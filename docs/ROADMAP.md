@@ -1,6 +1,6 @@
 # KubeView Roadmap — Building a Better Freelens
 
-> **Status:** 0 of 16 Phases Completed (Initiating Milestone 1)  
+> **Status:** 1 of 16 Phases Completed (Phase 1 Complete, Initiating Phase 2)  
 > **Guiding Principle:** Build KubeView as a high-performance Kubernetes desktop IDE first, then evolve it into an advanced operations and intelligence platform. Prioritize rock-solid cluster connectivity, safe resource mutations, and instant troubleshooting before broadening scope.
 
 ---
@@ -22,8 +22,8 @@ KubeView is engineered with a **three-tier decoupled architecture**:
 ```
 Phase 01 ──► Phase 02 ──► Phase 03 ──► Phase 04 ──► Phase 05 ──► Phase 06
 [ Desktop Shell ] [ Go Engine / Conn ] [ ECharts Dashboard ] [ Resource Browser ] [ Monaco Diff & Ops ] [ Triage Workbench ]
-                               ▲
-                               └─── MILESTONE 1 (v0.1 - v0.5): Daily-Driver Usable IDE ───┘
+      ✓
+      └─── MILESTONE 1 (v0.1 - v0.5): Daily-Driver Usable IDE ───┘
 
 Phase 07 ──► Phase 08 ──► Phase 09 ──► Phase 10 ──► Phase 11
 [ Topology ] [ Prometheus Metrics ] [ Networking/Cilium ] [ Storage/Longhorn ] [ Helm Releases ]
@@ -42,7 +42,40 @@ Phase 12 ──► Phase 13 ──► Phase 14 ──► Phase 15 ──► Phas
 
 | # | Phase Name | Primary Stack & Focus | Target Milestone | Status |
 | :---: | :--- | :--- | :---: | :---: |
-| **01** | [Core desktop application](#phase-1--core-desktop-application) | Tauri 2, Next.js static, Tailwind 4, shadcn/ui, cmdk, Geist | Milestone 1 | ⏳ Pending |
+| **01** | [Core desktop application](#phase-1--core-desktop-application) | Tauri 2, Next.js static, Tailwind 4, shadcn/ui, cmdk, Geist | Milestone 1 | ✅ Completed |
+| **02** | [Kubernetes connection management](#phase-2--kubernetes-connection-management) | Go `client-go`, `clientcmd`, JSON-RPC IPC, auth plugins | Milestone 1 | ⏳ Pending |
+| **03** | [Cluster overview and dashboard](#phase-3--cluster-overview-and-dashboard) | Apache ECharts, cluster health, warning events ticker | Milestone 1 | ⏳ Pending |
+| **04** | [Complete Kubernetes resource browser](#phase-4--complete-kubernetes-resource-browser) | TanStack Table, `client-go/dynamic` CRDs, virtualized grid | Milestone 1 | ⏳ Pending |
+| **05** | [Resource operations and YAML editor](#phase-5--resource-operations-and-yaml-editor) | Monaco Editor, Monaco Diff Editor, server dry-run diff | Milestone 1 | ⏳ Pending |
+| **06** | [Pod and container troubleshooting](#phase-6--pod-and-container-troubleshooting) | Live log streaming, xterm.js PTY exec, 1-click triage | Milestone 1 | ⏳ Pending |
+| **07** | [Workload topology and relationships](#phase-7--workload-topology-and-relationships) | React Flow / @xyflow graph, live dependency badges | Milestone 2 | ⏳ Pending |
+| **08** | [Metrics and monitoring](#phase-8--metrics-and-monitoring) | Apache ECharts, Metrics API, Prometheus PromQL queries | Milestone 2 | ⏳ Pending |
+| **09** | [Networking and connectivity](#phase-9--networking-and-connectivity) | Port-forwarding engine, Gateway API, Cilium Hubble | Milestone 2 | ⏳ Pending |
+| **10** | [Storage management](#phase-10--storage-management) | PV/PVC triage, StorageClasses, Longhorn integration | Milestone 2 | ⏳ Pending |
+| **11** | [Helm and application deployment](#phase-11--helm-and-application-deployment) | Helm release lifecycle, revision history, values diff | Milestone 2 | ⏳ Pending |
+| **12** | [Security and access control](#phase-12--security-and-access-control) | RBAC `auth can-i`, secret masking, Trivy scanner | Milestone 3 | ⏳ Pending |
+| **13** | [Plugin and extension system](#phase-13--plugin-and-extension-system) | TypeScript SDK, JSON Schema manifests, host sandbox | Milestone 3 | ⏳ Pending |
+| **14** | [Advanced productivity](#phase-14--advanced-productivity) | cmdk palette, multi-tab inspection, cross-cluster diff | Milestone 3 | ⏳ Pending |
+| **15** | [AI-assisted operations](#phase-15--ai-assisted-operations) | Root cause diagnosis, log summarizer, privacy guard | Milestone 3 | ⏳ Pending |
+| **16** | [Production quality and distribution](#phase-16--production-quality-and-distribution) | Playwright E2E, Go `envtest`, code signing, auto-update | Milestone 3 | ⏳ Pending |
+
+---
+
+## 🚀 Detailed Phase Breakdown
+
+### Phase 1 — Core Desktop Application
+- [x] Desktop application for macOS (Universal), Windows, and Linux via Tauri 2.
+- [x] Next.js static export (`output: 'export'`) with React 19 and TypeScript.
+- [x] Tailwind CSS 4 design tokens with dark-first theme (`#17191D` bg, `#22252B` surface, `#F08A42` accent, `#38B879` healthy).
+- [x] Theme engine using `next-themes` for zero-flash switching between dark and light modes.
+- [x] Collapsible sidebar navigation for cluster resources with smooth transitions.
+- [x] Command palette framework using `cmdk` with global keyboard shortcuts (`Cmd+K` / `Ctrl+K`).
+- [x] Global search input across active cluster resources.
+- [x] Application settings and user preferences storage with `tauri-plugin-store`.
+- [x] Persistent local application state (window size, layout splits, active context).
+- [x] Toast notification system with `Sonner` for async tasks, warnings, and errors.
+- [x] Resizable panels (`react-resizable-panels`) and tabbed resource views.
+- [x] Secure handling and sandboxing of local Kubernetes configuration files.
 | **02** | [Kubernetes connection management](#phase-2--kubernetes-connection-management) | Go `client-go`, `clientcmd`, JSON-RPC IPC, auth plugins | Milestone 1 | ⏳ Pending |
 | **03** | [Cluster overview and dashboard](#phase-3--cluster-overview-and-dashboard) | Apache ECharts, cluster health, warning events ticker | Milestone 1 | ⏳ Pending |
 | **04** | [Complete Kubernetes resource browser](#phase-4--complete-kubernetes-resource-browser) | TanStack Table, `client-go/dynamic` CRDs, virtualized grid | Milestone 1 | ⏳ Pending |

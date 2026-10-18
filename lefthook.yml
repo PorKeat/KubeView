@@ -1,0 +1,8 @@
+pre-commit:
+  parallel: true
+  commands:
+    prettier:
+      glob: "*.{ts,tsx,js,jsx,json,css,md}"
+      run: pnpm prettier --check {staged_files}
+    contracts-check:
+      run: pnpm --filter @kubeview/contracts build

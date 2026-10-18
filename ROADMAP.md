@@ -1,6 +1,6 @@
 # KubeView Roadmap — Building a Better Freelens
 
-> **Status:** 0 of 16 Phases Completed (Initiating Milestone 1)  
+> **Status:** 1 of 16 Phases Completed (Phase 1 Complete, Initiating Phase 2)  
 > **Guiding Principle:** Build KubeView as a high-performance Kubernetes desktop IDE first, then evolve it into an advanced operations and intelligence platform. Prioritize rock-solid cluster connectivity, safe resource mutations, and instant troubleshooting before broadening scope.
 
 ---
@@ -12,7 +12,7 @@ KubeView is engineered with a **three-tier decoupled architecture**:
 - **Desktop Host:** **Tauri 2 (Rust)** — Ultra-lightweight native host (<80MB RAM), system tray, and host-enforced security sandbox.
 - **Frontend UI:** **Next.js (Static Export) + React 19 + TypeScript + Tailwind CSS 4 + shadcn/ui + Motion + Lucide + cmdk + Sonner + next-themes + Geist**.
 - **Data & Tables:** **TanStack Query + Zustand + TanStack Table + Monaco Editor & Monaco Diff Editor + Apache ECharts + date-fns**.
-- **Kubernetes Engine:** **Go 1.23+ Sidecar with official `k8s.io/client-go` + `clientcmd` + `log/slog`**, communicating via versioned JSON-RPC over local IPC.
+- **Kubernetes Engine:** **Go 1.23+ Sidecar with official `k8s.io/client-go` + `clientcmd` + `log/slog`**, communicating via versioned JSON-RPC over local stdio pipes.
 - **Quality & Testing:** **`pnpm` + Lefthook + Vitest + Testing Library + Playwright + Go `testify` + `envtest`**.
 
 ---
@@ -22,8 +22,8 @@ KubeView is engineered with a **three-tier decoupled architecture**:
 ```
 Phase 01 ──► Phase 02 ──► Phase 03 ──► Phase 04 ──► Phase 05 ──► Phase 06
 [ Desktop Shell ] [ Go Engine / Conn ] [ ECharts Dashboard ] [ Resource Browser ] [ Monaco Diff & Ops ] [ Triage Workbench ]
-                               ▲
-                               └─── MILESTONE 1 (v0.1 - v0.5): Daily-Driver Usable IDE ───┘
+      ✓
+      └─── MILESTONE 1 (v0.1 - v0.5): Daily-Driver Usable IDE ───┘
 
 Phase 07 ──► Phase 08 ──► Phase 09 ──► Phase 10 ──► Phase 11
 [ Topology ] [ Prometheus Metrics ] [ Networking/Cilium ] [ Storage/Longhorn ] [ Helm Releases ]
@@ -42,7 +42,7 @@ Phase 12 ──► Phase 13 ──► Phase 14 ──► Phase 15 ──► Phas
 
 | # | Phase Name | Primary Stack & Focus | Target Milestone | Status |
 | :---: | :--- | :--- | :---: | :---: |
-| **01** | [Core desktop application](#phase-1--core-desktop-application) | Tauri 2, Next.js static, Tailwind 4, shadcn/ui, cmdk, Geist | Milestone 1 | ⏳ Pending |
+| **01** | [Core desktop application](#phase-1--core-desktop-application) | Tauri 2, Next.js static, Tailwind 4, shadcn/ui, cmdk, Geist | Milestone 1 | ✅ Completed |
 | **02** | [Kubernetes connection management](#phase-2--kubernetes-connection-management) | Go `client-go`, `clientcmd`, JSON-RPC IPC, auth plugins | Milestone 1 | ⏳ Pending |
 | **03** | [Cluster overview and dashboard](#phase-3--cluster-overview-and-dashboard) | Apache ECharts, cluster health, warning events ticker | Milestone 1 | ⏳ Pending |
 | **04** | [Complete Kubernetes resource browser](#phase-4--complete-kubernetes-resource-browser) | TanStack Table, `client-go/dynamic` CRDs, virtualized grid | Milestone 1 | ⏳ Pending |

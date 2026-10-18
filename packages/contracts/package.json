@@ -1,0 +1,23 @@
+{
+  "name": "@kubeview/contracts",
+  "version": "0.1.0",
+  "description": "Versioned JSON-RPC 2.0 contract schemas and types for KubeView",
+  "main": "./dist/index.js",
+  "module": "./dist/index.mjs",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.mjs",
+      "require": "./dist/index.js"
+    }
+  },
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsc --watch",
+    "clean": "rm -rf dist"
+  },
+  "devDependencies": {
+    "typescript": "^5.8.2"
+  }
+}

@@ -1,0 +1,21 @@
+{
+  "name": "kubeview-monorepo",
+  "private": true,
+  "version": "0.1.0",
+  "description": "Next-generation Kubernetes desktop IDE and operations platform",
+  "packageManager": "pnpm@11.9.0",
+  "scripts": {
+    "dev": "pnpm --filter @kubeview/desktop dev",
+    "build": "pnpm --filter @kubeview/contracts build && pnpm --filter @kubeview/desktop build",
+    "build:contracts": "pnpm --filter @kubeview/contracts build",
+    "lint": "pnpm --recursive lint",
+    "format": "prettier --write \"**/*.{ts,tsx,js,jsx,json,md,css}\"",
+    "test": "pnpm --recursive test",
+    "tauri:dev": "cargo tauri dev",
+    "tauri:build": "cargo tauri build"
+  },
+  "devDependencies": {
+    "prettier": "^3.5.3",
+    "typescript": "^5.8.2"
+  }
+}
