@@ -1,180 +1,344 @@
-# KubeView Technical Architecture
+# KubeView — Production Architecture Blueprint
 
-> **Design Objective:** Build a lightning-fast, resource-efficient, and secure Kubernetes desktop IDE that surpasses existing tools (Lens, Freelens) in speed, stability, troubleshooting ergonomics, and safety.
+> **Architectural Principle:** Local-first, layered desktop architecture where the **React UI displays and requests operations**, the **native Tauri host controls process access and permissions**, and the **Go engine performs Kubernetes operations**. Kubernetes credentials are never exposed to the React UI or plugins.
 
 ---
 
-## 1. High-Level Architecture: Three-Tier Decoupled System
+## 1. Overall System Architecture
 
-KubeView adopts a **three-tier decoupled desktop architecture** with strictly defined and versioned IPC boundaries:
+```mermaid
+flowchart TD
+    subgraph UI ["Layer 1: Frontend Presentation (Next.js Static Export / React / TypeScript)"]
+        Components["UI Components (shadcn/ui + Tailwind CSS 4 + Motion)"]
+        Stores["State Management (Zustand + TanStack Query)"]
+        Services["Typed Frontend Services (contracts package)"]
+    end
+
+    subgraph Host ["Layer 2: Native Host & Security Boundary (Tauri 2 / Rust)"]
+        CmdValidator["Command Validation & Origin Check"]
+        PermEngine["Host-Enforced Permissions & Capabilities"]
+        Supervisor["Go Engine Supervisor (Lifecycle, Backoff, Health)"]
+        SecureStore["Secure Local Storage & OS Keychain"]
+        IPCGateway["JSON-RPC 2.0 Pipe Dispatcher (stdin/stdout)"]
+    end
+
+    subgraph Engine ["Layer 3: Kubernetes Engine (Go Sidecar / client-go)"]
+        ClusterMgr["Cluster Manager (clientcmd & kubeconfig)"]
+        ResourceAPI["Resource CRUD & Server-Side Apply Engine"]
+        WatchMgr["Watch Manager (SharedInformerFactory & DeltaFIFO)"]
+        StreamEngine["Streaming Engine (Logs, Exec PTY, Port-Forward)"]
+        Discovery["Discovery & CRD Introspection"]
+        MetricsAdapters["Metrics Server & Prometheus Adapters"]
+        ExtAdapters["Integrations (Helm, Longhorn, Cilium, ArgoCD)"]
+    end
+
+    subgraph Cluster ["Layer 4: Kubernetes Infrastructure"]
+        APIServer["Kube-APIServer (REST, Watch, SPDY/WebSocket)"]
+        ClusterRBAC["Authoritative RBAC Enforcement"]
+    end
+
+    UI <-->|Typed Tauri Commands & Events| Host
+    Host <-->|Versioned JSON-RPC 2.0 (stdin/stdout pipes)| Engine
+    Engine <-->|HTTPS REST, Watch, SPDY (TLS Authenticated)| APIServer
+    APIServer --> ClusterRBAC
+```
+
+---
+
+## 2. Responsibilities by Layer
+
+| Layer | Owns | Must NOT Own |
+| :--- | :--- | :--- |
+| **Next.js / React** | UI presentation, navigation, forms, local view state, table interactions, editor rendering. | Cluster credentials, direct filesystem access, unrestricted shell execution. |
+| **Tauri / Rust** | IPC gateway, process lifecycle, supervisor, permission enforcement, native OS integration, secure key storage. | Kubernetes business logic duplicated from Go, direct Kubernetes API calls. |
+| **Go Engine** | Kubernetes clients, resource operations, informers/watches, log/PTY streams, API discovery, credential resolver. | Arbitrary frontend-controlled command execution, desktop windowing state. |
+| **Kubernetes API** | Authoritative cluster state, server-side admission, and RBAC authorization. | Desktop UI state. |
+
+---
+
+## 3. Desktop Framework & Next.js Static Export
+
+KubeView uses **Next.js with `output: 'export'`** as a zero-runtime static web bundle hosted inside **Tauri 2**:
+
+- **No Node Server in Production:** The desktop application contains zero Next.js runtime server, eliminating server action vulnerabilities and Node process memory overhead.
+- **Frontend Stack:** Next.js App Router, React 19, strict TypeScript, Tailwind CSS 4, shadcn/ui, TanStack Query, Zustand, Monaco Editor & Monaco Diff Editor.
+- **Frontend Data Flow:**
+  1. User navigates to a resource page (e.g. Pods).
+  2. React calls a typed service method from `@kubeview/contracts`.
+  3. The service invokes an allowlisted Tauri IPC command.
+  4. Rust validates the request against host capabilities and forwards the JSON-RPC payload to the Go engine's `stdin`.
+  5. Go executes the operation via `client-go` against the target cluster.
+  6. Go writes the JSON-RPC response to `stdout`.
+  7. Rust returns the typed response to React.
+  8. TanStack Query caches the result and updates the UI.
+
+---
+
+## 4. Process Management: Rust Supervises Go
+
+The Go engine is packaged as a **bundled Tauri sidecar executable** (`kubeview-engine`). Rust is the sole owner of the engine lifecycle.
+
+### Engine Lifecycle State Machine
+
+```mermaid
+stateDiagram-v2
+    [*] --> Initializing: App Startup
+    Initializing --> StartingEngine: Configure minimal env & stdio pipes
+    StartingEngine --> Handshaking: Spawn sidecar process
+    Handshaking --> Ready: Protocol handshake successful
+    Handshaking --> Failed: Protocol mismatch or timeout
+    Ready --> Degraded: Non-fatal error / RPC timeout
+    Degraded --> Ready: Health check recovered
+    Ready --> Stopping: App shutdown requested
+    Degraded --> Stopping: App shutdown requested
+    Ready --> Failed: Process exited unexpectedly
+    Failed --> StartingEngine: Restart policy permits (exponential backoff)
+    Failed --> [*]: Restart limit reached
+    Stopping --> [*]: Clean process termination (SIGTERM -> SIGKILL)
+```
+
+### Lifecycle Rules
+1. **Startup Handshake:** Upon spawning the Go process, Rust and Go perform an immediate `engine.handshake` verifying protocol compatibility (`protocolVersion: "1.0.0"`).
+2. **Standard I/O Isolation:** Engine diagnostic logs are strictly emitted to `stderr` (using `log/slog`), keeping `stdout` 100% clean for JSON-RPC message framing.
+3. **Crash Recovery:** If the Go engine exits unexpectedly, Rust restarts it with exponential backoff up to a hard limit (e.g., max 3 restarts in 60s). If the limit is reached, the UI displays a fatal engine alert.
+4. **Graceful Shutdown:** On app quit, Rust sends an `engine.shutdown` notification, waits up to 3 seconds for active watches, log streams, and port-forward tunnels to close, and falls back to `SIGKILL` only if unresponsive.
+
+---
+
+## 5. IPC Transport & JSON-RPC Protocol
+
+KubeView uses **JSON-RPC 2.0 over standard I/O pipes (stdin/stdout)** with newline-delimited JSON (`\n`) framing.
+
+- **No Open TCP Ports:** Eliminates all attack surfaces from other local processes on the user's workstation.
+- **Strict Framing & Limits:** Enforces a maximum message size (16MB) and bounded internal queues.
+- **Zero Generic Execution:** There is NO generic `execute(command)` IPC method. All operations are explicitly named and validated.
+
+### JSON-RPC Message Wire Format
+
+```json
+// Request
+{
+  "jsonrpc": "2.0",
+  "id": "req-1042",
+  "method": "resources.list",
+  "params": {
+    "clusterId": "cluster-01",
+    "apiVersion": "v1",
+    "resource": "pods",
+    "namespace": "default",
+    "limit": 100
+  }
+}
+
+// Success Response
+{
+  "jsonrpc": "2.0",
+  "id": "req-1042",
+  "result": {
+    "items": [],
+    "continueToken": null,
+    "resourceVersion": "123456"
+  }
+}
+
+// Error Response (Redacted, structured)
+{
+  "jsonrpc": "2.0",
+  "id": "req-1042",
+  "error": {
+    "code": "K8S_FORBIDDEN",
+    "message": "You do not have permission to list Pods in this namespace.",
+    "retryable": false,
+    "details": {
+      "resource": "pods",
+      "namespace": "default",
+      "operation": "list"
+    }
+  }
+}
+```
+
+### Streaming Contract (Logs, Watches, Exec)
+Long-running operations use explicit subscription lifecycles rather than blocking requests:
+- `watch.start` / `watch.stop` (Resource delta events)
+- `logs.start` / `logs.stop` (Chunked log stream)
+- `exec.start` / `exec.input` / `exec.resize` / `exec.stop` (Interactive PTY session)
+- `portForward.start` / `portForward.stop` (Network tunnel)
+
+```typescript
+export interface StreamEvent<T> {
+  streamId: string;
+  sequence: number;
+  type: "data" | "error" | "closed";
+  data?: T;
+  error?: {
+    code: string;
+    message: string;
+  };
+}
+```
+
+---
+
+## 6. Security Architecture & Credential Isolation
+
+```mermaid
+sequenceDiagram
+    participant React as React UI
+    participant Rust as Rust IPC Gateway
+    participant Go as Go Engine
+    participant Kubeconfig as Kubeconfig Resolver
+    participant K8s as Kubernetes API Server
+
+    React->>Rust: Operation Request (e.g. list pods)
+    Rust->>Rust: Validate Capabilities & Request Payload
+    Rust->>Go: Validated JSON-RPC Command
+    Go->>Kubeconfig: Resolve Context & Credentials (clientcmd)
+    Kubeconfig-->>Go: In-Memory Token / Cert (Never sent to UI)
+    Go->>K8s: TLS Authenticated Request with Token
+    K8s-->>Go: Authorized Result or 403 Forbidden
+    Go-->>Rust: Sanitized Response (Zero Credentials)
+    Rust-->>React: Typed UI Result
+```
+
+### Core Security Rules
+1. **Zero Credential Exposure:** Tokens, client certificates, private keys, and exec-helper secrets exist **only in Go engine memory**. They are NEVER passed to the React UI, plugins, telemetry, or logs.
+2. **Server-Side Apply & Safe Mutations:** Declarative changes use Kubernetes Server-Side Apply with field manager `kubeview`. Local YAML is validated and dry-run tested (`dryRun=All`) before mutation.
+3. **Secret Redaction:** `v1/Secret` data is masked (`********`) by default across all views and cannot be exposed through logs or IPC errors.
+4. **RBAC Pre-Flight Checks:** Queries `SelfSubjectAccessReview` before showing destructive actions, but treats the cluster's API server as the authoritative gatekeeper.
+
+---
+
+## 7. Plugin Trust & Isolation Model
+
+Plugins are categorized into three explicit trust tiers:
 
 ```mermaid
 graph TD
-    subgraph UI ["Tier 1: Presentation (Next.js Static Export / React / TypeScript)"]
-        Shell["Desktop Shell (Window, Sidebar, Tabs, Command Palette cmdk)"]
-        Components["shadcn/ui + Tailwind CSS 4 + Motion + Sonner"]
-        Stores["State Management (Zustand + TanStack Query)"]
-        Grid["Data Grid (TanStack Table + Virtualization)"]
-        Monaco["Monaco Editor & Diff Viewer"]
-        Charts["Apache ECharts (Metrics & Graphs)"]
-        Xterm["Terminal & Logs (xterm.js + WebGL)"]
+    subgraph T1 ["Tier 1: Declarative Plugins"]
+        D1["Navigation Links"]
+        D2["Settings Metadata"]
+        D3["Static Custom Views"]
     end
 
-    subgraph Host ["Tier 2: Native Desktop Host (Tauri 2 / Rust)"]
-        WindowMgr["Window Lifecycle, System Tray & Native Menus"]
-        SidecarSup["Go Engine Process Supervisor & Health Monitor"]
-        HostSecurity["Host-Enforced Permissions & Sandbox Guard"]
-        IPCBridge["Type-Safe IPC & JSON-RPC Protocol Dispatcher"]
+    subgraph T2 ["Tier 2: Sandboxed Plugins"]
+        S1["Scoped Resource Reads"]
+        S2["Approved Watch Streams"]
+        S3["Custom Resource Panes"]
     end
 
-    subgraph Engine ["Tier 3: Kubernetes Engine (Go Sidecar / client-go)"]
-        ClientGo["Official Kubernetes client-go (Typed & Dynamic Clients)"]
-        Discovery["API Resource Discovery & CRD Introspection"]
-        ConfigMgr["clientcmd Kubeconfig Parser, Merger & Watcher"]
-        Informers["SharedInformerFactory & In-Memory DeltaFIFO"]
-        StreamEngine["Log Chunk Streamer & PTY Terminal Multiplexer"]
-        PortFwd["TCP / HTTP Port-Forwarding Tunnel Manager"]
-        DiffEngine["Server-Side Dry-Run & Git Diff Generator"]
-        Logger["Structured Diagnostic Logging (log/slog)"]
+    subgraph T3 ["Tier 3: Trusted Native Integrations"]
+        N1["Helm Engine"]
+        N2["Cilium Hubble"]
+        N3["Longhorn Storage"]
+        N4["ArgoCD Workflows"]
     end
+```
 
-    subgraph Cluster ["Kubernetes Infrastructure"]
-        APIServer["Kube-APIServer (REST, Watch, SPDY/WebSockets)"]
-        MetricsServer["Metrics API Server / Prometheus"]
-    end
+- **Manifest Declaration:** Every plugin must provide a signed `plugin.json` declaring its required capabilities, permissions, and supported resource kinds.
+- **Host Enforcement:** Permissions are enforced at the Rust host boundary; plugins are never granted raw shell, filesystem, or credential access.
+- **Initial Milestone:** The core plugin SDK will be released with trusted built-in integrations; untrusted third-party plugin execution is deferred until full worker isolation is verified.
 
-    Shell --> Stores
-    Stores --> IPCBridge
-    IPCBridge <-->|Tauri IPC Commands & Events| Host
-    Host <-->|Versioned JSON-RPC over Local IPC (stdin/stdout)| Engine
+---
 
-    Engine <-->|HTTPS REST & Watch| APIServer
-    Engine <-->|SPDY / WebSockets (Exec & Port-Forward)| APIServer
-    Engine <-->|HTTP PromQL / Metrics API| MetricsServer
+## 8. Go Engine Modular Monolith Architecture
+
+The Go engine is structured as an internal modular monolith in `engine/`:
+
+```
+engine/
+├── cmd/
+│   └── kubeview-engine/
+│       └── main.go                  # Main entrypoint: flag parsing, stdio setup, signal handling
+├── internal/
+│   ├── app/
+│   │   ├── bootstrap.go             # Subsystem initialization & handshake
+│   │   └── shutdown.go              # Coordinated graceful shutdown
+│   ├── ipc/
+│   │   ├── transport.go             # stdin/stdout reader/writer with line framing
+│   │   ├── dispatcher.go            # Method routing and concurrency limits
+│   │   ├── protocol.go              # JSON-RPC 2.0 schemas
+│   │   └── errors.go                # Standardized error codes & redactor
+│   ├── cluster/
+│   │   ├── manager.go               # Active cluster connection pool
+│   │   ├── kubeconfig.go            # clientcmd loader & fsnotify watcher
+│   │   └── credentials.go           # In-memory credential caching & exec plugins
+│   ├── kubernetes/
+│   │   ├── clients.go               # typed clientset & dynamic client factory
+│   │   ├── discovery.go             # API group & resource discovery
+│   │   ├── resources.go             # Generic resource CRUD & pagination
+│   │   ├── apply.go                 # Server-Side Apply & dry-run diff engine
+│   │   └── authorization.go         # SelfSubjectAccessReview checks
+│   ├── watch/
+│   │   ├── manager.go               # SharedInformerFactory coordinator
+│   │   └── subscription.go          # Filtered watch event dispatching
+│   ├── streaming/
+│   │   ├── logs.go                  # Pod log streamer with tail & since
+│   │   ├── exec.go                  # Interactive SPDY/WebSocket PTY terminal
+│   │   └── portforward.go           # TCP port forwarding manager
+│   ├── metrics/
+│   │   ├── current.go               # Metrics Server consumer
+│   │   └── prometheus.go            # PromQL query client
+│   ├── integrations/
+│   │   ├── helm/                    # Helm driver adapter
+│   │   ├── longhorn/                # Longhorn CRD client
+│   │   ├── cilium/                  # Cilium network client
+│   │   └── argocd/                  # ArgoCD application client
+│   └── observability/
+│       └── logger.go                # slog structured logging to stderr
+├── pkg/
+│   └── contracts/                   # Shared types (mirrored with TS package)
+└── tests/
+    ├── e2e/                         # Engine integration tests
+    └── mocks/                       # Fake clientsets and envtest fixtures
 ```
 
 ---
 
-## 2. Multi-Tier Technology Evaluation & Rationale
-
-### 2.1 Why the Three-Tier Split? (Tauri 2 + Go `client-go` + Next.js)
-
-1. **Official Kubernetes Reliability (`client-go` in Go):**
-   - The official Kubernetes ecosystem is written in Go. By running a Go-powered engine with official `client-go`, `clientcmd`, and dynamic clients, KubeView achieves 100% compatibility with all cloud authenticators (AWS IAM, Azure kubelogin, GCP, OIDC), complex CRD schemas, and informer caching patterns without third-party translation quirks.
-2. **Minimal Desktop Overhead (Tauri 2 in Rust):**
-   - Electron apps easily consume 500 MB – 1 GB of memory at idle. Tauri 2 uses the native OS webview (WKWebView on macOS, WebView2 on Windows) and lightweight Rust bindings, keeping idle memory under 70–90 MB.
-3. **World-Class Frontend Velocity (Next.js Static Export + React + TypeScript):**
-   - Using Next.js configured with `output: 'export'`, the UI compiles to an ultra-fast, static client bundle loaded directly into the webview with zero node server runtime.
-   - Combines `shadcn/ui`, Tailwind CSS 4, Lucide icons, Geist typography, and Motion with full TypeScript safety.
-4. **Independent Evolution & Versioning:**
-   - Defining a strict, versioned JSON-RPC contract between the UI, Host, and Engine allows independent updates, mock testing with `envtest`, and bulletproof unit testing.
-
----
-
-## 3. Core Subsystems
-
-### 3.1 Kubernetes Engine (Go + `client-go`)
-- **Kubeconfig & Discovery:** Uses `k8s.io/client-go/tools/clientcmd` to parse standard multi-path `$KUBECONFIG` environments, execute credential helper plugins, and watch filesystem events for automatic reload.
-- **Dynamic & Typed Clients:** Uses standard clientsets for core resources and `k8s.io/client-go/dynamic` for CRDs, rendering custom resources with their `additionalPrinterColumns`.
-- **Informer Caching & Delta FIFO:** Implements `SharedInformerFactory` to maintain an in-memory resource cache, debouncing rapid cluster changes before emitting JSON-RPC events to the desktop host.
-- **Structured Logging:** Employs Go's `log/slog` for high-throughput diagnostic logs, strictly filtering and redacting auth tokens, bearer credentials, and private keys.
-
-### 3.2 Desktop Host Shell (Tauri 2 / Rust)
-- **Sidecar Lifecycle Management:** Spawns and supervises the Go engine binary on app launch, monitoring its health and gracefully terminating it on app exit.
-- **IPC Protocol Dispatcher:** Bridges JSON-RPC requests from the Next.js frontend to the Go engine over local standard I/O or named pipes.
-- **Host-Enforced Permissions:** Enforces that UI plugins and external calls cannot bypass security checks to access the local filesystem or run arbitrary shell commands.
-
-### 3.3 Presentation Layer (Next.js Static Export + React 19)
-- **High-Performance Data Grid:** TanStack Table v8 with TanStack Virtual for 60 FPS rendering of 10,000+ pods with column persistence and custom sorting/filtering.
-- **Monaco YAML & Diff Editor:** Full Monaco Editor configured with Kubernetes JSONSchema validation and Monaco Diff Editor for comparing local manifests against live server-admitted resources.
-- **Metrics & Visualization:** Apache ECharts rendering responsive CPU/Memory gauges, node pressure meters, and Prometheus historical charts.
-- **Interactive Terminal:** `xterm.js` with WebGL acceleration for interactive container `exec` sessions and high-frequency live log streaming.
-- **State Management:** Zustand for client state (active context, tabs, layout) and TanStack Query for server cache invalidation and queries.
-
----
-
-## 4. Visual Design System & Design Tokens
-
-KubeView features a developer-centric, dark-first design system with high-contrast accessibility and crisp Geist typography.
-
-### Design Tokens
-- **Background:** `#17191D` (Main application canvas, tab bar background)
-- **Surface:** `#22252B` (Cards, drawers, modal sheets, table rows)
-- **Surface Hover:** `#2C3038` (Interactive hover states)
-- **Border / Divider:** `#323741` (Subtle dividers, table borders)
-- **Accent / Brand:** `#F08A42` (Primary actions, selection indicators)
-- **Status Healthy:** `#38B879` (Running pods, ready nodes, active services)
-- **Status Warning:** `#F5A623` (Pending workloads, restarting containers)
-- **Status Critical:** `#E05252` (CrashLoopBackOff, OOMKilled, failed probes)
-- **Status Muted:** `#8A919E` (Completed jobs, suspended cronjobs)
-
-### Design Guidelines
-1. **Compact Density:** Optimized row heights (32px) and clean typography for scanning large resource counts.
-2. **Subtle Borders over Glass Effects:** Avoid blurry backdrop filters that compromise contrast and degrade rendering during heavy log output.
-3. **Restrained Animation:** Motion is used strictly for slide-overs, dialogs, and tab switches; disabled for frequently updating dashboard metrics to eliminate CPU waste.
-
----
-
-## 5. Security & Safety Model
-
-1. **Host-Enforced Plugin Permissions:** Plugins run in isolated Web Workers and cannot directly invoke Tauri commands, access the local filesystem, or read Kubernetes credentials.
-2. **Zero Plaintext Secrets:** Sensitive values in Secrets and environment variables are masked by default (`********`), unmaskable only upon explicit user click with RBAC verification.
-3. **Server-Side Dry-Run & Git Diff:** All resource mutations (`apply`, `patch`, `delete`) execute a server-side dry run (`dryRun=All`), computing a side-by-side visual diff before committing to the cluster.
-4. **RBAC Pre-Flight Verification:** Action buttons are dynamically enabled or disabled based on `SelfSubjectAccessReview` results against the live cluster.
-
----
-
-## 6. Project Directory Layout
+## 9. Monorepo Repository Structure
 
 ```
 KubeView/
-├── .github/workflows/        # CI/CD pipelines (GitHub Actions)
-├── docs/                     # Specifications & architectural documentation
-│   ├── ARCHITECTURE.md       # This document
-│   ├── TECH_STACK.md         # Production-ready tech stack reference
-│   ├── EXECUTION_PLAN.md     # Implementation plan and task breakdown
-│   ├── ROADMAP.md            # 16-phase roadmap and checklists
-│   └── phases/               # Phase-by-phase specifications (Phases 1-6)
-├── engine/                   # Kubernetes Engine (Go 1.23+ / client-go)
-│   ├── cmd/engine/           # Sidecar binary entrypoint
-│   │   └── main.go           # JSON-RPC listener & dispatcher
-│   ├── pkg/
-│   │   ├── k8s/              # client-go clientsets, dynamic client & informers
-│   │   ├── config/           # clientcmd kubeconfig parser & file watcher
-│   │   ├── stream/           # Log streamer & PTY exec multiplexer
-│   │   ├── ops/              # Dry-run apply, diff & rollout operations
-│   │   ├── metrics/          # Metrics API & Prometheus client
-│   │   └── rpc/              # Versioned JSON-RPC protocol schemas & handlers
-│   ├── go.mod                # Go module dependencies
-│   └── go.sum
-├── src-tauri/                # Desktop Host (Tauri 2 / Rust)
+├── apps/
+│   └── desktop/                     # Next.js Static Export (React 19 + TypeScript)
+│       ├── app/                     # App Router pages
+│       ├── components/              # UI components & design system
+│       ├── features/                # Domain features (clusters, workloads, triage)
+│       ├── services/                # Typed frontend IPC client
+│       ├── stores/                  # Zustand stores
+│       ├── lib/                     # Utilities
+│       ├── next.config.ts           # output: "export"
+│       └── package.json
+├── src-tauri/                       # Native Desktop Host (Tauri 2 / Rust)
 │   ├── src/
-│   │   ├── main.rs           # Tauri entrypoint & window configuration
-│   │   ├── sidecar.rs        # Go engine process supervisor
-│   │   ├── ipc.rs            # IPC bridge & JSON-RPC proxy
-│   │   └── security.rs       # Host permission validator
-│   ├── Cargo.toml            # Rust dependencies (tauri, tokio, etc.)
-│   └── tauri.conf.json       # Tauri window, sidecar & permission config
-├── src/                      # Frontend Application (Next.js Static Export)
-│   ├── app/                  # Next.js App Router (exported statically)
-│   │   ├── layout.tsx        # Root layout (next-themes, Geist font, Sonner)
-│   │   ├── page.tsx          # Main IDE shell
-│   │   └── globals.css       # Tailwind CSS 4 theme tokens
-│   ├── components/           # shadcn/ui & custom KubeView design system
-│   │   ├── ui/               # Base shadcn/ui primitives
-│   │   ├── layout/           # AppHeader, Sidebar, TabBar, StatusBar
-│   │   ├── grid/             # TanStack Table virtualized resource tables
-│   │   ├── editor/           # Monaco Editor & Monaco Diff Editor
-│   │   ├── charts/           # Apache ECharts metric widgets
-│   │   ├── terminal/         # xterm.js terminal & log streaming viewport
-│   │   └── triage/           # One-click troubleshooting workbench
-│   ├── stores/               # Zustand state stores (context, tabs, layout)
-│   ├── hooks/                # Custom hooks (useK8sQuery, useLogs, useExec)
-│   ├── lib/                  # JSON-RPC client, formatters, utilities
-│   └── types/                # TypeScript interfaces (K8s API & RPC contracts)
-├── package.json              # Frontend dependencies (pnpm)
-├── pnpm-lock.yaml            # Pinned dependency lockfile
-├── tailwind.config.ts        # Tailwind CSS 4 configuration
-├── tsconfig.json             # TypeScript strict configuration
-└── next.config.ts            # Next.js configuration (output: 'export')
+│   │   ├── commands/                # Allowlisted Tauri IPC commands
+│   │   ├── ipc/                     # JSON-RPC bridge over stdio
+│   │   ├── supervisor/              # Go engine sidecar process supervisor
+│   │   ├── security/                # Host permission checks & capability validator
+│   │   └── main.rs                  # Tauri entrypoint
+│   ├── capabilities/                # Tauri 2 capability definitions
+│   ├── binaries/                    # Target sidecar binaries for packaging
+│   └── tauri.conf.json              # Tauri windowing & sidecar config
+├── engine/                          # Kubernetes Engine (Go 1.23+ Sidecar)
+│   ├── cmd/                         # Entrypoint
+│   ├── internal/                    # Core subsystems
+│   ├── go.mod
+│   └── go.sum
+├── packages/
+│   ├── contracts/                   # Single source of truth for IPC types
+│   ├── ui/                          # Shared UI primitives (shadcn/ui base)
+│   └── plugin-sdk/                  # Extension development SDK
+├── plugins/                         # First-party plugins (Longhorn, Cilium, ArgoCD)
+├── docs/                            # Architectural & technical specs
+│   ├── ARCHITECTURE.md              # This document
+│   ├── TECH_STACK.md                # Ratified tech stack reference
+│   ├── EXECUTION_PLAN.md            # Phased implementation plan
+│   ├── ROADMAP.md                   # 16-phase roadmap checklist
+│   ├── contracts/                   # IPC protocol contract specifications
+│   │   └── IPC_SPECIFICATION.md
+│   └── phases/                      # Phase specifications (Phases 1-6)
+├── scripts/                         # Build, sidecar compilation & packaging scripts
+├── .github/workflows/               # Multi-platform CI/CD (macOS, Windows, Linux)
+├── pnpm-workspace.yaml              # pnpm monorepo workspace definition
+└── lefthook.yml                     # Git hooks for linting, formatting & testing
 ```

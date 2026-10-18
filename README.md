@@ -5,61 +5,70 @@
 
 ---
 
-## 🌟 Vision & Philosophy
+## 🌟 Vision & Guiding Principle
 
-**KubeView** is engineered around a core principle: **build a dependable Kubernetes desktop IDE first, then evolve it into a comprehensive operations and intelligence platform.**
+**KubeView** is engineered around a local-first, layered desktop architecture:
 
-Most Kubernetes GUI clients suffer from high memory overhead (Electron eating 1GB+ RAM), sluggish webview performance on large clusters (10,000+ pods), fragile connection management with modern cloud credential plugins, and confusing UX for day-to-day triage. KubeView directly solves these bottlenecks:
-
-1. **Dependable Foundations First**: Before adding bells and whistles, cluster connectivity, multi-kubeconfig handling, authentications (AWS IAM, Azure kubelogin, GCP, OIDC), and safe resource operations must be bulletproof.
-2. **Official Kubernetes Reliability (`client-go`)**: The backend engine runs native Go with official `client-go`, providing 100% fidelity with the Kubernetes ecosystem and dynamic CRD discovery.
-3. **Troubleshooting Over Mere Browsing**: Finding what is failing takes one click. Rather than digging through 5 separate pages, a unified triage workbench correlates logs, events, exit codes, scheduling conditions, and container probes.
-4. **Safety & Guardrails**: Destructive actions are guarded by explicit server-side dry-run diffs, validation, RBAC capability checks, and clear confirmation prompts.
-5. **Speed & Scalability**: Zero lag on large enterprise clusters using virtualized data grids, efficient informers/watches, and native background streaming.
+- **The Frontend (Next.js Static Export + React)** displays and requests operations. It must *never* own cluster credentials or execute unrestricted shell commands.
+- **The Native Host (Tauri 2 + Rust)** controls process access, enforces capabilities/permissions, and supervises the Go engine. It must *never* duplicate Kubernetes business logic.
+- **The Kubernetes Engine (Go Sidecar + client-go)** performs all Kubernetes API operations, watch streams, and credential resolution. It must *never* execute arbitrary frontend-controlled shell commands.
+- **The Kubernetes API Server** is the authoritative gatekeeper for cluster state and RBAC authorization.
 
 ---
 
-## 🏗️ Production-Ready Tech Stack
+## 🏗️ Production Architecture Blueprint
 
-KubeView uses a **three-tier decoupled architecture** designed for separation of concerns and independent versioning:
+```mermaid
+flowchart TD
+    subgraph UI ["Tier 1: Presentation (Next.js Static Export / React / TypeScript)"]
+        Components["UI Components (shadcn/ui + Tailwind CSS 4 + Motion)"]
+        Stores["State Management (Zustand + TanStack Query)"]
+        Services["Typed Frontend Services (@kubeview/contracts)"]
+    end
 
+    subgraph Host ["Tier 2: Native Host & Security Boundary (Tauri 2 / Rust)"]
+        CmdValidator["Command Validation & Origin Check"]
+        PermEngine["Host-Enforced Permissions & Capabilities"]
+        Supervisor["Go Engine Supervisor (Lifecycle, Backoff, Health)"]
+        IPCGateway["JSON-RPC 2.0 Pipe Dispatcher (stdin/stdout)"]
+    end
+
+    subgraph Engine ["Tier 3: Kubernetes Engine (Go Sidecar / client-go)"]
+        ClusterMgr["Cluster Manager (clientcmd & kubeconfig)"]
+        ResourceAPI["Resource CRUD & Server-Side Apply Engine"]
+        WatchMgr["Watch Manager (SharedInformerFactory & DeltaFIFO)"]
+        StreamEngine["Streaming Engine (Logs, Exec PTY, Port-Forward)"]
+        Discovery["Discovery & CRD Introspection"]
+        MetricsAdapters["Metrics Server & Prometheus Adapters"]
+    end
+
+    subgraph Cluster ["Tier 4: Kubernetes Infrastructure"]
+        APIServer["Kube-APIServer (REST, Watch, SPDY/WebSocket)"]
+    end
+
+    UI <-->|Typed Tauri Commands & Events| Host
+    Host <-->|Versioned JSON-RPC 2.0 (stdin/stdout pipes)| Engine
+    Engine <-->|HTTPS REST, Watch, SPDY (TLS Authenticated)| APIServer
 ```
-┌────────────────────────────────────────────────────────────────────────┐
-│  Tier 1: Presentation (Next.js Static Export + React + TypeScript)      │
-│  • shadcn/ui + Tailwind CSS 4 + Motion + Sonner + cmdk                 │
-│  • Zustand (Client State) + TanStack Query (Server State)              │
-│  • TanStack Table (Data Grid) + Apache ECharts (Metrics Visualization) │
-│  • Monaco Editor & Monaco Diff Editor (YAML & Semantic Diffs)          │
-│  • Geist Font Family (Crisp developer typography)                      │
-└───────────────────────────────────┬────────────────────────────────────┘
-                                    │ Tauri IPC / Events
-┌───────────────────────────────────▼────────────────────────────────────┐
-│  Tier 2: Desktop Host Shell (Tauri 2 / Rust)                           │
-│  • Lightweight Native Host (<80MB RAM vs 800MB in Electron)            │
-│  • Window management, system tray, and host-enforced security sandbox  │
-│  • Process supervisor for the Go engine sidecar                        │
-└───────────────────────────────────┬────────────────────────────────────┘
-                                    │ Versioned JSON-RPC over Local IPC
-┌───────────────────────────────────▼────────────────────────────────────┐
-│  Tier 3: Kubernetes Engine (Go + client-go Sidecar)                    │
-│  • Official k8s.io/client-go (Typed Clients, Dynamic CRD Client)       │
-│  • clientcmd (Kubeconfig parsing, multi-path merge & file watching)    │
-│  • SharedInformerFactory (DeltaFIFO caching & debounced updates)       │
-│  • High-throughput log streaming & PTY container exec terminal         │
-│  • Structured diagnostic logging via Go log/slog                       │
-└────────────────────────────────────────────────────────────────────────┘
-```
 
-| Layer | Technologies |
-| :--- | :--- |
-| **Desktop Host** | Tauri 2 (Rust) |
-| **Web UI** | Next.js (Static Export `output: 'export'`) + React 19 + TypeScript |
-| **Design System** | shadcn/ui + Tailwind CSS 4 + Motion + Lucide React + Geist |
-| **State & Data** | Zustand (Client) + TanStack Query (Server Cache) + TanStack Table |
-| **YAML & Diff** | Monaco Editor + Monaco Diff Editor |
-| **Data Viz** | Apache ECharts |
-| **Kubernetes Engine** | Go 1.23+ + official `client-go` + `clientcmd` + `log/slog` |
-| **Tooling & Tests** | `pnpm` + Lefthook + Vitest + Testing Library + Playwright + Go `testify` + `envtest` |
+### Layer Responsibilities
+
+| Layer | Owns | Must NOT Own |
+| :--- | :--- | :--- |
+| **Next.js / React** | UI presentation, navigation, forms, local view state, table interactions, editor rendering. | Cluster credentials, direct filesystem access, unrestricted shell execution. |
+| **Tauri / Rust** | IPC gateway, process lifecycle, supervisor, permission enforcement, native OS integration. | Kubernetes business logic duplicated from Go, direct Kubernetes API calls. |
+| **Go Engine** | Kubernetes clients, resource operations, informers/watches, log/PTY streams, API discovery. | Arbitrary frontend-controlled command execution, desktop windowing state. |
+| **Kubernetes API** | Authoritative cluster state, server-side admission, and RBAC authorization. | Desktop UI state. |
+
+---
+
+## 🔒 Security Architecture Highlights
+
+1. **Zero Credential Exposure:** Tokens, client certificates, private keys, and exec-helper secrets exist **only in Go engine memory**. They are NEVER passed to the React UI, plugins, telemetry, or logs.
+2. **No Local Network Sockets:** The Go engine communicates exclusively via **inherited stdio pipes (`stdin`/`stdout`)** using newline-delimited JSON-RPC 2.0. No local TCP/HTTP ports are opened.
+3. **Server-Side Apply & Dry-Run Diff:** All declarative changes use Kubernetes Server-Side Apply with field manager `kubeview`. Local YAML is validated and dry-run tested (`dryRun=All`) before live mutation.
+4. **Secret Masking:** Sensitive values in Secrets and environment variables are masked by default (`********`) across all views.
+5. **Host-Enforced Permissions:** Plugins and external integrations are constrained by host capabilities and cannot bypass security checks.
 
 ---
 
@@ -69,43 +78,26 @@ KubeView is built dark-first with a high-density, accessible layout:
 
 - **Background:** `#17191D`
 - **Surface:** `#22252B`
-- **Accent:** `#F08A42`
+- **Hover:** `#2C3038`
+- **Subtle Borders:** `#323741`
+- **Accent / Brand:** `#F08A42`
 - **Status Healthy:** `#38B879`
 - **Status Warning:** `#F5A623`
 - **Status Critical:** `#E05252`
 
 ---
 
-## 🗺️ Roadmap & Milestones
+## 🚀 9-Step Implementation Sequence
 
-KubeView's development is structured into **16 focused phases** across three milestone releases:
-
-```mermaid
-flowchart LR
-    subgraph Milestone1 ["Milestone 1: Core Desktop IDE (v0.1 - v0.5)"]
-        P1["01. Desktop Shell"] --> P2["02. Cluster Connectivity"]
-        P2 --> P3["03. Cluster Dashboard"]
-        P3 --> P4["04. Resource Browser"]
-        P4 --> P5["05. Resource Ops & YAML"]
-        P5 --> P6["06. Troubleshooting Workbench"]
-    end
-
-    subgraph Milestone2 ["Milestone 2: Deep Observability & Ops (v0.6 - v0.9)"]
-        P6 --> P7["07. Workload Topology"]
-        P7 --> P8["08. Metrics & Monitoring"]
-        P8 --> P9["09. Networking & Cilium"]
-        P9 --> P10["10. Storage & Longhorn"]
-        P10 --> P11["11. Helm Management"]
-    end
-
-    subgraph Milestone3 ["Milestone 3: Extensibility & AI (v1.0 Production)"]
-        P11 --> P12["12. Security & RBAC Guard"]
-        P12 --> P13["13. Plugin & Extension SDK"]
-        P13 --> P14["14. Advanced Productivity"]
-        P14 --> P15["15. AI-Assisted Operations"]
-        P15 --> P16["16. Hardening & Distribution"]
-    end
-```
+1. **01. Architecture Foundation:** Monorepo (`pnpm`), contracts package, Tauri 2 host shell, and Next.js static export (`output: "export"`).
+2. **02. Engine Lifecycle & Supervision:** Bundled Go sidecar, protocol handshake, stdio IPC dispatcher, and crash recovery.
+3. **03. Cluster Access & Connectivity:** Kubeconfig via `clientcmd`, context switching, auth plugins, and diagnostics.
+4. **04. Resource Browser & Data Grid:** API discovery, dynamic CRDs via `client-go/dynamic`, TanStack Table v8.
+5. **05. Resource Operations & Monaco YAML:** Monaco Editor, server-side dry-run diffs, safe apply, deletion guardrails.
+6. **06. Troubleshooting Workbench:** High-throughput live logs, `xterm.js` PTY container exec, 1-click root cause triage.
+7. **07. Performance, Caching & Safety:** `SharedInformerFactory`, DeltaFIFO, concurrency limits, secret redaction.
+8. **08. Integrations & Sandboxed Plugins:** Capability-based plugin SDK, Helm, Cilium, Longhorn, ArgoCD adapters.
+9. **09. Production Hardening & Release:** Multi-platform CI/CD, code signing, auto-update, KinD/envtest matrix.
 
 ---
 
@@ -113,10 +105,11 @@ flowchart LR
 
 The documentation is organized in the [`docs/`](file:///Users/alexkgm/KubeView/docs) directory:
 
-- 📋 [**ROADMAP.md**](file:///Users/alexkgm/KubeView/ROADMAP.md) — Complete 16-phase roadmap, detailed checklists, and progress tracker.
-- 🛠️ [**docs/TECH_STACK.md**](file:///Users/alexkgm/KubeView/docs/TECH_STACK.md) — Complete production-ready tech stack reference and library roles.
-- 🏛️ [**docs/ARCHITECTURE.md**](file:///Users/alexkgm/KubeView/docs/ARCHITECTURE.md) — Three-tier architecture, Go engine sidecar, IPC protocol, Monaco integration, and security model.
-- 🚀 [**docs/EXECUTION_PLAN.md**](file:///Users/alexkgm/KubeView/docs/EXECUTION_PLAN.md) — Step-by-step implementation plan, task breakdown, dependencies, milestones, and risk mitigations.
+- 🏛️ [**docs/ARCHITECTURE.md**](file:///Users/alexkgm/KubeView/docs/ARCHITECTURE.md) — Comprehensive Production Architecture Blueprint, supervisor state machine, layer boundaries, and Go package architecture.
+- 📜 [**docs/contracts/IPC_SPECIFICATION.md**](file:///Users/alexkgm/KubeView/docs/contracts/IPC_SPECIFICATION.md) — Versioned JSON-RPC 2.0 protocol contracts (`rpc/v1`), domain methods, envelopes, and error catalog.
+- 🛠️ [**docs/TECH_STACK.md**](file:///Users/alexkgm/KubeView/docs/TECH_STACK.md) — Production tech stack reference and dependency specifications.
+- 🚀 [**docs/EXECUTION_PLAN.md**](file:///Users/alexkgm/KubeView/docs/EXECUTION_PLAN.md) — 9-step implementation sequence, task breakdown, testing strategy, and risk mitigations.
+- 📋 [**ROADMAP.md**](file:///Users/alexkgm/KubeView/ROADMAP.md) — 16-phase roadmap checklist and status tracking.
 - 📖 [**docs/phases/**](file:///Users/alexkgm/KubeView/docs/phases) — Phase-by-phase functional and technical specifications:
   - [Phase 1: Core Desktop Application](file:///Users/alexkgm/KubeView/docs/phases/phase-01-core-desktop.md)
   - [Phase 2: Kubernetes Connection Management](file:///Users/alexkgm/KubeView/docs/phases/phase-02-connectivity.md)
@@ -124,18 +117,3 @@ The documentation is organized in the [`docs/`](file:///Users/alexkgm/KubeView/d
   - [Phase 4: Complete Kubernetes Resource Browser](file:///Users/alexkgm/KubeView/docs/phases/phase-04-resource-browser.md)
   - [Phase 5: Resource Operations & YAML Editor](file:///Users/alexkgm/KubeView/docs/phases/phase-05-resource-operations.md)
   - [Phase 6: Pod & Container Troubleshooting Workbench](file:///Users/alexkgm/KubeView/docs/phases/phase-06-troubleshooting.md)
-
----
-
-## ⚖️ KubeView vs Other Kubernetes Tools
-
-| Capability | Freelens / Lens | k9s | Headlamp | **KubeView** |
-| :--- | :--- | :--- | :--- | :--- |
-| **Form Factor** | Desktop GUI (Electron) | Terminal TUI | Web / Electron | **Desktop IDE (Tauri 2 + Go Sidecar)** |
-| **Memory Footprint** | ~600MB – 1.2GB | ~30MB | ~300MB | **~60MB – 90MB** |
-| **K8s Engine** | Node.js client | Go client-go | Go backend | **Official Go `client-go` Sidecar** |
-| **YAML Editing** | Basic Monaco | Text editor | Monaco | **Monaco + Server Dry-Run Diffs** |
-| **Troubleshooting** | Fragmented across tabs | Fast, split views | Basic views | **Unified 1-click triage (Logs+Events+Probes+Exec)** |
-| **Data Viz** | Basic SVG | Text gauges | Basic charts | **Apache ECharts (realtime & historical)** |
-| **Destructive Safety**| Basic prompt | Fast keybinds | Basic prompt | **Server-side Dry-Run Diff + RBAC check** |
-| **Extensibility** | Closed/Proprietary | None | Plugins | **Sandboxed TypeScript Plugin SDK** |
