@@ -22,9 +22,14 @@ import { ContextSwitcherDropdown } from "./ContextSwitcherDropdown";
 import { NamespaceSelectorDropdown } from "./NamespaceSelectorDropdown";
 
 export function AppHeader() {
-  const { setTheme, theme } = useTheme();
+  const [mounted, setMounted] = React.useState(false);
+  const { setTheme, resolvedTheme } = useTheme();
   const { setCommandPaletteOpen } = useLayoutStore();
   const { currentContext, currentNamespace, connectionStatus, latencyMs } = useClusterStore();
+
+  React.useEffect(() => {
+    setMounted(true);
+  }, []);
 
   const handleRefresh = () => {
     toast.info("Refreshing cluster state...", { duration: 1500 });
@@ -75,11 +80,15 @@ export function AppHeader() {
         </button>
 
         <button
-          onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
+          onClick={() => setTheme(resolvedTheme === "dark" ? "light" : "dark")}
           className="p-1.5 rounded-md hover:bg-[var(--surface-hover)] text-[var(--muted)] hover:text-[var(--foreground)] transition-colors"
           title="Toggle Theme"
         >
-          {theme === "dark" ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
+          {mounted ? (
+            resolvedTheme === "dark" ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />
+          ) : (
+            <div className="w-4 h-4" />
+          )}
         </button>
 
         <button

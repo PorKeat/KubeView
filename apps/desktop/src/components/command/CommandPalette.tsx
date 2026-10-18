@@ -31,7 +31,7 @@ export function CommandPalette() {
   const { commandPaletteOpen, setCommandPaletteOpen, toggleSidebar } = useLayoutStore();
   const { openTab } = useTabStore();
   const { setCurrentContext, setCurrentNamespace, openInspector, availableContexts, availableNamespaces } = useClusterStore();
-  const { theme, setTheme } = useTheme();
+  const { resolvedTheme, setTheme } = useTheme();
 
   React.useEffect(() => {
     const down = (e: KeyboardEvent) => {
@@ -194,12 +194,12 @@ export function CommandPalette() {
               </Command.Item>
               <Command.Item
                 onSelect={() => {
-                  setTheme(theme === "dark" ? "light" : "dark");
+                  setTheme(resolvedTheme === "dark" ? "light" : "dark");
                   setCommandPaletteOpen(false);
                 }}
                 className="flex items-center gap-2.5 px-2.5 py-2 rounded-md cursor-pointer hover:bg-[var(--surface-hover)] text-[var(--foreground)] transition-colors"
               >
-                {theme === "dark" ? <Sun className="w-4 h-4 text-amber-400" /> : <Moon className="w-4 h-4 text-blue-400" />}
+                {resolvedTheme === "dark" ? <Sun className="w-4 h-4 text-amber-400" /> : <Moon className="w-4 h-4 text-blue-400" />}
                 <span>Toggle Dark / Light Theme</span>
               </Command.Item>
               <Command.Item
