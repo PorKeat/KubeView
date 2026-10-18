@@ -17,6 +17,8 @@ import { useLayoutStore } from "@/stores/layoutStore";
 import { useClusterStore } from "@/stores/clusterStore";
 import { toast } from "sonner";
 
+import { Logo } from "@/components/brand/Logo";
+
 export function AppHeader() {
   const { setTheme, theme } = useTheme();
   const { setCommandPaletteOpen } = useLayoutStore();
@@ -33,10 +35,7 @@ export function AppHeader() {
     >
       {/* Left: Window Controls Inset & Brand */}
       <div className="flex items-center gap-3 pl-16">
-        <div className="flex items-center gap-1.5 font-semibold text-xs tracking-wider uppercase text-[var(--accent)]">
-          <div className="w-2 h-2 rounded-full bg-[var(--accent)] animate-pulse" />
-          <span>KubeView</span>
-        </div>
+        <Logo size="sm" />
 
         <div className="h-4 w-[1px] bg-[var(--border)]" />
 

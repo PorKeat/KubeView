@@ -21,6 +21,8 @@ import { useClusterStore } from "@/stores/clusterStore";
 import { useTheme } from "next-themes";
 import { toast } from "sonner";
 
+import { Logo } from "@/components/brand/Logo";
+
 export function CommandPalette() {
   const { commandPaletteOpen, setCommandPaletteOpen, toggleSidebar } = useLayoutStore();
   const { openTab } = useTabStore();
@@ -56,7 +58,8 @@ export function CommandPalette() {
         onClick={(e) => e.stopPropagation()}
       >
         <Command className="w-full">
-          <div className="flex items-center border-b border-[var(--border)] px-3">
+          <div className="flex items-center border-b border-[var(--border)] px-3 gap-2.5">
+            <Logo variant="mark" size="sm" />
             <Command.Input
               autoFocus
               placeholder="Type a command or search resources..."

@@ -1,3 +1,7 @@
+<p align="center">
+  <img src="apps/desktop/public/logo-full.png" width="180" alt="KubeView Logo" />
+</p>
+
 # KubeView
 
 > **A next-generation Kubernetes desktop IDE and operations platform.**  

@@ -14,6 +14,7 @@ import {
 } from "lucide-react";
 import { useClusterStore } from "@/stores/clusterStore";
 import { useTabStore } from "@/stores/tabStore";
+import { Logo } from "@/components/brand/Logo";
 
 export function ClusterOverviewView() {
   const { currentContext, serverVersion, latencyMs } = useClusterStore();
@@ -22,17 +23,20 @@ export function ClusterOverviewView() {
   return (
     <div className="flex-1 overflow-y-auto p-4 space-y-4">
       {/* Cluster Header Summary */}
-      <div className="flex items-center justify-between pb-2 border-b border-[var(--border)]">
-        <div>
-          <h1 className="text-base font-semibold text-[var(--foreground)] flex items-center gap-2">
-            <span>Cluster Overview</span>
-            <span className="text-xs px-2 py-0.5 rounded-full bg-[var(--surface-hover)] font-mono text-[var(--muted)]">
-              {currentContext}
-            </span>
-          </h1>
-          <p className="text-xs text-[var(--muted)] mt-0.5">
-            Kubernetes {serverVersion} • API latency: {latencyMs}ms • 100% Agentless
-          </p>
+      <div className="flex items-center justify-between pb-3 border-b border-[var(--border)]">
+        <div className="flex items-center gap-3">
+          <Logo variant="mark" size="lg" />
+          <div>
+            <h1 className="text-base font-semibold text-[var(--foreground)] flex items-center gap-2">
+              <span>Cluster Overview</span>
+              <span className="text-xs px-2 py-0.5 rounded-full bg-[var(--surface-hover)] font-mono text-[var(--muted)]">
+                {currentContext}
+              </span>
+            </h1>
+            <p className="text-xs text-[var(--muted)] mt-0.5">
+              Kubernetes {serverVersion} • API latency: {latencyMs}ms • 100% Agentless
+            </p>
+          </div>
         </div>
 
         <div className="flex items-center gap-2">
@@ -152,7 +156,7 @@ export function ClusterOverviewView() {
         <div className="p-3.5 rounded-lg bg-[var(--surface)] border border-[var(--border)] flex flex-col justify-between">
           <div>
             <div className="flex items-center gap-2 mb-3">
-              <Activity className="w-4 h-4 text-[var(--accent)]" />
+              <Logo variant="mark" size="sm" />
               <span className="text-xs font-semibold text-[var(--foreground)]">Agentless Engine</span>
             </div>
             <p className="text-xs text-[var(--muted)] leading-relaxed">

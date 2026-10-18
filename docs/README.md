@@ -1,3 +1,7 @@
+<p align="center">
+  <img src="../apps/desktop/public/logo-full.png" width="160" alt="KubeView Logo" />
+</p>
+
 # KubeView Documentation
 
 > **Complete architectural blueprints, security policies, IPC contracts, and engineering roadmaps for KubeView.**
