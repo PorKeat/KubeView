@@ -97,11 +97,11 @@ status:
   };
 
   return (
-    <div className="fixed inset-y-0 right-0 z-40 w-full max-w-xl bg-[var(--surface-elevated)] border-l border-[var(--border)] shadow-2xl flex flex-col select-none animate-in slide-in-from-right duration-200">
+    <div className="fixed inset-y-0 right-0 z-50 w-full max-w-xl glass-panel border-l border-white/10 shadow-2xl flex flex-col select-none animate-in slide-in-from-right duration-200 backdrop-blur-xl">
       {/* Top Header */}
-      <div className="h-14 border-b border-[var(--border)] px-4 flex items-center justify-between shrink-0 bg-[var(--surface)]">
+      <div className="h-14 border-b border-white/10 px-4 flex items-center justify-between shrink-0 bg-black/30">
         <div className="flex items-center gap-2.5 min-w-0">
-          <div className="p-1.5 rounded-md bg-[var(--accent)]/10 text-[var(--accent)]">
+          <div className="p-2 rounded-lg bg-[var(--accent)]/15 text-[var(--accent)] border border-[var(--accent)]/20 shadow-xs">
             <Box className="w-4 h-4" />
           </div>
           <div className="min-w-0">
@@ -109,7 +109,7 @@ status:
               <span className="text-xs font-semibold text-[var(--foreground)] truncate font-mono">
                 {selectedResource.name}
               </span>
-              <span className={cn("px-2 py-0.5 text-[10px] font-medium rounded-full border", getStatusColor(selectedResource.status))}>
+              <span className={cn("px-2 py-0.5 text-[10px] font-semibold rounded-full border shadow-xs", getStatusColor(selectedResource.status))}>
                 {selectedResource.status}
               </span>
             </div>
@@ -125,29 +125,29 @@ status:
         <div className="flex items-center gap-1 shrink-0">
           <button
             onClick={() => toast.success(`Streaming logs from ${selectedResource.name}...`)}
-            className="p-1.5 rounded hover:bg-[var(--surface-hover)] text-[var(--muted)] hover:text-[var(--foreground)] transition-colors"
+            className="p-1.5 rounded-lg hover:bg-white/[0.08] text-[var(--muted)] hover:text-white transition-colors cursor-pointer"
             title="View Logs"
           >
             <FileText className="w-4 h-4" />
           </button>
           <button
             onClick={() => toast.success(`Opening terminal session into ${selectedResource.name}...`)}
-            className="p-1.5 rounded hover:bg-[var(--surface-hover)] text-[var(--muted)] hover:text-[var(--foreground)] transition-colors"
+            className="p-1.5 rounded-lg hover:bg-white/[0.08] text-[var(--muted)] hover:text-white transition-colors cursor-pointer"
             title="Terminal Exec"
           >
             <Terminal className="w-4 h-4" />
           </button>
           <button
             onClick={() => toast.info(`Restarting ${selectedResource.kind}: ${selectedResource.name}`)}
-            className="p-1.5 rounded hover:bg-[var(--surface-hover)] text-[var(--muted)] hover:text-[var(--foreground)] transition-colors"
+            className="p-1.5 rounded-lg hover:bg-white/[0.08] text-[var(--muted)] hover:text-white transition-colors cursor-pointer"
             title="Restart Resource"
           >
             <RotateCw className="w-4 h-4" />
           </button>
-          <div className="h-4 w-[1px] bg-[var(--border)] mx-1" />
+          <div className="h-4 w-[1px] bg-white/10 mx-1" />
           <button
             onClick={closeInspector}
-            className="p-1.5 rounded hover:bg-[var(--surface-hover)] text-[var(--muted)] hover:text-[var(--foreground)] transition-colors"
+            className="p-1.5 rounded-lg hover:bg-white/[0.08] text-[var(--muted)] hover:text-white transition-colors cursor-pointer"
             title="Close Drawer (Esc)"
           >
             <X className="w-4 h-4" />
@@ -310,13 +310,13 @@ status:
               <span className="text-[10px] font-mono text-[var(--muted)]">Resource Manifest (Live YAML)</span>
               <button
                 onClick={copyYaml}
-                className="flex items-center gap-1.5 px-2 py-1 text-xs rounded bg-[var(--surface-active)] hover:bg-[var(--surface-hover)] text-[var(--foreground)] border border-[var(--border)] transition-colors"
+                className="flex items-center gap-1.5 px-2.5 py-1 text-xs rounded-lg bg-white/[0.08] hover:bg-white/[0.12] text-white border border-white/10 transition-colors cursor-pointer"
               >
                 {copied ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
                 <span>{copied ? "Copied" : "Copy YAML"}</span>
               </button>
             </div>
-            <pre className="p-3 rounded-lg bg-[var(--background)] border border-[var(--border)] text-[11px] font-mono text-[var(--foreground)] overflow-x-auto leading-relaxed select-text">
+            <pre className="p-3.5 rounded-xl bg-black/60 border border-white/10 text-[11px] font-mono text-emerald-300/90 overflow-x-auto leading-relaxed select-text shadow-inner">
               {mockYaml}
             </pre>
           </div>

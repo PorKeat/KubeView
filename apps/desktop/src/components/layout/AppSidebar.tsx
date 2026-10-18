@@ -156,13 +156,17 @@ export function AppSidebar() {
                         key={item.id}
                         onClick={() => handleItemClick(item)}
                         className={cn(
-                          "w-full flex items-center justify-between px-2.5 py-1.5 text-xs rounded-md transition-all text-left group",
+                          "w-full flex items-center justify-between px-2.5 py-1.5 text-xs rounded-lg transition-all text-left group relative",
                           isActive
-                            ? "bg-[var(--surface-active)] text-[var(--accent)] font-semibold shadow-xs"
-                            : "text-[var(--foreground)] hover:bg-[var(--surface-hover)]"
+                            ? "bg-white/[0.08] text-[var(--accent)] font-semibold shadow-inner"
+                            : "text-[var(--foreground)] hover:bg-white/[0.04]"
                         )}
                         title={sidebarCollapsed ? item.title : undefined}
                       >
+                        {isActive && (
+                          <span className="absolute left-0 top-1/2 -translate-y-1/2 w-0.5 h-4 rounded-r-full bg-[var(--accent)] shadow-[0_0_8px_rgba(240,138,66,0.8)]" />
+                        )}
+
                         <div className="flex items-center gap-2.5 min-w-0">
                           <Icon className={cn("w-4 h-4 shrink-0 transition-colors", isActive ? "text-[var(--accent)]" : "text-[var(--muted)] group-hover:text-[var(--foreground)]")} />
                           {!sidebarCollapsed && <span className="truncate">{item.title}</span>}
@@ -171,12 +175,12 @@ export function AppSidebar() {
                         {!sidebarCollapsed && item.badge !== undefined && (
                           <span
                             className={cn(
-                              "px-1.5 py-0.2 rounded text-[10px] font-mono font-medium shrink-0 ml-1.5",
+                              "px-1.5 py-0.2 rounded text-[10px] font-mono font-medium shrink-0 ml-1.5 border",
                               item.badgeVariant === "warning"
-                                ? "bg-amber-500/15 text-amber-400"
+                                ? "bg-amber-500/15 text-amber-400 border-amber-500/25"
                                 : item.badgeVariant === "accent"
-                                ? "bg-[var(--accent)]/15 text-[var(--accent)]"
-                                : "text-[var(--muted)] bg-[var(--surface-active)]"
+                                ? "bg-[var(--accent)]/15 text-[var(--accent)] border-[var(--accent)]/25"
+                                : "text-[var(--muted)] bg-white/[0.06] border-white/10"
                             )}
                           >
                             {item.badge}
@@ -191,6 +195,32 @@ export function AppSidebar() {
           );
         })}
       </div>
+
+      {/* Bottom Mini Cluster Card */}
+      {!sidebarCollapsed ? (
+        <div className="p-2 border-t border-[var(--border)] shrink-0 bg-black/20">
+          <div className="p-2 rounded-lg bg-white/[0.04] border border-white/[0.08] flex items-center justify-between text-xs">
+            <div className="flex items-center gap-2 min-w-0">
+              <span className="w-2 h-2 rounded-full bg-emerald-400 shadow-[0_0_6px_#34d399]" />
+              <div className="min-w-0">
+                <div className="font-mono text-[11px] font-semibold text-[var(--foreground)] truncate">
+                  Cluster Live
+                </div>
+                <div className="text-[9px] text-[var(--muted)] font-mono">
+                  Supervised Engine
+                </div>
+              </div>
+            </div>
+            <span className="px-1.5 py-0.5 rounded text-[9px] font-mono font-medium bg-[var(--accent)]/15 text-[var(--accent)] border border-[var(--accent)]/20">
+              v1.0.0
+            </span>
+          </div>
+        </div>
+      ) : (
+        <div className="p-2 border-t border-[var(--border)] flex justify-center shrink-0">
+          <span className="w-2 h-2 rounded-full bg-emerald-400 shadow-[0_0_6px_#34d399]" title="Cluster Active" />
+        </div>
+      )}
     </aside>
   );
 }

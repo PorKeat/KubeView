@@ -127,28 +127,28 @@ export function ResourceListView({ resourceType }: ResourceListViewProps) {
     switch (status) {
       case "Running":
         return (
-          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-medium bg-emerald-500/15 text-emerald-400 border border-emerald-500/30">
-            <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
+          <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-emerald-500/15 text-emerald-400 border border-emerald-500/25 shadow-xs">
+            <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse shadow-[0_0_6px_#34d399]" />
             Running
           </span>
         );
       case "Pending":
         return (
-          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-medium bg-amber-500/15 text-amber-400 border border-amber-500/30">
-            <span className="w-1.5 h-1.5 rounded-full bg-amber-400" />
+          <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-amber-500/15 text-amber-400 border border-amber-500/25 shadow-xs">
+            <span className="w-1.5 h-1.5 rounded-full bg-amber-400 animate-ping" />
             Pending
           </span>
         );
       case "CrashLoopBackOff":
         return (
-          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-medium bg-rose-500/15 text-rose-400 border border-rose-500/30">
-            <span className="w-1.5 h-1.5 rounded-full bg-rose-400 animate-pulse" />
+          <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-rose-500/15 text-rose-400 border border-rose-500/25 shadow-xs">
+            <span className="w-1.5 h-1.5 rounded-full bg-rose-400 animate-pulse shadow-[0_0_6px_#f43f5e]" />
             CrashLoopBackOff
           </span>
         );
       case "Completed":
         return (
-          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-medium bg-[var(--surface-hover)] text-[var(--muted)] border border-[var(--border)]">
+          <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-white/[0.06] text-[var(--muted)] border border-white/10">
             <span className="w-1.5 h-1.5 rounded-full bg-[var(--muted)]" />
             Completed
           </span>
@@ -159,7 +159,7 @@ export function ResourceListView({ resourceType }: ResourceListViewProps) {
   return (
     <div className="flex-1 flex flex-col h-full overflow-hidden select-none">
       {/* Table Command & Filter Toolbar */}
-      <div className="h-11 border-b border-[var(--border)] px-3 flex items-center justify-between shrink-0 bg-[var(--surface)] gap-3">
+      <div className="h-11 border-b border-white/10 px-3 flex items-center justify-between shrink-0 glass-panel gap-3">
         {/* Left: Search Bar & Namespace Filter */}
         <div className="flex items-center gap-2 flex-1 max-w-md">
           <div className="relative w-full">
@@ -169,12 +169,12 @@ export function ResourceListView({ resourceType }: ResourceListViewProps) {
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               placeholder={`Filter ${resourceType.toLowerCase()} by name, namespace...`}
-              className="w-full pl-8 pr-7 py-1 text-xs bg-[var(--background)] border border-[var(--border)] rounded-md text-[var(--foreground)] placeholder:text-[var(--muted)] outline-hidden focus:border-[var(--accent)] transition-colors font-mono"
+              className="w-full pl-8 pr-7 py-1 text-xs bg-black/30 border border-white/10 rounded-lg text-[var(--foreground)] placeholder:text-[var(--muted)] outline-hidden focus:border-[var(--accent)] transition-all font-mono shadow-inner"
             />
             {search && (
               <button
                 onClick={() => setSearch("")}
-                className="absolute right-2 top-1/2 -translate-y-1/2 text-[var(--muted)] hover:text-[var(--foreground)]"
+                className="absolute right-2 top-1/2 -translate-y-1/2 text-[var(--muted)] hover:text-[var(--foreground)] cursor-pointer"
               >
                 <X className="w-3 h-3" />
               </button>
@@ -183,7 +183,7 @@ export function ResourceListView({ resourceType }: ResourceListViewProps) {
         </div>
 
         {/* Center: Status Filter Pills */}
-        <div className="flex items-center gap-1 bg-[var(--background)] p-0.5 rounded-lg border border-[var(--border)] text-xs">
+        <div className="flex items-center gap-1 bg-black/30 p-0.5 rounded-lg border border-white/10 text-xs shadow-inner">
           {[
             { id: "all", label: "All", count: MOCK_PODS.length },
             { id: "running", label: "Running", count: MOCK_PODS.filter((p) => p.status === "Running").length },
@@ -194,10 +194,10 @@ export function ResourceListView({ resourceType }: ResourceListViewProps) {
               key={pill.id}
               onClick={() => setStatusFilter(pill.id)}
               className={cn(
-                "px-2.5 py-0.5 rounded text-[11px] font-medium transition-colors flex items-center gap-1.5",
+                "px-2.5 py-0.5 rounded-md text-[11px] font-medium transition-all flex items-center gap-1.5 cursor-pointer",
                 statusFilter === pill.id
-                  ? "bg-[var(--surface-active)] text-[var(--foreground)] font-semibold shadow-xs"
-                  : "text-[var(--muted)] hover:text-[var(--foreground)]"
+                  ? "bg-white/[0.12] text-white font-semibold shadow-xs"
+                  : "text-[var(--muted)] hover:text-white"
               )}
             >
               <span>{pill.label}</span>
@@ -209,10 +209,10 @@ export function ResourceListView({ resourceType }: ResourceListViewProps) {
         {/* Right: Actions */}
         <div className="flex items-center gap-2 text-xs text-[var(--muted)] shrink-0">
           <span className="font-mono text-[11px]">{sortedItems.length} items</span>
-          <div className="h-3 w-[1px] bg-[var(--border)]" />
+          <div className="h-3 w-[1px] bg-white/10" />
           <button
             onClick={() => toast.info(`Refreshed ${resourceType} list`)}
-            className="p-1.5 rounded hover:bg-[var(--surface-hover)] text-[var(--muted)] hover:text-[var(--foreground)] transition-colors"
+            className="p-1.5 rounded-lg hover:bg-white/[0.08] text-[var(--muted)] hover:text-[var(--foreground)] transition-colors cursor-pointer"
             title="Refresh list"
           >
             <RefreshCw className="w-3.5 h-3.5" />
@@ -262,10 +262,10 @@ export function ResourceListView({ resourceType }: ResourceListViewProps) {
       {/* High-Density Enterprise Table */}
       <div className="flex-1 overflow-auto">
         <table className="w-full text-left text-xs border-collapse">
-          <thead className="sticky top-0 bg-[var(--surface)] border-b border-[var(--border)] text-[10px] font-semibold text-[var(--muted)] uppercase tracking-wider z-10 select-none">
+          <thead className="sticky top-0 bg-[var(--surface)]/95 backdrop-blur-md border-b border-white/10 text-[10px] font-semibold text-[var(--muted)] uppercase tracking-wider z-10 select-none font-mono">
             <tr>
               <th className="py-2.5 px-3 w-8 text-center">
-                <button onClick={toggleSelectAll} className="p-0.5 hover:text-[var(--foreground)]">
+                <button onClick={toggleSelectAll} className="p-0.5 hover:text-[var(--foreground)] cursor-pointer">
                   {selectedItems.size === sortedItems.length && sortedItems.length > 0 ? (
                     <CheckSquare className="w-3.5 h-3.5 text-[var(--accent)]" />
                   ) : selectedItems.size > 0 ? (
@@ -278,26 +278,26 @@ export function ResourceListView({ resourceType }: ResourceListViewProps) {
               <th className="py-2.5 px-3 cursor-pointer hover:text-[var(--foreground)]" onClick={() => handleSort("name")}>
                 <div className="flex items-center gap-1">
                   <span>Name</span>
-                  {sortField === "name" && (sortAsc ? <ArrowUp className="w-3 h-3" /> : <ArrowDown className="w-3 h-3" />)}
+                  {sortField === "name" && (sortAsc ? <ArrowUp className="w-3 h-3 text-[var(--accent)]" /> : <ArrowDown className="w-3 h-3 text-[var(--accent)]" />)}
                 </div>
               </th>
               <th className="py-2.5 px-3 cursor-pointer hover:text-[var(--foreground)]" onClick={() => handleSort("namespace")}>
                 <div className="flex items-center gap-1">
                   <span>Namespace</span>
-                  {sortField === "namespace" && (sortAsc ? <ArrowUp className="w-3 h-3" /> : <ArrowDown className="w-3 h-3" />)}
+                  {sortField === "namespace" && (sortAsc ? <ArrowUp className="w-3 h-3 text-[var(--accent)]" /> : <ArrowDown className="w-3 h-3 text-[var(--accent)]" />)}
                 </div>
               </th>
               <th className="py-2.5 px-3 cursor-pointer hover:text-[var(--foreground)]" onClick={() => handleSort("status")}>
                 <div className="flex items-center gap-1">
                   <span>Status</span>
-                  {sortField === "status" && (sortAsc ? <ArrowUp className="w-3 h-3" /> : <ArrowDown className="w-3 h-3" />)}
+                  {sortField === "status" && (sortAsc ? <ArrowUp className="w-3 h-3 text-[var(--accent)]" /> : <ArrowDown className="w-3 h-3 text-[var(--accent)]" />)}
                 </div>
               </th>
               <th className="py-2.5 px-3">Ready</th>
               <th className="py-2.5 px-3 cursor-pointer hover:text-[var(--foreground)]" onClick={() => handleSort("restarts")}>
                 <div className="flex items-center gap-1">
                   <span>Restarts</span>
-                  {sortField === "restarts" && (sortAsc ? <ArrowUp className="w-3 h-3" /> : <ArrowDown className="w-3 h-3" />)}
+                  {sortField === "restarts" && (sortAsc ? <ArrowUp className="w-3 h-3 text-[var(--accent)]" /> : <ArrowDown className="w-3 h-3 text-[var(--accent)]" />)}
                 </div>
               </th>
               <th className="py-2.5 px-3 w-28">CPU</th>
@@ -305,13 +305,13 @@ export function ResourceListView({ resourceType }: ResourceListViewProps) {
               <th className="py-2.5 px-3 cursor-pointer hover:text-[var(--foreground)]" onClick={() => handleSort("age")}>
                 <div className="flex items-center gap-1">
                   <span>Age</span>
-                  {sortField === "age" && (sortAsc ? <ArrowUp className="w-3 h-3" /> : <ArrowDown className="w-3 h-3" />)}
+                  {sortField === "age" && (sortAsc ? <ArrowUp className="w-3 h-3 text-[var(--accent)]" /> : <ArrowDown className="w-3 h-3 text-[var(--accent)]" />)}
                 </div>
               </th>
               <th className="py-2.5 px-3 text-right">Quick Actions</th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-[var(--border)]">
+          <tbody className="divide-y divide-white/[0.05]">
             {sortedItems.map((item) => {
               const itemKey = `${item.namespace}/${item.name}`;
               const isSelected = selectedItems.has(itemKey);
@@ -320,8 +320,8 @@ export function ResourceListView({ resourceType }: ResourceListViewProps) {
                 <tr
                   key={itemKey}
                   className={cn(
-                    "h-9 hover:bg-[var(--surface-hover)] transition-colors cursor-pointer group",
-                    isSelected && "bg-[var(--surface-active)]/50"
+                    "h-9.5 hover:bg-white/[0.04] transition-colors cursor-pointer group relative",
+                    isSelected ? "bg-[var(--accent)]/10" : ""
                   )}
                   onClick={() => openInspector({ kind: resourceType.slice(0, -1) || "Pod", name: item.name, namespace: item.namespace, status: item.status })}
                 >

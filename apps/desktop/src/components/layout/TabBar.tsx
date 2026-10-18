@@ -58,12 +58,15 @@ export function TabBar() {
               key={tab.id}
               onClick={() => setActiveTab(tab.id)}
               className={cn(
-                "group h-7 px-2.5 flex items-center gap-2 text-xs rounded-t-md cursor-pointer border-t-2 transition-all shrink-0",
+                "group h-7 px-3 flex items-center gap-2 text-xs rounded-t-lg cursor-pointer transition-all shrink-0 relative",
                 isActive
-                  ? "bg-[var(--background)] border-[var(--accent)] text-[var(--foreground)] font-semibold shadow-xs"
-                  : "bg-transparent border-transparent text-[var(--muted)] hover:bg-[var(--surface-hover)] hover:text-[var(--foreground)]"
+                  ? "bg-[var(--background)] text-[var(--foreground)] font-semibold shadow-xs border-t border-x border-white/10"
+                  : "bg-transparent text-[var(--muted)] hover:bg-white/[0.04] hover:text-[var(--foreground)]"
               )}
             >
+              {isActive && (
+                <span className="absolute top-0 left-0 right-0 h-[2px] bg-gradient-to-r from-[var(--accent)] to-amber-400 rounded-t-lg shadow-[0_0_8px_rgba(240,138,66,0.6)]" />
+              )}
               <Icon className={cn("w-3.5 h-3.5 shrink-0 transition-colors", isActive ? "text-[var(--accent)]" : "text-[var(--muted)]")} />
               <span className="truncate max-w-[130px] font-mono text-[11px]">{tab.title}</span>
 
@@ -73,7 +76,7 @@ export function TabBar() {
                     e.stopPropagation();
                     closeTab(tab.id);
                   }}
-                  className="p-0.5 rounded hover:bg-[var(--surface-active)] text-[var(--muted)] hover:text-[var(--foreground)] opacity-50 group-hover:opacity-100 transition-opacity ml-1"
+                  className="p-0.5 rounded hover:bg-white/10 text-[var(--muted)] hover:text-white opacity-40 group-hover:opacity-100 transition-opacity ml-1"
                   title="Close tab (Cmd+W)"
                 >
                   <X className="w-3 h-3" />
