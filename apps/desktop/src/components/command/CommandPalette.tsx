@@ -97,32 +97,44 @@ export function CommandPalette() {
                 <span>Pods & Containers</span>
               </Command.Item>
               <Command.Item
-                onSelect={() => navigateTo("deployments", "Deployments")}
-                className="flex items-center gap-2.5 px-2.5 py-2 rounded-md cursor-pointer hover:bg-[var(--surface-hover)] text-[var(--foreground)] transition-colors"
+                disabled
+                className="flex items-center justify-between px-2.5 py-2 rounded-md opacity-35 cursor-not-allowed text-[var(--muted)]"
               >
-                <Layers className="w-4 h-4 text-blue-400" />
-                <span>Deployments</span>
+                <div className="flex items-center gap-2.5">
+                  <Layers className="w-4 h-4 text-blue-400" />
+                  <span>Deployments</span>
+                </div>
+                <span className="text-[9px] font-mono px-1.5 py-0.2 rounded bg-white/[0.04] border border-white/5">Soon</span>
               </Command.Item>
               <Command.Item
-                onSelect={() => navigateTo("services", "Services")}
-                className="flex items-center gap-2.5 px-2.5 py-2 rounded-md cursor-pointer hover:bg-[var(--surface-hover)] text-[var(--foreground)] transition-colors"
+                disabled
+                className="flex items-center justify-between px-2.5 py-2 rounded-md opacity-35 cursor-not-allowed text-[var(--muted)]"
               >
-                <Network className="w-4 h-4 text-purple-400" />
-                <span>Services & Networking</span>
+                <div className="flex items-center gap-2.5">
+                  <Network className="w-4 h-4 text-purple-400" />
+                  <span>Services & Networking</span>
+                </div>
+                <span className="text-[9px] font-mono px-1.5 py-0.2 rounded bg-white/[0.04] border border-white/5">Soon</span>
               </Command.Item>
               <Command.Item
-                onSelect={() => navigateTo("configmaps", "ConfigMaps")}
-                className="flex items-center gap-2.5 px-2.5 py-2 rounded-md cursor-pointer hover:bg-[var(--surface-hover)] text-[var(--foreground)] transition-colors"
+                disabled
+                className="flex items-center justify-between px-2.5 py-2 rounded-md opacity-35 cursor-not-allowed text-[var(--muted)]"
               >
-                <FileCode className="w-4 h-4 text-amber-400" />
-                <span>ConfigMaps</span>
+                <div className="flex items-center gap-2.5">
+                  <FileCode className="w-4 h-4 text-amber-400" />
+                  <span>ConfigMaps</span>
+                </div>
+                <span className="text-[9px] font-mono px-1.5 py-0.2 rounded bg-white/[0.04] border border-white/5">Soon</span>
               </Command.Item>
               <Command.Item
-                onSelect={() => navigateTo("secrets", "Secrets")}
-                className="flex items-center gap-2.5 px-2.5 py-2 rounded-md cursor-pointer hover:bg-[var(--surface-hover)] text-[var(--foreground)] transition-colors"
+                disabled
+                className="flex items-center justify-between px-2.5 py-2 rounded-md opacity-35 cursor-not-allowed text-[var(--muted)]"
               >
-                <FolderLock className="w-4 h-4 text-rose-400" />
-                <span>Secrets (Redacted)</span>
+                <div className="flex items-center gap-2.5">
+                  <FolderLock className="w-4 h-4 text-rose-400" />
+                  <span>Secrets (Redacted)</span>
+                </div>
+                <span className="text-[9px] font-mono px-1.5 py-0.2 rounded bg-white/[0.04] border border-white/5">Soon</span>
               </Command.Item>
             </Command.Group>
 

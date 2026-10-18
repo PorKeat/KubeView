@@ -173,11 +173,14 @@ export function ContextSwitcherDropdown() {
           {/* Bottom Actions */}
           <div className="border-t border-[var(--border)] pt-1.5 mt-1 space-y-0.5">
             <DropdownMenu.Item
-              onSelect={() => toast.info("Kubeconfig auto-detects from ~/.kube and $KUBECONFIG")}
-              className="flex items-center gap-2 p-1.5 text-xs rounded hover:bg-[var(--surface-hover)] text-[var(--muted)] hover:text-[var(--foreground)] cursor-pointer outline-hidden"
+              disabled
+              className="flex items-center justify-between p-1.5 text-xs rounded opacity-40 cursor-not-allowed text-[var(--muted)] select-none"
             >
-              <Plus className="w-3.5 h-3.5" />
-              <span>Import Kubeconfig File...</span>
+              <div className="flex items-center gap-2">
+                <Plus className="w-3.5 h-3.5" />
+                <span>Import Kubeconfig File...</span>
+              </div>
+              <span className="text-[9px] font-mono px-1.5 py-0.2 rounded bg-white/[0.04] border border-white/10">Auto-Loaded</span>
             </DropdownMenu.Item>
 
             <DropdownMenu.Item

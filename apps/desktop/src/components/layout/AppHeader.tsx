@@ -92,9 +92,9 @@ export function AppHeader() {
         </button>
 
         <button
-          onClick={() => toast.info("Settings panel coming in Phase 1")}
-          className="p-1.5 rounded-lg hover:bg-white/[0.08] text-[var(--muted)] hover:text-[var(--foreground)] transition-colors cursor-pointer"
-          title="Settings"
+          disabled
+          className="p-1.5 rounded-lg opacity-35 cursor-not-allowed text-[var(--muted)]"
+          title="Settings & Global Preferences (Coming Soon)"
         >
           <Settings className="w-4 h-4" />
         </button>

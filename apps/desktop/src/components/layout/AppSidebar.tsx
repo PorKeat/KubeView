@@ -32,7 +32,8 @@ interface NavItem {
   title: string;
   icon: React.ElementType;
   badge?: string | number;
-  badgeVariant?: "default" | "warning" | "accent";
+  badgeVariant?: "default" | "warning" | "accent" | "soon";
+  disabled?: boolean;
 }
 
 interface NavGroup {
@@ -44,44 +45,44 @@ const NAVIGATION_GROUPS: NavGroup[] = [
   {
     category: "Overview",
     items: [
-      { id: "overview", title: "Cluster Overview", icon: LayoutDashboard, badge: "2", badgeVariant: "warning" },
+      { id: "overview", title: "Cluster Overview", icon: LayoutDashboard },
     ],
   },
   {
     category: "Workloads",
     items: [
-      { id: "pods", title: "Pods", icon: Box, badge: 42 },
-      { id: "deployments", title: "Deployments", icon: Layers, badge: 12 },
-      { id: "replicasets", title: "ReplicaSets", icon: Repeat },
-      { id: "statefulsets", title: "StatefulSets", icon: Database, badge: 2 },
-      { id: "daemonsets", title: "DaemonSets", icon: Cpu, badge: 1 },
-      { id: "jobs", title: "Jobs & CronJobs", icon: Clock },
+      { id: "pods", title: "Pods", icon: Box, badge: 42, badgeVariant: "accent" },
+      { id: "deployments", title: "Deployments", icon: Layers, badge: "Soon", badgeVariant: "soon", disabled: true },
+      { id: "replicasets", title: "ReplicaSets", icon: Repeat, badge: "Soon", badgeVariant: "soon", disabled: true },
+      { id: "statefulsets", title: "StatefulSets", icon: Database, badge: "Soon", badgeVariant: "soon", disabled: true },
+      { id: "daemonsets", title: "DaemonSets", icon: Cpu, badge: "Soon", badgeVariant: "soon", disabled: true },
+      { id: "jobs", title: "Jobs & CronJobs", icon: Clock, badge: "Soon", badgeVariant: "soon", disabled: true },
     ],
   },
   {
     category: "Networking",
     items: [
-      { id: "services", title: "Services", icon: Network, badge: 8 },
-      { id: "endpoints", title: "Endpoints", icon: Radio },
-      { id: "ingresses", title: "Ingresses & Gateways", icon: Network, badge: 3 },
-      { id: "networkpolicies", title: "Network Policies", icon: Shield },
+      { id: "services", title: "Services", icon: Network, badge: "Soon", badgeVariant: "soon", disabled: true },
+      { id: "endpoints", title: "Endpoints", icon: Radio, badge: "Soon", badgeVariant: "soon", disabled: true },
+      { id: "ingresses", title: "Ingresses & Gateways", icon: Network, badge: "Soon", badgeVariant: "soon", disabled: true },
+      { id: "networkpolicies", title: "Network Policies", icon: Shield, badge: "Soon", badgeVariant: "soon", disabled: true },
     ],
   },
   {
     category: "Config & Storage",
     items: [
-      { id: "configmaps", title: "ConfigMaps", icon: FileCode, badge: 9 },
-      { id: "secrets", title: "Secrets", icon: FolderLock, badge: 14 },
-      { id: "persistentvolumes", title: "Persistent Volumes", icon: HardDrive, badge: 4 },
-      { id: "storageclasses", title: "Storage Classes", icon: HardDrive },
+      { id: "configmaps", title: "ConfigMaps", icon: FileCode, badge: "Soon", badgeVariant: "soon", disabled: true },
+      { id: "secrets", title: "Secrets", icon: FolderLock, badge: "Soon", badgeVariant: "soon", disabled: true },
+      { id: "persistentvolumes", title: "Persistent Volumes", icon: HardDrive, badge: "Soon", badgeVariant: "soon", disabled: true },
+      { id: "storageclasses", title: "Storage Classes", icon: HardDrive, badge: "Soon", badgeVariant: "soon", disabled: true },
     ],
   },
   {
     category: "Access & Custom",
     items: [
-      { id: "serviceaccounts", title: "Service Accounts", icon: Users },
-      { id: "rbac", title: "Roles & Bindings", icon: Key },
-      { id: "crds", title: "Custom Resources", icon: Boxes, badge: 6 },
+      { id: "serviceaccounts", title: "Service Accounts", icon: Users, badge: "Soon", badgeVariant: "soon", disabled: true },
+      { id: "rbac", title: "Roles & Bindings", icon: Key, badge: "Soon", badgeVariant: "soon", disabled: true },
+      { id: "crds", title: "Custom Resources", icon: Boxes, badge: "Soon", badgeVariant: "soon", disabled: true },
     ],
   },
 ];
@@ -96,6 +97,10 @@ export function AppSidebar() {
   };
 
   const handleItemClick = (item: NavItem) => {
+    if (item.disabled) {
+      return;
+    }
+
     openTab({
       id: item.id,
       title: item.title,
@@ -154,16 +159,25 @@ export function AppSidebar() {
                     return (
                       <button
                         key={item.id}
+                        disabled={item.disabled}
                         onClick={() => handleItemClick(item)}
                         className={cn(
                           "w-full flex items-center justify-between px-2.5 py-1.5 text-xs rounded-lg transition-all text-left group relative",
-                          isActive
-                            ? "bg-white/[0.08] text-[var(--accent)] font-semibold shadow-inner"
-                            : "text-[var(--foreground)] hover:bg-white/[0.04]"
+                          item.disabled
+                            ? "opacity-35 cursor-not-allowed select-none hover:bg-transparent text-[var(--muted)]"
+                            : isActive
+                            ? "bg-white/[0.08] text-[var(--accent)] font-semibold shadow-inner cursor-pointer"
+                            : "text-[var(--foreground)] hover:bg-white/[0.04] cursor-pointer"
                         )}
-                        title={sidebarCollapsed ? item.title : undefined}
+                        title={
+                          item.disabled
+                            ? `${item.title} (Scheduled for upcoming Phase 4)`
+                            : sidebarCollapsed
+                            ? item.title
+                            : undefined
+                        }
                       >
-                        {isActive && (
+                        {isActive && !item.disabled && (
                           <span className="absolute left-0 top-1/2 -translate-y-1/2 w-0.5 h-4 rounded-r-full bg-[var(--accent)] shadow-[0_0_8px_rgba(240,138,66,0.8)]" />
                         )}
 
@@ -175,8 +189,10 @@ export function AppSidebar() {
                         {!sidebarCollapsed && item.badge !== undefined && (
                           <span
                             className={cn(
-                              "px-1.5 py-0.2 rounded text-[10px] font-mono font-medium shrink-0 ml-1.5 border",
-                              item.badgeVariant === "warning"
+                              "px-1.5 py-0.2 rounded text-[9px] font-mono font-medium shrink-0 ml-1.5 border tracking-tight",
+                              item.badgeVariant === "soon"
+                                ? "bg-white/[0.03] text-[var(--muted)] border-white/[0.06] opacity-75"
+                                : item.badgeVariant === "warning"
                                 ? "bg-amber-500/15 text-amber-400 border-amber-500/25"
                                 : item.badgeVariant === "accent"
                                 ? "bg-[var(--accent)]/15 text-[var(--accent)] border-[var(--accent)]/25"
