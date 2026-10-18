@@ -9,6 +9,9 @@ import "./globals.css";
 export const metadata: Metadata = {
   title: "KubeView",
   description: "Next-generation Kubernetes desktop IDE and operations platform",
+  icons: {
+    icon: "/icon.png",
+  },
 };
 
 export default function RootLayout({
