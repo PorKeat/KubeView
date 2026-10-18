@@ -6,7 +6,14 @@ import { useClusterStore } from "@/stores/clusterStore";
 import { toast } from "sonner";
 
 export function StatusBar() {
-  const { currentContext, currentNamespace, latencyMs, serverVersion, rbacMode } = useClusterStore();
+  const {
+    currentContext,
+    currentNamespace,
+    latencyMs,
+    serverVersion,
+    rbacMode,
+    connectionStatus,
+  } = useClusterStore();
   const [copied, setCopied] = React.useState(false);
 
   const copyVersion = () => {
@@ -16,16 +23,54 @@ export function StatusBar() {
     setTimeout(() => setCopied(false), 2000);
   };
 
+  const getStatusDisplay = () => {
+    switch (connectionStatus) {
+      case "connected":
+        return {
+          label: "Connected",
+          color: "text-emerald-400",
+          beacon: "bg-emerald-400",
+          ping: true,
+        };
+      case "degraded":
+        return {
+          label: "Degraded",
+          color: "text-amber-400",
+          beacon: "bg-amber-400",
+          ping: false,
+        };
+      case "checking":
+        return {
+          label: "Diagnosing...",
+          color: "text-amber-400",
+          beacon: "bg-amber-400",
+          ping: true,
+        };
+      case "offline":
+      default:
+        return {
+          label: "Offline",
+          color: "text-rose-400",
+          beacon: "bg-rose-500",
+          ping: false,
+        };
+    }
+  };
+
+  const status = getStatusDisplay();
+
   return (
     <footer className="h-6 w-full border-t border-[var(--border)] bg-[var(--surface)] flex items-center justify-between px-3 text-[11px] text-[var(--muted)] select-none shrink-0 font-mono">
       {/* Left: Connection Status */}
       <div className="flex items-center gap-2.5">
-        <div className="flex items-center gap-1.5 text-emerald-400">
+        <div className={`flex items-center gap-1.5 ${status.color}`}>
           <span className="relative flex h-1.5 w-1.5">
-            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
-            <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-emerald-400" />
+            {status.ping && (
+              <span className={`animate-ping absolute inline-flex h-full w-full rounded-full ${status.beacon} opacity-75`} />
+            )}
+            <span className={`relative inline-flex rounded-full h-1.5 w-1.5 ${status.beacon}`} />
           </span>
-          <span className="font-semibold text-[var(--foreground)]">Connected</span>
+          <span className="font-semibold text-[var(--foreground)]">{status.label}</span>
           <span className="text-[10px] text-[var(--muted)]">({latencyMs}ms)</span>
         </div>
 

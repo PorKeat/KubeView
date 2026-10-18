@@ -10,6 +10,7 @@ out/
 dist/
 build/
 bin/
+*.tsbuildinfo
 
 # Rust / Tauri
 target/

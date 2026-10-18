@@ -18,15 +18,22 @@ import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 
 export function ContextSwitcherDropdown() {
-  const { currentContext, availableContexts, setCurrentContext, latencyMs } = useClusterStore();
+  const {
+    currentContext,
+    availableContexts,
+    switchContext,
+    diagnoseContext,
+    connectionStatus,
+    latencyMs,
+  } = useClusterStore();
   const [search, setSearch] = React.useState("");
 
   const currentInfo = availableContexts.find((c) => c.name === currentContext) || {
-    name: currentContext,
-    cluster: currentContext,
+    name: currentContext || "Select Cluster",
+    cluster: currentContext || "none",
     server: "https://127.0.0.1:6443",
     provider: "generic" as const,
-    status: "connected" as const,
+    status: connectionStatus,
     latencyMs,
   };
 
@@ -53,22 +60,38 @@ export function ContextSwitcherDropdown() {
     }
   };
 
+  const getStatusColor = () => {
+    switch (connectionStatus) {
+      case "connected":
+        return "bg-[var(--status-healthy)]";
+      case "degraded":
+        return "bg-[var(--status-warning)]";
+      case "checking":
+        return "bg-amber-400";
+      case "offline":
+      default:
+        return "bg-rose-500";
+    }
+  };
+
   return (
     <DropdownMenu.Root>
       <DropdownMenu.Trigger asChild>
         <button
           className="flex items-center gap-2 px-2.5 py-1 text-xs rounded-md bg-[var(--background)] border border-[var(--border)] hover:bg-[var(--surface-hover)] hover:border-[var(--accent)] transition-all text-[var(--foreground)] outline-hidden group select-none"
-          title="Switch Kubernetes Context"
+          title={`Active Context: ${currentContext || "None"} (${connectionStatus})`}
         >
           <div className="flex items-center gap-1.5">
             <span className="relative flex h-2 w-2">
-              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[var(--status-healthy)] opacity-75" />
-              <span className="relative inline-flex rounded-full h-2 w-2 bg-[var(--status-healthy)]" />
+              {connectionStatus === "checking" && (
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75" />
+              )}
+              <span className={cn("relative inline-flex rounded-full h-2 w-2 transition-colors", getStatusColor())} />
             </span>
-            <span className="font-semibold max-w-[130px] truncate">{currentContext}</span>
+            <span className="font-semibold max-w-[130px] truncate">{currentContext || "Select Cluster"}</span>
           </div>
           {getProviderBadge(currentInfo.provider)}
-          <span className="text-[10px] text-[var(--muted)] font-mono">({currentInfo.latencyMs}ms)</span>
+          <span className="text-[10px] text-[var(--muted)] font-mono">({latencyMs}ms)</span>
           <ChevronDown className="w-3 h-3 text-[var(--muted)] group-hover:text-[var(--foreground)] transition-transform duration-150" />
         </button>
       </DropdownMenu.Trigger>
@@ -110,8 +133,8 @@ export function ContextSwitcherDropdown() {
                 <DropdownMenu.Item
                   key={ctx.name}
                   onSelect={() => {
-                    setCurrentContext(ctx.name);
-                    toast.success(`Connected to cluster: ${ctx.name}`);
+                    switchContext(ctx.name);
+                    toast.info(`Connecting to cluster: ${ctx.name}...`);
                   }}
                   className={cn(
                     "flex items-center justify-between p-2 rounded-md cursor-pointer outline-hidden transition-colors text-xs",
@@ -131,7 +154,9 @@ export function ContextSwitcherDropdown() {
                   </div>
 
                   <div className="flex items-center gap-1.5 shrink-0">
-                    <span className="text-[10px] text-[var(--muted)] font-mono">{ctx.latencyMs}ms</span>
+                    <span className="text-[10px] text-[var(--muted)] font-mono">
+                      {ctx.latencyMs > 0 ? `${ctx.latencyMs}ms` : ""}
+                    </span>
                     {isSelected && <Check className="w-4 h-4 text-[var(--accent)]" />}
                   </div>
                 </DropdownMenu.Item>
@@ -148,7 +173,7 @@ export function ContextSwitcherDropdown() {
           {/* Bottom Actions */}
           <div className="border-t border-[var(--border)] pt-1.5 mt-1 space-y-0.5">
             <DropdownMenu.Item
-              onSelect={() => toast.info("Opening kubeconfig import dialog")}
+              onSelect={() => toast.info("Kubeconfig auto-detects from ~/.kube and $KUBECONFIG")}
               className="flex items-center gap-2 p-1.5 text-xs rounded hover:bg-[var(--surface-hover)] text-[var(--muted)] hover:text-[var(--foreground)] cursor-pointer outline-hidden"
             >
               <Plus className="w-3.5 h-3.5" />
@@ -156,7 +181,17 @@ export function ContextSwitcherDropdown() {
             </DropdownMenu.Item>
 
             <DropdownMenu.Item
-              onSelect={() => toast.info("Running 4-stage connection diagnostic probe...")}
+              onSelect={async () => {
+                toast.info("Running 4-stage connection diagnostic probe...");
+                const res = await diagnoseContext();
+                if (res?.status === "connected") {
+                  toast.success(`Connection verified! ${res.serverVersion} (${res.latencyMs}ms)`);
+                } else if (res?.status === "degraded") {
+                  toast.warning("Cluster connected with restricted RBAC privileges.");
+                } else {
+                  toast.error(`Connection failed: ${res?.remediation || "Check API endpoint"}`);
+                }
+              }}
               className="flex items-center gap-2 p-1.5 text-xs rounded hover:bg-[var(--surface-hover)] text-[var(--muted)] hover:text-[var(--foreground)] cursor-pointer outline-hidden"
             >
               <Activity className="w-3.5 h-3.5 text-[var(--status-healthy)]" />

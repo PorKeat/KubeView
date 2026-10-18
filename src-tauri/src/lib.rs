@@ -1,19 +1,42 @@
+use std::sync::Arc;
 use tauri::Manager;
+
+mod supervisor;
 
 #[tauri::command]
 fn ping() -> String {
     "pong".to_string()
 }
 
+#[tauri::command]
+async fn send_rpc_request(
+    method: String,
+    params: Option<serde_json::Value>,
+    supervisor: tauri::State<'_, Arc<supervisor::EngineSupervisor>>,
+) -> Result<serde_json::Value, String> {
+    supervisor.send_request(&method, params).await
+}
+
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
-    env_logger::init();
+    let _ = env_logger::try_init();
 
     tauri::Builder::default()
         .plugin(tauri_plugin_store::Builder::default().build())
-        .invoke_handler(tauri::generate_handler![ping])
         .setup(|app| {
             log::info!("KubeView desktop shell initialized");
+
+            // Initialize Go Engine Supervisor
+            let handle = app.handle().clone();
+            let supervisor = tauri::async_runtime::block_on(async move {
+                supervisor::EngineSupervisor::start(handle).await
+            }).map_err(|e| {
+                log::error!("Failed to initialize engine supervisor: {}", e);
+                e
+            })?;
+
+            app.manage(supervisor);
+
             #[cfg(debug_assertions)]
             {
                 if let Some(window) = app.get_webview_window("main") {
@@ -31,6 +54,7 @@ pub fn run() {
             }
             Ok(())
         })
+        .invoke_handler(tauri::generate_handler![ping, send_rpc_request])
         .run(tauri::generate_context!())
         .expect("error while running KubeView desktop application");
 }

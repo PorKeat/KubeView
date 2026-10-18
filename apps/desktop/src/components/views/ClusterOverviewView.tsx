@@ -25,7 +25,15 @@ import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 
 export function ClusterOverviewView() {
-  const { currentContext, serverVersion, latencyMs, openInspector } = useClusterStore();
+  const {
+    currentContext,
+    serverVersion,
+    latencyMs,
+    openInspector,
+    diagnosticResult,
+    connectionStatus,
+    diagnoseContext,
+  } = useClusterStore();
   const { openTab } = useTabStore();
 
   return (
@@ -229,47 +237,108 @@ export function ClusterOverviewView() {
         {/* 4-Stage Diagnostic Security & Health Pipeline Card */}
         <div className="p-4 rounded-xl bg-[var(--surface)] border border-[var(--border)] flex flex-col justify-between space-y-4">
           <div>
-            <div className="flex items-center gap-2 mb-3">
-              <ShieldCheck className="w-4 h-4 text-[var(--accent)]" />
-              <span className="text-xs font-bold text-[var(--foreground)] tracking-tight">
-                Connection Health & Security
-              </span>
+            <div className="flex items-center justify-between mb-3">
+              <div className="flex items-center gap-2">
+                <ShieldCheck className="w-4 h-4 text-[var(--accent)]" />
+                <span className="text-xs font-bold text-[var(--foreground)] tracking-tight">
+                  Connection Health & Security
+                </span>
+              </div>
+              <button
+                onClick={() => diagnoseContext()}
+                className="text-[10px] text-[var(--muted)] hover:text-[var(--accent)] transition-colors flex items-center gap-1 cursor-pointer"
+                title="Re-run Diagnostics"
+              >
+                <RotateCw className="w-3 h-3" />
+                <span>Re-test</span>
+              </button>
             </div>
 
             {/* 4-Stage Pipeline Probes */}
             <div className="space-y-2 text-xs">
+              {/* Stage 1: Network & DNS */}
               <div className="flex items-center justify-between p-2 rounded-md bg-[var(--background)] border border-[var(--border)]">
-                <div className="flex items-center gap-2">
-                  <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" />
-                  <span>1. Network & DNS Handshake</span>
+                <div className="flex items-center gap-2 min-w-0 pr-2">
+                  {diagnosticResult?.stages?.network?.passed ? (
+                    <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
+                  ) : connectionStatus === "checking" ? (
+                    <RotateCw className="w-3.5 h-3.5 text-amber-400 animate-spin shrink-0" />
+                  ) : (
+                    <AlertTriangle className="w-3.5 h-3.5 text-rose-400 shrink-0" />
+                  )}
+                  <span className="truncate">1. Network & DNS Probe</span>
                 </div>
-                <span className="font-mono text-[10px] text-[var(--muted)]">12ms</span>
+                <span className="font-mono text-[10px] text-[var(--muted)] shrink-0">
+                  {diagnosticResult?.stages?.network?.latencyMs
+                    ? `${diagnosticResult.stages.network.latencyMs}ms`
+                    : connectionStatus === "checking" ? "Probing..." : "Failed"}
+                </span>
               </div>
 
+              {/* Stage 2: Authentication */}
               <div className="flex items-center justify-between p-2 rounded-md bg-[var(--background)] border border-[var(--border)]">
-                <div className="flex items-center gap-2">
-                  <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" />
-                  <span>2. Authentication Probe</span>
+                <div className="flex items-center gap-2 min-w-0 pr-2">
+                  {diagnosticResult?.stages?.authentication?.passed ? (
+                    <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
+                  ) : connectionStatus === "checking" ? (
+                    <RotateCw className="w-3.5 h-3.5 text-amber-400 animate-spin shrink-0" />
+                  ) : (
+                    <AlertTriangle className="w-3.5 h-3.5 text-rose-400 shrink-0" />
+                  )}
+                  <span className="truncate">2. Authentication & Plugin</span>
                 </div>
-                <span className="font-mono text-[10px] text-[var(--muted)]">Cert OK</span>
+                <span className="font-mono text-[10px] text-[var(--muted)] shrink-0">
+                  {diagnosticResult?.stages?.authentication?.passed ? "Valid" : "Pending"}
+                </span>
               </div>
 
+              {/* Stage 3: TLS & Health */}
               <div className="flex items-center justify-between p-2 rounded-md bg-[var(--background)] border border-[var(--border)]">
-                <div className="flex items-center gap-2">
-                  <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" />
-                  <span>3. TLS & API Server Health</span>
+                <div className="flex items-center gap-2 min-w-0 pr-2">
+                  {diagnosticResult?.stages?.tls?.passed ? (
+                    <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
+                  ) : connectionStatus === "checking" ? (
+                    <RotateCw className="w-3.5 h-3.5 text-amber-400 animate-spin shrink-0" />
+                  ) : (
+                    <AlertTriangle className="w-3.5 h-3.5 text-rose-400 shrink-0" />
+                  )}
+                  <span className="truncate">3. TLS CA & /version</span>
                 </div>
-                <span className="font-mono text-[10px] text-emerald-400 font-medium">/readyz OK</span>
+                <span className="font-mono text-[10px] text-emerald-400 font-medium shrink-0">
+                  {diagnosticResult?.stages?.tls?.passed ? "Healthy" : "Failed"}
+                </span>
               </div>
 
+              {/* Stage 4: RBAC */}
               <div className="flex items-center justify-between p-2 rounded-md bg-[var(--background)] border border-[var(--border)]">
-                <div className="flex items-center gap-2">
-                  <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" />
-                  <span>4. RBAC Pre-Flight Verification</span>
+                <div className="flex items-center gap-2 min-w-0 pr-2">
+                  {diagnosticResult?.stages?.rbac?.passed ? (
+                    <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
+                  ) : connectionStatus === "checking" ? (
+                    <RotateCw className="w-3.5 h-3.5 text-amber-400 animate-spin shrink-0" />
+                  ) : (
+                    <AlertTriangle className="w-3.5 h-3.5 text-amber-400 shrink-0" />
+                  )}
+                  <span className="truncate">4. RBAC Pre-Flight</span>
                 </div>
-                <span className="font-mono text-[10px] text-emerald-400 font-medium">ClusterAdmin</span>
+                <span className="font-mono text-[10px] text-emerald-400 font-medium shrink-0">
+                  {diagnosticResult?.stages?.rbac?.details?.clusterAdmin !== false ? "Admin" : "Scoped"}
+                </span>
               </div>
             </div>
+
+            {/* Actionable Remediation if Failed */}
+            {diagnosticResult?.remediation && (
+              <div className="mt-3 p-2.5 rounded-lg bg-rose-500/10 border border-rose-500/20 text-rose-300 text-xs">
+                <p className="font-semibold text-[11px] mb-1 flex items-center gap-1.5 text-rose-400">
+                  <AlertTriangle className="w-3 h-3" />
+                  Diagnostic Recommendation
+                </p>
+                <p className="text-[10px] leading-relaxed opacity-90 font-mono">
+                  {diagnosticResult.remediation}
+                </p>
+              </div>
+            )}
           </div>
 
           {/* Security Guarantee Pill */}

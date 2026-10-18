@@ -9,7 +9,20 @@ import { ActiveViewRenderer } from "@/components/views/ActiveViewRenderer";
 import { CommandPalette } from "@/components/command/CommandPalette";
 import { ResourceInspectorDrawer } from "@/components/views/ResourceInspectorDrawer";
 
+import { useClusterStore } from "@/stores/clusterStore";
+
 export function AppShell() {
+  const loadContexts = useClusterStore((s) => s.loadContexts);
+  const initEventListener = useClusterStore((s) => s.initEventListener);
+
+  React.useEffect(() => {
+    loadContexts();
+    const cleanupPromise = initEventListener();
+    return () => {
+      cleanupPromise.then((cleanup) => cleanup && cleanup());
+    };
+  }, [loadContexts, initEventListener]);
+
   return (
     <div className="h-screen w-screen flex flex-col bg-[var(--background)] text-[var(--foreground)] overflow-hidden">
       {/* 1. Frameless Window Titlebar */}
