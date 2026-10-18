@@ -28,7 +28,7 @@ export function Logo({ variant = "full", size = "md", className }: LogoProps) {
           alt="KubeView Logo"
           width={icon}
           height={icon}
-          className="rounded-xs select-none object-contain"
+          className="select-none object-contain"
           priority
         />
       </div>
@@ -43,7 +43,7 @@ export function Logo({ variant = "full", size = "md", className }: LogoProps) {
           alt="KubeView Logo"
           width={icon * 2}
           height={icon * 2}
-          className="rounded-md select-none object-contain drop-shadow-[0_4px_16px_rgba(240,138,66,0.25)]"
+          className="select-none object-contain drop-shadow-[0_4px_16px_rgba(240,138,66,0.25)]"
           priority
         />
         <div className="font-bold tracking-tight select-none">
@@ -61,7 +61,7 @@ export function Logo({ variant = "full", size = "md", className }: LogoProps) {
         alt="KubeView Logo"
         width={icon}
         height={icon}
-        className="rounded-xs shrink-0 object-contain drop-shadow-[0_2px_8px_rgba(240,138,66,0.2)]"
+        className="shrink-0 object-contain drop-shadow-[0_2px_8px_rgba(240,138,66,0.2)]"
         priority
       />
       <div className={cn("font-bold tracking-tight", text)}>
