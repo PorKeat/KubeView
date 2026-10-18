@@ -46,49 +46,16 @@ flowchart LR
 | **KubeView Cloud Account** | ❌ **No** | **100% Local-First.** No account creation, signup, or telemetry lock-in. |
 | **Remote KubeView Backend** | ❌ **No** | The backend runs locally on your machine as a bundled Go sidecar. |
 
-### Important Operational Boundaries
-- **Network Access:** If your API server is private, your workstation must have access through your LAN, VPN, or approved proxy path.
-- **Authentication Plugins:** Some kubeconfigs depend on external executables (`aws eks get-token`, `kubelogin`, `gke-gcloud-auth-plugin`). KubeView validates these dependencies automatically.
-- **RBAC Permissions:** KubeView cannot show or modify resources your Kubernetes identity is not authorized to access.
-- **Expired Credentials:** If your SSO or cloud token expires, KubeView surfaces clear plain-language remediation steps (e.g. "Run `aws sso login`").
-- **Cluster-Specific Features:** Metrics, Helm releases, Longhorn, Cilium, and other integrations require their respective APIs or controllers to be installed in the cluster.
-
 ---
 
-## 🏗️ Production Architecture Blueprint
+## 🔒 Security Architecture Highlights
 
-```mermaid
-flowchart TD
-    subgraph UI ["Tier 1: Presentation (Next.js Static Export / React / TypeScript)"]
-        Components["UI Components (shadcn/ui + Tailwind CSS 4 + Motion)"]
-        Stores["State Management (Zustand + TanStack Query)"]
-        Services["Typed Frontend Services (@kubeview/contracts)"]
-    end
-
-    subgraph Host ["Tier 2: Native Host & Security Boundary (Tauri 2 / Rust)"]
-        CmdValidator["Command Validation & Origin Check"]
-        PermEngine["Host-Enforced Permissions & Capabilities"]
-        Supervisor["Go Engine Supervisor (Lifecycle, Backoff, Health)"]
-        IPCGateway["JSON-RPC 2.0 Pipe Dispatcher (stdin/stdout)"]
-    end
-
-    subgraph Engine ["Tier 3: Kubernetes Engine (Go Sidecar / client-go)"]
-        ClusterMgr["Cluster Manager (clientcmd & kubeconfig)"]
-        ResourceAPI["Resource CRUD & Server-Side Apply Engine"]
-        WatchMgr["Watch Manager (SharedInformerFactory & DeltaFIFO)"]
-        StreamEngine["Streaming Engine (Logs, Exec PTY, Port-Forward)"]
-        Discovery["Discovery & CRD Introspection"]
-        MetricsAdapters["Metrics Server & Prometheus Adapters"]
-    end
-
-    subgraph Cluster ["Tier 4: Kubernetes Infrastructure"]
-        APIServer["Kube-APIServer (REST, Watch, SPDY/WebSocket)"]
-    end
-
-    UI <-->|Typed Tauri Commands & Events| Host
-    Host <-->|Versioned JSON-RPC 2.0 (stdin/stdout pipes)| Engine
-    Engine <-->|HTTPS REST, Watch, SPDY (TLS Authenticated)| APIServer
-```
+1. **Zero Credential Exposure:** Tokens, client certificates, private keys, and exec-helper secrets exist **only in Go engine memory**. They are NEVER passed to the React UI, plugins, telemetry, or logs.
+2. **No Local Network Sockets:** The Go engine communicates exclusively via **inherited stdio pipes (`stdin`/`stdout`)** using newline-delimited JSON-RPC 2.0. No local TCP/HTTP ports are opened.
+3. **Controlled Credential Execution:** External `exec` credential plugins require explicit user approval, execute directly (no shell), and run with sanitized environments and 10s timeouts.
+4. **Server-Side Apply & Dry-Run Diff:** All declarative changes use Kubernetes Server-Side Apply with field manager `kubeview`. Local YAML is validated and dry-run tested (`dryRun=All`) before live mutation.
+5. **Secret Masking:** Sensitive values in Secrets and environment variables are masked by default (`••••••••`) across all views.
+6. **Host-Enforced Permissions:** Plugins and external integrations are constrained by host capabilities and cannot bypass security checks.
 
 ---
 
@@ -121,20 +88,16 @@ KubeView is built dark-first with a high-density, accessible layout:
 
 ---
 
-## 📚 Project Documentation
+## 📚 Project Documentation (`docs/`)
 
-The documentation is organized in the [`docs/`](file:///Users/alexkgm/KubeView/docs) directory:
+All project documentation is consolidated in the [`docs/`](file:///Users/alexkgm/KubeView/docs) directory:
 
+- 📖 [**docs/README.md**](file:///Users/alexkgm/KubeView/docs/README.md) — Master documentation index and sitemap.
+- 🔒 [**docs/SECURITY_ARCHITECTURE.md**](file:///Users/alexkgm/KubeView/docs/SECURITY_ARCHITECTURE.md) — Production Security Architecture (Process boundaries, kubeconfigs, exec plugins, secrets, RBAC, threat model, checklist).
 - 🚀 [**docs/FIRST_RUN_EXPERIENCE.md**](file:///Users/alexkgm/KubeView/docs/FIRST_RUN_EXPERIENCE.md) — Agentless onboarding flow, 4-stage automated connection diagnostics, and user guidance.
-- 🏛️ [**docs/ARCHITECTURE.md**](file:///Users/alexkgm/KubeView/docs/ARCHITECTURE.md) — Comprehensive Production Architecture Blueprint, supervisor state machine, layer boundaries, and Go package architecture.
+- 🏛️ [**docs/ARCHITECTURE.md**](file:///Users/alexkgm/KubeView/docs/ARCHITECTURE.md) — Comprehensive Production Architecture Blueprint, supervisor state machine, and Go package architecture.
 - 📜 [**docs/contracts/IPC_SPECIFICATION.md**](file:///Users/alexkgm/KubeView/docs/contracts/IPC_SPECIFICATION.md) — Versioned JSON-RPC 2.0 protocol contracts (`rpc/v1`), domain methods, envelopes, and error catalog.
 - 🛠️ [**docs/TECH_STACK.md**](file:///Users/alexkgm/KubeView/docs/TECH_STACK.md) — Production tech stack reference and dependency specifications.
 - 🚀 [**docs/EXECUTION_PLAN.md**](file:///Users/alexkgm/KubeView/docs/EXECUTION_PLAN.md) — 9-step implementation sequence, task breakdown, testing strategy, and risk mitigations.
-- 📋 [**ROADMAP.md**](file:///Users/alexkgm/KubeView/ROADMAP.md) — 16-phase roadmap checklist and status tracking (0/16 completed).
-- 📖 [**docs/phases/**](file:///Users/alexkgm/KubeView/docs/phases) — Phase-by-phase functional and technical specifications:
-  - [Phase 1: Core Desktop Application](file:///Users/alexkgm/KubeView/docs/phases/phase-01-core-desktop.md)
-  - [Phase 2: Kubernetes Connection Management](file:///Users/alexkgm/KubeView/docs/phases/phase-02-connectivity.md)
-  - [Phase 3: Cluster Overview & Dashboard](file:///Users/alexkgm/KubeView/docs/phases/phase-03-cluster-dashboard.md)
-  - [Phase 4: Complete Kubernetes Resource Browser](file:///Users/alexkgm/KubeView/docs/phases/phase-04-resource-browser.md)
-  - [Phase 5: Resource Operations & YAML Editor](file:///Users/alexkgm/KubeView/docs/phases/phase-05-resource-operations.md)
-  - [Phase 6: Pod & Container Troubleshooting Workbench](file:///Users/alexkgm/KubeView/docs/phases/phase-06-troubleshooting.md)
+- 📋 [**docs/ROADMAP.md**](file:///Users/alexkgm/KubeView/docs/ROADMAP.md) — 16-phase roadmap checklist and status tracking (0/16 completed).
+- 📖 [**docs/phases/**](file:///Users/alexkgm/KubeView/docs/phases) — Specifications for Phases 1 through 6.
