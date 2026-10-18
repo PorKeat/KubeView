@@ -2,36 +2,50 @@
 
 @layer base {
   :root {
-    --background: #ffffff;
-    --foreground: #17191d;
-    --surface: #f4f5f7;
-    --surface-hover: #e9ebef;
-    --surface-active: #dde0e6;
-    --border: #dcdfe4;
+    --background: #f8fafc;
+    --foreground: #0f172a;
+    --surface: #ffffff;
+    --surface-hover: #f1f5f9;
+    --surface-active: #e2e8f0;
+    --surface-elevated: #ffffff;
+    --border: #e2e8f0;
+    --border-subtle: #edf2f7;
     --accent: #f08a42;
+    --accent-hover: #e07931;
     --accent-foreground: #ffffff;
-    --muted: #6b7280;
-    --status-healthy: #22a06b;
-    --status-warning: #e28e1b;
-    --status-critical: #d33d3d;
-    --status-muted: #8a919e;
+    --muted: #64748b;
+    --status-healthy: #10b981;
+    --status-healthy-bg: rgba(16, 185, 129, 0.12);
+    --status-warning: #f59e0b;
+    --status-warning-bg: rgba(245, 158, 11, 0.12);
+    --status-critical: #ef4444;
+    --status-critical-bg: rgba(239, 68, 68, 0.12);
+    --status-muted: #94a3b8;
+    --status-muted-bg: rgba(148, 163, 184, 0.12);
     --radius: 0.5rem;
   }
 
   .dark {
-    --background: #17191d;
-    --foreground: #ededed;
-    --surface: #22252b;
-    --surface-hover: #2c3038;
-    --surface-active: #343943;
-    --border: #323741;
+    --background: #0d0f12;
+    --foreground: #f1f5f9;
+    --surface: #14171d;
+    --surface-hover: #1c2028;
+    --surface-active: #242934;
+    --surface-elevated: #1a1e26;
+    --border: #262b36;
+    --border-subtle: #1e222b;
     --accent: #f08a42;
+    --accent-hover: #ff9e59;
     --accent-foreground: #ffffff;
-    --muted: #9499a5;
-    --status-healthy: #38b879;
-    --status-warning: #f5a623;
-    --status-critical: #e05252;
-    --status-muted: #8a919e;
+    --muted: #8b94a5;
+    --status-healthy: #34d399;
+    --status-healthy-bg: rgba(52, 211, 153, 0.15);
+    --status-warning: #fbbf24;
+    --status-warning-bg: rgba(251, 191, 36, 0.15);
+    --status-critical: #f87171;
+    --status-critical-bg: rgba(248, 113, 113, 0.15);
+    --status-muted: #94a3b8;
+    --status-muted-bg: rgba(148, 163, 184, 0.15);
   }
 
   * {
@@ -41,7 +55,7 @@
   body {
     background-color: var(--background);
     color: var(--foreground);
-    font-feature-settings: "rlig" 1, "calt" 1;
+    font-feature-settings: "rlig" 1, "calt" 1, "cv02" 1, "cv03" 1;
     user-select: none;
     -webkit-user-select: none;
     overflow: hidden;
@@ -50,8 +64,8 @@
 
 /* Custom Scrollbars for Compact Desktop Data Grids */
 ::-webkit-scrollbar {
-  width: 6px;
-  height: 6px;
+  width: 5px;
+  height: 5px;
 }
 
 ::-webkit-scrollbar-track {
@@ -60,9 +74,24 @@
 
 ::-webkit-scrollbar-thumb {
   background: var(--border);
-  border-radius: 3px;
+  border-radius: 4px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
   background: var(--muted);
+}
+
+@keyframes pulseGlow {
+  0%, 100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.6;
+    transform: scale(1.15);
+  }
+}
+
+.animate-pulse-glow {
+  animation: pulseGlow 2.5s cubic-bezier(0.4, 0, 0.6, 1) infinite;
 }

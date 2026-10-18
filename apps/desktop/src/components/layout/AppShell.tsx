@@ -7,6 +7,7 @@ import { TabBar } from "./TabBar";
 import { StatusBar } from "./StatusBar";
 import { ActiveViewRenderer } from "@/components/views/ActiveViewRenderer";
 import { CommandPalette } from "@/components/command/CommandPalette";
+import { ResourceInspectorDrawer } from "@/components/views/ResourceInspectorDrawer";
 
 export function AppShell() {
   return (
@@ -29,6 +30,9 @@ export function AppShell() {
 
       {/* 4. Global Command Palette Modal (Cmd+K) */}
       <CommandPalette />
+
+      {/* 5. Resource Inspector Slide-Over Drawer */}
+      <ResourceInspectorDrawer />
     </div>
   );
 }

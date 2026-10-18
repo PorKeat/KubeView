@@ -31,6 +31,8 @@ interface NavItem {
   id: string;
   title: string;
   icon: React.ElementType;
+  badge?: string | number;
+  badgeVariant?: "default" | "warning" | "accent";
 }
 
 interface NavGroup {
@@ -42,35 +44,35 @@ const NAVIGATION_GROUPS: NavGroup[] = [
   {
     category: "Overview",
     items: [
-      { id: "overview", title: "Cluster Overview", icon: LayoutDashboard },
+      { id: "overview", title: "Cluster Overview", icon: LayoutDashboard, badge: "2", badgeVariant: "warning" },
     ],
   },
   {
     category: "Workloads",
     items: [
-      { id: "pods", title: "Pods", icon: Box },
-      { id: "deployments", title: "Deployments", icon: Layers },
+      { id: "pods", title: "Pods", icon: Box, badge: 42 },
+      { id: "deployments", title: "Deployments", icon: Layers, badge: 12 },
       { id: "replicasets", title: "ReplicaSets", icon: Repeat },
-      { id: "statefulsets", title: "StatefulSets", icon: Database },
-      { id: "daemonsets", title: "DaemonSets", icon: Cpu },
+      { id: "statefulsets", title: "StatefulSets", icon: Database, badge: 2 },
+      { id: "daemonsets", title: "DaemonSets", icon: Cpu, badge: 1 },
       { id: "jobs", title: "Jobs & CronJobs", icon: Clock },
     ],
   },
   {
     category: "Networking",
     items: [
-      { id: "services", title: "Services", icon: Network },
+      { id: "services", title: "Services", icon: Network, badge: 8 },
       { id: "endpoints", title: "Endpoints", icon: Radio },
-      { id: "ingresses", title: "Ingresses & Gateways", icon: Network },
+      { id: "ingresses", title: "Ingresses & Gateways", icon: Network, badge: 3 },
       { id: "networkpolicies", title: "Network Policies", icon: Shield },
     ],
   },
   {
     category: "Config & Storage",
     items: [
-      { id: "configmaps", title: "ConfigMaps", icon: FileCode },
-      { id: "secrets", title: "Secrets", icon: FolderLock },
-      { id: "persistentvolumes", title: "Persistent Volumes", icon: HardDrive },
+      { id: "configmaps", title: "ConfigMaps", icon: FileCode, badge: 9 },
+      { id: "secrets", title: "Secrets", icon: FolderLock, badge: 14 },
+      { id: "persistentvolumes", title: "Persistent Volumes", icon: HardDrive, badge: 4 },
       { id: "storageclasses", title: "Storage Classes", icon: HardDrive },
     ],
   },
@@ -79,7 +81,7 @@ const NAVIGATION_GROUPS: NavGroup[] = [
     items: [
       { id: "serviceaccounts", title: "Service Accounts", icon: Users },
       { id: "rbac", title: "Roles & Bindings", icon: Key },
-      { id: "crds", title: "Custom Resources", icon: Boxes },
+      { id: "crds", title: "Custom Resources", icon: Boxes, badge: 6 },
     ],
   },
 ];
@@ -154,15 +156,32 @@ export function AppSidebar() {
                         key={item.id}
                         onClick={() => handleItemClick(item)}
                         className={cn(
-                          "w-full flex items-center gap-2.5 px-2.5 py-1.5 text-xs rounded-md transition-colors text-left",
+                          "w-full flex items-center justify-between px-2.5 py-1.5 text-xs rounded-md transition-all text-left group",
                           isActive
-                            ? "bg-[var(--surface-active)] text-[var(--accent)] font-medium border-l-2 border-[var(--accent)]"
+                            ? "bg-[var(--surface-active)] text-[var(--accent)] font-semibold shadow-xs"
                             : "text-[var(--foreground)] hover:bg-[var(--surface-hover)]"
                         )}
                         title={sidebarCollapsed ? item.title : undefined}
                       >
-                        <Icon className={cn("w-4 h-4 shrink-0", isActive ? "text-[var(--accent)]" : "text-[var(--muted)]")} />
-                        {!sidebarCollapsed && <span className="truncate">{item.title}</span>}
+                        <div className="flex items-center gap-2.5 min-w-0">
+                          <Icon className={cn("w-4 h-4 shrink-0 transition-colors", isActive ? "text-[var(--accent)]" : "text-[var(--muted)] group-hover:text-[var(--foreground)]")} />
+                          {!sidebarCollapsed && <span className="truncate">{item.title}</span>}
+                        </div>
+
+                        {!sidebarCollapsed && item.badge !== undefined && (
+                          <span
+                            className={cn(
+                              "px-1.5 py-0.2 rounded text-[10px] font-mono font-medium shrink-0 ml-1.5",
+                              item.badgeVariant === "warning"
+                                ? "bg-amber-500/15 text-amber-400"
+                                : item.badgeVariant === "accent"
+                                ? "bg-[var(--accent)]/15 text-[var(--accent)]"
+                                : "text-[var(--muted)] bg-[var(--surface-active)]"
+                            )}
+                          >
+                            {item.badge}
+                          </span>
+                        )}
                       </button>
                     );
                   })}

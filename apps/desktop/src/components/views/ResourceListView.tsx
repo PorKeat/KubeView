@@ -1,9 +1,29 @@
 "use client";
 
 import * as React from "react";
-import { Search, Filter, RefreshCw, MoreVertical, Terminal, FileText, Trash2, RotateCw } from "lucide-react";
+import {
+  Search,
+  RefreshCw,
+  Terminal,
+  FileText,
+  Trash2,
+  RotateCw,
+  ArrowUpDown,
+  ArrowUp,
+  ArrowDown,
+  CheckSquare,
+  Square,
+  MinusSquare,
+  AlertCircle,
+  Copy,
+  ChevronLeft,
+  ChevronRight,
+  Filter,
+  X,
+} from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
+import { useClusterStore } from "@/stores/clusterStore";
 
 interface ResourceListViewProps {
   resourceType: string;
@@ -12,138 +32,404 @@ interface ResourceListViewProps {
 interface MockResourceItem {
   name: string;
   namespace: string;
-  status: "Running" | "Pending" | "CrashLoopBackOff" | "Completed" | "Active";
+  status: "Running" | "Pending" | "CrashLoopBackOff" | "Completed";
   ready: string;
   restarts: number;
   age: string;
   cpu: string;
+  cpuPercent: number;
   memory: string;
+  memoryPercent: number;
 }
 
 const MOCK_PODS: MockResourceItem[] = [
-  { name: "coredns-7c65d6cfc9-j9kmq", namespace: "kube-system", status: "Running", ready: "1/1", restarts: 0, age: "12d", cpu: "4m", memory: "18Mi" },
-  { name: "coredns-7c65d6cfc9-w82fl", namespace: "kube-system", status: "Running", ready: "1/1", restarts: 0, age: "12d", cpu: "5m", memory: "19Mi" },
-  { name: "etcd-kind-control-plane", namespace: "kube-system", status: "Running", ready: "1/1", restarts: 0, age: "12d", cpu: "18m", memory: "64Mi" },
-  { name: "kube-apiserver-kind-control-plane", namespace: "kube-system", status: "Running", ready: "1/1", restarts: 0, age: "12d", cpu: "45m", memory: "182Mi" },
-  { name: "api-gateway-7f8d-x9q", namespace: "production", status: "CrashLoopBackOff", ready: "0/1", restarts: 8, age: "4h", cpu: "1m", memory: "42Mi" },
-  { name: "auth-service-589679bc4-plk7d", namespace: "production", status: "Running", ready: "1/1", restarts: 0, age: "3d", cpu: "12m", memory: "86Mi" },
-  { name: "database-postgres-0", namespace: "production", status: "Running", ready: "1/1", restarts: 1, age: "14d", cpu: "32m", memory: "340Mi" },
-  { name: "redis-cache-master-0", namespace: "production", status: "Running", ready: "1/1", restarts: 0, age: "7d", cpu: "8m", memory: "54Mi" },
-  { name: "analytics-worker-2", namespace: "default", status: "Pending", ready: "0/1", restarts: 0, age: "15m", cpu: "-", memory: "-" },
-  { name: "frontend-web-6d9b4b574-z2vqx", namespace: "default", status: "Running", ready: "1/1", restarts: 0, age: "1d", cpu: "9m", memory: "62Mi" },
-  { name: "cron-cleanup-2894120-4mkl9", namespace: "default", status: "Completed", ready: "0/1", restarts: 0, age: "55m", cpu: "-", memory: "-" },
+  { name: "coredns-7c65d6cfc9-j9kmq", namespace: "kube-system", status: "Running", ready: "1/1", restarts: 0, age: "12d", cpu: "4m", cpuPercent: 4, memory: "18Mi", memoryPercent: 12 },
+  { name: "coredns-7c65d6cfc9-w82fl", namespace: "kube-system", status: "Running", ready: "1/1", restarts: 0, age: "12d", cpu: "5m", cpuPercent: 5, memory: "19Mi", memoryPercent: 13 },
+  { name: "etcd-kind-control-plane", namespace: "kube-system", status: "Running", ready: "1/1", restarts: 0, age: "12d", cpu: "18m", cpuPercent: 18, memory: "64Mi", memoryPercent: 35 },
+  { name: "kube-apiserver-kind-control-plane", namespace: "kube-system", status: "Running", ready: "1/1", restarts: 0, age: "12d", cpu: "45m", cpuPercent: 45, memory: "182Mi", memoryPercent: 55 },
+  { name: "api-gateway-7f8d-x9q", namespace: "production", status: "CrashLoopBackOff", ready: "0/1", restarts: 8, age: "4h", cpu: "1m", cpuPercent: 1, memory: "42Mi", memoryPercent: 24 },
+  { name: "auth-service-589679bc4-plk7d", namespace: "production", status: "Running", ready: "1/1", restarts: 0, age: "3d", cpu: "12m", cpuPercent: 12, memory: "86Mi", memoryPercent: 40 },
+  { name: "database-postgres-0", namespace: "production", status: "Running", ready: "1/1", restarts: 1, age: "14d", cpu: "32m", cpuPercent: 32, memory: "340Mi", memoryPercent: 68 },
+  { name: "redis-cache-master-0", namespace: "production", status: "Running", ready: "1/1", restarts: 0, age: "7d", cpu: "8m", cpuPercent: 8, memory: "54Mi", memoryPercent: 28 },
+  { name: "analytics-worker-2", namespace: "default", status: "Pending", ready: "0/1", restarts: 0, age: "15m", cpu: "-", cpuPercent: 0, memory: "-", memoryPercent: 0 },
+  { name: "frontend-web-6d9b4b574-z2vqx", namespace: "default", status: "Running", ready: "1/1", restarts: 0, age: "1d", cpu: "9m", cpuPercent: 9, memory: "62Mi", memoryPercent: 30 },
+  { name: "cron-cleanup-2894120-4mkl9", namespace: "default", status: "Completed", ready: "0/1", restarts: 0, age: "55m", cpu: "-", cpuPercent: 0, memory: "-", memoryPercent: 0 },
 ];
 
 export function ResourceListView({ resourceType }: ResourceListViewProps) {
+  const { openInspector } = useClusterStore();
   const [search, setSearch] = React.useState("");
+  const [statusFilter, setStatusFilter] = React.useState<string>("all");
+  const [selectedNamespaces, setSelectedNamespaces] = React.useState<string>("all");
+  const [selectedItems, setSelectedItems] = React.useState<Set<string>>(new Set());
+  const [sortField, setSortField] = React.useState<keyof MockResourceItem>("name");
+  const [sortAsc, setSortAsc] = React.useState(true);
 
-  const filteredItems = MOCK_PODS.filter(
-    (item) =>
+  // Filter items
+  const filteredItems = MOCK_PODS.filter((item) => {
+    const matchesSearch =
       item.name.toLowerCase().includes(search.toLowerCase()) ||
-      item.namespace.toLowerCase().includes(search.toLowerCase())
-  );
+      item.namespace.toLowerCase().includes(search.toLowerCase());
+
+    const matchesStatus =
+      statusFilter === "all" ||
+      (statusFilter === "running" && item.status === "Running") ||
+      (statusFilter === "pending" && item.status === "Pending") ||
+      (statusFilter === "failing" && item.status === "CrashLoopBackOff");
+
+    const matchesNamespace =
+      selectedNamespaces === "all" || item.namespace === selectedNamespaces;
+
+    return matchesSearch && matchesStatus && matchesNamespace;
+  });
+
+  // Sort items
+  const sortedItems = [...filteredItems].sort((a, b) => {
+    const aVal = a[sortField];
+    const bVal = b[sortField];
+    if (typeof aVal === "string" && typeof bVal === "string") {
+      return sortAsc ? aVal.localeCompare(bVal) : bVal.localeCompare(aVal);
+    }
+    if (typeof aVal === "number" && typeof bVal === "number") {
+      return sortAsc ? aVal - bVal : bVal - aVal;
+    }
+    return 0;
+  });
+
+  const handleSort = (field: keyof MockResourceItem) => {
+    if (sortField === field) {
+      setSortAsc(!sortAsc);
+    } else {
+      setSortField(field);
+      setSortAsc(true);
+    }
+  };
+
+  const toggleSelectAll = () => {
+    if (selectedItems.size === sortedItems.length && sortedItems.length > 0) {
+      setSelectedItems(new Set());
+    } else {
+      setSelectedItems(new Set(sortedItems.map((i) => `${i.namespace}/${i.name}`)));
+    }
+  };
+
+  const toggleSelectItem = (key: string) => {
+    const next = new Set(selectedItems);
+    if (next.has(key)) {
+      next.delete(key);
+    } else {
+      next.add(key);
+    }
+    setSelectedItems(next);
+  };
 
   const getStatusBadge = (status: MockResourceItem["status"]) => {
     switch (status) {
       case "Running":
-      case "Active":
-        return <span className="px-2 py-0.5 rounded text-[10px] font-medium bg-[var(--status-healthy)]/15 text-[var(--status-healthy)]">Running</span>;
+        return (
+          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-medium bg-emerald-500/15 text-emerald-400 border border-emerald-500/30">
+            <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
+            Running
+          </span>
+        );
       case "Pending":
-        return <span className="px-2 py-0.5 rounded text-[10px] font-medium bg-[var(--status-warning)]/15 text-[var(--status-warning)]">Pending</span>;
+        return (
+          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-medium bg-amber-500/15 text-amber-400 border border-amber-500/30">
+            <span className="w-1.5 h-1.5 rounded-full bg-amber-400" />
+            Pending
+          </span>
+        );
       case "CrashLoopBackOff":
-        return <span className="px-2 py-0.5 rounded text-[10px] font-medium bg-[var(--status-critical)]/15 text-[var(--status-critical)]">CrashLoopBackOff</span>;
+        return (
+          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-medium bg-rose-500/15 text-rose-400 border border-rose-500/30">
+            <span className="w-1.5 h-1.5 rounded-full bg-rose-400 animate-pulse" />
+            CrashLoopBackOff
+          </span>
+        );
       case "Completed":
-        return <span className="px-2 py-0.5 rounded text-[10px] font-medium bg-[var(--status-muted)]/15 text-[var(--status-muted)]">Completed</span>;
+        return (
+          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-medium bg-[var(--surface-hover)] text-[var(--muted)] border border-[var(--border)]">
+            <span className="w-1.5 h-1.5 rounded-full bg-[var(--muted)]" />
+            Completed
+          </span>
+        );
     }
   };
 
   return (
     <div className="flex-1 flex flex-col h-full overflow-hidden select-none">
-      {/* Table Toolbar */}
-      <div className="h-10 border-b border-[var(--border)] px-3 flex items-center justify-between shrink-0 bg-[var(--surface)]">
-        <div className="flex items-center gap-2 flex-1 max-w-sm">
+      {/* Table Command & Filter Toolbar */}
+      <div className="h-11 border-b border-[var(--border)] px-3 flex items-center justify-between shrink-0 bg-[var(--surface)] gap-3">
+        {/* Left: Search Bar & Namespace Filter */}
+        <div className="flex items-center gap-2 flex-1 max-w-md">
           <div className="relative w-full">
             <Search className="w-3.5 h-3.5 absolute left-2.5 top-1/2 -translate-y-1/2 text-[var(--muted)]" />
             <input
               type="text"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              placeholder={`Filter ${resourceType}...`}
-              className="w-full pl-8 pr-3 py-1 text-xs bg-[var(--background)] border border-[var(--border)] rounded-md text-[var(--foreground)] placeholder:text-[var(--muted)] outline-hidden focus:border-[var(--accent)]"
+              placeholder={`Filter ${resourceType.toLowerCase()} by name, namespace...`}
+              className="w-full pl-8 pr-7 py-1 text-xs bg-[var(--background)] border border-[var(--border)] rounded-md text-[var(--foreground)] placeholder:text-[var(--muted)] outline-hidden focus:border-[var(--accent)] transition-colors font-mono"
             />
+            {search && (
+              <button
+                onClick={() => setSearch("")}
+                className="absolute right-2 top-1/2 -translate-y-1/2 text-[var(--muted)] hover:text-[var(--foreground)]"
+              >
+                <X className="w-3 h-3" />
+              </button>
+            )}
           </div>
         </div>
 
-        <div className="flex items-center gap-1.5 text-xs text-[var(--muted)]">
-          <span>{filteredItems.length} items</span>
+        {/* Center: Status Filter Pills */}
+        <div className="flex items-center gap-1 bg-[var(--background)] p-0.5 rounded-lg border border-[var(--border)] text-xs">
+          {[
+            { id: "all", label: "All", count: MOCK_PODS.length },
+            { id: "running", label: "Running", count: MOCK_PODS.filter((p) => p.status === "Running").length },
+            { id: "pending", label: "Pending", count: MOCK_PODS.filter((p) => p.status === "Pending").length },
+            { id: "failing", label: "Failing", count: MOCK_PODS.filter((p) => p.status === "CrashLoopBackOff").length },
+          ].map((pill) => (
+            <button
+              key={pill.id}
+              onClick={() => setStatusFilter(pill.id)}
+              className={cn(
+                "px-2.5 py-0.5 rounded text-[11px] font-medium transition-colors flex items-center gap-1.5",
+                statusFilter === pill.id
+                  ? "bg-[var(--surface-active)] text-[var(--foreground)] font-semibold shadow-xs"
+                  : "text-[var(--muted)] hover:text-[var(--foreground)]"
+              )}
+            >
+              <span>{pill.label}</span>
+              <span className="text-[10px] text-[var(--muted)] font-mono">{pill.count}</span>
+            </button>
+          ))}
+        </div>
+
+        {/* Right: Actions */}
+        <div className="flex items-center gap-2 text-xs text-[var(--muted)] shrink-0">
+          <span className="font-mono text-[11px]">{sortedItems.length} items</span>
           <div className="h-3 w-[1px] bg-[var(--border)]" />
           <button
             onClick={() => toast.info(`Refreshed ${resourceType} list`)}
-            className="p-1 rounded hover:bg-[var(--surface-hover)] text-[var(--muted)] hover:text-[var(--foreground)] transition-colors"
-            title="Refresh"
+            className="p-1.5 rounded hover:bg-[var(--surface-hover)] text-[var(--muted)] hover:text-[var(--foreground)] transition-colors"
+            title="Refresh list"
           >
             <RefreshCw className="w-3.5 h-3.5" />
           </button>
         </div>
       </div>
 
-      {/* High-Density Compact Table */}
+      {/* Floating Batch Action Toolbar */}
+      {selectedItems.size > 0 && (
+        <div className="h-9 bg-[var(--surface-active)] border-b border-[var(--border)] px-4 flex items-center justify-between text-xs text-[var(--foreground)] animate-in fade-in duration-100">
+          <div className="flex items-center gap-2">
+            <span className="font-semibold text-[var(--accent)] font-mono">{selectedItems.size}</span>
+            <span>selected</span>
+          </div>
+
+          <div className="flex items-center gap-1.5">
+            <button
+              onClick={() => {
+                toast.success(`Restarting ${selectedItems.size} workloads...`);
+                setSelectedItems(new Set());
+              }}
+              className="px-2.5 py-1 rounded bg-[var(--surface)] border border-[var(--border)] hover:bg-[var(--surface-hover)] text-xs font-medium flex items-center gap-1.5 transition-colors"
+            >
+              <RotateCw className="w-3 h-3 text-[var(--status-warning)]" />
+              <span>Rolling Restart</span>
+            </button>
+            <button
+              onClick={() => {
+                toast.error(`Deleted ${selectedItems.size} resources`);
+                setSelectedItems(new Set());
+              }}
+              className="px-2.5 py-1 rounded bg-[var(--surface)] border border-[var(--border)] hover:bg-rose-500/10 hover:text-rose-400 text-xs font-medium flex items-center gap-1.5 transition-colors"
+            >
+              <Trash2 className="w-3 h-3" />
+              <span>Delete</span>
+            </button>
+            <button
+              onClick={() => setSelectedItems(new Set())}
+              className="px-2 py-1 text-xs text-[var(--muted)] hover:text-[var(--foreground)]"
+            >
+              Deselect
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* High-Density Enterprise Table */}
       <div className="flex-1 overflow-auto">
         <table className="w-full text-left text-xs border-collapse">
-          <thead className="sticky top-0 bg-[var(--surface)] border-b border-[var(--border)] text-[11px] font-semibold text-[var(--muted)] uppercase tracking-wider z-10">
+          <thead className="sticky top-0 bg-[var(--surface)] border-b border-[var(--border)] text-[10px] font-semibold text-[var(--muted)] uppercase tracking-wider z-10 select-none">
             <tr>
-              <th className="py-2 px-3">Name</th>
-              <th className="py-2 px-3">Namespace</th>
-              <th className="py-2 px-3">Status</th>
-              <th className="py-2 px-3">Ready</th>
-              <th className="py-2 px-3">Restarts</th>
-              <th className="py-2 px-3">CPU</th>
-              <th className="py-2 px-3">Memory</th>
-              <th className="py-2 px-3">Age</th>
-              <th className="py-2 px-3 text-right">Actions</th>
+              <th className="py-2.5 px-3 w-8 text-center">
+                <button onClick={toggleSelectAll} className="p-0.5 hover:text-[var(--foreground)]">
+                  {selectedItems.size === sortedItems.length && sortedItems.length > 0 ? (
+                    <CheckSquare className="w-3.5 h-3.5 text-[var(--accent)]" />
+                  ) : selectedItems.size > 0 ? (
+                    <MinusSquare className="w-3.5 h-3.5 text-[var(--accent)]" />
+                  ) : (
+                    <Square className="w-3.5 h-3.5 text-[var(--muted)]" />
+                  )}
+                </button>
+              </th>
+              <th className="py-2.5 px-3 cursor-pointer hover:text-[var(--foreground)]" onClick={() => handleSort("name")}>
+                <div className="flex items-center gap-1">
+                  <span>Name</span>
+                  {sortField === "name" && (sortAsc ? <ArrowUp className="w-3 h-3" /> : <ArrowDown className="w-3 h-3" />)}
+                </div>
+              </th>
+              <th className="py-2.5 px-3 cursor-pointer hover:text-[var(--foreground)]" onClick={() => handleSort("namespace")}>
+                <div className="flex items-center gap-1">
+                  <span>Namespace</span>
+                  {sortField === "namespace" && (sortAsc ? <ArrowUp className="w-3 h-3" /> : <ArrowDown className="w-3 h-3" />)}
+                </div>
+              </th>
+              <th className="py-2.5 px-3 cursor-pointer hover:text-[var(--foreground)]" onClick={() => handleSort("status")}>
+                <div className="flex items-center gap-1">
+                  <span>Status</span>
+                  {sortField === "status" && (sortAsc ? <ArrowUp className="w-3 h-3" /> : <ArrowDown className="w-3 h-3" />)}
+                </div>
+              </th>
+              <th className="py-2.5 px-3">Ready</th>
+              <th className="py-2.5 px-3 cursor-pointer hover:text-[var(--foreground)]" onClick={() => handleSort("restarts")}>
+                <div className="flex items-center gap-1">
+                  <span>Restarts</span>
+                  {sortField === "restarts" && (sortAsc ? <ArrowUp className="w-3 h-3" /> : <ArrowDown className="w-3 h-3" />)}
+                </div>
+              </th>
+              <th className="py-2.5 px-3 w-28">CPU</th>
+              <th className="py-2.5 px-3 w-32">Memory</th>
+              <th className="py-2.5 px-3 cursor-pointer hover:text-[var(--foreground)]" onClick={() => handleSort("age")}>
+                <div className="flex items-center gap-1">
+                  <span>Age</span>
+                  {sortField === "age" && (sortAsc ? <ArrowUp className="w-3 h-3" /> : <ArrowDown className="w-3 h-3" />)}
+                </div>
+              </th>
+              <th className="py-2.5 px-3 text-right">Quick Actions</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-[var(--border)]">
-            {filteredItems.map((item) => (
-              <tr
-                key={`${item.namespace}/${item.name}`}
-                className="h-8 hover:bg-[var(--surface-hover)] transition-colors cursor-pointer group"
-                onClick={() => toast.info(`Viewing details for ${item.name}`)}
-              >
-                <td className="py-1 px-3 font-medium text-[var(--foreground)] truncate max-w-xs">{item.name}</td>
-                <td className="py-1 px-3 font-mono text-[var(--muted)]">{item.namespace}</td>
-                <td className="py-1 px-3">{getStatusBadge(item.status)}</td>
-                <td className="py-1 px-3 font-mono text-[var(--muted)]">{item.ready}</td>
-                <td className="py-1 px-3 font-mono text-[var(--muted)]">
-                  <span className={cn(item.restarts > 0 && "text-[var(--status-warning)] font-semibold")}>
-                    {item.restarts}
-                  </span>
-                </td>
-                <td className="py-1 px-3 font-mono text-[var(--muted)]">{item.cpu}</td>
-                <td className="py-1 px-3 font-mono text-[var(--muted)]">{item.memory}</td>
-                <td className="py-1 px-3 font-mono text-[var(--muted)]">{item.age}</td>
-                <td className="py-1 px-3 text-right" onClick={(e) => e.stopPropagation()}>
-                  <div className="flex items-center justify-end gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                    <button
-                      onClick={() => toast.success(`Streaming logs from ${item.name}`)}
-                      className="p-1 rounded hover:bg-[var(--surface-active)] text-[var(--muted)] hover:text-[var(--foreground)]"
-                      title="Logs"
-                    >
-                      <FileText className="w-3.5 h-3.5" />
+            {sortedItems.map((item) => {
+              const itemKey = `${item.namespace}/${item.name}`;
+              const isSelected = selectedItems.has(itemKey);
+
+              return (
+                <tr
+                  key={itemKey}
+                  className={cn(
+                    "h-9 hover:bg-[var(--surface-hover)] transition-colors cursor-pointer group",
+                    isSelected && "bg-[var(--surface-active)]/50"
+                  )}
+                  onClick={() => openInspector({ kind: resourceType.slice(0, -1) || "Pod", name: item.name, namespace: item.namespace, status: item.status })}
+                >
+                  <td className="py-1 px-3 text-center" onClick={(e) => e.stopPropagation()}>
+                    <button onClick={() => toggleSelectItem(itemKey)} className="p-0.5 hover:text-[var(--foreground)]">
+                      {isSelected ? (
+                        <CheckSquare className="w-3.5 h-3.5 text-[var(--accent)]" />
+                      ) : (
+                        <Square className="w-3.5 h-3.5 text-[var(--muted)] group-hover:text-[var(--foreground)]" />
+                      )}
                     </button>
-                    <button
-                      onClick={() => toast.success(`Opening terminal exec into ${item.name}`)}
-                      className="p-1 rounded hover:bg-[var(--surface-active)] text-[var(--muted)] hover:text-[var(--foreground)]"
-                      title="Exec Terminal"
-                    >
-                      <Terminal className="w-3.5 h-3.5" />
-                    </button>
-                  </div>
-                </td>
-              </tr>
-            ))}
+                  </td>
+                  <td className="py-1 px-3 font-medium text-[var(--foreground)] font-mono truncate max-w-xs">
+                    {item.name}
+                  </td>
+                  <td className="py-1 px-3 font-mono text-[var(--muted)]">{item.namespace}</td>
+                  <td className="py-1 px-3">{getStatusBadge(item.status)}</td>
+                  <td className="py-1 px-3 font-mono text-[var(--muted)]">{item.ready}</td>
+                  <td className="py-1 px-3 font-mono text-[var(--muted)]">
+                    <span className={cn(item.restarts > 0 && "text-amber-400 font-semibold")}>
+                      {item.restarts}
+                    </span>
+                  </td>
+                  <td className="py-1 px-3">
+                    <div className="flex items-center gap-2">
+                      <span className="font-mono text-[var(--foreground)] text-[11px] w-8">{item.cpu}</span>
+                      {item.cpuPercent > 0 && (
+                        <div className="flex-1 h-1.5 rounded-full bg-[var(--surface-active)] overflow-hidden w-12">
+                          <div
+                            className={cn("h-full rounded-full", item.cpuPercent > 70 ? "bg-rose-400" : "bg-emerald-400")}
+                            style={{ width: `${item.cpuPercent}%` }}
+                          />
+                        </div>
+                      )}
+                    </div>
+                  </td>
+                  <td className="py-1 px-3">
+                    <div className="flex items-center gap-2">
+                      <span className="font-mono text-[var(--foreground)] text-[11px] w-10">{item.memory}</span>
+                      {item.memoryPercent > 0 && (
+                        <div className="flex-1 h-1.5 rounded-full bg-[var(--surface-active)] overflow-hidden w-12">
+                          <div
+                            className={cn("h-full rounded-full", item.memoryPercent > 70 ? "bg-rose-400" : "bg-cyan-400")}
+                            style={{ width: `${item.memoryPercent}%` }}
+                          />
+                        </div>
+                      )}
+                    </div>
+                  </td>
+                  <td className="py-1 px-3 font-mono text-[var(--muted)]">{item.age}</td>
+                  <td className="py-1 px-3 text-right" onClick={(e) => e.stopPropagation()}>
+                    <div className="flex items-center justify-end gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                      <button
+                        onClick={() => toast.success(`Logs: ${item.name}`)}
+                        className="p-1 rounded hover:bg-[var(--surface-active)] text-[var(--muted)] hover:text-[var(--foreground)] transition-colors"
+                        title="View Logs"
+                      >
+                        <FileText className="w-3.5 h-3.5" />
+                      </button>
+                      <button
+                        onClick={() => toast.success(`Exec: ${item.name}`)}
+                        className="p-1 rounded hover:bg-[var(--surface-active)] text-[var(--muted)] hover:text-[var(--foreground)] transition-colors"
+                        title="Exec Shell"
+                      >
+                        <Terminal className="w-3.5 h-3.5" />
+                      </button>
+                      <button
+                        onClick={() => toast.info(`Restarted ${item.name}`)}
+                        className="p-1 rounded hover:bg-[var(--surface-active)] text-[var(--muted)] hover:text-[var(--foreground)] transition-colors"
+                        title="Restart"
+                      >
+                        <RotateCw className="w-3.5 h-3.5" />
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              );
+            })}
           </tbody>
         </table>
+
+        {sortedItems.length === 0 && (
+          <div className="py-16 text-center text-xs text-[var(--muted)] space-y-2">
+            <AlertCircle className="w-8 h-8 text-[var(--muted)] mx-auto opacity-50" />
+            <p className="font-medium text-[var(--foreground)]">No matching {resourceType.toLowerCase()} found</p>
+            <p className="text-[11px]">Try adjusting your search query or status filter.</p>
+          </div>
+        )}
+      </div>
+
+      {/* Footer Status Bar with Pagination */}
+      <div className="h-8 border-t border-[var(--border)] px-4 flex items-center justify-between text-[11px] text-[var(--muted)] bg-[var(--surface)] shrink-0">
+        <div>
+          Showing <span className="text-[var(--foreground)] font-mono">{sortedItems.length}</span> of{" "}
+          <span className="text-[var(--foreground)] font-mono">{MOCK_PODS.length}</span> items
+        </div>
+
+        <div className="flex items-center gap-2">
+          <span>Page 1 of 1</span>
+          <div className="flex items-center gap-0.5">
+            <button disabled className="p-1 rounded text-[var(--muted)] opacity-50 cursor-not-allowed">
+              <ChevronLeft className="w-3.5 h-3.5" />
+            </button>
+            <button disabled className="p-1 rounded text-[var(--muted)] opacity-50 cursor-not-allowed">
+              <ChevronRight className="w-3.5 h-3.5" />
+            </button>
+          </div>
+        </div>
       </div>
     </div>
   );
