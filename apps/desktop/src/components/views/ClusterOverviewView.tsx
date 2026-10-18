@@ -28,6 +28,7 @@ import { useTabStore } from "@/stores/tabStore";
 import { Logo } from "@/components/brand/Logo";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
+import { OverviewSkeleton, OfflineState, ErrorBanner } from "@/components/ui";
 
 export function ClusterOverviewView() {
   const {
@@ -49,8 +50,25 @@ export function ClusterOverviewView() {
   const tlsStage = diagnosticResult?.stages?.tls;
   const rbacStage = diagnosticResult?.stages?.rbac;
 
+  if (connectionStatus === "offline") {
+    return <OfflineState />;
+  }
+
+  if (connectionStatus === "checking" && !diagnosticResult) {
+    return <OverviewSkeleton />;
+  }
+
   return (
     <div className="flex-1 overflow-y-auto p-5 space-y-5 select-none cyber-grid">
+      {/* Degraded Warning Banner */}
+      {connectionStatus === "degraded" && (
+        <ErrorBanner
+          message="Cluster connectivity is operating in degraded mode. Some network probes or RBAC checks reported issues."
+          actionLabel="Re-run Diagnostics"
+          onAction={() => diagnoseContext()}
+        />
+      )}
+
       {/* 1. Ambient Glass Hero Banner */}
       <div className="relative overflow-hidden p-5 rounded-2xl glass-panel border border-white/10 shadow-2xl">
         {/* Ambient Gradient Glows */}

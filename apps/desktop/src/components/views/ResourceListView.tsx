@@ -24,6 +24,7 @@ import {
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { useClusterStore } from "@/stores/clusterStore";
+import { TableSkeleton, ErrorState, EmptyState } from "@/components/ui";
 
 interface ResourceListViewProps {
   resourceType: string;
@@ -64,6 +65,17 @@ export function ResourceListView({ resourceType }: ResourceListViewProps) {
   const [selectedItems, setSelectedItems] = React.useState<Set<string>>(new Set());
   const [sortField, setSortField] = React.useState<keyof MockResourceItem>("name");
   const [sortAsc, setSortAsc] = React.useState(true);
+  const [isLoading, setIsLoading] = React.useState(false);
+  const [isError, setIsError] = React.useState(false);
+
+  const handleRefresh = () => {
+    setIsLoading(true);
+    setIsError(false);
+    setTimeout(() => {
+      setIsLoading(false);
+      toast.success(`Refreshed ${resourceType} list`);
+    }, 500);
+  };
 
   // Filter items
   const filteredItems = MOCK_PODS.filter((item) => {
@@ -211,11 +223,12 @@ export function ResourceListView({ resourceType }: ResourceListViewProps) {
           <span className="font-mono text-[11px]">{sortedItems.length} items</span>
           <div className="h-3 w-[1px] bg-white/10" />
           <button
-            onClick={() => toast.info(`Refreshed ${resourceType} list`)}
+            onClick={handleRefresh}
+            disabled={isLoading}
             className="p-1.5 rounded-lg hover:bg-white/[0.08] text-[var(--muted)] hover:text-[var(--foreground)] transition-colors cursor-pointer"
             title="Refresh list"
           >
-            <RefreshCw className="w-3.5 h-3.5" />
+            <RefreshCw className={cn("w-3.5 h-3.5", isLoading && "animate-spin text-[var(--accent)]")} />
           </button>
         </div>
       </div>
@@ -259,9 +272,21 @@ export function ResourceListView({ resourceType }: ResourceListViewProps) {
         </div>
       )}
 
-      {/* High-Density Enterprise Table */}
-      <div className="flex-1 overflow-auto">
-        <table className="w-full text-left text-xs border-collapse">
+      {/* Table Body or Loading/Error States */}
+      {isError ? (
+        <ErrorState
+          title={`Failed to load ${resourceType}`}
+          message={`Unable to connect to the Kubernetes cluster to query ${resourceType.toLowerCase()}.`}
+          code="ERR_RESOURCE_QUERY_FAILED"
+          onRetry={handleRefresh}
+        />
+      ) : isLoading ? (
+        <div className="flex-1 overflow-auto">
+          <TableSkeleton rows={9} />
+        </div>
+      ) : (
+        <div className="flex-1 overflow-auto">
+          <table className="w-full text-left text-xs border-collapse">
           <thead className="sticky top-0 bg-[var(--surface)]/95 backdrop-blur-md border-b border-white/10 text-[10px] font-semibold text-[var(--muted)] uppercase tracking-wider z-10 select-none font-mono">
             <tr>
               <th className="py-2.5 px-3 w-8 text-center">
@@ -404,13 +429,30 @@ export function ResourceListView({ resourceType }: ResourceListViewProps) {
         </table>
 
         {sortedItems.length === 0 && (
-          <div className="py-16 text-center text-xs text-[var(--muted)] space-y-2">
-            <AlertCircle className="w-8 h-8 text-[var(--muted)] mx-auto opacity-50" />
-            <p className="font-medium text-[var(--foreground)]">No matching {resourceType.toLowerCase()} found</p>
-            <p className="text-[11px]">Try adjusting your search query or status filter.</p>
-          </div>
+          <EmptyState
+            variant={search || statusFilter !== "all" ? "search" : "empty"}
+            title={search || statusFilter !== "all" ? "No Matching Resources" : `No ${resourceType} Found`}
+            description={
+              search || statusFilter !== "all"
+                ? `No ${resourceType.toLowerCase()} matched your filter criteria "${search || statusFilter}".`
+                : `Namespace "${selectedNamespaces}" currently contains no ${resourceType.toLowerCase()}.`
+            }
+            action={
+              search || statusFilter !== "all"
+                ? {
+                    label: "Clear Filters",
+                    icon: <RefreshCw className="w-3.5 h-3.5" />,
+                    onClick: () => {
+                      setSearch("");
+                      setStatusFilter("all");
+                    },
+                  }
+                : undefined
+            }
+          />
         )}
       </div>
+      )}
 
       {/* Footer Status Bar with Pagination */}
       <div className="h-8 border-t border-[var(--border)] px-4 flex items-center justify-between text-[11px] text-[var(--muted)] bg-[var(--surface)] shrink-0">

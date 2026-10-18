@@ -22,11 +22,22 @@ import {
 import { useClusterStore, SelectedResource } from "@/stores/clusterStore";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
+import { InspectorSkeleton, NotFoundState } from "@/components/ui";
 
 export function ResourceInspectorDrawer() {
   const { isInspectorOpen, selectedResource, closeInspector } = useClusterStore();
   const [activeTab, setActiveTab] = React.useState<"overview" | "containers" | "conditions" | "events" | "yaml">("overview");
   const [copied, setCopied] = React.useState(false);
+  const [isLoading, setIsLoading] = React.useState(false);
+
+  // Trigger brief shimmer loading on resource inspection
+  React.useEffect(() => {
+    if (isInspectorOpen && selectedResource) {
+      setIsLoading(true);
+      const timer = setTimeout(() => setIsLoading(false), 300);
+      return () => clearTimeout(timer);
+    }
+  }, [isInspectorOpen, selectedResource?.name, selectedResource?.namespace]);
 
   // Close on Escape key
   React.useEffect(() => {
@@ -40,6 +51,24 @@ export function ResourceInspectorDrawer() {
   }, [isInspectorOpen, closeInspector]);
 
   if (!isInspectorOpen || !selectedResource) return null;
+
+  if (selectedResource.status === "NotFound") {
+    return (
+      <div className="fixed inset-y-0 right-0 z-50 w-full max-w-xl glass-panel border-l border-white/10 shadow-2xl flex flex-col select-none animate-in slide-in-from-right duration-200 backdrop-blur-xl">
+        <div className="h-14 border-b border-white/10 px-4 flex items-center justify-between shrink-0 bg-black/30">
+          <span className="text-xs font-semibold text-[var(--foreground)] font-mono">Resource Not Found</span>
+          <button onClick={closeInspector} className="p-1.5 rounded-lg hover:bg-white/[0.08] text-[var(--muted)] hover:text-white transition-colors cursor-pointer">
+            <X className="w-4 h-4" />
+          </button>
+        </div>
+        <NotFoundState
+          resourceKind={selectedResource.kind}
+          resourceName={selectedResource.name}
+          message="This resource was terminated or no longer exists in the current namespace."
+        />
+      </div>
+    );
+  }
 
   const mockYaml = `apiVersion: v1
 kind: ${selectedResource.kind}
@@ -138,11 +167,17 @@ status:
             <Terminal className="w-4 h-4" />
           </button>
           <button
-            onClick={() => toast.info(`Restarting ${selectedResource.kind}: ${selectedResource.name}`)}
+            onClick={() => {
+              setIsLoading(true);
+              setTimeout(() => {
+                setIsLoading(false);
+                toast.success(`Refreshed ${selectedResource.name}`);
+              }, 350);
+            }}
             className="p-1.5 rounded-lg hover:bg-white/[0.08] text-[var(--muted)] hover:text-white transition-colors cursor-pointer"
-            title="Restart Resource"
+            title="Refresh Resource Details"
           >
-            <RotateCw className="w-4 h-4" />
+            <RotateCw className={cn("w-4 h-4", isLoading && "animate-spin text-[var(--accent)]")} />
           </button>
           <div className="h-4 w-[1px] bg-white/10 mx-1" />
           <button
@@ -173,8 +208,11 @@ status:
         ))}
       </div>
 
-      {/* Tab Content */}
-      <div className="flex-1 overflow-y-auto p-4 space-y-4">
+      {/* Tab Content or Loading Skeleton */}
+      {isLoading ? (
+        <InspectorSkeleton />
+      ) : (
+        <div className="flex-1 overflow-y-auto p-4 space-y-4">
         {activeTab === "overview" && (
           <div className="space-y-4 text-xs">
             {/* Meta Key-Value Grid */}
@@ -322,6 +360,7 @@ status:
           </div>
         )}
       </div>
+      )}
     </div>
   );
 }
