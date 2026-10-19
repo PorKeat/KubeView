@@ -20,6 +20,10 @@ import type {
   PodEventsResult,
   PodYamlResult,
   ClusterOverviewResult,
+  DetectedContextInfo,
+  DetectSystemConfigsResult,
+  ImportDetectedContextItem,
+  ImportDetectedContextsParams,
 } from "@kubeview/contracts";
 import { invokeRpc, listenNotification } from "@/lib/ipc";
 
@@ -57,7 +61,7 @@ interface ClusterState {
   isInspectorOpen: boolean;
   isLoading: boolean;
   isKubeconfigModalOpen: boolean;
-  kubeconfigModalTab: "browse" | "paste" | "manage";
+  kubeconfigModalTab: "auto" | "browse" | "paste" | "manage";
   splashDismissed: boolean;
 
   // Real cluster overview & pods telemetry
@@ -66,6 +70,10 @@ interface ClusterState {
   pods: PodSummary[];
   totalPodsCount: number;
   isPodsLoading: boolean;
+
+  // OS Auto-Detected Kubeconfig Contexts
+  detectedSystemConfigs: DetectedContextInfo[];
+  isDetectingConfigs: boolean;
 
   // Action modals for Pods
   logsModalPod: { name: string; namespace: string; container?: string } | null;
@@ -102,10 +110,12 @@ interface ClusterState {
   setServerInfo: (version: string, latency: number) => void;
   openInspector: (resource: SelectedResource) => void;
   closeInspector: () => void;
-  openKubeconfigModal: (tab?: "browse" | "paste" | "manage") => void;
+  openKubeconfigModal: (tab?: "auto" | "browse" | "paste" | "manage") => void;
   closeKubeconfigModal: () => void;
   setSplashDismissed: (dismissed: boolean) => void;
   importKubeconfig: (params: ImportKubeconfigParams) => Promise<ImportKubeconfigResult>;
+  detectSystemConfigs: () => Promise<DetectedContextInfo[]>;
+  importDetectedContexts: (contexts: ImportDetectedContextItem[]) => Promise<ImportKubeconfigResult>;
   deleteContext: (contextName: string) => Promise<void>;
   clearAllContexts: () => Promise<void>;
   initEventListener: () => Promise<() => void>;
@@ -134,6 +144,9 @@ export const useClusterStore = create<ClusterState>((set, get) => ({
   pods: [],
   totalPodsCount: 0,
   isPodsLoading: false,
+
+  detectedSystemConfigs: [],
+  isDetectingConfigs: false,
 
   logsModalPod: null,
   execModalPod: null,
@@ -441,6 +454,41 @@ export const useClusterStore = create<ClusterState>((set, get) => ({
       }
       set({ isLoading: false });
       throw new Error("Kubeconfig import returned unconfirmed status");
+    } catch (err) {
+      set({ isLoading: false });
+      throw err;
+    }
+  },
+
+  detectSystemConfigs: async () => {
+    set({ isDetectingConfigs: true });
+    try {
+      const res = await invokeRpc<DetectSystemConfigsResult>("clusters.detectSystemConfigs");
+      const list = res?.contexts || [];
+      set({ detectedSystemConfigs: list, isDetectingConfigs: false });
+      return list;
+    } catch (err) {
+      console.warn("[ClusterStore] Failed to detect system kubeconfigs:", err);
+      set({ detectedSystemConfigs: [], isDetectingConfigs: false });
+      return [];
+    }
+  },
+
+  importDetectedContexts: async (contexts: ImportDetectedContextItem[]) => {
+    set({ isLoading: true });
+    try {
+      const res = await invokeRpc<ImportKubeconfigResult>("clusters.importDetected", { contexts });
+      if (res && res.success) {
+        await get().loadContexts();
+        await get().detectSystemConfigs();
+        if (res.activeContext) {
+          await get().switchContext(res.activeContext);
+        }
+        set({ isKubeconfigModalOpen: false, isLoading: false });
+        return res;
+      }
+      set({ isLoading: false });
+      throw new Error("Import failed to confirm context registration");
     } catch (err) {
       set({ isLoading: false });
       throw err;

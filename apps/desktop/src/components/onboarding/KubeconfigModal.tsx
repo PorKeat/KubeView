@@ -21,8 +21,12 @@ import {
   CheckSquare,
   Square,
   Info,
+  Sparkles,
+  RotateCw,
+  Compass,
 } from "lucide-react";
 import { useClusterStore, ClusterContextInfo } from "@/stores/clusterStore";
+import type { DetectedContextInfo } from "@kubeview/contracts";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 
@@ -48,11 +52,27 @@ export function KubeconfigModal() {
     switchContext,
     deleteContext,
     clearAllContexts,
+    detectedSystemConfigs,
+    isDetectingConfigs,
+    detectSystemConfigs,
+    importDetectedContexts,
   } = useClusterStore();
 
-  const [activeTab, setActiveTab] = React.useState<"browse" | "paste" | "manage">(
+  const [activeTab, setActiveTab] = React.useState<"auto" | "browse" | "paste" | "manage">(
     kubeconfigModalTab || "browse"
   );
+  const [selectedDetected, setSelectedDetected] = React.useState<Set<string>>(new Set());
+
+  // Auto detect system configs when modal opens
+  React.useEffect(() => {
+    if (isKubeconfigModalOpen) {
+      detectSystemConfigs().then((detected) => {
+        if (detected && detected.length > 0 && availableContexts.length === 0 && (!kubeconfigModalTab || kubeconfigModalTab === "browse")) {
+          setActiveTab("auto");
+        }
+      });
+    }
+  }, [isKubeconfigModalOpen, detectSystemConfigs, availableContexts.length, kubeconfigModalTab]);
 
   // Sync tab with store state when opened
   React.useEffect(() => {
@@ -368,6 +388,41 @@ export function KubeconfigModal() {
     }
   };
 
+  const toggleSelectAllDetected = () => {
+    const nonImported = detectedSystemConfigs.filter((c) => !c.isImported);
+    if (selectedDetected.size === nonImported.length && nonImported.length > 0) {
+      setSelectedDetected(new Set());
+    } else {
+      setSelectedDetected(new Set(nonImported.map((c) => c.contextName)));
+    }
+  };
+
+  const handleImportDetected = async (specificContext?: DetectedContextInfo) => {
+    const toImport = specificContext
+      ? [{ contextName: specificContext.contextName, filePath: specificContext.filePath }]
+      : detectedSystemConfigs
+          .filter((c) => selectedDetected.has(c.contextName))
+          .map((c) => ({ contextName: c.contextName, filePath: c.filePath }));
+
+    if (toImport.length === 0) return;
+
+    setIsSubmitting(true);
+    setErrorMsg(null);
+    try {
+      const res = await importDetectedContexts(toImport);
+      toast.success(
+        `Successfully imported ${res.importedContexts.length} cluster context(s)! Connected to '${res.activeContext}'`
+      );
+      setSelectedDetected(new Set());
+    } catch (err: any) {
+      console.error("Import error:", err);
+      setErrorMsg(err.message || "Failed to import detected cluster");
+      toast.error(`Import failed: ${err.message || "Unknown error"}`);
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
   const getProviderBadge = (provider: ClusterContextInfo["provider"]) => {
     switch (provider) {
       case "kind":
@@ -421,6 +476,27 @@ export function KubeconfigModal() {
 
           {/* Navigation Tabs */}
           <div className="flex items-center gap-2 px-6 pt-3 border-b border-[var(--border)] bg-black/[0.02] dark:bg-white/[0.02] select-none">
+            <button
+              onClick={() => {
+                setActiveTab("auto");
+                setErrorMsg(null);
+              }}
+              className={cn(
+                "flex items-center gap-2 px-3 py-2 text-xs font-semibold border-b-2 transition-all cursor-pointer",
+                activeTab === "auto"
+                  ? "border-[#F08A42] text-[#F08A42]"
+                  : "border-transparent text-[var(--muted)] hover:text-[var(--foreground)]"
+              )}
+            >
+              <Sparkles className="w-3.5 h-3.5" />
+              <span>Auto-Detected (~/.kube)</span>
+              {detectedSystemConfigs.length > 0 && (
+                <span className="px-1.5 py-0.2 text-[10px] rounded-full bg-[#F08A42]/20 text-[#F08A42] font-mono font-medium">
+                  {detectedSystemConfigs.length}
+                </span>
+              )}
+            </button>
+
             <button
               onClick={() => {
                 setActiveTab("browse");
@@ -488,9 +564,194 @@ export function KubeconfigModal() {
               </div>
             )}
 
+            {/* TAB 0: AUTO-DETECTED OS KUBECONFIGS */}
+            {activeTab === "auto" && (
+              <div className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <h4 className="text-xs font-bold text-[var(--foreground)] uppercase tracking-wider flex items-center gap-1.5">
+                      <Sparkles className="w-3.5 h-3.5 text-[#F08A42]" />
+                      <span>Auto-Detected System Clusters</span>
+                    </h4>
+                    <p className="text-[11px] text-[var(--muted)] mt-0.5">
+                      Discovered from standard OS locations: <code>~/.kube/config</code>, <code>~/.kube/kubeconfig</code>, <code>$KUBECONFIG</code>. Select which clusters you want to add to KubeView.
+                    </p>
+                  </div>
+                  <button
+                    onClick={() => detectSystemConfigs()}
+                    disabled={isDetectingConfigs}
+                    className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg border border-[var(--border)] hover:bg-[var(--surface-hover)] text-xs text-[var(--muted)] hover:text-[var(--foreground)] transition-colors cursor-pointer shrink-0"
+                  >
+                    <RotateCw className={cn("w-3.5 h-3.5", isDetectingConfigs && "animate-spin text-[#F08A42]")} />
+                    <span>Re-Scan</span>
+                  </button>
+                </div>
+
+                {isDetectingConfigs ? (
+                  <div className="py-12 flex flex-col items-center justify-center text-[var(--muted)] gap-2">
+                    <RotateCw className="w-5 h-5 animate-spin text-[#F08A42]" />
+                    <span className="text-xs">Scanning OS directories for Kubernetes configurations...</span>
+                  </div>
+                ) : detectedSystemConfigs.length === 0 ? (
+                  <div className="py-12 border-2 border-dashed border-[var(--border)] rounded-2xl flex flex-col items-center justify-center text-center p-6 text-[var(--muted)]">
+                    <Info className="w-8 h-8 opacity-40 mb-2" />
+                    <span className="text-xs font-semibold text-[var(--foreground)]">No Kubeconfigs Found in ~/.kube</span>
+                    <p className="text-[11px] max-w-sm mt-1">
+                      We scanned standard OS paths but didn't find any kubeconfig files. You can manually pick files, select a folder, or paste YAML using the other tabs.
+                    </p>
+                  </div>
+                ) : (
+                  <div className="space-y-3">
+                    {/* Bulk Selection Header */}
+                    <div className="flex items-center justify-between px-1 text-xs">
+                      <button
+                        onClick={toggleSelectAllDetected}
+                        className="flex items-center gap-2 text-[var(--muted)] hover:text-[var(--foreground)] cursor-pointer"
+                      >
+                        {selectedDetected.size > 0 && selectedDetected.size === detectedSystemConfigs.filter((c) => !c.isImported).length ? (
+                          <CheckSquare className="w-4 h-4 text-[#F08A42]" />
+                        ) : selectedDetected.size > 0 ? (
+                          <CheckSquare className="w-4 h-4 text-[#F08A42] opacity-70" />
+                        ) : (
+                          <Square className="w-4 h-4" />
+                        )}
+                        <span>
+                          Select All ({detectedSystemConfigs.filter((c) => !c.isImported).length} Available)
+                        </span>
+                      </button>
+
+                      {selectedDetected.size > 0 && (
+                        <button
+                          onClick={() => handleImportDetected()}
+                          disabled={isSubmitting}
+                          className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[#F08A42] hover:bg-[#E07931] text-white text-xs font-semibold shadow-md transition-all cursor-pointer"
+                        >
+                          <Plus className="w-3.5 h-3.5" />
+                          <span>Import Selected ({selectedDetected.size})</span>
+                        </button>
+                      )}
+                    </div>
+
+                    {/* Cards List */}
+                    <div className="space-y-2">
+                      {detectedSystemConfigs.map((c) => {
+                        const isSelected = selectedDetected.has(c.contextName);
+                        return (
+                          <div
+                            key={`${c.filePath}-${c.contextName}`}
+                            onClick={() => {
+                              if (!c.isImported) {
+                                const next = new Set(selectedDetected);
+                                if (next.has(c.contextName)) {
+                                  next.delete(c.contextName);
+                                } else {
+                                  next.add(c.contextName);
+                                }
+                                setSelectedDetected(next);
+                              }
+                            }}
+                            className={cn(
+                              "p-3.5 rounded-xl border transition-all flex items-center justify-between gap-3",
+                              c.isImported
+                                ? "bg-slate-50/50 dark:bg-white/[0.02] border-[var(--border)] opacity-80"
+                                : isSelected
+                                ? "bg-[#F08A42]/10 border-[#F08A42] shadow-xs cursor-pointer"
+                                : "bg-slate-50 dark:bg-black/30 border border-[var(--border)] hover:border-slate-300 dark:hover:border-white/20 cursor-pointer"
+                            )}
+                          >
+                            <div className="flex items-center gap-3 min-w-0">
+                              <div className="shrink-0" onClick={(e) => e.stopPropagation()}>
+                                {c.isImported ? (
+                                  <div className="w-4 h-4 rounded bg-emerald-500/20 text-emerald-500 flex items-center justify-center">
+                                    <Check className="w-3 h-3" />
+                                  </div>
+                                ) : (
+                                  <input
+                                    type="checkbox"
+                                    checked={isSelected}
+                                    onChange={() => {
+                                      const next = new Set(selectedDetected);
+                                      if (next.has(c.contextName)) {
+                                        next.delete(c.contextName);
+                                      } else {
+                                        next.add(c.contextName);
+                                      }
+                                      setSelectedDetected(next);
+                                    }}
+                                    className="rounded accent-[#F08A42] cursor-pointer"
+                                  />
+                                )}
+                              </div>
+
+                              <div className="min-w-0">
+                                <div className="flex items-center gap-2">
+                                  <span className="font-mono font-bold text-xs text-[var(--foreground)] truncate">
+                                    {c.contextName}
+                                  </span>
+                                  {getProviderBadge(c.provider)}
+                                </div>
+                                <div className="flex items-center gap-2 text-[10px] text-[var(--muted)] font-mono mt-0.5 truncate">
+                                  <span>{c.server || "local server"}</span>
+                                  <span>•</span>
+                                  <span className="truncate" title={c.filePath}>
+                                    {c.filePath}
+                                  </span>
+                                </div>
+                              </div>
+                            </div>
+
+                            <div className="shrink-0 flex items-center gap-2" onClick={(e) => e.stopPropagation()}>
+                              {c.isImported ? (
+                                <span className="px-2.5 py-1 rounded-lg text-[11px] font-semibold bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20 flex items-center gap-1">
+                                  <Check className="w-3 h-3" />
+                                  <span>Added</span>
+                                </span>
+                              ) : (
+                                <button
+                                  onClick={() => handleImportDetected(c)}
+                                  disabled={isSubmitting}
+                                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[#F08A42] hover:bg-[#E07931] text-white text-xs font-semibold shadow-xs transition-all cursor-pointer"
+                                >
+                                  <span>Add to KubeView</span>
+                                  <ArrowRight className="w-3 h-3" />
+                                </button>
+                              )}
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
+
             {/* TAB 1: PICK FILES OR FOLDER */}
             {activeTab === "browse" && (
               <div className="space-y-4">
+                {/* Auto-detected banner hint */}
+                {detectedSystemConfigs.some((c) => !c.isImported) && (
+                  <div className="p-3.5 rounded-xl bg-[#F08A42]/10 border border-[#F08A42]/25 flex items-center justify-between text-xs">
+                    <div className="flex items-center gap-2.5">
+                      <Sparkles className="w-4 h-4 text-[#F08A42] shrink-0" />
+                      <div>
+                        <span className="font-semibold text-[var(--foreground)] block">
+                          Auto-Detected System Cluster Configs Found!
+                        </span>
+                        <span className="text-[11px] text-[var(--muted)]">
+                          Found {detectedSystemConfigs.filter((c) => !c.isImported).length} cluster context(s) in your standard OS paths (e.g. <code>~/.kube/kubeconfig</code>).
+                        </span>
+                      </div>
+                    </div>
+                    <button
+                      onClick={() => setActiveTab("auto")}
+                      className="px-3 py-1.5 rounded-lg bg-[#F08A42] hover:bg-[#E07931] text-white text-xs font-semibold shrink-0 cursor-pointer shadow-xs transition-all"
+                    >
+                      View & Select
+                    </button>
+                  </div>
+                )}
+
                 {/* Hidden Native File & Folder Inputs */}
                 <input
                   type="file"
@@ -928,6 +1189,31 @@ export function KubeconfigModal() {
               >
                 Cancel
               </button>
+
+              {activeTab === "auto" && (
+                <button
+                  type="button"
+                  onClick={() => handleImportDetected()}
+                  disabled={selectedDetected.size === 0 || isSubmitting}
+                  className="px-4 py-1.5 rounded-lg bg-[#F08A42] hover:bg-[#E07931] disabled:opacity-50 disabled:cursor-not-allowed text-white text-xs font-semibold shadow-md transition-all cursor-pointer flex items-center gap-2"
+                >
+                  {isSubmitting ? (
+                    <>
+                      <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                      <span>Importing...</span>
+                    </>
+                  ) : (
+                    <>
+                      <Sparkles className="w-3.5 h-3.5" />
+                      <span>
+                        {selectedDetected.size > 0
+                          ? `Import ${selectedDetected.size} Selected Cluster${selectedDetected.size > 1 ? "s" : ""}`
+                          : "Select Clusters to Import"}
+                      </span>
+                    </>
+                  )}
+                </button>
+              )}
 
               {activeTab === "browse" && (
                 <button

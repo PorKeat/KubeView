@@ -12,6 +12,7 @@ import {
   ShieldAlert,
   ArrowRight,
   UploadCloud,
+  Sparkles,
 } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
@@ -25,7 +26,13 @@ export function OfflineState({ className }: { className?: string }) {
     diagnoseContext,
     diagnosticResult,
     openKubeconfigModal,
+    detectedSystemConfigs,
+    detectSystemConfigs,
   } = useClusterStore();
+
+  React.useEffect(() => {
+    detectSystemConfigs();
+  }, [detectSystemConfigs]);
 
   const [isRetrying, setIsRetrying] = React.useState(false);
   const [copiedCmd, setCopiedCmd] = React.useState(false);
@@ -88,17 +95,39 @@ export function OfflineState({ className }: { className?: string }) {
               No Kubernetes Cluster Connected
             </h2>
             <p className="text-xs text-[var(--muted)] leading-relaxed max-w-sm mx-auto">
-              Your workspace is completely clean. Import your Kubeconfig file (with any extension or no extension), select a folder, or paste YAML to connect.
+              Your workspace is completely clean. Choose an auto-detected cluster from your system, import a file, or paste YAML to connect.
             </p>
           </div>
+
+          {detectedSystemConfigs.length > 0 && (
+            <div className="p-3 rounded-2xl bg-[#F08A42]/10 border border-[#F08A42]/25 flex items-center justify-between text-left">
+              <div className="flex items-center gap-2.5">
+                <Sparkles className="w-4 h-4 text-[#F08A42] shrink-0" />
+                <div>
+                  <span className="font-semibold text-xs text-[var(--foreground)] block">
+                    Found {detectedSystemConfigs.length} Cluster{detectedSystemConfigs.length > 1 ? "s" : ""} in ~/.kube
+                  </span>
+                  <span className="text-[10px] text-[var(--muted)] font-mono">
+                    {detectedSystemConfigs[0]?.contextName} ({detectedSystemConfigs[0]?.fileName})
+                  </span>
+                </div>
+              </div>
+              <button
+                onClick={() => openKubeconfigModal("auto")}
+                className="px-3 py-1.5 rounded-xl bg-[#F08A42] hover:bg-[#E07931] text-white text-xs font-semibold shadow-xs transition-all cursor-pointer shrink-0"
+              >
+                Add Cluster
+              </button>
+            </div>
+          )}
 
           <div className="flex items-center justify-center gap-3 pt-2">
             <button
               onClick={() => openKubeconfigModal("browse")}
-              className="px-5 py-2.5 rounded-xl bg-[#F08A42] hover:bg-[#E07931] text-white text-xs font-semibold shadow-md transition-all cursor-pointer flex items-center gap-2"
+              className="px-5 py-2.5 rounded-xl bg-[var(--surface-active)] hover:bg-[var(--surface-hover)] border border-[var(--border)] text-[var(--foreground)] text-xs font-semibold shadow-xs transition-all cursor-pointer flex items-center gap-2"
             >
-              <UploadCloud className="w-4 h-4" />
-              <span>Import Kubeconfig</span>
+              <UploadCloud className="w-4 h-4 text-[#F08A42]" />
+              <span>Browse File or Folder</span>
             </button>
 
             <button

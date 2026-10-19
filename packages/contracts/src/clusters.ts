@@ -80,3 +80,30 @@ export interface ImportKubeconfigResult {
   totalContexts: number;
 }
 
+export interface DetectedContextInfo {
+  contextName: string;
+  clusterName: string;
+  server: string;
+  user: string;
+  provider: ProviderType;
+  authType: AuthType;
+  filePath: string;
+  fileName: string;
+  isImported: boolean;
+}
+
+export interface DetectSystemConfigsResult {
+  discoveredFiles: string[];
+  contexts: DetectedContextInfo[];
+}
+
+export interface ImportDetectedContextItem {
+  contextName: string;
+  filePath: string;
+}
+
+export interface ImportDetectedContextsParams {
+  contexts: ImportDetectedContextItem[];
+}
+
+

@@ -120,6 +120,40 @@ func main() {
 		return res, nil
 	})
 
+	// Method: clusters.detectSystemConfigs
+	server.Register("clusters.detectSystemConfigs", func(params json.RawMessage) (interface{}, *ipc.RPCError) {
+		res, err := mgr.DetectSystemConfigs()
+		if err != nil {
+			return nil, &ipc.RPCError{
+				Code:    ipc.ErrCodeInternalError,
+				Message: fmt.Sprintf("Failed to detect system configs: %v", err),
+			}
+		}
+		server.Log("System config detection found %d files with %d contexts", len(res.DiscoveredFiles), len(res.Contexts))
+		return res, nil
+	})
+
+	// Method: clusters.importDetected
+	server.Register("clusters.importDetected", func(params json.RawMessage) (interface{}, *ipc.RPCError) {
+		var p cluster.ImportDetectedContextsParams
+		if err := json.Unmarshal(params, &p); err != nil {
+			return nil, &ipc.RPCError{
+				Code:    ipc.ErrCodeInvalidParams,
+				Message: fmt.Sprintf("Invalid params: %v", err),
+			}
+		}
+
+		res, err := mgr.ImportDetectedContexts(p)
+		if err != nil {
+			return nil, &ipc.RPCError{
+				Code:    ipc.ErrCodeInternalError,
+				Message: fmt.Sprintf("Failed to import detected contexts: %v", err),
+			}
+		}
+		server.Log("Successfully imported %d system contexts, active context: %s", len(res.ImportedContexts), res.ActiveContext)
+		return res, nil
+	})
+
 	// Method: clusters.deleteContext
 	server.Register("clusters.deleteContext", func(params json.RawMessage) (interface{}, *ipc.RPCError) {
 		var p struct {

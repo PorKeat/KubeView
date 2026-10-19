@@ -75,13 +75,20 @@ function mockRpcFallback<T>(method: string, _params?: unknown): T {
     } as T;
   }
 
-  if (method === "clusters.importKubeconfig") {
+  if (method === "clusters.importKubeconfig" || method === "clusters.importDetected") {
     return {
       success: true,
       importedContexts: [],
       activeContext: "",
       savedPath: "",
       totalContexts: 0,
+    } as T;
+  }
+
+  if (method === "clusters.detectSystemConfigs") {
+    return {
+      discoveredFiles: [],
+      contexts: [],
     } as T;
   }
 
