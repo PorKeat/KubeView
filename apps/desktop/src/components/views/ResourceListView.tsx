@@ -22,6 +22,7 @@ import {
   X,
   Layers,
   Box,
+  Globe,
 } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
@@ -50,6 +51,7 @@ export function ResourceListView({ resourceType }: ResourceListViewProps) {
     openDeleteConfirm,
     openBulkRestartConfirm,
     openBulkDeleteConfirm,
+    availableNamespaces,
     autoRefreshInterval,
     setAutoRefreshInterval,
     openKubeconfigModal,
@@ -151,15 +153,15 @@ export function ResourceListView({ resourceType }: ResourceListViewProps) {
     switch (status) {
       case "Running":
         return (
-          <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-emerald-500/15 text-emerald-700 dark:text-emerald-400 border border-emerald-500/25 shadow-xs">
-            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 shadow-[0_0_6px_#10b981]" />
+          <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-emerald-500/15 text-emerald-700 dark:text-emerald-400 border border-emerald-500/25">
+            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
             Running
           </span>
         );
       case "Pending":
       case "ContainerCreating":
         return (
-          <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-amber-500/15 text-amber-700 dark:text-amber-400 border border-amber-500/25 shadow-xs">
+          <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-amber-500/15 text-amber-700 dark:text-amber-400 border border-amber-500/25">
             <span className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-ping" />
             {status}
           </span>
@@ -174,8 +176,8 @@ export function ResourceListView({ resourceType }: ResourceListViewProps) {
         );
       default:
         return (
-          <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-rose-500/15 text-rose-700 dark:text-rose-400 border border-rose-500/25 shadow-xs">
-            <span className="w-1.5 h-1.5 rounded-full bg-rose-500 animate-pulse shadow-[0_0_6px_#ef4444]" />
+          <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-rose-500/15 text-rose-700 dark:text-rose-400 border border-rose-500/25">
+            <span className="w-1.5 h-1.5 rounded-full bg-rose-500 animate-pulse" />
             {status}
           </span>
         );
@@ -238,7 +240,7 @@ export function ResourceListView({ resourceType }: ResourceListViewProps) {
               className={cn(
                 "px-2.5 py-0.5 rounded-md text-[11px] font-medium transition-all flex items-center gap-1.5 cursor-pointer",
                 statusFilter === pill.id
-                  ? "bg-white dark:bg-white/[0.12] text-[var(--foreground)] dark:text-white font-semibold shadow-xs"
+                  ? "bg-white dark:bg-white/[0.12] text-[var(--foreground)] dark:text-white font-semibold"
                   : "text-[var(--muted)] hover:text-[var(--foreground)]"
               )}
             >
@@ -253,7 +255,7 @@ export function ResourceListView({ resourceType }: ResourceListViewProps) {
           {/* Auto Refresh Interval Dropdown */}
           <div className="flex items-center gap-1.5 px-2 py-0.5 rounded-lg border border-[var(--border)] bg-slate-100/70 dark:bg-black/20 text-[11px]">
             <span className="text-[var(--muted)] flex items-center gap-1 text-[10px]">
-              <span className={cn("w-1.5 h-1.5 rounded-full transition-all", autoRefreshInterval > 0 ? "bg-emerald-500 shadow-[0_0_6px_#10b981]" : "bg-[var(--muted)]/50")} />
+              <span className={cn("w-1.5 h-1.5 rounded-full transition-all", autoRefreshInterval > 0 ? "bg-emerald-500" : "bg-[var(--muted)]/50")} />
               <span>Auto:</span>
             </span>
             <select
@@ -300,7 +302,7 @@ export function ResourceListView({ resourceType }: ResourceListViewProps) {
                 });
                 openBulkRestartConfirm(list);
               }}
-              className="px-2.5 py-1 rounded bg-[var(--surface)] border border-[var(--border)] hover:bg-[var(--surface-hover)] text-xs font-medium flex items-center gap-1.5 transition-colors cursor-pointer shadow-2xs"
+              className="px-2.5 py-1 rounded bg-[var(--surface)] border border-[var(--border)] hover:bg-[var(--surface-hover)] text-xs font-medium flex items-center gap-1.5 transition-colors cursor-pointer"
             >
               <RotateCw className="w-3.5 h-3.5 text-cyan-500" />
               <span>Restart Workloads ({selectedItems.size})</span>
@@ -313,7 +315,7 @@ export function ResourceListView({ resourceType }: ResourceListViewProps) {
                 });
                 openBulkDeleteConfirm(list);
               }}
-              className="px-2.5 py-1 rounded bg-rose-500/10 border border-rose-500/20 text-rose-500 hover:bg-rose-500/20 text-xs font-medium flex items-center gap-1.5 transition-colors cursor-pointer shadow-2xs"
+              className="px-2.5 py-1 rounded bg-rose-500/10 border border-rose-500/20 text-rose-500 hover:bg-rose-500/20 text-xs font-medium flex items-center gap-1.5 transition-colors cursor-pointer"
             >
               <Trash2 className="w-3.5 h-3.5" />
               <span>Delete Selected ({selectedItems.size})</span>
@@ -335,7 +337,7 @@ export function ResourceListView({ resourceType }: ResourceListViewProps) {
       ) : (
         <div className="flex-1 overflow-y-auto overflow-x-auto min-h-0">
           <table className="w-full text-left text-xs border-collapse">
-            <thead className="sticky top-0 bg-[var(--surface)] z-10 border-b border-[var(--border)] shadow-xs">
+            <thead className="sticky top-0 bg-[var(--surface)] z-10 border-b border-[var(--border)]">
               <tr className="text-[11px] font-semibold text-[var(--muted)] uppercase tracking-wider h-8">
                 <th className="w-9 px-3 text-center">
                   <button
@@ -542,11 +544,41 @@ export function ResourceListView({ resourceType }: ResourceListViewProps) {
           {sortedItems.length === 0 && (
             <EmptyState
               variant={search || statusFilter !== "all" ? "search" : "empty"}
-              title={search || statusFilter !== "all" ? "No Matching Resources" : `No ${resourceType} Found`}
+              title={
+                search || statusFilter !== "all"
+                  ? `No ${resourceType.toLowerCase()} match filter "${search || statusFilter}"`
+                  : `No ${resourceType.toLowerCase()} scheduled in "${currentNamespace}"`
+              }
               description={
                 search || statusFilter !== "all"
-                  ? `No ${resourceType.toLowerCase()} matched your filter criteria "${search || statusFilter}".`
-                  : `Namespace "${currentNamespace}" currently contains no ${resourceType.toLowerCase()}.`
+                  ? `0 of ${totalPodsCount} ${resourceType.toLowerCase()} in ${currentNamespace === "all" ? "all namespaces" : `namespace "${currentNamespace}"`} match your active search or status criteria.`
+                  : `Namespace "${currentNamespace}" currently holds zero active workloads or running containers.`
+              }
+              scopeBadge={
+                search || statusFilter !== "all"
+                  ? search
+                    ? `Query: "${search}"`
+                    : `Status: ${statusFilter}`
+                  : `Namespace: ${currentNamespace}`
+              }
+              codeSnippet={
+                !search && statusFilter === "all"
+                  ? `kubectl run demo-app --image=nginx --namespace=${currentNamespace === "all" ? "default" : currentNamespace}`
+                  : undefined
+              }
+              suggestions={
+                !search && statusFilter === "all" && currentNamespace !== "all"
+                  ? availableNamespaces
+                      .filter((ns) => ns !== currentNamespace && ns !== "all")
+                      .slice(0, 4)
+                      .map((ns) => ({
+                        label: ns,
+                        onClick: () => {
+                          setCurrentNamespace(ns);
+                          loadPods(ns);
+                        },
+                      }))
+                  : undefined
               }
               action={
                 search || statusFilter !== "all"
@@ -556,6 +588,33 @@ export function ResourceListView({ resourceType }: ResourceListViewProps) {
                       onClick: () => {
                         setSearch("");
                         setStatusFilter("all");
+                      },
+                    }
+                  : {
+                      label: "View All Namespaces",
+                      icon: <Globe className="w-3.5 h-3.5" />,
+                      onClick: () => {
+                        setCurrentNamespace("all");
+                        loadPods("all");
+                      },
+                    }
+              }
+              secondaryAction={
+                !search && statusFilter === "all" && currentNamespace !== "default"
+                  ? {
+                      label: "Switch to default",
+                      onClick: () => {
+                        setCurrentNamespace("default");
+                        loadPods("default");
+                      },
+                    }
+                  : currentNamespace !== "all" && (search || statusFilter !== "all")
+                  ? {
+                      label: "Search All Namespaces",
+                      icon: <Globe className="w-3.5 h-3.5" />,
+                      onClick: () => {
+                        setCurrentNamespace("all");
+                        loadPods("all");
                       },
                     }
                   : undefined

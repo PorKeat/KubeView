@@ -16,6 +16,8 @@ import {
   Check,
   Activity,
   HardDrive,
+  LayoutGrid,
+  List,
 } from "lucide-react";
 import { useClusterStore } from "@/stores/clusterStore";
 import { useTabStore } from "@/stores/tabStore";
@@ -43,6 +45,7 @@ export function ClusterOverviewView() {
 
   const { openTab } = useTabStore();
   const [selectedNode, setSelectedNode] = React.useState<string | null>(null);
+  const [nodeViewMode, setNodeViewMode] = React.useState<"grid" | "table">("grid");
 
   React.useEffect(() => {
     if (connectionStatus === "connected" || connectionStatus === "degraded") {
@@ -81,7 +84,7 @@ export function ClusterOverviewView() {
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-2 border-b border-[var(--border)]/60">
         <div className="flex items-center gap-3.5 min-w-0">
           <div className="relative shrink-0">
-            <div className="w-10 h-10 rounded-xl bg-[var(--surface)] border border-[var(--border)] flex items-center justify-center shadow-xs">
+            <div className="w-10 h-10 rounded-xl bg-[var(--surface)] border border-[var(--border)] flex items-center justify-center">
               <Logo variant="mark" size="md" />
             </div>
             <span className="absolute -bottom-0.5 -right-0.5 flex h-2.5 w-2.5">
@@ -92,10 +95,10 @@ export function ClusterOverviewView() {
                 className={cn(
                   "relative inline-flex rounded-full h-2.5 w-2.5 border border-[var(--surface)]",
                   connectionStatus === "connected"
-                    ? "bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.6)]"
+                    ? "bg-emerald-500"
                     : connectionStatus === "checking"
-                    ? "bg-amber-400 shadow-[0_0_8px_rgba(245,158,11,0.6)]"
-                    : "bg-rose-500 shadow-[0_0_8px_rgba(239,68,68,0.6)]"
+                    ? "bg-amber-400"
+                    : "bg-rose-500"
                 )}
               />
             </span>
@@ -106,7 +109,7 @@ export function ClusterOverviewView() {
               <h1 className="text-lg font-bold text-[var(--foreground)] tracking-tight">
                 Cluster Overview
               </h1>
-              <span className="px-2.5 py-0.5 rounded-md text-xs font-mono font-medium bg-[var(--surface)] text-[var(--foreground)] border border-[var(--border)] shadow-xs">
+              <span className="px-2.5 py-0.5 rounded-md text-xs font-mono font-medium bg-[var(--surface)] text-[var(--foreground)] border border-[var(--border)]">
                 {currentContext || "default"}
               </span>
               <span
@@ -170,7 +173,7 @@ export function ClusterOverviewView() {
               toast.info(`Showing all ${clusterOverview?.totalPods ?? 0} pods across namespaces`);
             }}
             aria-label={`Browse all ${clusterOverview?.totalPods ?? 0} pods across namespaces`}
-            className="flex items-center gap-2 px-3.5 py-2 rounded-lg bg-[var(--surface)] hover:bg-[var(--surface-hover)] border border-[var(--border)] text-xs font-medium text-[var(--foreground)] transition-colors cursor-pointer shadow-xs hover:border-[var(--accent)]/40 focus-visible:ring-2 focus-visible:ring-[var(--accent)] focus-visible:outline-hidden"
+            className="flex items-center gap-2 px-3.5 py-2 rounded-lg bg-[var(--surface)] hover:bg-[var(--surface-hover)] border border-[var(--border)] text-xs font-medium text-[var(--foreground)] transition-colors cursor-pointer hover:border-[var(--accent)]/40 focus-visible:ring-2 focus-visible:ring-[var(--accent)] focus-visible:outline-hidden"
           >
             <Box className="w-4 h-4 text-[var(--muted)]" aria-hidden="true" />
             <span>Browse Pods ({clusterOverview?.totalPods ?? 0})</span>
@@ -183,7 +186,7 @@ export function ClusterOverviewView() {
               toast.success("Telemetry refreshed!");
             }}
             aria-label="Refresh cluster telemetry and diagnostics"
-            className="flex items-center gap-2 px-3.5 py-2 rounded-lg bg-[var(--accent)] hover:bg-[var(--accent-hover)] text-zinc-950 dark:text-zinc-950 text-xs font-semibold shadow-xs transition-colors cursor-pointer active:scale-[0.98] focus-visible:ring-2 focus-visible:ring-[var(--accent)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--background)] focus-visible:outline-hidden"
+            className="flex items-center gap-2 px-3.5 py-2 rounded-lg bg-[var(--accent)] hover:bg-[var(--accent-hover)] text-zinc-950 dark:text-zinc-950 text-xs font-semibold transition-colors cursor-pointer active:scale-[0.98] focus-visible:ring-2 focus-visible:ring-[var(--accent)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--background)] focus-visible:outline-hidden"
           >
             <RotateCw className="w-3.5 h-3.5" aria-hidden="true" />
             <span>Refresh</span>
@@ -194,7 +197,7 @@ export function ClusterOverviewView() {
       {/* 2. Unified Metric Strip (design-taste-frontend: Type-led KPIs, no redundant icon tiles, sentence-case) */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         {/* Card 1: CPU Capacity */}
-        <div className="group p-5 rounded-xl border border-[var(--border)] bg-[var(--surface)] flex flex-col justify-between space-y-3.5 shadow-2xs hover:border-[var(--accent)]/40 hover:bg-[var(--surface-hover)]/30 transition-all">
+        <div className="group p-5 rounded-xl border border-[var(--border)] bg-[var(--surface)] flex flex-col justify-between space-y-3.5 hover:border-[var(--accent)]/40 hover:bg-[var(--surface-hover)]/30 transition-all">
           <div className="flex items-center justify-between">
             <span className="text-xs font-medium text-[var(--muted)]">
               CPU Allocation
@@ -217,10 +220,10 @@ export function ClusterOverviewView() {
                 className={cn(
                   "h-full rounded-full transition-all duration-700 ease-out",
                   (clusterOverview?.cpuPercent ?? 0) > 85
-                    ? "bg-rose-500 shadow-[0_0_6px_rgba(239,68,68,0.5)]"
+                    ? "bg-rose-500"
                     : (clusterOverview?.cpuPercent ?? 0) > 70
-                    ? "bg-amber-500 shadow-[0_0_6px_rgba(245,158,11,0.5)]"
-                    : "bg-emerald-500 dark:bg-emerald-400 shadow-[0_0_6px_rgba(16,185,129,0.3)]"
+                    ? "bg-amber-500"
+                    : "bg-emerald-500 dark:bg-emerald-400"
                 )}
                 style={{ width: `${Math.min(100, clusterOverview?.cpuPercent ?? 0)}%` }}
               />
@@ -245,7 +248,7 @@ export function ClusterOverviewView() {
         </div>
 
         {/* Card 2: Memory Usage */}
-        <div className="group p-5 rounded-xl border border-[var(--border)] bg-[var(--surface)] flex flex-col justify-between space-y-3.5 shadow-2xs hover:border-[var(--accent)]/40 hover:bg-[var(--surface-hover)]/30 transition-all">
+        <div className="group p-5 rounded-xl border border-[var(--border)] bg-[var(--surface)] flex flex-col justify-between space-y-3.5 hover:border-[var(--accent)]/40 hover:bg-[var(--surface-hover)]/30 transition-all">
           <div className="flex items-center justify-between">
             <span className="text-xs font-medium text-[var(--muted)]">
               Memory Usage
@@ -268,10 +271,10 @@ export function ClusterOverviewView() {
                 className={cn(
                   "h-full rounded-full transition-all duration-700 ease-out",
                   (clusterOverview?.memoryPercent ?? 0) > 85
-                    ? "bg-rose-500 shadow-[0_0_6px_rgba(239,68,68,0.5)]"
+                    ? "bg-rose-500"
                     : (clusterOverview?.memoryPercent ?? 0) > 70
-                    ? "bg-amber-500 shadow-[0_0_6px_rgba(245,158,11,0.5)]"
-                    : "bg-emerald-500 dark:bg-emerald-400 shadow-[0_0_6px_rgba(16,185,129,0.3)]"
+                    ? "bg-amber-500"
+                    : "bg-emerald-500 dark:bg-emerald-400"
                 )}
                 style={{ width: `${Math.min(100, clusterOverview?.memoryPercent ?? 0)}%` }}
               />
@@ -313,7 +316,7 @@ export function ClusterOverviewView() {
               loadPods("all");
             }
           }}
-          className="group p-5 rounded-xl border border-[var(--border)] bg-[var(--surface)] flex flex-col justify-between space-y-3.5 shadow-2xs cursor-pointer hover:border-[var(--accent)]/40 hover:bg-[var(--surface-hover)]/40 focus-visible:ring-2 focus-visible:ring-[var(--accent)] focus-visible:outline-hidden transition-all"
+          className="group p-5 rounded-xl border border-[var(--border)] bg-[var(--surface)] flex flex-col justify-between space-y-3.5 cursor-pointer hover:border-[var(--accent)]/40 hover:bg-[var(--surface-hover)]/40 focus-visible:ring-2 focus-visible:ring-[var(--accent)] focus-visible:outline-hidden transition-all"
         >
           <div className="flex items-center justify-between">
             <span className="text-xs font-medium text-[var(--muted)]">
@@ -343,7 +346,7 @@ export function ClusterOverviewView() {
                     ? "bg-rose-500"
                     : (clusterOverview?.podPercent ?? 0) > 70
                     ? "bg-amber-500"
-                    : "bg-emerald-500 dark:bg-emerald-400 shadow-[0_0_6px_rgba(16,185,129,0.3)]"
+                    : "bg-emerald-500 dark:bg-emerald-400"
                 )}
                 style={{ width: `${Math.min(100, clusterOverview?.podPercent ?? 0)}%` }}
               />
@@ -365,7 +368,7 @@ export function ClusterOverviewView() {
         </div>
 
         {/* Card 4: Cluster Nodes */}
-        <div className="group p-5 rounded-xl border border-[var(--border)] bg-[var(--surface)] flex flex-col justify-between space-y-3.5 shadow-2xs hover:border-[var(--accent)]/40 hover:bg-[var(--surface-hover)]/30 transition-all">
+        <div className="group p-5 rounded-xl border border-[var(--border)] bg-[var(--surface)] flex flex-col justify-between space-y-3.5 hover:border-[var(--accent)]/40 hover:bg-[var(--surface-hover)]/30 transition-all">
           <div className="flex items-center justify-between">
             <span className="text-xs font-medium text-[var(--muted)]">
               Cluster Nodes
@@ -391,8 +394,8 @@ export function ClusterOverviewView() {
                 className={cn(
                   "h-full rounded-full transition-all duration-700 ease-out",
                   clusterOverview?.totalNodes && clusterOverview.readyNodes === clusterOverview.totalNodes
-                    ? "bg-emerald-500 dark:bg-emerald-400 shadow-[0_0_6px_rgba(16,185,129,0.3)]"
-                    : "bg-amber-500 shadow-[0_0_6px_rgba(245,158,11,0.5)]"
+                    ? "bg-emerald-500 dark:bg-emerald-400"
+                    : "bg-amber-500"
                 )}
                 style={{
                   width: `${
@@ -422,65 +425,291 @@ export function ClusterOverviewView() {
           </div>
         </div>
       </div>
-
-      {/* 3. Node Topology (Infrastructure Surfaces with Semantic Health) */}
+      {/* 3. Node Topology & Infrastructure (Architectural Layout & Typographic Rhythm) */}
       <div className="space-y-3.5">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2.5">
-            <Server className="w-4 h-4 text-[var(--accent)]" />
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-1 border-b border-[var(--border)]/60">
+          <div className="flex items-center gap-2.5 flex-wrap">
+            <Server className="w-4 h-4 text-[var(--accent)]" aria-hidden="true" />
             <h2 className="text-sm font-semibold text-[var(--foreground)] tracking-tight">
               Cluster Nodes & Infrastructure
             </h2>
-            <span className="text-xs font-mono px-2.5 py-0.5 rounded-full bg-[var(--surface)] border border-[var(--border)] text-[var(--muted)]">
+            <span className="text-xs font-mono px-2 py-0.5 rounded-md bg-[var(--surface)] border border-[var(--border)] text-[var(--foreground)] font-medium">
               {nodes.length} {nodes.length === 1 ? "Node" : "Nodes"}
             </span>
+            <span className="text-xs text-[var(--muted)] font-mono hidden md:inline">
+              &bull; {clusterOverview?.readyNodes ?? 0} Ready &bull; {clusterOverview?.totalCpuCores ?? 0} Cores Total &bull; {clusterOverview?.totalMemoryGiB ?? 0} GiB Total
+            </span>
           </div>
-          <span className="text-xs text-[var(--muted)] font-mono hidden sm:inline">Click node to inspect telemetry</span>
+
+          {/* High-Craft Segmented View Switcher: Matrix Cards vs Telemetry Table */}
+          <div className="flex items-center gap-2 self-start sm:self-auto">
+            <span className="text-[11px] text-[var(--muted)] font-mono hidden lg:inline">
+              Click node to inspect
+            </span>
+            <div className="flex items-center p-0.5 rounded-lg border border-[var(--border)] bg-[var(--surface)] text-xs font-mono" role="group" aria-label="Nodes view mode">
+              <button
+                type="button"
+                onClick={() => setNodeViewMode("grid")}
+                aria-pressed={nodeViewMode === "grid"}
+                aria-label="Grid layout view"
+                className={cn(
+                  "px-2.5 py-1 rounded-md flex items-center gap-1.5 transition-all cursor-pointer focus-visible:ring-2 focus-visible:ring-[var(--accent)] focus-visible:outline-hidden",
+                  nodeViewMode === "grid"
+                    ? "bg-[var(--surface-active)] text-[var(--foreground)] font-semibold"
+                    : "text-[var(--muted)] hover:text-[var(--foreground)]"
+                )}
+                title="Matrix Grid View"
+              >
+                <LayoutGrid className="w-3.5 h-3.5" aria-hidden="true" />
+                <span>Grid</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => setNodeViewMode("table")}
+                aria-pressed={nodeViewMode === "table"}
+                aria-label="Table telemetry view"
+                className={cn(
+                  "px-2.5 py-1 rounded-md flex items-center gap-1.5 transition-all cursor-pointer focus-visible:ring-2 focus-visible:ring-[var(--accent)] focus-visible:outline-hidden",
+                  nodeViewMode === "table"
+                    ? "bg-[var(--surface-active)] text-[var(--foreground)] font-semibold"
+                    : "text-[var(--muted)] hover:text-[var(--foreground)]"
+                )}
+                title="Telemetry Table View"
+              >
+                <List className="w-3.5 h-3.5" aria-hidden="true" />
+                <span>Table</span>
+              </button>
+            </div>
+          </div>
         </div>
 
         {nodes.length === 0 ? (
-          <div className="p-8 rounded-xl border border-[var(--border)] bg-[var(--surface)] text-center text-xs text-[var(--muted)]">
+          <div className="p-8 rounded-xl border border-[var(--border)] bg-[var(--surface)] text-center text-xs text-[var(--muted)] font-mono">
             No Kubernetes nodes detected for the active context.
           </div>
-        ) : (
+        ) : nodeViewMode === "grid" ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {nodes.map((n) => {
               const isSelected = selectedNode === n.name;
               const isNodeReady = n.status === "Ready";
+              const openNodeInspector = () => {
+                setSelectedNode(n.name);
+                openInspector({
+                  kind: "Node",
+                  name: n.name,
+                  namespace: "Cluster Scope",
+                  status: n.status,
+                  data: {
+                    name: n.name,
+                    status: n.status,
+                    roles: n.roles,
+                    version: n.version,
+                    architecture: n.architecture,
+                    internalIP: n.internalIP,
+                    cpuCapacity: n.cpuCapacity,
+                    cpuAllocated: n.cpuAllocated,
+                    cpuPercent: `${n.cpuPercent}%`,
+                    memoryCapacity: n.memoryCapacity,
+                    memoryAllocated: n.memoryAllocated,
+                    memoryPercent: `${n.memoryPercent}%`,
+                    podCapacity: n.podCapacity,
+                    activePods: n.activePods,
+                  },
+                });
+              };
+
               return (
                 <div
                   key={n.name}
                   role="button"
                   tabIndex={0}
                   aria-label={`Node ${n.name}, status ${n.status}, CPU ${n.cpuPercent} percent, memory ${n.memoryPercent} percent. Press Enter or Space to inspect.`}
-                  onClick={() => {
-                    setSelectedNode(n.name);
-                    openInspector({
-                      kind: "Node",
-                      name: n.name,
-                      namespace: "Cluster Scope",
-                      status: n.status,
-                      data: {
-                        name: n.name,
-                        status: n.status,
-                        roles: n.roles,
-                        version: n.version,
-                        architecture: n.architecture,
-                        internalIP: n.internalIP,
-                        cpuCapacity: n.cpuCapacity,
-                        cpuAllocated: n.cpuAllocated,
-                        cpuPercent: `${n.cpuPercent}%`,
-                        memoryCapacity: n.memoryCapacity,
-                        memoryAllocated: n.memoryAllocated,
-                        memoryPercent: `${n.memoryPercent}%`,
-                        podCapacity: n.podCapacity,
-                        activePods: n.activePods,
-                      },
-                    });
-                  }}
+                  onClick={openNodeInspector}
                   onKeyDown={(e) => {
                     if (e.key === "Enter" || e.key === " ") {
                       e.preventDefault();
+                      openNodeInspector();
+                    }
+                  }}
+                  className={cn(
+                    "group p-5 rounded-xl border transition-all cursor-pointer bg-[var(--surface)] space-y-4 focus-visible:ring-2 focus-visible:ring-[var(--accent)] focus-visible:outline-hidden",
+                    isSelected
+                      ? "border-[var(--accent)] ring-1 ring-[var(--accent)]/30 bg-[var(--surface-hover)]"
+                      : "border-[var(--border)] hover:border-[var(--accent)]/40 hover:bg-[var(--surface-hover)]/40"
+                  )}
+                >
+                  {/* Top Line: Host Identity & Status */}
+                  <div className="flex items-center justify-between gap-2">
+                    <div className="flex items-center gap-2 min-w-0">
+                      <span
+                        className={cn(
+                          "w-2 h-2 rounded-full shrink-0",
+                          isNodeReady ? "bg-emerald-500" : "bg-rose-500"
+                        )}
+                        aria-hidden="true"
+                      />
+                      <span className="font-mono font-bold text-xs text-[var(--foreground)] truncate tracking-tight">
+                        {n.name}
+                      </span>
+                      <span
+                        className={cn(
+                          "px-1.5 py-0.2 rounded text-[10px] font-mono font-semibold",
+                          isNodeReady
+                            ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20"
+                            : "bg-rose-500/10 text-rose-600 dark:text-rose-400 border border-rose-500/20"
+                        )}
+                      >
+                        {n.status}
+                      </span>
+                    </div>
+
+                    <span className="px-2 py-0.5 rounded text-[10px] font-mono font-medium bg-[var(--surface-hover)] text-[var(--muted)] border border-[var(--border)] shrink-0">
+                      {n.roles.join(", ") || "worker"}
+                    </span>
+                  </div>
+
+                  {/* Architecture & Host Specs Bar */}
+                  <div className="text-[11px] font-mono text-[var(--muted)] flex items-center justify-between pb-1 border-b border-[var(--border)]/60">
+                    <span>IP: <strong className="text-[var(--foreground)] font-medium">{n.internalIP}</strong></span>
+                    <span>{n.architecture} &bull; {n.version}</span>
+                  </div>
+
+                  {/* Precision Allocation Rhythms */}
+                  <div className="space-y-3 font-mono text-xs">
+                    {/* CPU Barometer */}
+                    <div className="space-y-1">
+                      <div className="flex items-center justify-between text-[11px]">
+                        <span className="text-[var(--muted)]">CPU Allocation</span>
+                        <div className="flex items-center gap-1.5">
+                          <span className="text-[var(--foreground)] tabular-nums">{n.cpuAllocated}</span>
+                          <span className="text-[var(--muted)]">/ {n.cpuCapacity}</span>
+                          <span
+                            className={cn(
+                              "font-semibold text-xs ml-1",
+                              n.cpuPercent > 85
+                                ? "text-rose-600 dark:text-rose-400"
+                                : n.cpuPercent > 70
+                                ? "text-amber-600 dark:text-amber-400"
+                                : "text-[var(--foreground)]"
+                            )}
+                          >
+                            {n.cpuPercent}%
+                          </span>
+                        </div>
+                      </div>
+                      <div className="w-full h-1 bg-black/10 dark:bg-white/10 rounded-full overflow-hidden">
+                        <div
+                          className={cn(
+                            "h-full rounded-full transition-all duration-500",
+                            n.cpuPercent > 85
+                              ? "bg-rose-500"
+                              : n.cpuPercent > 70
+                              ? "bg-amber-500"
+                              : "bg-emerald-500 dark:bg-emerald-400"
+                          )}
+                          style={{ width: `${Math.min(100, n.cpuPercent)}%` }}
+                        />
+                      </div>
+                    </div>
+
+                    {/* Memory Barometer */}
+                    <div className="space-y-1">
+                      <div className="flex items-center justify-between text-[11px]">
+                        <span className="text-[var(--muted)]">Memory Reserved</span>
+                        <div className="flex items-center gap-1.5">
+                          <span className="text-[var(--foreground)] tabular-nums">{n.memoryAllocated}</span>
+                          <span className="text-[var(--muted)]">/ {n.memoryCapacity}</span>
+                          <span
+                            className={cn(
+                              "font-semibold text-xs ml-1",
+                              n.memoryPercent > 85
+                                ? "text-rose-600 dark:text-rose-400"
+                                : n.memoryPercent > 70
+                                ? "text-amber-600 dark:text-amber-400"
+                                : "text-[var(--foreground)]"
+                            )}
+                          >
+                            {n.memoryPercent}%
+                          </span>
+                        </div>
+                      </div>
+                      <div className="w-full h-1 bg-black/10 dark:bg-white/10 rounded-full overflow-hidden">
+                        <div
+                          className={cn(
+                            "h-full rounded-full transition-all duration-500",
+                            n.memoryPercent > 85
+                              ? "bg-rose-500"
+                              : n.memoryPercent > 70
+                              ? "bg-amber-500"
+                              : "bg-emerald-500 dark:bg-emerald-400"
+                          )}
+                          style={{ width: `${Math.min(100, n.memoryPercent)}%` }}
+                        />
+                      </div>
+                    </div>
+
+                    {/* Pod Density Barometer */}
+                    <div className="space-y-1">
+                      <div className="flex items-center justify-between text-[11px]">
+                        <span className="text-[var(--muted)]">Pod Density</span>
+                        <div className="flex items-center gap-1.5">
+                          <span className="text-emerald-600 dark:text-emerald-400 font-semibold tabular-nums">{n.activePods}</span>
+                          <span className="text-[var(--muted)]">/ {n.podCapacity}</span>
+                          <span className="font-medium text-[var(--foreground)] text-xs ml-1">
+                            {n.podCapacity ? Math.round((n.activePods * 100) / n.podCapacity) : 0}%
+                          </span>
+                        </div>
+                      </div>
+                      <div className="w-full h-1 bg-black/10 dark:bg-white/10 rounded-full overflow-hidden">
+                        <div
+                          className="h-full rounded-full bg-emerald-500 dark:bg-emerald-400 transition-all duration-500"
+                          style={{
+                            width: `${
+                              n.podCapacity ? Math.min(100, (n.activePods * 100) / n.podCapacity) : 0
+                            }%`,
+                          }}
+                        />
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Card Footer: Affordance & Telemetry */}
+                  <div className="pt-3 border-t border-[var(--border)]/70 flex items-center justify-between text-[11px] text-[var(--muted)] font-mono">
+                    <span className="flex items-center gap-1.5 text-emerald-600 dark:text-emerald-400 font-medium">
+                      <ShieldCheck className="w-3.5 h-3.5" aria-hidden="true" />
+                      <span>Ready</span>
+                    </span>
+                    <span className="text-[var(--accent)] font-medium flex items-center gap-1 group-hover:translate-x-0.5 transition-transform">
+                      Inspect Node &rarr;
+                    </span>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        ) : (
+          /* High-Density Topology Telemetry Table View */
+          <div className="border border-[var(--border)] rounded-xl overflow-hidden bg-[var(--surface)]">
+            <div className="overflow-x-auto">
+              <table className="w-full text-left font-mono text-xs">
+                <thead>
+                  <tr className="border-b border-[var(--border)] bg-[var(--surface-hover)]/40 text-[11px] text-[var(--muted)]">
+                    <th className="py-2.5 px-3.5 font-medium">Node</th>
+                    <th className="py-2.5 px-3 font-medium">Status</th>
+                    <th className="py-2.5 px-3 font-medium">Roles</th>
+                    <th className="py-2.5 px-3 font-medium">Internal IP</th>
+                    <th className="py-2.5 px-3 font-medium text-right">CPU Alloc</th>
+                    <th className="py-2.5 px-3 font-medium text-right">RAM Alloc</th>
+                    <th className="py-2.5 px-3 font-medium text-right">Pods</th>
+                    <th className="py-2.5 px-3 font-medium">Version</th>
+                    <th className="py-2.5 px-3.5 font-medium text-right">Action</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-[var(--border)]/60">
+                  {nodes.map((n) => {
+                    const isSelected = selectedNode === n.name;
+                    const isNodeReady = n.status === "Ready";
+                    const openNodeInspector = () => {
                       setSelectedNode(n.name);
                       openInspector({
                         kind: "Node",
@@ -504,94 +733,79 @@ export function ClusterOverviewView() {
                           activePods: n.activePods,
                         },
                       });
-                    }
-                  }}
-                  className={cn(
-                    "p-4.5 rounded-xl border transition-all cursor-pointer bg-[var(--surface)] space-y-3.5 shadow-xs focus-visible:ring-2 focus-visible:ring-[var(--accent)] focus-visible:outline-hidden",
-                    isSelected
-                      ? "border-[var(--accent)] ring-1 ring-[var(--accent)]/40 bg-[var(--surface-hover)]"
-                      : "border-[var(--border)] hover:border-[var(--accent)]/40 hover:bg-[var(--surface-hover)]/50"
-                  )}
-                >
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2.5 min-w-0">
-                      <span
+                    };
+
+                    return (
+                      <tr
+                        key={n.name}
+                        onClick={openNodeInspector}
+                        tabIndex={0}
+                        onKeyDown={(e) => {
+                          if (e.key === "Enter" || e.key === " ") {
+                            e.preventDefault();
+                            openNodeInspector();
+                          }
+                        }}
                         className={cn(
-                          "w-2.5 h-2.5 rounded-full shrink-0",
-                          isNodeReady
-                            ? "bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.5)]"
-                            : "bg-rose-500 shadow-[0_0_8px_rgba(239,68,68,0.5)]"
+                          "hover:bg-[var(--surface-hover)] transition-colors cursor-pointer focus-visible:ring-2 focus-visible:ring-[var(--accent)] focus-visible:outline-hidden",
+                          isSelected && "bg-[var(--surface-hover)] font-semibold"
                         )}
-                        aria-hidden="true"
-                      />
-                      <span className="font-mono font-semibold text-xs text-[var(--foreground)] truncate">
-                        {n.name}
-                      </span>
-                    </div>
-                    <span className="px-2 py-0.5 rounded text-[10px] font-mono font-medium bg-[var(--surface-hover)] text-[var(--muted)] border border-[var(--border)] shrink-0">
-                      {n.roles.join(", ") || "worker"}
-                    </span>
-                  </div>
-
-                  <div className="space-y-2.5 text-xs text-[var(--muted)] font-mono">
-                    <div>
-                      <div className="flex justify-between text-[11px] mb-1">
-                        <span>CPU: {n.cpuAllocated}</span>
-                        <span className={cn(
-                          "font-semibold",
-                          n.cpuPercent > 85 ? "text-rose-600 dark:text-rose-400" : n.cpuPercent > 70 ? "text-amber-600 dark:text-amber-400" : "text-[var(--foreground)]"
-                        )}>
-                          {n.cpuPercent}%
-                        </span>
-                      </div>
-                      <div className="w-full h-1.5 bg-black/5 dark:bg-white/10 rounded-full overflow-hidden">
-                        <div
-                          className={cn(
-                            "h-full rounded-full transition-all duration-500",
-                            n.cpuPercent > 85
-                              ? "bg-rose-500 shadow-[0_0_6px_rgba(239,68,68,0.5)]"
-                              : n.cpuPercent > 70
-                              ? "bg-amber-500 shadow-[0_0_6px_rgba(245,158,11,0.5)]"
-                              : "bg-emerald-500 dark:bg-emerald-400 shadow-[0_0_6px_rgba(16,185,129,0.3)]"
-                          )}
-                          style={{ width: `${Math.min(100, n.cpuPercent)}%` }}
-                        />
-                      </div>
-                    </div>
-
-                    <div>
-                      <div className="flex justify-between text-[11px] mb-1">
-                        <span>Memory: {n.memoryAllocated}</span>
-                        <span className={cn(
-                          "font-semibold",
-                          n.memoryPercent > 85 ? "text-rose-600 dark:text-rose-400" : n.memoryPercent > 70 ? "text-amber-600 dark:text-amber-400" : "text-[var(--foreground)]"
-                        )}>
-                          {n.memoryPercent}%
-                        </span>
-                      </div>
-                      <div className="w-full h-1.5 bg-black/5 dark:bg-white/10 rounded-full overflow-hidden">
-                        <div
-                          className={cn(
-                            "h-full rounded-full transition-all duration-500",
-                            n.memoryPercent > 85
-                              ? "bg-rose-500 shadow-[0_0_6px_rgba(239,68,68,0.5)]"
-                              : n.memoryPercent > 70
-                              ? "bg-amber-500 shadow-[0_0_6px_rgba(245,158,11,0.5)]"
-                              : "bg-emerald-500 dark:bg-emerald-400 shadow-[0_0_6px_rgba(16,185,129,0.3)]"
-                          )}
-                          style={{ width: `${Math.min(100, n.memoryPercent)}%` }}
-                        />
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="pt-2.5 border-t border-[var(--border)]/70 flex items-center justify-between text-[11px] text-[var(--muted)] font-mono">
-                    <span>{n.version} &bull; {n.architecture}</span>
-                    <span className="text-emerald-600 dark:text-emerald-400 font-medium">{n.activePods} Pods</span>
-                  </div>
-                </div>
-              );
-            })}
+                      >
+                        <td className="py-3 px-3.5">
+                          <div className="flex items-center gap-2">
+                            <span
+                              className={cn(
+                                "w-2 h-2 rounded-full shrink-0",
+                                isNodeReady ? "bg-emerald-500" : "bg-rose-500"
+                              )}
+                              aria-hidden="true"
+                            />
+                            <span className="font-bold text-[var(--foreground)]">{n.name}</span>
+                          </div>
+                        </td>
+                        <td className="py-3 px-3">
+                          <span
+                            className={cn(
+                              "px-2 py-0.5 rounded-full text-[10px] font-semibold",
+                              isNodeReady
+                                ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20"
+                                : "bg-rose-500/10 text-rose-600 dark:text-rose-400 border border-rose-500/20"
+                            )}
+                          >
+                            {n.status}
+                          </span>
+                        </td>
+                        <td className="py-3 px-3 text-[var(--muted)]">
+                          {n.roles.join(", ") || "worker"}
+                        </td>
+                        <td className="py-3 px-3 text-[var(--foreground)]">{n.internalIP}</td>
+                        <td className="py-3 px-3 text-right">
+                          <span className="tabular-nums text-[var(--foreground)] font-medium">
+                            {n.cpuAllocated} ({n.cpuPercent}%)
+                          </span>
+                        </td>
+                        <td className="py-3 px-3 text-right">
+                          <span className="tabular-nums text-[var(--foreground)] font-medium">
+                            {n.memoryAllocated} ({n.memoryPercent}%)
+                          </span>
+                        </td>
+                        <td className="py-3 px-3 text-right">
+                          <span className="tabular-nums text-emerald-600 dark:text-emerald-400 font-medium">
+                            {n.activePods} / {n.podCapacity}
+                          </span>
+                        </td>
+                        <td className="py-3 px-3 text-[var(--muted)]">{n.version}</td>
+                        <td className="py-3 px-3.5 text-right">
+                          <span className="text-[var(--accent)] hover:underline text-xs font-sans font-medium">
+                            Inspect &rarr;
+                          </span>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
           </div>
         )}
       </div>
@@ -599,7 +813,7 @@ export function ClusterOverviewView() {
       {/* 4. Split Grid: Diagnostics & Warning Incidents (Strict Semantic Success/Warning/Error/Info) */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
         {/* Left: 4-Stage Diagnostic Security Pipeline */}
-        <div className="p-5 rounded-xl border border-[var(--border)] bg-[var(--surface)] flex flex-col justify-between space-y-4 shadow-xs">
+        <div className="p-5 rounded-xl border border-[var(--border)] bg-[var(--surface)] flex flex-col justify-between space-y-4">
           <div>
             <div className="flex items-center justify-between pb-3.5 border-b border-[var(--border)]/70">
               <div className="flex items-center gap-2.5">
@@ -742,7 +956,7 @@ export function ClusterOverviewView() {
         </div>
 
         {/* Right: Live Cluster Events & Warning Stream (Semantic Warning & Error Mapping) */}
-        <div className="p-5 rounded-xl border border-[var(--border)] bg-[var(--surface)] flex flex-col justify-between space-y-4 shadow-2xs">
+        <div className="p-5 rounded-xl border border-[var(--border)] bg-[var(--surface)] flex flex-col justify-between space-y-4">
           <div>
             <div className="flex items-center justify-between pb-3.5 border-b border-[var(--border)]/70">
               <div className="flex items-center gap-2.5">
