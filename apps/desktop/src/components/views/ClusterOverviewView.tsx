@@ -89,7 +89,7 @@ export function ClusterOverviewView() {
             </div>
             <span className="absolute -bottom-0.5 -right-0.5 flex h-2.5 w-2.5">
               {connectionStatus === "connected" && (
-                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
+                <span className="animate-ping motion-reduce:animate-none absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
               )}
               <span
                 className={cn(
@@ -126,7 +126,7 @@ export function ClusterOverviewView() {
                   className={cn(
                     "w-1.5 h-1.5 rounded-full",
                     connectionStatus === "connected"
-                      ? "bg-emerald-500 animate-pulse"
+                      ? "bg-emerald-500 animate-pulse motion-reduce:animate-none"
                       : connectionStatus === "checking"
                       ? "bg-amber-400"
                       : "bg-rose-500"
@@ -173,7 +173,7 @@ export function ClusterOverviewView() {
               toast.info(`Showing all ${clusterOverview?.totalPods ?? 0} pods across namespaces`);
             }}
             aria-label={`Browse all ${clusterOverview?.totalPods ?? 0} pods across namespaces`}
-            className="flex items-center gap-2 px-3.5 py-2 rounded-lg bg-[var(--surface)] hover:bg-[var(--surface-hover)] border border-[var(--border)] text-xs font-medium text-[var(--foreground)] transition-colors cursor-pointer hover:border-[var(--accent)]/40 focus-visible:ring-2 focus-visible:ring-[var(--accent)] focus-visible:outline-hidden"
+            className="flex items-center gap-2 px-3.5 py-2 rounded-lg bg-[var(--surface)] hover:bg-[var(--surface-hover)] border border-[var(--border)] text-xs font-medium text-[var(--foreground)] transition-colors cursor-pointer hover:border-[var(--accent)]/40 active:scale-[0.98] motion-reduce:transition-none motion-reduce:transform-none motion-reduce:active:scale-100 focus-visible:ring-2 focus-visible:ring-[var(--accent)] focus-visible:outline-hidden"
           >
             <Box className="w-4 h-4 text-[var(--muted)]" aria-hidden="true" />
             <span>Browse Pods ({clusterOverview?.totalPods ?? 0})</span>
@@ -186,7 +186,7 @@ export function ClusterOverviewView() {
               toast.success("Telemetry refreshed!");
             }}
             aria-label="Refresh cluster telemetry and diagnostics"
-            className="flex items-center gap-2 px-3.5 py-2 rounded-lg bg-[var(--accent)] hover:bg-[var(--accent-hover)] text-zinc-950 dark:text-zinc-950 text-xs font-semibold transition-colors cursor-pointer active:scale-[0.98] focus-visible:ring-2 focus-visible:ring-[var(--accent)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--background)] focus-visible:outline-hidden"
+            className="flex items-center gap-2 px-3.5 py-2 rounded-lg bg-[var(--accent)] hover:bg-[var(--accent-hover)] text-zinc-950 dark:text-zinc-950 text-xs font-semibold transition-colors cursor-pointer active:scale-[0.98] motion-reduce:transition-none motion-reduce:transform-none motion-reduce:active:scale-100 focus-visible:ring-2 focus-visible:ring-[var(--accent)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--background)] focus-visible:outline-hidden"
           >
             <RotateCw className="w-3.5 h-3.5" aria-hidden="true" />
             <span>Refresh</span>
@@ -194,10 +194,10 @@ export function ClusterOverviewView() {
         </div>
       </div>
 
-      {/* 2. Unified Metric Strip (design-taste-frontend: Type-led KPIs, no redundant icon tiles, sentence-case) */}
+      {/* 2. Unified Metric Strip (design-taste-frontend: Type-led KPIs, subtle micro-interactions & tactile active state) */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         {/* Card 1: CPU Capacity */}
-        <div className="group p-5 rounded-xl border border-[var(--border)] bg-[var(--surface)] flex flex-col justify-between space-y-3.5 hover:border-[var(--accent)]/40 hover:bg-[var(--surface-hover)]/30 transition-all">
+        <div className="group p-5 rounded-xl border border-[var(--border)] bg-[var(--surface)] flex flex-col justify-between space-y-3.5 hover:border-[var(--accent)]/50 hover:bg-[var(--surface-hover)]/40 hover:-translate-y-0.5 active:scale-[0.985] active:translate-y-0 transition-all duration-150 ease-out motion-reduce:transition-none motion-reduce:transform-none motion-reduce:hover:translate-y-0 motion-reduce:active:scale-100">
           <div className="flex items-center justify-between">
             <span className="text-xs font-medium text-[var(--muted)]">
               CPU Allocation
@@ -214,11 +214,11 @@ export function ClusterOverviewView() {
               </span>
             </div>
 
-            {/* Semantic Utilization Progress Bar */}
-            <div className="w-full h-1.5 bg-black/5 dark:bg-white/10 rounded-full overflow-hidden mt-3">
+            {/* Semantic Utilization Progress Bar with Micro-Expansion on Hover */}
+            <div className="w-full h-1.5 bg-black/5 dark:bg-white/10 rounded-full overflow-hidden mt-3 group-hover:h-2 transition-all duration-200 ease-out motion-reduce:transition-none">
               <div
                 className={cn(
-                  "h-full rounded-full transition-all duration-700 ease-out",
+                  "h-full rounded-full transition-all duration-700 ease-out motion-reduce:transition-none",
                   (clusterOverview?.cpuPercent ?? 0) > 85
                     ? "bg-rose-500"
                     : (clusterOverview?.cpuPercent ?? 0) > 70
@@ -248,7 +248,7 @@ export function ClusterOverviewView() {
         </div>
 
         {/* Card 2: Memory Usage */}
-        <div className="group p-5 rounded-xl border border-[var(--border)] bg-[var(--surface)] flex flex-col justify-between space-y-3.5 hover:border-[var(--accent)]/40 hover:bg-[var(--surface-hover)]/30 transition-all">
+        <div className="group p-5 rounded-xl border border-[var(--border)] bg-[var(--surface)] flex flex-col justify-between space-y-3.5 hover:border-[var(--accent)]/50 hover:bg-[var(--surface-hover)]/40 hover:-translate-y-0.5 active:scale-[0.985] active:translate-y-0 transition-all duration-150 ease-out motion-reduce:transition-none motion-reduce:transform-none motion-reduce:hover:translate-y-0 motion-reduce:active:scale-100">
           <div className="flex items-center justify-between">
             <span className="text-xs font-medium text-[var(--muted)]">
               Memory Usage
@@ -265,11 +265,11 @@ export function ClusterOverviewView() {
               </span>
             </div>
 
-            {/* Semantic Utilization Progress Bar */}
-            <div className="w-full h-1.5 bg-black/5 dark:bg-white/10 rounded-full overflow-hidden mt-3">
+            {/* Semantic Utilization Progress Bar with Micro-Expansion on Hover */}
+            <div className="w-full h-1.5 bg-black/5 dark:bg-white/10 rounded-full overflow-hidden mt-3 group-hover:h-2 transition-all duration-200 ease-out motion-reduce:transition-none">
               <div
                 className={cn(
-                  "h-full rounded-full transition-all duration-700 ease-out",
+                  "h-full rounded-full transition-all duration-700 ease-out motion-reduce:transition-none",
                   (clusterOverview?.memoryPercent ?? 0) > 85
                     ? "bg-rose-500"
                     : (clusterOverview?.memoryPercent ?? 0) > 70
@@ -316,7 +316,7 @@ export function ClusterOverviewView() {
               loadPods("all");
             }
           }}
-          className="group p-5 rounded-xl border border-[var(--border)] bg-[var(--surface)] flex flex-col justify-between space-y-3.5 cursor-pointer hover:border-[var(--accent)]/40 hover:bg-[var(--surface-hover)]/40 focus-visible:ring-2 focus-visible:ring-[var(--accent)] focus-visible:outline-hidden transition-all"
+          className="group p-5 rounded-xl border border-[var(--border)] bg-[var(--surface)] flex flex-col justify-between space-y-3.5 cursor-pointer hover:border-[var(--accent)]/50 hover:bg-[var(--surface-hover)]/40 hover:-translate-y-0.5 active:scale-[0.985] active:translate-y-0 focus-visible:ring-2 focus-visible:ring-[var(--accent)] focus-visible:outline-hidden transition-all duration-150 ease-out motion-reduce:transition-none motion-reduce:transform-none motion-reduce:hover:translate-y-0 motion-reduce:active:scale-100"
         >
           <div className="flex items-center justify-between">
             <span className="text-xs font-medium text-[var(--muted)]">
@@ -337,11 +337,11 @@ export function ClusterOverviewView() {
               </span>
             </div>
 
-            {/* Semantic Pod Utilization Bar */}
-            <div className="w-full h-1.5 bg-black/5 dark:bg-white/10 rounded-full overflow-hidden mt-3">
+            {/* Semantic Pod Utilization Bar with Micro-Expansion on Hover */}
+            <div className="w-full h-1.5 bg-black/5 dark:bg-white/10 rounded-full overflow-hidden mt-3 group-hover:h-2 transition-all duration-200 ease-out motion-reduce:transition-none">
               <div
                 className={cn(
-                  "h-full rounded-full transition-all duration-700 ease-out",
+                  "h-full rounded-full transition-all duration-700 ease-out motion-reduce:transition-none",
                   (clusterOverview?.podPercent ?? 0) > 85
                     ? "bg-rose-500"
                     : (clusterOverview?.podPercent ?? 0) > 70
@@ -361,14 +361,34 @@ export function ClusterOverviewView() {
                 {clusterOverview?.pendingPods ?? 0}
               </strong> Pending
             </span>
-            <span className="text-[var(--accent)] font-medium flex items-center gap-0.5 group-hover:translate-x-0.5 transition-transform font-sans">
+            <span className="text-[var(--accent)] font-medium flex items-center gap-0.5 group-hover:translate-x-1 transition-transform duration-150 ease-out motion-reduce:transform-none motion-reduce:transition-none font-sans">
               View &rarr;
             </span>
           </div>
         </div>
 
         {/* Card 4: Cluster Nodes */}
-        <div className="group p-5 rounded-xl border border-[var(--border)] bg-[var(--surface)] flex flex-col justify-between space-y-3.5 hover:border-[var(--accent)]/40 hover:bg-[var(--surface-hover)]/30 transition-all">
+        <div
+          role="button"
+          tabIndex={0}
+          aria-label={`Cluster nodes: ${clusterOverview?.readyNodes ?? 0} of ${clusterOverview?.totalNodes ?? 0} ready. Press Enter or Space to view nodes.`}
+          onClick={() => {
+            const el = document.getElementById("cluster-nodes-section");
+            if (el) {
+              el.scrollIntoView({ behavior: "smooth" });
+            }
+          }}
+          onKeyDown={(e) => {
+            if (e.key === "Enter" || e.key === " ") {
+              e.preventDefault();
+              const el = document.getElementById("cluster-nodes-section");
+              if (el) {
+                el.scrollIntoView({ behavior: "smooth" });
+              }
+            }
+          }}
+          className="group p-5 rounded-xl border border-[var(--border)] bg-[var(--surface)] flex flex-col justify-between space-y-3.5 cursor-pointer hover:border-[var(--accent)]/50 hover:bg-[var(--surface-hover)]/40 hover:-translate-y-0.5 active:scale-[0.985] active:translate-y-0 focus-visible:ring-2 focus-visible:ring-[var(--accent)] focus-visible:outline-hidden transition-all duration-150 ease-out motion-reduce:transition-none motion-reduce:transform-none motion-reduce:hover:translate-y-0 motion-reduce:active:scale-100"
+        >
           <div className="flex items-center justify-between">
             <span className="text-xs font-medium text-[var(--muted)]">
               Cluster Nodes
@@ -388,11 +408,11 @@ export function ClusterOverviewView() {
               </span>
             </div>
 
-            {/* Semantic Node Availability Bar */}
-            <div className="w-full h-1.5 bg-black/5 dark:bg-white/10 rounded-full overflow-hidden mt-3">
+            {/* Semantic Node Availability Bar with Micro-Expansion on Hover */}
+            <div className="w-full h-1.5 bg-black/5 dark:bg-white/10 rounded-full overflow-hidden mt-3 group-hover:h-2 transition-all duration-200 ease-out motion-reduce:transition-none">
               <div
                 className={cn(
-                  "h-full rounded-full transition-all duration-700 ease-out",
+                  "h-full rounded-full transition-all duration-700 ease-out motion-reduce:transition-none",
                   clusterOverview?.totalNodes && clusterOverview.readyNodes === clusterOverview.totalNodes
                     ? "bg-emerald-500 dark:bg-emerald-400"
                     : "bg-amber-500"
@@ -410,23 +430,15 @@ export function ClusterOverviewView() {
 
           <div className="pt-3 border-t border-[var(--border)]/70 flex items-center justify-between text-xs text-[var(--muted)] font-mono">
             <span>{availableNamespaces.length} Namespaces</span>
-            <span
-              className={cn(
-                "font-semibold",
-                latencyMs < 300
-                  ? "text-emerald-600 dark:text-emerald-400"
-                  : latencyMs < 800
-                  ? "text-amber-600 dark:text-amber-400"
-                  : "text-rose-600 dark:text-rose-400"
-              )}
-            >
-              {latencyMs}ms Ping
+            <span className="text-[var(--accent)] font-medium flex items-center gap-0.5 group-hover:translate-x-1 transition-transform duration-150 ease-out motion-reduce:transform-none motion-reduce:transition-none font-sans">
+              Inspect &rarr;
             </span>
           </div>
         </div>
       </div>
+
       {/* 3. Node Topology & Infrastructure (Architectural Layout & Typographic Rhythm) */}
-      <div className="space-y-3.5">
+      <div id="cluster-nodes-section" className="space-y-3.5 scroll-mt-6">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-1 border-b border-[var(--border)]/60">
           <div className="flex items-center gap-2.5 flex-wrap">
             <Server className="w-4 h-4 text-[var(--accent)]" aria-hidden="true" />
@@ -453,7 +465,7 @@ export function ClusterOverviewView() {
                 aria-pressed={nodeViewMode === "grid"}
                 aria-label="Grid layout view"
                 className={cn(
-                  "px-2.5 py-1 rounded-md flex items-center gap-1.5 transition-all cursor-pointer focus-visible:ring-2 focus-visible:ring-[var(--accent)] focus-visible:outline-hidden",
+                  "px-2.5 py-1 rounded-md flex items-center gap-1.5 transition-all duration-150 motion-reduce:transition-none motion-reduce:transform-none cursor-pointer focus-visible:ring-2 focus-visible:ring-[var(--accent)] focus-visible:outline-hidden",
                   nodeViewMode === "grid"
                     ? "bg-[var(--surface-active)] text-[var(--foreground)] font-semibold"
                     : "text-[var(--muted)] hover:text-[var(--foreground)]"
@@ -469,7 +481,7 @@ export function ClusterOverviewView() {
                 aria-pressed={nodeViewMode === "table"}
                 aria-label="Table telemetry view"
                 className={cn(
-                  "px-2.5 py-1 rounded-md flex items-center gap-1.5 transition-all cursor-pointer focus-visible:ring-2 focus-visible:ring-[var(--accent)] focus-visible:outline-hidden",
+                  "px-2.5 py-1 rounded-md flex items-center gap-1.5 transition-all duration-150 motion-reduce:transition-none motion-reduce:transform-none cursor-pointer focus-visible:ring-2 focus-visible:ring-[var(--accent)] focus-visible:outline-hidden",
                   nodeViewMode === "table"
                     ? "bg-[var(--surface-active)] text-[var(--foreground)] font-semibold"
                     : "text-[var(--muted)] hover:text-[var(--foreground)]"
@@ -532,10 +544,13 @@ export function ClusterOverviewView() {
                     }
                   }}
                   className={cn(
-                    "group p-5 rounded-xl border transition-all cursor-pointer bg-[var(--surface)] space-y-4 focus-visible:ring-2 focus-visible:ring-[var(--accent)] focus-visible:outline-hidden",
+                    "group p-5 rounded-xl border cursor-pointer bg-[var(--surface)] space-y-4",
+                    "transition-all duration-150 ease-out hover:-translate-y-0.5 active:scale-[0.99] active:translate-y-0",
+                    "motion-reduce:transition-none motion-reduce:transform-none motion-reduce:hover:translate-y-0 motion-reduce:active:scale-100",
+                    "focus-visible:ring-2 focus-visible:ring-[var(--accent)] focus-visible:outline-hidden",
                     isSelected
                       ? "border-[var(--accent)] ring-1 ring-[var(--accent)]/30 bg-[var(--surface-hover)]"
-                      : "border-[var(--border)] hover:border-[var(--accent)]/40 hover:bg-[var(--surface-hover)]/40"
+                      : "border-[var(--border)] hover:border-[var(--accent)]/50 hover:bg-[var(--surface-hover)]/40"
                   )}
                 >
                   {/* Top Line: Host Identity & Status */}
@@ -600,7 +615,7 @@ export function ClusterOverviewView() {
                       <div className="w-full h-1 bg-black/10 dark:bg-white/10 rounded-full overflow-hidden">
                         <div
                           className={cn(
-                            "h-full rounded-full transition-all duration-500",
+                            "h-full rounded-full transition-all duration-500 motion-reduce:transition-none",
                             n.cpuPercent > 85
                               ? "bg-rose-500"
                               : n.cpuPercent > 70
@@ -636,7 +651,7 @@ export function ClusterOverviewView() {
                       <div className="w-full h-1 bg-black/10 dark:bg-white/10 rounded-full overflow-hidden">
                         <div
                           className={cn(
-                            "h-full rounded-full transition-all duration-500",
+                            "h-full rounded-full transition-all duration-500 motion-reduce:transition-none",
                             n.memoryPercent > 85
                               ? "bg-rose-500"
                               : n.memoryPercent > 70
@@ -662,7 +677,7 @@ export function ClusterOverviewView() {
                       </div>
                       <div className="w-full h-1 bg-black/10 dark:bg-white/10 rounded-full overflow-hidden">
                         <div
-                          className="h-full rounded-full bg-emerald-500 dark:bg-emerald-400 transition-all duration-500"
+                          className="h-full rounded-full bg-emerald-500 dark:bg-emerald-400 transition-all duration-500 motion-reduce:transition-none"
                           style={{
                             width: `${
                               n.podCapacity ? Math.min(100, (n.activePods * 100) / n.podCapacity) : 0
@@ -679,7 +694,7 @@ export function ClusterOverviewView() {
                       <ShieldCheck className="w-3.5 h-3.5" aria-hidden="true" />
                       <span>Ready</span>
                     </span>
-                    <span className="text-[var(--accent)] font-medium flex items-center gap-1 group-hover:translate-x-0.5 transition-transform">
+                    <span className="text-[var(--accent)] font-medium flex items-center gap-1 group-hover:translate-x-1 transition-transform duration-150 ease-out motion-reduce:transform-none motion-reduce:transition-none font-sans">
                       Inspect Node &rarr;
                     </span>
                   </div>
@@ -747,7 +762,7 @@ export function ClusterOverviewView() {
                           }
                         }}
                         className={cn(
-                          "hover:bg-[var(--surface-hover)] transition-colors cursor-pointer focus-visible:ring-2 focus-visible:ring-[var(--accent)] focus-visible:outline-hidden",
+                          "hover:bg-[var(--surface-hover)] transition-colors duration-150 motion-reduce:transition-none cursor-pointer focus-visible:ring-2 focus-visible:ring-[var(--accent)] focus-visible:outline-hidden",
                           isSelected && "bg-[var(--surface-hover)] font-semibold"
                         )}
                       >
@@ -833,7 +848,7 @@ export function ClusterOverviewView() {
                   {netStage?.passed ? (
                     <CheckCircle2 className="w-4 h-4 text-emerald-500 shrink-0" />
                   ) : connectionStatus === "checking" ? (
-                    <RotateCw className="w-4 h-4 text-amber-500 animate-spin shrink-0" />
+                    <RotateCw className="w-4 h-4 text-amber-500 animate-spin motion-reduce:animate-none shrink-0" />
                   ) : (
                     <AlertTriangle className="w-4 h-4 text-rose-500 shrink-0" />
                   )}
@@ -857,7 +872,7 @@ export function ClusterOverviewView() {
                   {authStage?.passed ? (
                     <CheckCircle2 className="w-4 h-4 text-emerald-500 shrink-0" />
                   ) : connectionStatus === "checking" ? (
-                    <RotateCw className="w-4 h-4 text-amber-500 animate-spin shrink-0" />
+                    <RotateCw className="w-4 h-4 text-amber-500 animate-spin motion-reduce:animate-none shrink-0" />
                   ) : (
                     <AlertTriangle className="w-4 h-4 text-rose-500 shrink-0" />
                   )}
@@ -888,7 +903,7 @@ export function ClusterOverviewView() {
                   {tlsStage?.passed ? (
                     <CheckCircle2 className="w-4 h-4 text-emerald-500 shrink-0" />
                   ) : connectionStatus === "checking" ? (
-                    <RotateCw className="w-4 h-4 text-amber-500 animate-spin shrink-0" />
+                    <RotateCw className="w-4 h-4 text-amber-500 animate-spin motion-reduce:animate-none shrink-0" />
                   ) : (
                     <AlertTriangle className="w-4 h-4 text-rose-500 shrink-0" />
                   )}
@@ -919,7 +934,7 @@ export function ClusterOverviewView() {
                   {rbacStage?.passed ? (
                     <CheckCircle2 className="w-4 h-4 text-emerald-500 shrink-0" />
                   ) : connectionStatus === "checking" ? (
-                    <RotateCw className="w-4 h-4 text-amber-500 animate-spin shrink-0" />
+                    <RotateCw className="w-4 h-4 text-amber-500 animate-spin motion-reduce:animate-none shrink-0" />
                   ) : (
                     <AlertTriangle className="w-4 h-4 text-amber-500 shrink-0" />
                   )}
@@ -1030,7 +1045,7 @@ export function ClusterOverviewView() {
                 loadPods("all");
               }}
               aria-label="View pods explorer"
-              className="text-[var(--accent)] hover:underline cursor-pointer flex items-center gap-1 font-medium focus-visible:ring-2 focus-visible:ring-[var(--accent)] rounded focus-visible:outline-hidden"
+              className="text-[var(--accent)] hover:underline cursor-pointer flex items-center gap-1 font-medium transition-colors duration-150 motion-reduce:transition-none focus-visible:ring-2 focus-visible:ring-[var(--accent)] rounded focus-visible:outline-hidden"
             >
               <span>View Pods Explorer</span>
               <ChevronRight className="w-3.5 h-3.5" aria-hidden="true" />

@@ -244,7 +244,7 @@ export function ResourceInspectorDrawer() {
       setIsMounted(false);
       const timer = setTimeout(() => {
         setIsRendered(false);
-      }, 300);
+      }, 200);
       return () => clearTimeout(timer);
     }
   }, [isInspectorOpen]);
@@ -333,8 +333,8 @@ export function ResourceInspectorDrawer() {
       case "Active":
       case "Ready":
         return (
-          <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-semibold bg-emerald-500/15 text-emerald-700 dark:text-emerald-400 border border-emerald-500/25 shadow-xs shrink-0">
-            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 shadow-[0_0_6px_#10b981]" />
+          <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-semibold bg-emerald-500/15 text-emerald-700 dark:text-emerald-400 border border-emerald-500/25 shrink-0">
+            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
             {status}
           </span>
         );
@@ -342,8 +342,8 @@ export function ResourceInspectorDrawer() {
       case "ContainerCreating":
       case "Terminating":
         return (
-          <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-semibold bg-amber-500/15 text-amber-700 dark:text-amber-400 border border-amber-500/25 shadow-xs shrink-0">
-            <span className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-ping" />
+          <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-semibold bg-amber-500/15 text-amber-700 dark:text-amber-400 border border-amber-500/25 shrink-0">
+            <span className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-ping motion-reduce:animate-none" />
             {status}
           </span>
         );
@@ -357,8 +357,8 @@ export function ResourceInspectorDrawer() {
         );
       default:
         return (
-          <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-semibold bg-rose-500/15 text-rose-700 dark:text-rose-400 border border-rose-500/25 shadow-xs shrink-0">
-            <span className="w-1.5 h-1.5 rounded-full bg-rose-500 animate-pulse shadow-[0_0_6px_#ef4444]" />
+          <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-semibold bg-rose-500/15 text-rose-700 dark:text-rose-400 border border-rose-500/25 shrink-0">
+            <span className="w-1.5 h-1.5 rounded-full bg-rose-500 animate-pulse motion-reduce:animate-none" />
             {status}
           </span>
         );
@@ -395,34 +395,36 @@ export function ResourceInspectorDrawer() {
   return (
     <div
       className={cn(
-        "fixed inset-0 z-40 overflow-hidden transition-all duration-300",
+        "fixed inset-0 z-40 overflow-hidden transition-all duration-200 motion-reduce:transition-none",
         isMounted ? "pointer-events-auto" : "pointer-events-none"
       )}
     >
-      {/* Modal Backdrop / Dim Overlay with smooth fade */}
+      {/* Modal Backdrop / Dim Overlay with natural opacity transition */}
       <div
         data-testid="resource-inspector-backdrop"
         onClick={closeInspector}
         className={cn(
-          "fixed inset-0 bg-black/35 dark:bg-black/60 backdrop-blur-[2px] transition-opacity duration-300 ease-out cursor-pointer",
-          isMounted ? "opacity-100" : "opacity-0"
+          "fixed inset-0 bg-black/40 dark:bg-black/60 backdrop-blur-[2px] transition-opacity motion-reduce:transition-none cursor-pointer",
+          isMounted ? "opacity-100 duration-250 ease-out" : "opacity-0 duration-200 ease-in"
         )}
         aria-hidden="true"
       />
 
-      {/* Slide-Over Drawer with smooth spring-like slide transition */}
+      {/* Slide-Over Drawer with animate skill rules: 250ms natural deceleration curve (no bounce), 200ms exit */}
       <div
         data-testid="resource-inspector-drawer"
         className={cn(
           "fixed inset-y-0 right-0 z-40 w-full max-w-xl md:max-w-2xl glass-panel border-l border-[var(--border)] shadow-2xl flex flex-col select-none backdrop-blur-xl",
-          "transform transition-transform duration-300 ease-[cubic-bezier(0.16,1,0.3,1)]",
-          isMounted ? "translate-x-0" : "translate-x-full"
+          "transform transition-transform motion-reduce:transition-none motion-reduce:transform-none",
+          isMounted
+            ? "translate-x-0 duration-250 ease-[cubic-bezier(0.16,1,0.3,1)]"
+            : "translate-x-full duration-200 ease-in"
         )}
       >
       {/* Top Header */}
       <div className="h-16 border-b border-[var(--border)] px-4 flex items-center justify-between shrink-0 bg-slate-50/80 dark:bg-black/40">
         <div className="flex items-center gap-3 min-w-0 pr-2">
-          <div className="p-2.5 rounded-xl bg-[var(--accent)]/15 text-[var(--accent)] border border-[var(--accent)]/20 shadow-xs shrink-0">
+          <div className="p-2.5 rounded-xl bg-[var(--accent)]/15 text-[var(--accent)] border border-[var(--accent)]/20 shrink-0">
             {isNode ? <Server className="w-5 h-5" /> : <Box className="w-5 h-5" />}
           </div>
           <div className="min-w-0">
