@@ -90,7 +90,7 @@ export const useClusterStore = create<ClusterState>((set, get) => ({
     set({ isLoading: true });
     try {
       const res = await invokeRpc<ListContextsResult>("clusters.listContexts");
-      if (res && res.contexts) {
+      if (res && res.contexts && res.contexts.length > 0) {
         const contexts: ClusterContextInfo[] = res.contexts.map((c: ContextSummary) => ({
           name: c.name,
           cluster: c.cluster,
@@ -115,6 +115,15 @@ export const useClusterStore = create<ClusterState>((set, get) => ({
           get().diagnoseContext(activeCtx);
           get().loadNamespaces(activeCtx);
         }
+      } else {
+        set({
+          availableContexts: [],
+          currentContext: "",
+          connectionStatus: "offline",
+          serverVersion: "No cluster connected",
+          latencyMs: 0,
+          isLoading: false,
+        });
       }
     } catch (err) {
       console.error("[ClusterStore] Failed to load contexts:", err);
@@ -278,7 +287,7 @@ export const useClusterStore = create<ClusterState>((set, get) => ({
       "clusters:contextsChanged",
       (res) => {
         console.log("[ClusterStore] Kubeconfig contexts changed on disk:", res);
-        if (res && res.contexts) {
+        if (res && res.contexts && res.contexts.length > 0) {
           const contexts: ClusterContextInfo[] = res.contexts.map((c: ContextSummary) => ({
             name: c.name,
             cluster: c.cluster,
@@ -290,6 +299,14 @@ export const useClusterStore = create<ClusterState>((set, get) => ({
             authType: c.authType,
           }));
           set({ availableContexts: contexts });
+        } else {
+          set({
+            availableContexts: [],
+            currentContext: "",
+            connectionStatus: "offline",
+            serverVersion: "No cluster connected",
+            latencyMs: 0,
+          });
         }
       }
     );

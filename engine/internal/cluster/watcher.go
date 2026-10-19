@@ -40,11 +40,11 @@ func (w *Watcher) Start() error {
 		watchDir = filepath.Dir(filePath)
 		targetName = filepath.Base(filePath)
 	} else {
-		home, err := os.UserHomeDir()
+		dir, err := getKubeViewDir()
 		if err != nil {
 			return err
 		}
-		watchDir = filepath.Join(home, ".kube")
+		watchDir = dir
 	}
 
 	if _, err := os.Stat(watchDir); err != nil {

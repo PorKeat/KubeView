@@ -112,13 +112,6 @@ func discoverConfigFiles(explicitPath string) []string {
 	}
 
 	var candidates []string
-	if env := os.Getenv("KUBECONFIG"); env != "" {
-		for _, p := range filepath.SplitList(env) {
-			if trimmed := strings.TrimSpace(p); trimmed != "" {
-				candidates = append(candidates, trimmed)
-			}
-		}
-	}
 
 	// Solely load configurations managed by KubeView in ~/.kubeview/clusters/
 	if dir, err := getKubeViewDir(); err == nil {
