@@ -85,5 +85,50 @@ function mockRpcFallback<T>(method: string, _params?: unknown): T {
     } as T;
   }
 
+  if (method === "pods.list") {
+    return {
+      items: [],
+      totalCount: 0,
+    } as T;
+  }
+
+  if (method === "pods.logs") {
+    return {
+      logs: "No logs available. Connect to a Kubernetes cluster.",
+      container: "",
+      containers: [],
+    } as T;
+  }
+
+  if (method === "pods.delete" || method === "pods.restart") {
+    return {
+      success: true,
+    } as T;
+  }
+
+  if (method === "pods.exec") {
+    return {
+      stdout: "",
+      stderr: "",
+      exitCode: 0,
+    } as T;
+  }
+
+  if (method === "pods.yaml") {
+    return {
+      yaml: "",
+    } as T;
+  }
+
+  if (method === "pods.events") {
+    return {
+      events: [],
+    } as T;
+  }
+
+  if (method === "clusters.overview") {
+    return null as T;
+  }
+
   return {} as T;
 }

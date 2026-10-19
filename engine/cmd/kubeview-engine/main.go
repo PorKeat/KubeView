@@ -214,6 +214,232 @@ func main() {
 		}, nil
 	})
 
+	// Method: pods.list
+	server.Register("pods.list", func(params json.RawMessage) (interface{}, *ipc.RPCError) {
+		var p cluster.ListPodsParams
+		if len(params) > 0 {
+			_ = json.Unmarshal(params, &p)
+		}
+		ctxName := p.ContextName
+		if ctxName == "" {
+			if listRes, err := mgr.ListContexts(); err == nil {
+				ctxName = listRes.CurrentContext
+			}
+		}
+
+		ctx, cancel := context.WithTimeout(context.Background(), 8*time.Second)
+		defer cancel()
+
+		res, err := mgr.ListPods(ctx, ctxName, p.Namespace)
+		if err != nil {
+			return nil, &ipc.RPCError{
+				Code:    ipc.ErrK8sConnFailed,
+				Message: fmt.Sprintf("Failed to list pods: %v", err),
+			}
+		}
+		return res, nil
+	})
+
+	// Method: pods.logs
+	server.Register("pods.logs", func(params json.RawMessage) (interface{}, *ipc.RPCError) {
+		var p cluster.PodLogsParams
+		if err := json.Unmarshal(params, &p); err != nil {
+			return nil, &ipc.RPCError{
+				Code:    ipc.ErrCodeInvalidParams,
+				Message: fmt.Sprintf("Invalid params: %v", err),
+			}
+		}
+		if p.ContextName == "" {
+			if listRes, err := mgr.ListContexts(); err == nil {
+				p.ContextName = listRes.CurrentContext
+			}
+		}
+
+		ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+		defer cancel()
+
+		res, err := mgr.GetPodLogs(ctx, p)
+		if err != nil {
+			return nil, &ipc.RPCError{
+				Code:    ipc.ErrK8sConnFailed,
+				Message: fmt.Sprintf("Failed to get pod logs: %v", err),
+			}
+		}
+		return res, nil
+	})
+
+	// Method: pods.delete
+	server.Register("pods.delete", func(params json.RawMessage) (interface{}, *ipc.RPCError) {
+		var p cluster.DeletePodParams
+		if err := json.Unmarshal(params, &p); err != nil {
+			return nil, &ipc.RPCError{
+				Code:    ipc.ErrCodeInvalidParams,
+				Message: fmt.Sprintf("Invalid params: %v", err),
+			}
+		}
+		if p.ContextName == "" {
+			if listRes, err := mgr.ListContexts(); err == nil {
+				p.ContextName = listRes.CurrentContext
+			}
+		}
+
+		ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+		defer cancel()
+
+		if err := mgr.DeletePod(ctx, p); err != nil {
+			return nil, &ipc.RPCError{
+				Code:    ipc.ErrCodeInternalError,
+				Message: fmt.Sprintf("Failed to delete pod: %v", err),
+			}
+		}
+		return map[string]interface{}{"success": true, "podName": p.PodName}, nil
+	})
+
+	// Method: pods.restart
+	server.Register("pods.restart", func(params json.RawMessage) (interface{}, *ipc.RPCError) {
+		var p cluster.RestartPodParams
+		if err := json.Unmarshal(params, &p); err != nil {
+			return nil, &ipc.RPCError{
+				Code:    ipc.ErrCodeInvalidParams,
+				Message: fmt.Sprintf("Invalid params: %v", err),
+			}
+		}
+		if p.ContextName == "" {
+			if listRes, err := mgr.ListContexts(); err == nil {
+				p.ContextName = listRes.CurrentContext
+			}
+		}
+
+		ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+		defer cancel()
+
+		if err := mgr.RestartPod(ctx, p); err != nil {
+			return nil, &ipc.RPCError{
+				Code:    ipc.ErrCodeInternalError,
+				Message: fmt.Sprintf("Failed to restart pod: %v", err),
+			}
+		}
+		return map[string]interface{}{"success": true, "restarted": p.PodName}, nil
+	})
+
+	// Method: pods.exec
+	server.Register("pods.exec", func(params json.RawMessage) (interface{}, *ipc.RPCError) {
+		var p cluster.ExecPodParams
+		if err := json.Unmarshal(params, &p); err != nil {
+			return nil, &ipc.RPCError{
+				Code:    ipc.ErrCodeInvalidParams,
+				Message: fmt.Sprintf("Invalid params: %v", err),
+			}
+		}
+		if p.ContextName == "" {
+			if listRes, err := mgr.ListContexts(); err == nil {
+				p.ContextName = listRes.CurrentContext
+			}
+		}
+
+		ctx, cancel := context.WithTimeout(context.Background(), 15*time.Second)
+		defer cancel()
+
+		res, err := mgr.ExecPod(ctx, p)
+		if err != nil {
+			return nil, &ipc.RPCError{
+				Code:    ipc.ErrCodeInternalError,
+				Message: fmt.Sprintf("Command execution failed: %v", err),
+			}
+		}
+		return res, nil
+	})
+
+	// Method: pods.yaml
+	server.Register("pods.yaml", func(params json.RawMessage) (interface{}, *ipc.RPCError) {
+		var p struct {
+			ContextName string `json:"contextName"`
+			Namespace   string `json:"namespace"`
+			PodName     string `json:"podName"`
+		}
+		if err := json.Unmarshal(params, &p); err != nil {
+			return nil, &ipc.RPCError{
+				Code:    ipc.ErrCodeInvalidParams,
+				Message: fmt.Sprintf("Invalid params: %v", err),
+			}
+		}
+		if p.ContextName == "" {
+			if listRes, err := mgr.ListContexts(); err == nil {
+				p.ContextName = listRes.CurrentContext
+			}
+		}
+
+		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+		defer cancel()
+
+		res, err := mgr.GetPodYaml(ctx, p.ContextName, p.Namespace, p.PodName)
+		if err != nil {
+			return nil, &ipc.RPCError{
+				Code:    ipc.ErrCodeInternalError,
+				Message: fmt.Sprintf("Failed to get pod YAML: %v", err),
+			}
+		}
+		return res, nil
+	})
+
+	// Method: pods.events
+	server.Register("pods.events", func(params json.RawMessage) (interface{}, *ipc.RPCError) {
+		var p struct {
+			ContextName string `json:"contextName"`
+			Namespace   string `json:"namespace"`
+			PodName     string `json:"podName"`
+		}
+		if err := json.Unmarshal(params, &p); err != nil {
+			return nil, &ipc.RPCError{
+				Code:    ipc.ErrCodeInvalidParams,
+				Message: fmt.Sprintf("Invalid params: %v", err),
+			}
+		}
+		if p.ContextName == "" {
+			if listRes, err := mgr.ListContexts(); err == nil {
+				p.ContextName = listRes.CurrentContext
+			}
+		}
+
+		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+		defer cancel()
+
+		res, err := mgr.GetPodEvents(ctx, p.ContextName, p.Namespace, p.PodName)
+		if err != nil {
+			return nil, &ipc.RPCError{
+				Code:    ipc.ErrCodeInternalError,
+				Message: fmt.Sprintf("Failed to get pod events: %v", err),
+			}
+		}
+		return res, nil
+	})
+
+	// Method: clusters.overview
+	server.Register("clusters.overview", func(params json.RawMessage) (interface{}, *ipc.RPCError) {
+		var p cluster.ClusterOverviewParams
+		if len(params) > 0 {
+			_ = json.Unmarshal(params, &p)
+		}
+		ctxName := p.ContextName
+		if ctxName == "" {
+			if listRes, err := mgr.ListContexts(); err == nil {
+				ctxName = listRes.CurrentContext
+			}
+		}
+
+		ctx, cancel := context.WithTimeout(context.Background(), 8*time.Second)
+		defer cancel()
+
+		res, err := mgr.GetClusterOverview(ctx, ctxName)
+		if err != nil {
+			return nil, &ipc.RPCError{
+				Code:    ipc.ErrK8sConnFailed,
+				Message: fmt.Sprintf("Failed to get cluster overview: %v", err),
+			}
+		}
+		return res, nil
+	})
+
 	// 3. Setup out-of-band file watcher
 	if mgr != nil {
 		watcher := cluster.NewWatcher(mgr, func() {

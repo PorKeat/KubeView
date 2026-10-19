@@ -9,17 +9,9 @@ import {
   CheckCircle2,
   Cpu,
   Database,
-  ArrowUpRight,
   ShieldCheck,
-  Activity,
-  Terminal,
-  FileCode,
-  Sparkles,
-  ExternalLink,
   RotateCw,
-  HardDrive,
   Radio,
-  Zap,
   ChevronRight,
   Check,
 } from "lucide-react";
@@ -40,9 +32,19 @@ export function ClusterOverviewView() {
     connectionStatus,
     diagnoseContext,
     availableNamespaces,
+    clusterOverview,
+    isOverviewLoading,
+    loadClusterOverview,
   } = useClusterStore();
+
   const { openTab } = useTabStore();
   const [selectedNode, setSelectedNode] = React.useState<string | null>(null);
+
+  React.useEffect(() => {
+    if (connectionStatus === "connected" || connectionStatus === "degraded") {
+      loadClusterOverview();
+    }
+  }, [connectionStatus, currentContext]);
 
   // Derived Diagnostic status
   const netStage = diagnosticResult?.stages?.network;
@@ -54,9 +56,12 @@ export function ClusterOverviewView() {
     return <OfflineState />;
   }
 
-  if (connectionStatus === "checking" && !diagnosticResult) {
+  if ((connectionStatus === "checking" && !diagnosticResult) || (isOverviewLoading && !clusterOverview)) {
     return <OverviewSkeleton />;
   }
+
+  const nodes = clusterOverview?.nodes || [];
+  const selectedNodeData = nodes.find((n) => n.name === selectedNode) || nodes[0];
 
   return (
     <div className="flex-1 overflow-y-auto p-5 space-y-5 select-none cyber-grid">
@@ -71,7 +76,6 @@ export function ClusterOverviewView() {
 
       {/* 1. Ambient Glass Hero Banner */}
       <div className="relative overflow-hidden p-5 rounded-2xl glass-panel border border-[var(--border)] shadow-2xl">
-        {/* Ambient Gradient Glows */}
         <div className="absolute -top-16 -left-16 w-64 h-64 bg-[var(--accent)]/15 rounded-full blur-3xl pointer-events-none" />
         <div className="absolute -bottom-16 -right-16 w-64 h-64 bg-cyan-500/10 rounded-full blur-3xl pointer-events-none" />
 
@@ -93,18 +97,22 @@ export function ClusterOverviewView() {
                 <span className="px-2.5 py-0.5 rounded-full text-xs font-mono font-medium bg-black/[0.05] dark:bg-white/[0.06] text-[var(--foreground)] border border-black/10 dark:border-white/10 shadow-inner">
                   {currentContext || "default"}
                 </span>
-                <span className={cn(
-                  "px-2.5 py-0.5 rounded-full text-[10px] font-semibold border inline-flex items-center gap-1.5 shadow-xs uppercase tracking-wider",
-                  connectionStatus === "connected"
-                    ? "bg-emerald-500/15 text-emerald-500 dark:text-emerald-400 border-emerald-500/25"
-                    : connectionStatus === "checking"
-                    ? "bg-amber-500/15 text-amber-500 dark:text-amber-400 border-amber-500/25"
-                    : "bg-rose-500/15 text-rose-500 dark:text-rose-400 border-rose-500/25"
-                )}>
-                  <span className={cn(
-                    "w-1.5 h-1.5 rounded-full",
-                    connectionStatus === "connected" ? "bg-emerald-400 animate-pulse" : "bg-amber-400"
-                  )} />
+                <span
+                  className={cn(
+                    "px-2.5 py-0.5 rounded-full text-[10px] font-semibold border inline-flex items-center gap-1.5 shadow-xs uppercase tracking-wider",
+                    connectionStatus === "connected"
+                      ? "bg-emerald-500/15 text-emerald-500 dark:text-emerald-400 border-emerald-500/25"
+                      : connectionStatus === "checking"
+                      ? "bg-amber-500/15 text-amber-500 dark:text-amber-400 border-amber-500/25"
+                      : "bg-rose-500/15 text-rose-500 dark:text-rose-400 border-rose-500/25"
+                  )}
+                >
+                  <span
+                    className={cn(
+                      "w-1.5 h-1.5 rounded-full",
+                      connectionStatus === "connected" ? "bg-emerald-400 animate-pulse" : "bg-amber-400"
+                    )}
+                  />
                   {connectionStatus === "connected" ? "Active Plane" : connectionStatus === "checking" ? "Probing" : "Unreachable"}
                 </span>
               </div>
@@ -132,25 +140,25 @@ export function ClusterOverviewView() {
               className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[var(--surface)] hover:bg-[var(--surface-hover)] border border-[var(--border)] text-xs font-medium text-[var(--foreground)] transition-all cursor-pointer shadow-xs hover:border-[var(--accent)]/50"
             >
               <Box className="w-3.5 h-3.5 text-[var(--accent)]" />
-              <span>Browse Pods</span>
+              <span>Browse Pods ({clusterOverview?.totalPods ?? 0})</span>
             </button>
 
             <button
               onClick={async () => {
-                toast.info("Running live diagnostic pipeline...");
-                await diagnoseContext();
+                toast.info("Refreshing live cluster telemetry...");
+                await Promise.all([diagnoseContext(), loadClusterOverview()]);
                 toast.success("Telemetry updated!");
               }}
               className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[var(--accent)] hover:bg-[var(--accent-hover)] text-white text-xs font-semibold shadow-md transition-all cursor-pointer"
             >
               <RotateCw className="w-3.5 h-3.5" />
-              <span>Re-Test Probes</span>
+              <span>Refresh Telemetry</span>
             </button>
           </div>
         </div>
       </div>
 
-      {/* 2. Visual Capacity Gauges (SVG Circular Rings & Wave Sparklines) */}
+      {/* 2. Visual Capacity Gauges (SVG Circular Rings & Live Telemetry) */}
       <div className="grid grid-cols-4 gap-3.5">
         {/* CPU Capacity Card */}
         <div className="glass-card p-4 rounded-xl relative overflow-hidden group">
@@ -160,11 +168,15 @@ export function ClusterOverviewView() {
                 CPU Capacity
               </span>
               <div className="flex items-baseline gap-1.5 mt-1">
-                <span className="text-2xl font-bold font-mono text-[var(--foreground)]">32%</span>
-                <span className="text-[10px] text-[var(--muted)] font-mono">/ 16 Cores</span>
+                <span className="text-2xl font-bold font-mono text-[var(--foreground)]">
+                  {clusterOverview?.cpuPercent ?? 0}%
+                </span>
+                <span className="text-[10px] text-[var(--muted)] font-mono">
+                  / {clusterOverview?.totalCpuCores ?? 0} Cores
+                </span>
               </div>
-              <span className="text-[11px] text-emerald-600 dark:text-emerald-400 font-medium mt-0.5 inline-block">
-                4.8 Cores Allocated
+              <span className="text-[11px] text-emerald-600 dark:text-emerald-400 font-medium mt-0.5 inline-block font-mono">
+                {clusterOverview?.allocatedCpuCores ?? 0} Cores Allocated
               </span>
             </div>
 
@@ -180,7 +192,7 @@ export function ClusterOverviewView() {
                 />
                 <path
                   className="text-[var(--accent)] transition-all duration-1000 ease-out"
-                  strokeDasharray="32, 100"
+                  strokeDasharray={`${clusterOverview?.cpuPercent ?? 0}, 100`}
                   strokeWidth="3.2"
                   strokeLinecap="round"
                   stroke="currentColor"
@@ -192,10 +204,9 @@ export function ClusterOverviewView() {
             </div>
           </div>
 
-          {/* Sparkline curve */}
-          <div className="mt-3 pt-2 border-t border-[var(--border)] flex items-center justify-between text-[10px] text-[var(--muted)]">
-            <span>Peak: 5.2 Cores</span>
-            <span className="text-emerald-600 dark:text-emerald-400 font-mono font-medium">Optimal</span>
+          <div className="mt-3 pt-2 border-t border-[var(--border)] flex items-center justify-between text-[10px] text-[var(--muted)] font-mono">
+            <span>Available: {Math.max(0, (clusterOverview?.totalCpuCores ?? 0) - (clusterOverview?.allocatedCpuCores ?? 0)).toFixed(1)} Cores</span>
+            <span className="text-emerald-600 dark:text-emerald-400 font-medium">Healthy</span>
           </div>
         </div>
 
@@ -207,11 +218,15 @@ export function ClusterOverviewView() {
                 Memory Usage
               </span>
               <div className="flex items-baseline gap-1.5 mt-1">
-                <span className="text-2xl font-bold font-mono text-[var(--foreground)]">58%</span>
-                <span className="text-[10px] text-[var(--muted)] font-mono">/ 32 GiB</span>
+                <span className="text-2xl font-bold font-mono text-[var(--foreground)]">
+                  {clusterOverview?.memoryPercent ?? 0}%
+                </span>
+                <span className="text-[10px] text-[var(--muted)] font-mono">
+                  / {clusterOverview?.totalMemoryGiB ?? 0} GiB
+                </span>
               </div>
-              <span className="text-[11px] text-cyan-600 dark:text-cyan-400 font-medium mt-0.5 inline-block">
-                18.6 GiB Reserved
+              <span className="text-[11px] text-cyan-600 dark:text-cyan-400 font-medium mt-0.5 inline-block font-mono">
+                {clusterOverview?.allocatedMemoryGiB ?? 0} GiB Reserved
               </span>
             </div>
 
@@ -227,7 +242,7 @@ export function ClusterOverviewView() {
                 />
                 <path
                   className="text-cyan-500 dark:text-cyan-400 transition-all duration-1000 ease-out"
-                  strokeDasharray="58, 100"
+                  strokeDasharray={`${clusterOverview?.memoryPercent ?? 0}, 100`}
                   strokeWidth="3.2"
                   strokeLinecap="round"
                   stroke="currentColor"
@@ -239,16 +254,16 @@ export function ClusterOverviewView() {
             </div>
           </div>
 
-          <div className="mt-3 pt-2 border-t border-[var(--border)] flex items-center justify-between text-[10px] text-[var(--muted)]">
-            <span>Buffer: 13.4 GiB free</span>
-            <span className="text-cyan-600 dark:text-cyan-400 font-mono font-medium">No Pressure</span>
+          <div className="mt-3 pt-2 border-t border-[var(--border)] flex items-center justify-between text-[10px] text-[var(--muted)] font-mono">
+            <span>Free: {Math.max(0, (clusterOverview?.totalMemoryGiB ?? 0) - (clusterOverview?.allocatedMemoryGiB ?? 0)).toFixed(1)} GiB</span>
+            <span className="text-cyan-600 dark:text-cyan-400 font-medium">Optimal</span>
           </div>
         </div>
 
         {/* Pod Density Card */}
         <div
           onClick={() => openTab({ id: "pods", title: "Pods", closable: true })}
-          className="glass-card p-4 rounded-xl relative overflow-hidden group cursor-pointer"
+          className="glass-card p-4 rounded-xl relative overflow-hidden group cursor-pointer hover:border-[var(--accent)]/50 transition-colors"
         >
           <div className="flex items-start justify-between">
             <div>
@@ -256,11 +271,15 @@ export function ClusterOverviewView() {
                 Pod Allocation
               </span>
               <div className="flex items-baseline gap-1.5 mt-1">
-                <span className="text-2xl font-bold font-mono text-[var(--foreground)]">42</span>
-                <span className="text-[10px] text-[var(--muted)] font-mono">/ 110 Max</span>
+                <span className="text-2xl font-bold font-mono text-[var(--foreground)]">
+                  {clusterOverview?.totalPods ?? 0}
+                </span>
+                <span className="text-[10px] text-[var(--muted)] font-mono">
+                  / {clusterOverview?.podCapacity ?? 0} Max
+                </span>
               </div>
-              <span className="text-[11px] text-purple-600 dark:text-purple-400 font-medium mt-0.5 inline-block">
-                38% Node Density
+              <span className="text-[11px] text-purple-600 dark:text-purple-400 font-medium mt-0.5 inline-block font-mono">
+                {clusterOverview?.podPercent ?? 0}% Cluster Density
               </span>
             </div>
 
@@ -276,7 +295,7 @@ export function ClusterOverviewView() {
                 />
                 <path
                   className="text-purple-500 dark:text-purple-400 transition-all duration-1000 ease-out"
-                  strokeDasharray="38, 100"
+                  strokeDasharray={`${clusterOverview?.podPercent ?? 0}, 100`}
                   strokeWidth="3.2"
                   strokeLinecap="round"
                   stroke="currentColor"
@@ -288,10 +307,12 @@ export function ClusterOverviewView() {
             </div>
           </div>
 
-          <div className="mt-3 pt-2 border-t border-[var(--border)] flex items-center justify-between text-[10px] text-[var(--muted)]">
-            <span>40 Running • 2 Pending</span>
-            <span className="text-[var(--accent)] font-medium flex items-center gap-0.5">
-              Inspect <ChevronRight className="w-3 h-3" />
+          <div className="mt-3 pt-2 border-t border-[var(--border)] flex items-center justify-between text-[10px] text-[var(--muted)] font-mono">
+            <span>
+              {clusterOverview?.runningPods ?? 0} Running • {clusterOverview?.pendingPods ?? 0} Pending
+            </span>
+            <span className="text-[var(--accent)] font-medium flex items-center gap-0.5 font-sans">
+              Browse <ChevronRight className="w-3 h-3" />
             </span>
           </div>
         </div>
@@ -301,14 +322,18 @@ export function ClusterOverviewView() {
           <div className="flex items-start justify-between">
             <div>
               <span className="text-[11px] font-semibold text-[var(--muted)] uppercase tracking-wider block">
-                Ingress Flow
+                Cluster Nodes
               </span>
               <div className="flex items-baseline gap-1.5 mt-1">
-                <span className="text-2xl font-bold font-mono text-[var(--foreground)]">14.2</span>
-                <span className="text-[10px] text-[var(--muted)] font-mono">MB/s</span>
+                <span className="text-2xl font-bold font-mono text-[var(--foreground)]">
+                  {clusterOverview?.readyNodes ?? 0}
+                </span>
+                <span className="text-[10px] text-[var(--muted)] font-mono">
+                  / {clusterOverview?.totalNodes ?? 0} Ready
+                </span>
               </div>
-              <span className="text-[11px] text-emerald-600 dark:text-emerald-400 font-medium mt-0.5 inline-block">
-                8 Services • 3 Ingresses
+              <span className="text-[11px] text-emerald-600 dark:text-emerald-400 font-medium mt-0.5 inline-block font-mono">
+                {availableNamespaces.length} Namespaces
               </span>
             </div>
 
@@ -324,7 +349,7 @@ export function ClusterOverviewView() {
                 />
                 <path
                   className="text-emerald-500 dark:text-emerald-400 transition-all duration-1000 ease-out"
-                  strokeDasharray="45, 100"
+                  strokeDasharray={`${clusterOverview?.totalNodes ? (clusterOverview.readyNodes * 100) / clusterOverview.totalNodes : 100}, 100`}
                   strokeWidth="3.2"
                   strokeLinecap="round"
                   stroke="currentColor"
@@ -336,9 +361,9 @@ export function ClusterOverviewView() {
             </div>
           </div>
 
-          <div className="mt-3 pt-2 border-t border-[var(--border)] flex items-center justify-between text-[10px] text-[var(--muted)]">
+          <div className="mt-3 pt-2 border-t border-[var(--border)] flex items-center justify-between text-[10px] text-[var(--muted)] font-mono">
             <span>Latency: {latencyMs}ms roundtrip</span>
-            <span className="text-emerald-600 dark:text-emerald-400 font-mono font-medium">Normal</span>
+            <span className="text-emerald-600 dark:text-emerald-400 font-medium">Connected</span>
           </div>
         </div>
       </div>
@@ -351,153 +376,79 @@ export function ClusterOverviewView() {
             <h2 className="text-xs font-bold text-[var(--foreground)] uppercase tracking-wider">
               Cluster Node Topology & Infrastructure
             </h2>
-            <span className="text-[10px] font-mono text-[var(--muted)]">3 Nodes Active</span>
+            <span className="text-[10px] font-mono text-[var(--muted)]">
+              {nodes.length} {nodes.length === 1 ? "Node" : "Nodes"} Active
+            </span>
           </div>
           <span className="text-[11px] text-[var(--muted)]">Click node to inspect telemetry</span>
         </div>
 
-        <div className="grid grid-cols-3 gap-3">
-          {/* Node 1: Control Plane */}
-          <div
-            onClick={() => setSelectedNode("kind-control-plane")}
-            className={cn(
-              "p-3.5 rounded-xl border transition-all cursor-pointer relative",
-              selectedNode === "kind-control-plane"
-                ? "bg-[var(--accent)]/10 dark:bg-white/[0.08] border-[var(--accent)] shadow-md"
-                : "bg-slate-50 dark:bg-black/30 border border-[var(--border)] hover:border-slate-300 dark:hover:border-white/20"
-            )}
-          >
-            <div className="flex items-center justify-between mb-2">
-              <div className="flex items-center gap-2">
-                <span className="w-2 h-2 rounded-full bg-emerald-500 shadow-[0_0_8px_#10b981]" />
-                <span className="font-mono font-semibold text-xs text-[var(--foreground)] truncate">
-                  kind-control-plane
-                </span>
-              </div>
-              <span className="px-1.5 py-0.5 rounded text-[9px] font-mono font-medium bg-purple-500/15 text-purple-700 dark:text-purple-300 border border-purple-500/25">
-                Control-Plane
-              </span>
-            </div>
-
-            <div className="space-y-1.5 text-[11px] text-[var(--muted)] font-mono">
-              <div className="flex justify-between">
-                <span>CPU Load:</span>
-                <span className="text-[var(--foreground)]">45m (2%)</span>
-              </div>
-              <div className="w-full h-1 bg-slate-200 dark:bg-white/10 rounded-full overflow-hidden">
-                <div className="h-full bg-purple-500 dark:bg-purple-400 rounded-full" style={{ width: "15%" }} />
-              </div>
-
-              <div className="flex justify-between pt-1">
-                <span>Memory:</span>
-                <span className="text-[var(--foreground)]">482Mi (12%)</span>
-              </div>
-              <div className="w-full h-1 bg-slate-200 dark:bg-white/10 rounded-full overflow-hidden">
-                <div className="h-full bg-cyan-500 dark:bg-cyan-400 rounded-full" style={{ width: "22%" }} />
-              </div>
-            </div>
-
-            <div className="mt-3 pt-2 border-t border-[var(--border)] flex items-center justify-between text-[10px] text-[var(--muted)] font-mono">
-              <span>v1.34.1 • arm64</span>
-              <span className="text-emerald-600 dark:text-emerald-400 font-medium">14 Pods</span>
-            </div>
+        {nodes.length === 0 ? (
+          <div className="p-8 text-center text-xs text-[var(--muted)]">
+            No Kubernetes nodes detected for the active context.
           </div>
+        ) : (
+          <div className="grid grid-cols-3 gap-3">
+            {nodes.map((n) => {
+              const isSelected = selectedNode === n.name;
+              return (
+                <div
+                  key={n.name}
+                  onClick={() => setSelectedNode(n.name)}
+                  className={cn(
+                    "p-3.5 rounded-xl border transition-all cursor-pointer relative",
+                    isSelected
+                      ? "bg-[var(--accent)]/10 dark:bg-white/[0.08] border-[var(--accent)] shadow-md"
+                      : "bg-slate-50 dark:bg-black/30 border border-[var(--border)] hover:border-slate-300 dark:hover:border-white/20"
+                  )}
+                >
+                  <div className="flex items-center justify-between mb-2">
+                    <div className="flex items-center gap-2 min-w-0">
+                      <span
+                        className={cn(
+                          "w-2 h-2 rounded-full shrink-0",
+                          n.status === "Ready" ? "bg-emerald-500 shadow-[0_0_8px_#10b981]" : "bg-rose-500 shadow-[0_0_8px_#ef4444]"
+                        )}
+                      />
+                      <span className="font-mono font-semibold text-xs text-[var(--foreground)] truncate">
+                        {n.name}
+                      </span>
+                    </div>
+                    <span className="px-1.5 py-0.5 rounded text-[9px] font-mono font-medium bg-purple-500/15 text-purple-700 dark:text-purple-300 border border-purple-500/25 shrink-0">
+                      {n.roles.join(", ") || "Worker"}
+                    </span>
+                  </div>
 
-          {/* Node 2: Worker 1 */}
-          <div
-            onClick={() => setSelectedNode("kind-worker-1")}
-            className={cn(
-              "p-3.5 rounded-xl border transition-all cursor-pointer relative",
-              selectedNode === "kind-worker-1"
-                ? "bg-[var(--accent)]/10 dark:bg-white/[0.08] border-[var(--accent)] shadow-md"
-                : "bg-slate-50 dark:bg-black/30 border border-[var(--border)] hover:border-slate-300 dark:hover:border-white/20"
-            )}
-          >
-            <div className="flex items-center justify-between mb-2">
-              <div className="flex items-center gap-2">
-                <span className="w-2 h-2 rounded-full bg-emerald-500 shadow-[0_0_8px_#10b981]" />
-                <span className="font-mono font-semibold text-xs text-[var(--foreground)] truncate">
-                  kind-worker-1
-                </span>
-              </div>
-              <span className="px-1.5 py-0.5 rounded text-[9px] font-mono font-medium bg-cyan-500/15 text-cyan-700 dark:text-cyan-300 border border-cyan-500/25">
-                Worker
-              </span>
-            </div>
+                  <div className="space-y-1.5 text-[11px] text-[var(--muted)] font-mono">
+                    <div className="flex justify-between">
+                      <span>CPU Load:</span>
+                      <span className="text-[var(--foreground)]">{n.cpuAllocated}</span>
+                    </div>
+                    <div className="w-full h-1 bg-slate-200 dark:bg-white/10 rounded-full overflow-hidden">
+                      <div className="h-full bg-[var(--accent)] rounded-full" style={{ width: `${Math.min(100, n.cpuPercent)}%` }} />
+                    </div>
 
-            <div className="space-y-1.5 text-[11px] text-[var(--muted)] font-mono">
-              <div className="flex justify-between">
-                <span>CPU Load:</span>
-                <span className="text-[var(--foreground)]">210m (18%)</span>
-              </div>
-              <div className="w-full h-1 bg-slate-200 dark:bg-white/10 rounded-full overflow-hidden">
-                <div className="h-full bg-[var(--accent)] rounded-full" style={{ width: "35%" }} />
-              </div>
+                    <div className="flex justify-between pt-1">
+                      <span>Memory:</span>
+                      <span className="text-[var(--foreground)]">{n.memoryAllocated}</span>
+                    </div>
+                    <div className="w-full h-1 bg-slate-200 dark:bg-white/10 rounded-full overflow-hidden">
+                      <div className="h-full bg-cyan-500 dark:bg-cyan-400 rounded-full" style={{ width: `${Math.min(100, n.memoryPercent)}%` }} />
+                    </div>
+                  </div>
 
-              <div className="flex justify-between pt-1">
-                <span>Memory:</span>
-                <span className="text-[var(--foreground)]">1.4Gi (44%)</span>
-              </div>
-              <div className="w-full h-1 bg-slate-200 dark:bg-white/10 rounded-full overflow-hidden">
-                <div className="h-full bg-cyan-500 dark:bg-cyan-400 rounded-full" style={{ width: "44%" }} />
-              </div>
-            </div>
-
-            <div className="mt-3 pt-2 border-t border-[var(--border)] flex items-center justify-between text-[10px] text-[var(--muted)] font-mono">
-              <span>v1.34.1 • arm64</span>
-              <span className="text-emerald-600 dark:text-emerald-400 font-medium">16 Pods</span>
-            </div>
+                  <div className="mt-3 pt-2 border-t border-[var(--border)] flex items-center justify-between text-[10px] text-[var(--muted)] font-mono">
+                    <span>{n.version} • {n.architecture}</span>
+                    <span className="text-emerald-600 dark:text-emerald-400 font-medium">{n.activePods} Pods</span>
+                  </div>
+                </div>
+              );
+            })}
           </div>
-
-          {/* Node 3: Worker 2 */}
-          <div
-            onClick={() => setSelectedNode("kind-worker-2")}
-            className={cn(
-              "p-3.5 rounded-xl border transition-all cursor-pointer relative",
-              selectedNode === "kind-worker-2"
-                ? "bg-[var(--accent)]/10 dark:bg-white/[0.08] border-[var(--accent)] shadow-md"
-                : "bg-slate-50 dark:bg-black/30 border border-[var(--border)] hover:border-slate-300 dark:hover:border-white/20"
-            )}
-          >
-            <div className="flex items-center justify-between mb-2">
-              <div className="flex items-center gap-2">
-                <span className="w-2 h-2 rounded-full bg-emerald-500 shadow-[0_0_8px_#10b981]" />
-                <span className="font-mono font-semibold text-xs text-[var(--foreground)] truncate">
-                  kind-worker-2
-                </span>
-              </div>
-              <span className="px-1.5 py-0.5 rounded text-[9px] font-mono font-medium bg-cyan-500/15 text-cyan-700 dark:text-cyan-300 border border-cyan-500/25">
-                Worker
-              </span>
-            </div>
-
-            <div className="space-y-1.5 text-[11px] text-[var(--muted)] font-mono">
-              <div className="flex justify-between">
-                <span>CPU Load:</span>
-                <span className="text-[var(--foreground)]">120m (11%)</span>
-              </div>
-              <div className="w-full h-1 bg-slate-200 dark:bg-white/10 rounded-full overflow-hidden">
-                <div className="h-full bg-[var(--accent)] rounded-full" style={{ width: "22%" }} />
-              </div>
-
-              <div className="flex justify-between pt-1">
-                <span>Memory:</span>
-                <span className="text-[var(--foreground)]">980Mi (31%)</span>
-              </div>
-              <div className="w-full h-1 bg-slate-200 dark:bg-white/10 rounded-full overflow-hidden">
-                <div className="h-full bg-cyan-500 dark:bg-cyan-400 rounded-full" style={{ width: "31%" }} />
-              </div>
-            </div>
-
-            <div className="mt-3 pt-2 border-t border-[var(--border)] flex items-center justify-between text-[10px] text-[var(--muted)] font-mono">
-              <span>v1.34.1 • arm64</span>
-              <span className="text-emerald-600 dark:text-emerald-400 font-medium">12 Pods</span>
-            </div>
-          </div>
-        </div>
+        )}
       </div>
 
-      {/* 4. Split Grid: Visual Diagnostic Pipeline & Real-Time Warning Stream */}
+      {/* 4. Split Grid: Visual Diagnostic Pipeline & Warning Events */}
       <div className="grid grid-cols-2 gap-4">
         {/* Left: 4-Stage Diagnostic Security Pipeline */}
         <div className="glass-panel p-4 rounded-xl border border-[var(--border)] flex flex-col justify-between space-y-4">
@@ -526,7 +477,7 @@ export function ClusterOverviewView() {
                   )}
                   <div>
                     <div className="text-xs font-semibold text-[var(--foreground)]">
-                       1. Network & TCP Handshake
+                      1. Network & TCP Handshake
                     </div>
                     <div className="text-[10px] text-[var(--muted)] font-mono truncate">
                       {netStage?.message || "Dialing host API server port..."}
@@ -553,7 +504,7 @@ export function ClusterOverviewView() {
                       2. Authentication & Credential Provider
                     </div>
                     <div className="text-[10px] text-[var(--muted)] font-mono truncate">
-                      {authStage?.message || "Verifying exec plugin or certificates..."}
+                      {authStage?.message || "Verifying certificates..."}
                     </div>
                   </div>
                 </div>
@@ -610,19 +561,6 @@ export function ClusterOverviewView() {
                 </span>
               </div>
             </div>
-
-            {/* Remediation Advice */}
-            {diagnosticResult?.remediation && (
-              <div className="mt-3 p-3 rounded-xl bg-rose-500/10 border border-rose-500/25 text-rose-700 dark:text-rose-200 text-xs">
-                <div className="font-semibold text-rose-600 dark:text-rose-400 flex items-center gap-1.5 mb-1">
-                  <AlertTriangle className="w-3.5 h-3.5" />
-                  Remediation Recommendation
-                </div>
-                <p className="font-mono text-[11px] leading-relaxed opacity-95">
-                  {diagnosticResult.remediation}
-                </p>
-              </div>
-            )}
           </div>
 
           <div className="pt-2 border-t border-[var(--border)] text-[10px] text-[var(--muted)] flex items-center justify-between">
@@ -645,60 +583,42 @@ export function ClusterOverviewView() {
                 </h3>
               </div>
               <span className="px-2 py-0.5 rounded-full text-[10px] font-mono bg-amber-500/15 text-amber-500 dark:text-amber-400 border border-amber-500/25">
-                2 Active Warnings
+                {clusterOverview?.warningEvents?.length ?? 0} Active Warnings
               </span>
             </div>
 
             <div className="space-y-2.5">
-              {/* Event 1 */}
-              <div
-                onClick={() => openInspector({ kind: "Pod", name: "api-gateway-7f8d-x9q", namespace: "production", status: "CrashLoopBackOff" })}
-                className="p-3 rounded-lg bg-slate-50 dark:bg-black/30 border border-[var(--border)] hover:border-amber-400/50 cursor-pointer transition-all hover:bg-slate-100/60 dark:hover:bg-white/[0.04] group"
-              >
-                <div className="flex items-center justify-between text-xs">
-                  <div className="flex items-center gap-2">
-                    <span className="w-2 h-2 rounded-full bg-amber-500 shadow-[0_0_6px_#f59e0b]" />
-                    <span className="font-semibold text-amber-600 dark:text-amber-400 group-hover:text-amber-700 dark:group-hover:text-amber-300">
-                      CrashLoopBackOff
-                    </span>
+              {!clusterOverview?.warningEvents || clusterOverview.warningEvents.length === 0 ? (
+                <div className="p-6 rounded-xl bg-slate-50 dark:bg-black/30 border border-[var(--border)] text-center text-xs text-[var(--muted)] flex flex-col items-center justify-center gap-2">
+                  <CheckCircle2 className="w-6 h-6 text-emerald-500" />
+                  <span className="font-semibold text-[var(--foreground)]">Cluster Operating Normally</span>
+                  <p className="text-[11px] text-[var(--muted)]">No active warning events found across namespaces.</p>
+                </div>
+              ) : (
+                clusterOverview.warningEvents.map((ev, idx) => (
+                  <div
+                    key={idx}
+                    className="p-3 rounded-lg bg-slate-50 dark:bg-black/30 border border-[var(--border)] transition-all"
+                  >
+                    <div className="flex items-center justify-between text-xs">
+                      <div className="flex items-center gap-2">
+                        <span className="w-2 h-2 rounded-full bg-amber-500 shadow-[0_0_6px_#f59e0b]" />
+                        <span className="font-semibold text-amber-600 dark:text-amber-400">
+                          {ev.reason}
+                        </span>
+                      </div>
+                      <span className="text-[10px] text-[var(--muted)] font-mono">{ev.lastTimestamp}</span>
+                    </div>
+                    <p className="text-[11px] text-[var(--muted)] mt-1.5 font-mono line-clamp-2">
+                      {ev.message}
+                    </p>
+                    <div className="mt-2 flex items-center justify-between text-[10px] text-[var(--muted)] font-mono">
+                      <span>Source: {ev.source || "k8s-event"}</span>
+                      {ev.count > 1 && <span>Occurred {ev.count} times</span>}
+                    </div>
                   </div>
-                  <span className="text-[10px] text-[var(--muted)] font-mono">2m ago</span>
-                </div>
-                <p className="text-[11px] text-[var(--muted)] mt-1.5 font-mono">
-                  Back-off restarting failed container in pod <strong className="text-[var(--foreground)]">api-gateway-7f8d-x9q</strong>
-                </p>
-                <div className="mt-2 flex items-center justify-between text-[10px] text-[var(--muted)] font-mono">
-                  <span>ns: production</span>
-                  <span className="text-[var(--accent)] font-sans font-medium flex items-center gap-0.5">
-                    Live Diagnostics <ChevronRight className="w-3 h-3" />
-                  </span>
-                </div>
-              </div>
-
-              {/* Event 2 */}
-              <div
-                onClick={() => openInspector({ kind: "Pod", name: "analytics-worker-2", namespace: "default", status: "Pending" })}
-                className="p-3 rounded-lg bg-slate-50 dark:bg-black/30 border border-[var(--border)] hover:border-rose-400/50 cursor-pointer transition-all hover:bg-slate-100/60 dark:hover:bg-white/[0.04] group"
-              >
-                <div className="flex items-center justify-between text-xs">
-                  <div className="flex items-center gap-2">
-                    <span className="w-2 h-2 rounded-full bg-rose-500 shadow-[0_0_6px_#ef4444]" />
-                    <span className="font-semibold text-rose-600 dark:text-rose-400 group-hover:text-rose-700 dark:group-hover:text-rose-300">
-                      FailedScheduling
-                    </span>
-                  </div>
-                  <span className="text-[10px] text-[var(--muted)] font-mono">5m ago</span>
-                </div>
-                <p className="text-[11px] text-[var(--muted)] mt-1.5 font-mono">
-                  0/3 nodes available: insufficient memory for pod <strong className="text-[var(--foreground)]">analytics-worker-2</strong>
-                </p>
-                <div className="mt-2 flex items-center justify-between text-[10px] text-[var(--muted)] font-mono">
-                  <span>ns: default</span>
-                  <span className="text-[var(--accent)] font-sans font-medium flex items-center gap-0.5">
-                    Inspect Resource <ChevronRight className="w-3 h-3" />
-                  </span>
-                </div>
-              </div>
+                ))
+              )}
             </div>
           </div>
 
@@ -710,7 +630,7 @@ export function ClusterOverviewView() {
               }}
               className="text-[var(--accent)] hover:underline cursor-pointer"
             >
-              View Full Audit Log →
+              View Pods Explorer →
             </button>
           </div>
         </div>

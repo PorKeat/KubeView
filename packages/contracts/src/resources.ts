@@ -78,3 +78,146 @@ export interface PatchResourceRequest {
   patch: Record<string, unknown> | unknown[];
   patchType: "strategic" | "merge" | "json";
 }
+
+export interface ContainerInfo {
+  name: string;
+  image: string;
+  ready: boolean;
+  restartCount: number;
+  state: string;
+  stateReason?: string;
+}
+
+export interface PodSummary {
+  name: string;
+  namespace: string;
+  status: string;
+  ready: string;
+  restarts: number;
+  age: string;
+  cpu: string;
+  cpuPercent: number;
+  memory: string;
+  memoryPercent: number;
+  nodeName: string;
+  ip: string;
+  containers: ContainerInfo[];
+  creationTimestamp: string;
+  labels?: Record<string, string>;
+  annotations?: Record<string, string>;
+  controlledBy?: string;
+}
+
+export interface ListPodsParams {
+  contextName?: string;
+  namespace?: string;
+}
+
+export interface ListPodsResult {
+  items: PodSummary[];
+  totalCount: number;
+}
+
+export interface PodLogsParams {
+  contextName?: string;
+  namespace: string;
+  podName: string;
+  container?: string;
+  tailLines?: number;
+  previous?: boolean;
+}
+
+export interface PodLogsResult {
+  logs: string;
+  container: string;
+  containers: string[];
+}
+
+export interface DeletePodParams {
+  contextName?: string;
+  namespace: string;
+  podName: string;
+  gracePeriodSeconds?: number;
+}
+
+export interface RestartPodParams {
+  contextName?: string;
+  namespace: string;
+  podName: string;
+}
+
+export interface ExecPodParams {
+  contextName?: string;
+  namespace: string;
+  podName: string;
+  container?: string;
+  command: string[];
+}
+
+export interface ExecPodResult {
+  stdout: string;
+  stderr: string;
+  exitCode: number;
+}
+
+export interface PodEventItem {
+  type: string;
+  reason: string;
+  message: string;
+  count: number;
+  lastTimestamp: string;
+  source: string;
+}
+
+export interface PodEventsResult {
+  events: PodEventItem[];
+}
+
+export interface PodYamlResult {
+  yaml: string;
+}
+
+export interface NodeSummary {
+  name: string;
+  status: string;
+  roles: string[];
+  version: string;
+  architecture: string;
+  internalIP: string;
+  cpuCapacity: string;
+  cpuCores: number;
+  cpuAllocated: string;
+  cpuPercent: number;
+  memoryCapacity: string;
+  memoryGiB: number;
+  memoryAllocated: string;
+  memoryPercent: number;
+  podCapacity: number;
+  activePods: number;
+}
+
+export interface ClusterOverviewParams {
+  contextName?: string;
+}
+
+export interface ClusterOverviewResult {
+  contextName: string;
+  totalNodes: number;
+  readyNodes: number;
+  totalPods: number;
+  runningPods: number;
+  pendingPods: number;
+  failedPods: number;
+  succeededPods: number;
+  totalCpuCores: number;
+  allocatedCpuCores: number;
+  cpuPercent: number;
+  totalMemoryGiB: number;
+  allocatedMemoryGiB: number;
+  memoryPercent: number;
+  podCapacity: number;
+  podPercent: number;
+  nodes: NodeSummary[];
+  warningEvents: PodEventItem[];
+}
+

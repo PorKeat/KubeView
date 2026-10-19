@@ -10,6 +10,10 @@ import { CommandPalette } from "@/components/command/CommandPalette";
 import { ResourceInspectorDrawer } from "@/components/views/ResourceInspectorDrawer";
 import { SplashScreen } from "@/components/onboarding/SplashScreen";
 import { KubeconfigModal } from "@/components/onboarding/KubeconfigModal";
+import { PodLogsModal } from "@/components/modals/PodLogsModal";
+import { PodExecModal } from "@/components/modals/PodExecModal";
+import { PodDeleteModal } from "@/components/modals/PodDeleteModal";
+import { PodRestartModal } from "@/components/modals/PodRestartModal";
 
 import { useClusterStore } from "@/stores/clusterStore";
 
@@ -52,7 +56,13 @@ export function AppShell() {
       {/* 6. Onboarding & Kubeconfig Management Modal */}
       <KubeconfigModal />
 
-      {/* 7. Initial High-Tech Splash Screen Overlay */}
+      {/* 7. Pod Action Modals (Logs, Exec, Delete, Restart) */}
+      <PodLogsModal />
+      <PodExecModal />
+      <PodDeleteModal />
+      <PodRestartModal />
+
+      {/* 8. Initial High-Tech Splash Screen Overlay */}
       <SplashScreen />
     </div>
   );
