@@ -26,23 +26,25 @@ export async function invokeRpc<T>(method: string, params?: unknown): Promise<T>
   }
 
   // When running in browser preview (Next.js dev server), proxy to /api/rpc
+  let res: Response;
   try {
-    const res = await fetch("/api/rpc", {
+    res = await fetch("/api/rpc", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ method, params: params ?? null }),
     });
-
-    if (res.ok) {
-      const data = await res.json();
-      if (data.error) {
-        console.warn(`[IPC] /api/rpc error for '${method}':`, data.error);
-        throw new Error(data.error.message || JSON.stringify(data.error));
-      }
-      return data.result as T;
-    }
   } catch (err: unknown) {
-    console.warn(`[IPC] /api/rpc failed for '${method}', falling back to mock:`, err);
+    console.warn(`[IPC] /api/rpc network error for '${method}', falling back to mock:`, err);
+    return mockRpcFallback<T>(method, params);
+  }
+
+  const data = await res.json().catch(() => null);
+  if (data?.error) {
+    console.warn(`[IPC] /api/rpc returned error for '${method}':`, data.error);
+    throw new Error(data.error.message || JSON.stringify(data.error));
+  }
+  if (data?.result !== undefined) {
+    return data.result as T;
   }
 
   // Fallback for offline or static environments

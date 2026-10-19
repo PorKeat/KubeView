@@ -24,7 +24,7 @@ export async function POST(req: NextRequest) {
           message: err.message || "Internal error executing RPC method",
         },
       },
-      { status: 500 }
+      { status: 200 }
     );
   }
 }
