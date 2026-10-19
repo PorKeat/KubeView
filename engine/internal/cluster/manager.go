@@ -637,3 +637,97 @@ func (m *Manager) ClearAllContexts() error {
 
 	return nil
 }
+
+// UpdateEndpoint updates the API server endpoint URL for a specific cluster context
+func (m *Manager) UpdateEndpoint(contextName, newServerUrl string) error {
+	newServerUrl = strings.TrimSpace(newServerUrl)
+	if newServerUrl == "" {
+		return fmt.Errorf("new server URL cannot be empty")
+	}
+	if !strings.HasPrefix(newServerUrl, "http://") && !strings.HasPrefix(newServerUrl, "https://") {
+		newServerUrl = "https://" + newServerUrl
+	}
+
+	dir, err := getKubeViewDir()
+	if err != nil {
+		return err
+	}
+
+	entries, err := os.ReadDir(dir)
+	if err != nil {
+		return err
+	}
+
+	updated := false
+	// Pass 1: Exact context name match
+	for _, entry := range entries {
+		if entry.IsDir() || strings.HasPrefix(entry.Name(), ".") {
+			continue
+		}
+		filePath := filepath.Join(dir, entry.Name())
+		cfg, err := clientcmd.LoadFromFile(filePath)
+		if err != nil || cfg == nil {
+			continue
+		}
+
+		for cName, cObj := range cfg.Contexts {
+			if cName == contextName {
+				clusterName := cObj.Cluster
+				if clusterObj, exists := cfg.Clusters[clusterName]; exists {
+					clusterObj.Server = newServerUrl
+					_ = clientcmd.WriteToFile(*cfg, filePath)
+					updated = true
+					break
+				}
+			}
+		}
+		if updated {
+			break
+		}
+	}
+
+	// Pass 2: Prefix match fallback
+	if !updated {
+		for _, entry := range entries {
+			if entry.IsDir() || strings.HasPrefix(entry.Name(), ".") {
+				continue
+			}
+			filePath := filepath.Join(dir, entry.Name())
+			cfg, err := clientcmd.LoadFromFile(filePath)
+			if err != nil || cfg == nil {
+				continue
+			}
+
+			for cName, cObj := range cfg.Contexts {
+				if strings.HasPrefix(contextName, cName) || strings.HasPrefix(cName, contextName) {
+					clusterName := cObj.Cluster
+					if clusterObj, exists := cfg.Clusters[clusterName]; exists {
+						clusterObj.Server = newServerUrl
+						_ = clientcmd.WriteToFile(*cfg, filePath)
+						updated = true
+						break
+					}
+				}
+			}
+			if updated {
+				break
+			}
+		}
+	}
+
+	if !updated {
+		m.mu.Lock()
+		if m.rawConfig != nil {
+			if ctxObj, ok := m.rawConfig.Contexts[contextName]; ok {
+				if clObj, ok := m.rawConfig.Clusters[ctxObj.Cluster]; ok {
+					clObj.Server = newServerUrl
+					updated = true
+				}
+			}
+		}
+		m.mu.Unlock()
+	}
+
+	return m.ReloadConfig()
+}
+

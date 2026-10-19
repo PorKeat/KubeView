@@ -175,6 +175,34 @@ func main() {
 		return map[string]interface{}{"success": true}, nil
 	})
 
+	// Method: clusters.updateEndpoint
+	server.Register("clusters.updateEndpoint", func(params json.RawMessage) (interface{}, *ipc.RPCError) {
+		var p struct {
+			ContextName string `json:"contextName"`
+			NewServer   string `json:"newServer"`
+		}
+		if err := json.Unmarshal(params, &p); err != nil {
+			return nil, &ipc.RPCError{
+				Code:    ipc.ErrCodeInvalidParams,
+				Message: fmt.Sprintf("Invalid params: %v", err),
+			}
+		}
+		if p.ContextName == "" || p.NewServer == "" {
+			return nil, &ipc.RPCError{
+				Code:    ipc.ErrCodeInvalidParams,
+				Message: "contextName and newServer are required",
+			}
+		}
+		if err := mgr.UpdateEndpoint(p.ContextName, p.NewServer); err != nil {
+			return nil, &ipc.RPCError{
+				Code:    ipc.ErrCodeInternalError,
+				Message: err.Error(),
+			}
+		}
+		server.Log("Updated endpoint for context '%s' to '%s'", p.ContextName, p.NewServer)
+		return map[string]interface{}{"success": true, "contextName": p.ContextName, "newServer": p.NewServer}, nil
+	})
+
 	// Method: clusters.clearAll
 	server.Register("clusters.clearAll", func(params json.RawMessage) (interface{}, *ipc.RPCError) {
 		if err := mgr.ClearAllContexts(); err != nil {

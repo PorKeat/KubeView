@@ -2,6 +2,8 @@ package cluster
 
 import (
 	"fmt"
+	"net"
+	"net/url"
 	"os"
 	"path/filepath"
 	"sort"
@@ -289,9 +291,31 @@ func (m *Manager) ImportDetectedContexts(params ImportDetectedContextsParams) (*
 		return nil, fmt.Errorf("failed to reload configs after importing system contexts: %w", err)
 	}
 
-	// Switch to the first newly imported context
-	activeCtx := importedContexts[0]
-	_, _ = m.SwitchContext(activeCtx)
+	// Smart Context Switching:
+	// If user already has an active working cluster, test candidate cluster connection.
+	// Only switch if candidate is verified reachable or if no cluster was active.
+	m.mu.RLock()
+	currentActive := m.currentContext
+	m.mu.RUnlock()
+
+	candidateCtx := importedContexts[0]
+	candidateServer := ""
+	m.mu.RLock()
+	if m.rawConfig != nil && m.rawConfig.Contexts[candidateCtx] != nil {
+		cl := m.rawConfig.Clusters[m.rawConfig.Contexts[candidateCtx].Cluster]
+		if cl != nil {
+			candidateServer = cl.Server
+		}
+	}
+	m.mu.RUnlock()
+
+	isCandidateReachable := candidateServer != "" && probeEndpoint(candidateServer, 1500*time.Millisecond)
+
+	activeCtx := currentActive
+	if currentActive == "" || isCandidateReachable {
+		activeCtx = candidateCtx
+		_, _ = m.SwitchContext(activeCtx)
+	}
 
 	m.mu.RLock()
 	totalContexts := len(m.rawConfig.Contexts)
@@ -305,3 +329,25 @@ func (m *Manager) ImportDetectedContexts(params ImportDetectedContextsParams) (*
 		TotalContexts:    totalContexts,
 	}, nil
 }
+
+func probeEndpoint(serverUrl string, timeoutDur time.Duration) bool {
+	u, err := url.Parse(serverUrl)
+	if err != nil {
+		return false
+	}
+	host := u.Host
+	if !strings.Contains(host, ":") {
+		if u.Scheme == "https" {
+			host += ":443"
+		} else {
+			host += ":80"
+		}
+	}
+	conn, err := net.DialTimeout("tcp", host, timeoutDur)
+	if err != nil {
+		return false
+	}
+	_ = conn.Close()
+	return true
+}
+

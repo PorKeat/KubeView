@@ -3,6 +3,7 @@
 import * as React from "react";
 import {
   ServerOff,
+  Server,
   RotateCw,
   Terminal,
   Layers,
@@ -28,6 +29,7 @@ export function OfflineState({ className }: { className?: string }) {
     openKubeconfigModal,
     detectedSystemConfigs,
     detectSystemConfigs,
+    updateEndpoint,
   } = useClusterStore();
 
   React.useEffect(() => {
@@ -39,6 +41,25 @@ export function OfflineState({ className }: { className?: string }) {
 
   const activeContextInfo = availableContexts.find((c) => c.name === currentContext);
   const serverUrl = activeContextInfo?.server || "https://127.0.0.1:6443";
+  const [customEndpoint, setCustomEndpoint] = React.useState(serverUrl);
+  const [isUpdatingEndpoint, setIsUpdatingEndpoint] = React.useState(false);
+
+  React.useEffect(() => {
+    setCustomEndpoint(serverUrl);
+  }, [serverUrl]);
+
+  const handleSaveEndpoint = async () => {
+    if (!customEndpoint.trim()) return;
+    setIsUpdatingEndpoint(true);
+    try {
+      await updateEndpoint(currentContext, customEndpoint.trim());
+      toast.success("Updated cluster API server endpoint");
+    } catch (err: any) {
+      toast.error(`Update failed: ${err.message || err}`);
+    } finally {
+      setIsUpdatingEndpoint(false);
+    }
+  };
   const isKind = currentContext.includes("kind");
   const isMinikube = currentContext.includes("minikube");
   const isDocker = currentContext.includes("docker") || currentContext.includes("desktop");
@@ -176,6 +197,46 @@ export function OfflineState({ className }: { className?: string }) {
             </span>{" "}
             is not responding. The container daemon or local node may be stopped.
           </p>
+        </div>
+
+        {/* API Server Endpoint Configuration Box */}
+        <div className="p-3.5 rounded-xl bg-black/[0.03] dark:bg-black/40 border border-[var(--border)] text-left space-y-2.5">
+          <div className="flex items-center justify-between text-[11px]">
+            <span className="flex items-center gap-1.5 font-medium text-[var(--foreground)]">
+              <Server className="w-3.5 h-3.5 text-[#F08A42]" />
+              API Server Endpoint
+            </span>
+            {serverUrl.includes(".local") || serverUrl.includes(".internal") ? (
+              <span className="text-[10px] text-amber-500 font-medium">Internal domain detected</span>
+            ) : (
+              <span className="text-[10px] font-mono text-[var(--muted)]">Edit IP / Hostname</span>
+            )}
+          </div>
+
+          <div className="flex items-center gap-2">
+            <input
+              type="text"
+              value={customEndpoint}
+              onChange={(e) => setCustomEndpoint(e.target.value)}
+              placeholder="https://<master-ip>:6443"
+              className="flex-1 px-3 py-1.5 rounded-lg bg-black/[0.05] dark:bg-black/50 border border-[var(--border)] text-xs font-mono text-[var(--foreground)] focus:outline-none focus:border-[#F08A42]"
+            />
+            <button
+              onClick={handleSaveEndpoint}
+              disabled={isUpdatingEndpoint || customEndpoint === serverUrl}
+              className="px-3.5 py-1.5 rounded-lg bg-[#F08A42] hover:bg-[#E07931] disabled:opacity-50 text-white text-xs font-medium cursor-pointer transition-colors whitespace-nowrap"
+            >
+              {isUpdatingEndpoint ? "Updating..." : "Save & Reconnect"}
+            </button>
+          </div>
+
+          {(serverUrl.includes(".local") || serverUrl.includes(".internal") || serverUrl.includes("127.0.0.1")) && (
+            <p className="text-[11px] text-[var(--muted)] leading-normal">
+              💡 Tip: Clusters created by tools like KubeKey default to internal hostnames (e.g.{" "}
+              <code className="text-[#F08A42] font-mono">lb.kubesphere.local</code>). You can replace this with your master node&apos;s reachable IP address (e.g.{" "}
+              <code className="text-[var(--foreground)] font-mono">https://10.1.16.11:6443</code>) to connect immediately.
+            </p>
+          )}
         </div>
 
         {/* Suggested Quick Recovery Command */}

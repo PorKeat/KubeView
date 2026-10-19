@@ -1,4 +1,5 @@
 import { create } from "zustand";
+import { toast } from "sonner";
 import type {
   ContextSummary,
   DiagnosticResult,
@@ -117,6 +118,7 @@ interface ClusterState {
   detectSystemConfigs: () => Promise<DetectedContextInfo[]>;
   importDetectedContexts: (contexts: ImportDetectedContextItem[]) => Promise<ImportKubeconfigResult>;
   deleteContext: (contextName: string) => Promise<void>;
+  updateEndpoint: (contextName: string, newServer: string) => Promise<void>;
   clearAllContexts: () => Promise<void>;
   initEventListener: () => Promise<() => void>;
 }
@@ -501,6 +503,21 @@ export const useClusterStore = create<ClusterState>((set, get) => ({
       await get().loadContexts();
     } catch (err) {
       console.error("Failed to delete context:", err);
+    }
+  },
+
+  updateEndpoint: async (contextName: string, newServer: string) => {
+    try {
+      await invokeRpc("clusters.updateEndpoint", { contextName, newServer });
+      toast.success(`Updated endpoint for '${contextName}' to ${newServer}`);
+      await get().loadContexts();
+      if (get().currentContext === contextName) {
+        await get().diagnoseContext();
+      }
+    } catch (err: any) {
+      console.error("Failed to update endpoint:", err);
+      toast.error(`Failed to update endpoint: ${err.message || err}`);
+      throw err;
     }
   },
 

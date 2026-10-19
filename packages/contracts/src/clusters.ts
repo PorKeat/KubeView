@@ -106,4 +106,16 @@ export interface ImportDetectedContextsParams {
   contexts: ImportDetectedContextItem[];
 }
 
+export interface UpdateEndpointParams {
+  contextName: string;
+  newServer: string;
+}
+
+export interface UpdateEndpointResult {
+  success: boolean;
+  contextName: string;
+  newServer: string;
+}
+
+
 
