@@ -11,6 +11,7 @@ import {
   Settings,
   Bell,
   RefreshCw,
+  Plus,
 } from "lucide-react";
 import { useTheme } from "next-themes";
 import { useLayoutStore } from "@/stores/layoutStore";
@@ -25,7 +26,13 @@ export function AppHeader() {
   const [mounted, setMounted] = React.useState(false);
   const { setTheme, resolvedTheme } = useTheme();
   const { setCommandPaletteOpen } = useLayoutStore();
-  const { currentContext, currentNamespace, connectionStatus, latencyMs } = useClusterStore();
+  const {
+    currentContext,
+    currentNamespace,
+    connectionStatus,
+    latencyMs,
+    openKubeconfigModal,
+  } = useClusterStore();
 
   React.useEffect(() => {
     setMounted(true);
@@ -51,6 +58,15 @@ export function AppHeader() {
 
         {/* Interactive Namespace Selector */}
         <NamespaceSelectorDropdown />
+
+        <button
+          onClick={() => openKubeconfigModal("browse")}
+          className="flex items-center gap-1 px-2 py-1 text-xs rounded-md bg-[#F08A42]/10 hover:bg-[#F08A42]/20 text-[#F08A42] border border-[#F08A42]/25 transition-all font-medium cursor-pointer shadow-2xs"
+          title="Import or Manage Kubeconfigs"
+        >
+          <Plus className="w-3.5 h-3.5" />
+          <span className="hidden md:inline">Add Cluster</span>
+        </button>
       </div>
 
       {/* Center: Search Trigger (Cmd+K) */}

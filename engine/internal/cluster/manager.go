@@ -374,3 +374,84 @@ func detectAuthType(authInfo *clientcmdapi.AuthInfo) AuthType {
 	}
 	return AuthUnknown
 }
+
+// ImportKubeconfig imports a kubeconfig from raw YAML or a file path into ~/.kube/kubeview_*.yaml
+func (m *Manager) ImportKubeconfig(params ImportKubeconfigParams) (*ImportKubeconfigResult, error) {
+	var cfg *clientcmdapi.Config
+	var err error
+
+	if strings.TrimSpace(params.RawYAML) != "" {
+		cfg, err = clientcmd.Load([]byte(params.RawYAML))
+		if err != nil {
+			return nil, fmt.Errorf("invalid kubeconfig YAML format: %w", err)
+		}
+	} else if strings.TrimSpace(params.FilePath) != "" {
+		cfg, err = clientcmd.LoadFromFile(params.FilePath)
+		if err != nil {
+			return nil, fmt.Errorf("failed to read kubeconfig file '%s': %w", params.FilePath, err)
+		}
+	} else {
+		return nil, fmt.Errorf("either rawYaml or filePath must be provided")
+	}
+
+	if cfg == nil || len(cfg.Contexts) == 0 {
+		return nil, fmt.Errorf("kubeconfig contains no valid contexts")
+	}
+
+	home, err := os.UserHomeDir()
+	if err != nil {
+		return nil, fmt.Errorf("cannot resolve home directory: %w", err)
+	}
+
+	kubeDir := filepath.Join(home, ".kube")
+	if err := os.MkdirAll(kubeDir, 0700); err != nil {
+		return nil, fmt.Errorf("failed to create .kube directory: %w", err)
+	}
+
+	cleanName := "imported"
+	if params.Name != "" {
+		cleanName = strings.ReplaceAll(params.Name, " ", "_")
+	} else if cfg.CurrentContext != "" {
+		cleanName = strings.ReplaceAll(cfg.CurrentContext, " ", "_")
+	}
+
+	cleanName = strings.Map(func(r rune) rune {
+		if (r >= 'a' && r <= 'z') || (r >= 'A' && r <= 'Z') || (r >= '0' && r <= '9') || r == '-' || r == '_' {
+			return r
+		}
+		return '_'
+	}, cleanName)
+
+	targetPath := filepath.Join(kubeDir, fmt.Sprintf("kubeview_%s_%d.yaml", cleanName, time.Now().Unix()))
+
+	if err := clientcmd.WriteToFile(*cfg, targetPath); err != nil {
+		return nil, fmt.Errorf("failed to write kubeconfig to %s: %w", targetPath, err)
+	}
+
+	// Reload manager to merge the new configuration
+	if err := m.ReloadConfig(); err != nil {
+		return nil, fmt.Errorf("failed to reload configs after import: %w", err)
+	}
+
+	var importedContexts []string
+	for ctxName := range cfg.Contexts {
+		importedContexts = append(importedContexts, ctxName)
+	}
+
+	firstCtx := cfg.CurrentContext
+	if firstCtx == "" && len(importedContexts) > 0 {
+		firstCtx = importedContexts[0]
+	}
+
+	if firstCtx != "" {
+		_, _ = m.SwitchContext(firstCtx)
+	}
+
+	return &ImportKubeconfigResult{
+		Success:          true,
+		ImportedContexts: importedContexts,
+		ActiveContext:    firstCtx,
+		SavedPath:        targetPath,
+		TotalContexts:    len(m.rawConfig.Contexts),
+	}, nil
+}

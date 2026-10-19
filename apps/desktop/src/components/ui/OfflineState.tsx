@@ -11,6 +11,7 @@ import {
   ExternalLink,
   ShieldAlert,
   ArrowRight,
+  UploadCloud,
 } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
@@ -23,6 +24,7 @@ export function OfflineState({ className }: { className?: string }) {
     switchContext,
     diagnoseContext,
     diagnosticResult,
+    openKubeconfigModal,
   } = useClusterStore();
 
   const [isRetrying, setIsRetrying] = React.useState(false);
@@ -149,10 +151,18 @@ export function OfflineState({ className }: { className?: string }) {
           <button
             onClick={handleRetry}
             disabled={isRetrying}
-            className="px-4 py-2 rounded-lg bg-[var(--accent)] hover:bg-[var(--accent-hover)] text-white text-xs font-semibold shadow-md transition-all cursor-pointer flex items-center gap-2"
+            className="px-4 py-2 rounded-lg bg-[var(--surface-active)] hover:bg-[var(--surface-hover)] border border-[var(--border)] text-[var(--foreground)] text-xs font-semibold shadow-xs transition-all cursor-pointer flex items-center gap-2"
           >
             <RotateCw className={cn("w-3.5 h-3.5", isRetrying && "animate-spin")} />
             <span>Re-Test Probes</span>
+          </button>
+
+          <button
+            onClick={() => openKubeconfigModal("browse")}
+            className="px-4 py-2 rounded-lg bg-[#F08A42] hover:bg-[#E07931] text-white text-xs font-semibold shadow-md transition-all cursor-pointer flex items-center gap-2"
+          >
+            <UploadCloud className="w-3.5 h-3.5" />
+            <span>Import / Switch Kubeconfig</span>
           </button>
         </div>
       </div>

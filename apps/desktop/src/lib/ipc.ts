@@ -116,5 +116,15 @@ function mockRpcFallback<T>(method: string, _params?: unknown): T {
     } as T;
   }
 
+  if (method === "clusters.importKubeconfig") {
+    return {
+      success: true,
+      importedContexts: ["imported-cluster"],
+      activeContext: "imported-cluster",
+      savedPath: "~/.kube/kubeview_imported.yaml",
+      totalContexts: 3,
+    } as T;
+  }
+
   return {} as T;
 }

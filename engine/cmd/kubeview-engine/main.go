@@ -98,6 +98,28 @@ func main() {
 		return res, nil
 	})
 
+	// Method: clusters.importKubeconfig
+	server.Register("clusters.importKubeconfig", func(params json.RawMessage) (interface{}, *ipc.RPCError) {
+		var p cluster.ImportKubeconfigParams
+		if err := json.Unmarshal(params, &p); err != nil {
+			return nil, &ipc.RPCError{
+				Code:    ipc.ErrCodeInvalidParams,
+				Message: fmt.Sprintf("Invalid params: %v", err),
+			}
+		}
+
+		res, err := mgr.ImportKubeconfig(p)
+		if err != nil {
+			return nil, &ipc.RPCError{
+				Code:    ipc.ErrCodeInternalError,
+				Message: err.Error(),
+			}
+		}
+
+		server.Log("Successfully imported kubeconfig, active context: %s, total contexts: %d", res.ActiveContext, res.TotalContexts)
+		return res, nil
+	})
+
 	// Method: clusters.diagnose
 	server.Register("clusters.diagnose", func(params json.RawMessage) (interface{}, *ipc.RPCError) {
 		var p struct {

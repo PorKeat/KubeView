@@ -8,6 +8,8 @@ import { StatusBar } from "./StatusBar";
 import { ActiveViewRenderer } from "@/components/views/ActiveViewRenderer";
 import { CommandPalette } from "@/components/command/CommandPalette";
 import { ResourceInspectorDrawer } from "@/components/views/ResourceInspectorDrawer";
+import { SplashScreen } from "@/components/onboarding/SplashScreen";
+import { KubeconfigModal } from "@/components/onboarding/KubeconfigModal";
 
 import { useClusterStore } from "@/stores/clusterStore";
 
@@ -46,6 +48,12 @@ export function AppShell() {
 
       {/* 5. Resource Inspector Slide-Over Drawer */}
       <ResourceInspectorDrawer />
+
+      {/* 6. Onboarding & Kubeconfig Management Modal */}
+      <KubeconfigModal />
+
+      {/* 7. Initial High-Tech Splash Screen Overlay */}
+      <SplashScreen />
     </div>
   );
 }

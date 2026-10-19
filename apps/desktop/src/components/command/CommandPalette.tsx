@@ -30,8 +30,15 @@ import { Logo } from "@/components/brand/Logo";
 export function CommandPalette() {
   const { commandPaletteOpen, setCommandPaletteOpen, toggleSidebar } = useLayoutStore();
   const { openTab } = useTabStore();
-  const { setCurrentContext, setCurrentNamespace, openInspector, availableContexts, availableNamespaces } = useClusterStore();
   const { resolvedTheme, setTheme } = useTheme();
+  const {
+    setCurrentContext,
+    setCurrentNamespace,
+    openInspector,
+    availableContexts,
+    availableNamespaces,
+    openKubeconfigModal,
+  } = useClusterStore();
 
   React.useEffect(() => {
     const down = (e: KeyboardEvent) => {
@@ -140,6 +147,48 @@ export function CommandPalette() {
 
             {/* Clusters & Contexts */}
             <Command.Group heading="Clusters & Contexts" className="text-[10px] font-semibold text-[var(--muted)] px-2 py-1 uppercase tracking-wider">
+              <Command.Item
+                onSelect={() => {
+                  openKubeconfigModal("browse");
+                  setCommandPaletteOpen(false);
+                }}
+                className="flex items-center justify-between px-2.5 py-2 rounded-md cursor-pointer hover:bg-[var(--surface-hover)] text-[#F08A42] transition-colors"
+              >
+                <div className="flex items-center gap-2.5">
+                  <Server className="w-4 h-4 text-[#F08A42]" />
+                  <span className="font-medium">+ Import Kubeconfig File...</span>
+                </div>
+                <span className="text-[9px] font-mono px-1.5 py-0.5 rounded bg-[#F08A42]/10 text-[#F08A42]">Add</span>
+              </Command.Item>
+
+              <Command.Item
+                onSelect={() => {
+                  openKubeconfigModal("paste");
+                  setCommandPaletteOpen(false);
+                }}
+                className="flex items-center justify-between px-2.5 py-2 rounded-md cursor-pointer hover:bg-[var(--surface-hover)] text-[#F08A42] transition-colors"
+              >
+                <div className="flex items-center gap-2.5">
+                  <FileCode className="w-4 h-4 text-[#F08A42]" />
+                  <span className="font-medium">+ Paste Kubeconfig YAML...</span>
+                </div>
+                <span className="text-[9px] font-mono px-1.5 py-0.5 rounded bg-[#F08A42]/10 text-[#F08A42]">YAML</span>
+              </Command.Item>
+
+              <Command.Item
+                onSelect={() => {
+                  openKubeconfigModal("manage");
+                  setCommandPaletteOpen(false);
+                }}
+                className="flex items-center justify-between px-2.5 py-2 rounded-md cursor-pointer hover:bg-[var(--surface-hover)] text-[var(--foreground)] transition-colors"
+              >
+                <div className="flex items-center gap-2.5">
+                  <Layers className="w-4 h-4 text-[var(--muted)]" />
+                  <span>Manage Configured Clusters...</span>
+                </div>
+                <span className="text-[10px] text-[var(--muted)] font-mono">{availableContexts.length} clusters</span>
+              </Command.Item>
+
               {availableContexts.map((ctx) => (
                 <Command.Item
                   key={ctx.name}

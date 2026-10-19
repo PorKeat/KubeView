@@ -6,6 +6,8 @@ import type {
   ListNamespacesResult,
   ProviderType,
   SwitchContextResult,
+  ImportKubeconfigParams,
+  ImportKubeconfigResult,
 } from "@kubeview/contracts";
 import { invokeRpc, listenNotification } from "@/lib/ipc";
 
@@ -42,6 +44,9 @@ interface ClusterState {
   selectedResource: SelectedResource | null;
   isInspectorOpen: boolean;
   isLoading: boolean;
+  isKubeconfigModalOpen: boolean;
+  kubeconfigModalTab: "browse" | "paste" | "manage";
+  splashDismissed: boolean;
 
   // Actions
   loadContexts: () => Promise<void>;
@@ -54,6 +59,10 @@ interface ClusterState {
   setServerInfo: (version: string, latency: number) => void;
   openInspector: (resource: SelectedResource) => void;
   closeInspector: () => void;
+  openKubeconfigModal: (tab?: "browse" | "paste" | "manage") => void;
+  closeKubeconfigModal: () => void;
+  setSplashDismissed: (dismissed: boolean) => void;
+  importKubeconfig: (params: ImportKubeconfigParams) => Promise<ImportKubeconfigResult>;
   initEventListener: () => Promise<() => void>;
 }
 
@@ -71,6 +80,9 @@ export const useClusterStore = create<ClusterState>((set, get) => ({
   selectedResource: null,
   isInspectorOpen: false,
   isLoading: false,
+  isKubeconfigModalOpen: false,
+  kubeconfigModalTab: "browse",
+  splashDismissed: false,
 
   loadContexts: async () => {
     set({ isLoading: true });
@@ -208,6 +220,31 @@ export const useClusterStore = create<ClusterState>((set, get) => ({
   setServerInfo: (version, latency) => set({ serverVersion: version, latencyMs: latency }),
   openInspector: (resource) => set({ selectedResource: resource, isInspectorOpen: true }),
   closeInspector: () => set({ selectedResource: null, isInspectorOpen: false }),
+
+  openKubeconfigModal: (tab = "browse") =>
+    set({ isKubeconfigModalOpen: true, kubeconfigModalTab: tab }),
+  closeKubeconfigModal: () => set({ isKubeconfigModalOpen: false }),
+  setSplashDismissed: (dismissed) => set({ splashDismissed: dismissed }),
+
+  importKubeconfig: async (params: ImportKubeconfigParams) => {
+    set({ isLoading: true });
+    try {
+      const res = await invokeRpc<ImportKubeconfigResult>("clusters.importKubeconfig", params);
+      if (res && res.success) {
+        await get().loadContexts();
+        if (res.activeContext) {
+          await get().switchContext(res.activeContext);
+        }
+        set({ isKubeconfigModalOpen: false, isLoading: false });
+        return res;
+      }
+      set({ isLoading: false });
+      throw new Error("Kubeconfig import returned unconfirmed status");
+    } catch (err) {
+      set({ isLoading: false });
+      throw err;
+    }
+  },
 
   initEventListener: async () => {
     const unlisten = await listenNotification<ListContextsResult>(

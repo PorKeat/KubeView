@@ -63,3 +63,19 @@ type ListNamespacesParams struct {
 type ListNamespacesResult struct {
 	Namespaces []string `json:"namespaces"`
 }
+
+// ImportKubeconfigParams provides either raw YAML text or a local file path
+type ImportKubeconfigParams struct {
+	RawYAML  string `json:"rawYaml,omitempty"`
+	FilePath string `json:"filePath,omitempty"`
+	Name     string `json:"name,omitempty"`
+}
+
+// ImportKubeconfigResult returned after successfully parsing and persisting kubeconfig
+type ImportKubeconfigResult struct {
+	Success          bool     `json:"success"`
+	ImportedContexts []string `json:"importedContexts"`
+	ActiveContext    string   `json:"activeContext"`
+	SavedPath        string   `json:"savedPath"`
+	TotalContexts    int      `json:"totalContexts"`
+}

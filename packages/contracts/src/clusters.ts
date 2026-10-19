@@ -58,3 +58,18 @@ export interface ClusterSummary {
   status: "connected" | "degraded" | "offline" | "checking";
   latencyMs?: number;
 }
+
+export interface ImportKubeconfigParams {
+  rawYaml?: string;
+  filePath?: string;
+  name?: string;
+}
+
+export interface ImportKubeconfigResult {
+  success: boolean;
+  importedContexts: string[];
+  activeContext: string;
+  savedPath: string;
+  totalContexts: number;
+}
+

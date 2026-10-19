@@ -25,6 +25,7 @@ export function ContextSwitcherDropdown() {
     diagnoseContext,
     connectionStatus,
     latencyMs,
+    openKubeconfigModal,
   } = useClusterStore();
   const [search, setSearch] = React.useState("");
 
@@ -173,14 +174,16 @@ export function ContextSwitcherDropdown() {
           {/* Bottom Actions */}
           <div className="border-t border-[var(--border)] pt-1.5 mt-1 space-y-0.5">
             <DropdownMenu.Item
-              disabled
-              className="flex items-center justify-between p-1.5 text-xs rounded opacity-40 cursor-not-allowed text-[var(--muted)] select-none"
+              onSelect={() => openKubeconfigModal("browse")}
+              className="flex items-center justify-between p-1.5 text-xs rounded hover:bg-[var(--surface-hover)] text-[var(--foreground)] hover:text-[#F08A42] cursor-pointer outline-hidden select-none transition-colors"
             >
               <div className="flex items-center gap-2">
-                <Plus className="w-3.5 h-3.5" />
-                <span>Import Kubeconfig File...</span>
+                <Plus className="w-3.5 h-3.5 text-[#F08A42]" />
+                <span className="font-medium">Import / Add Kubeconfig...</span>
               </div>
-              <span className="text-[9px] font-mono px-1.5 py-0.5 rounded bg-black/[0.04] dark:bg-white/[0.04] border border-[var(--border)]">Auto-Loaded</span>
+              <span className="text-[9px] font-mono px-1.5 py-0.5 rounded bg-[#F08A42]/10 text-[#F08A42] border border-[#F08A42]/20">
+                + Add
+              </span>
             </DropdownMenu.Item>
 
             <DropdownMenu.Item
