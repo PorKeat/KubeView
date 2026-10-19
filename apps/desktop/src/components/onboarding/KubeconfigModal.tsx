@@ -393,7 +393,7 @@ export function KubeconfigModal() {
     if (selectedDetected.size === nonImported.length && nonImported.length > 0) {
       setSelectedDetected(new Set());
     } else {
-      setSelectedDetected(new Set(nonImported.map((c) => c.contextName)));
+      setSelectedDetected(new Set(nonImported.map((c) => `${c.filePath}::${c.contextName}`)));
     }
   };
 
@@ -401,7 +401,7 @@ export function KubeconfigModal() {
     const toImport = specificContext
       ? [{ contextName: specificContext.contextName, filePath: specificContext.filePath }]
       : detectedSystemConfigs
-          .filter((c) => selectedDetected.has(c.contextName))
+          .filter((c) => selectedDetected.has(`${c.filePath}::${c.contextName}`))
           .map((c) => ({ contextName: c.contextName, filePath: c.filePath }));
 
     if (toImport.length === 0) return;
@@ -656,17 +656,18 @@ export function KubeconfigModal() {
                     {/* Cards List */}
                     <div className="space-y-2.5">
                       {detectedSystemConfigs.map((c) => {
-                        const isSelected = selectedDetected.has(c.contextName);
+                        const itemKey = `${c.filePath}::${c.contextName}`;
+                        const isSelected = selectedDetected.has(itemKey);
                         return (
                           <div
-                            key={`${c.filePath}-${c.contextName}`}
+                            key={itemKey}
                             onClick={() => {
                               if (!c.isImported) {
                                 const next = new Set(selectedDetected);
-                                if (next.has(c.contextName)) {
-                                  next.delete(c.contextName);
+                                if (next.has(itemKey)) {
+                                  next.delete(itemKey);
                                 } else {
-                                  next.add(c.contextName);
+                                  next.add(itemKey);
                                 }
                                 setSelectedDetected(next);
                               }
@@ -692,10 +693,10 @@ export function KubeconfigModal() {
                                     checked={isSelected}
                                     onChange={() => {
                                       const next = new Set(selectedDetected);
-                                      if (next.has(c.contextName)) {
-                                        next.delete(c.contextName);
+                                      if (next.has(itemKey)) {
+                                        next.delete(itemKey);
                                       } else {
-                                        next.add(c.contextName);
+                                        next.add(itemKey);
                                       }
                                       setSelectedDetected(next);
                                     }}

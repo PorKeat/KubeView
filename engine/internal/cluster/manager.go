@@ -62,23 +62,58 @@ func (m *Manager) ReloadConfig() error {
 		if err != nil {
 			continue // skip non-kubeconfig or unparseable files
 		}
-		for k, v := range cfg.Clusters {
-			if _, exists := mergedConfig.Clusters[k]; !exists {
-				mergedConfig.Clusters[k] = v
-			}
+
+		fileBase := strings.TrimSuffix(filepath.Base(f), filepath.Ext(f))
+		// Remove timestamps like _1792379041610570000_0 from fileBase
+		parts := strings.Split(fileBase, "_")
+		if len(parts) > 2 {
+			fileBase = parts[0]
 		}
-		for k, v := range cfg.AuthInfos {
-			if _, exists := mergedConfig.AuthInfos[k]; !exists {
-				mergedConfig.AuthInfos[k] = v
+
+		for ctxName, ctxObj := range cfg.Contexts {
+			targetCtxName := ctxName
+			targetClusterName := ctxObj.Cluster
+			targetAuthName := ctxObj.AuthInfo
+
+			clusterObj := cfg.Clusters[ctxObj.Cluster]
+			userObj := cfg.AuthInfos[ctxObj.AuthInfo]
+
+			// Check collision with already merged contexts
+			if existingCtx, exists := mergedConfig.Contexts[targetCtxName]; exists {
+				existingCluster := mergedConfig.Clusters[existingCtx.Cluster]
+				serverUrl := ""
+				if clusterObj != nil {
+					serverUrl = clusterObj.Server
+				}
+				cleanServer := strings.TrimRight(strings.ToLower(serverUrl), "/")
+				existingServer := ""
+				if existingCluster != nil {
+					existingServer = strings.TrimRight(strings.ToLower(existingCluster.Server), "/")
+				}
+
+				if cleanServer != "" && cleanServer != existingServer {
+					// Different cluster endpoint! Disambiguate context name, cluster name, and auth name
+					targetCtxName = fmt.Sprintf("%s (%s)", ctxName, fileBase)
+					targetClusterName = fmt.Sprintf("%s-%s", ctxObj.Cluster, fileBase)
+					targetAuthName = fmt.Sprintf("%s-%s", ctxObj.AuthInfo, fileBase)
+				}
 			}
-		}
-		for k, v := range cfg.Contexts {
-			if _, exists := mergedConfig.Contexts[k]; !exists {
-				mergedConfig.Contexts[k] = v
+
+			if clusterObj != nil {
+				mergedConfig.Clusters[targetClusterName] = clusterObj
 			}
-		}
-		if mergedConfig.CurrentContext == "" && cfg.CurrentContext != "" {
-			mergedConfig.CurrentContext = cfg.CurrentContext
+			if userObj != nil {
+				mergedConfig.AuthInfos[targetAuthName] = userObj
+			}
+
+			newCtx := *ctxObj
+			newCtx.Cluster = targetClusterName
+			newCtx.AuthInfo = targetAuthName
+			mergedConfig.Contexts[targetCtxName] = &newCtx
+
+			if mergedConfig.CurrentContext == "" {
+				mergedConfig.CurrentContext = targetCtxName
+			}
 		}
 	}
 

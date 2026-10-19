@@ -200,16 +200,18 @@ class EngineBridge {
         const content = fs.readFileSync(file, "utf-8");
         // Lightweight regex parse for context names and clusters
         const ctxRegex = /-\s*name:\s*([^\s\n\r]+)/g;
+        const serverMatch = content.match(/server:\s*([^\s\n\r]+)/);
+        const server = serverMatch ? serverMatch[1].trim() : "kubernetes.cluster.local";
         let match;
         let hasContexts = false;
         while ((match = ctxRegex.exec(content)) !== null) {
           const name = match[1].replace(/['"]/g, "").trim();
-          if (name && !contexts.some((c) => c.contextName === name)) {
+          if (name && !contexts.some((c) => c.contextName === name && c.filePath === file)) {
             hasContexts = true;
             contexts.push({
               contextName: name,
               clusterName: name,
-              server: "kubernetes.cluster.local",
+              server: server,
               user: "admin",
               provider: "generic",
               authType: "cert",

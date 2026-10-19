@@ -140,8 +140,18 @@ func (m *Manager) DetectSystemConfigs() (*DetectSystemConfigsResult, error) {
 			provider := detectProvider(ctxName, ctx.Cluster, serverUrl)
 
 			isAlreadyImported := false
-			if activeConfig != nil && activeConfig.Contexts[ctxName] != nil {
-				isAlreadyImported = true
+			if activeConfig != nil {
+				cleanServer := strings.TrimRight(strings.ToLower(serverUrl), "/")
+				for _, actCtx := range activeConfig.Contexts {
+					actCluster := activeConfig.Clusters[actCtx.Cluster]
+					if actCluster != nil {
+						actServer := strings.TrimRight(strings.ToLower(actCluster.Server), "/")
+						if actServer != "" && actServer == cleanServer {
+							isAlreadyImported = true
+							break
+						}
+					}
+				}
 			}
 
 			detectedContexts = append(detectedContexts, DetectedContextInfo{
@@ -199,26 +209,74 @@ func (m *Manager) ImportDetectedContexts(params ImportDetectedContextsParams) (*
 			continue
 		}
 
+		fileBase := strings.TrimSuffix(filepath.Base(item.FilePath), filepath.Ext(item.FilePath))
+		if fileBase == "" {
+			fileBase = "cluster"
+		}
+
+		targetCtxName := item.ContextName
+		targetClusterName := ctxObj.Cluster
+		targetAuthName := ctxObj.AuthInfo
+
+		// Check if this context name already exists with a different server URL
+		m.mu.RLock()
+		serverUrl := ""
+		if clusterObj, ok := cfg.Clusters[ctxObj.Cluster]; ok && clusterObj != nil {
+			serverUrl = clusterObj.Server
+		}
+		cleanServer := strings.TrimRight(strings.ToLower(serverUrl), "/")
+
+		nameCollision := false
+		if m.rawConfig != nil {
+			if existingCtx, exists := m.rawConfig.Contexts[targetCtxName]; exists {
+				existingCluster := m.rawConfig.Clusters[existingCtx.Cluster]
+				existingServer := ""
+				if existingCluster != nil {
+					existingServer = strings.TrimRight(strings.ToLower(existingCluster.Server), "/")
+				}
+				if existingServer != "" && existingServer != cleanServer {
+					nameCollision = true
+				}
+			}
+		}
+		m.mu.RUnlock()
+
+		for _, prev := range importedContexts {
+			if prev == targetCtxName {
+				nameCollision = true
+				break
+			}
+		}
+
+		if nameCollision {
+			targetCtxName = fmt.Sprintf("%s (%s)", item.ContextName, fileBase)
+			targetClusterName = fmt.Sprintf("%s-%s", ctxObj.Cluster, fileBase)
+			targetAuthName = fmt.Sprintf("%s-%s", ctxObj.AuthInfo, fileBase)
+		}
+
 		// Create clean standalone config for this specific context
 		singleCfg := clientcmdapi.NewConfig()
-		singleCfg.Contexts[item.ContextName] = ctxObj
+		newCtx := *ctxObj
+		newCtx.Cluster = targetClusterName
+		newCtx.AuthInfo = targetAuthName
+		singleCfg.Contexts[targetCtxName] = &newCtx
 
 		if clusterObj, ok := cfg.Clusters[ctxObj.Cluster]; ok {
-			singleCfg.Clusters[ctxObj.Cluster] = clusterObj
+			singleCfg.Clusters[targetClusterName] = clusterObj
 		}
 		if userObj, ok := cfg.AuthInfos[ctxObj.AuthInfo]; ok {
-			singleCfg.AuthInfos[ctxObj.AuthInfo] = userObj
+			singleCfg.AuthInfos[targetAuthName] = userObj
 		}
-		singleCfg.CurrentContext = item.ContextName
+		singleCfg.CurrentContext = targetCtxName
 
-		cleanName := sanitizeConfigName(item.ContextName)
+		cleanName := sanitizeConfigName(targetCtxName)
 		targetPath := filepath.Join(targetDir, fmt.Sprintf("%s_%d_%d.kubeconfig", cleanName, timestamp, idx))
 
 		if err := clientcmd.WriteToFile(*singleCfg, targetPath); err != nil {
 			continue
 		}
 
-		importedContexts = append(importedContexts, item.ContextName)
+		importedContexts = append(importedContexts, targetCtxName)
 		lastSavedPath = targetPath
 	}
 
