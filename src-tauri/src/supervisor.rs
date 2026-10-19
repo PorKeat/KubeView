@@ -96,8 +96,10 @@ impl EngineSupervisor {
                             }
                         } else if let Some(method) = val.get("method").and_then(|m| m.as_str()) {
                             // It's a server-initiated notification (e.g., clusters.contextsChanged)
-                            info!("Forwarding engine notification to UI: {}", method);
-                            let _ = app_handle.emit(method, val.get("params"));
+                            // Tauri 2 events must include only alphanumeric characters, '-', '/', ':', and '_'
+                            let safe_event = method.replace('.', ":");
+                            info!("Forwarding engine notification to UI: {} as {}", method, safe_event);
+                            let _ = app_handle.emit(&safe_event, val.get("params"));
                             let _ = app_handle.emit("engine-notification", val);
                         }
                     }

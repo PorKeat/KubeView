@@ -20,7 +20,7 @@ export async function invokeRpc<T>(method: string, params?: unknown): Promise<T>
       });
       return result;
     } catch (err: unknown) {
-      console.error(`[IPC] RPC Error for '${method}':`, err);
+      console.warn(`[IPC] RPC Error for '${method}':`, err);
       throw err;
     }
   }
@@ -37,10 +37,12 @@ export async function listenNotification<T>(
   if (isTauri()) {
     try {
       const { listen } = await import("@tauri-apps/api/event");
-      const unlisten = await listen<T>(event, (ev) => handler(ev.payload));
+      // Tauri 2 events must include only alphanumeric characters, '-', '/', ':', and '_'
+      const safeEvent = event.replace(/\./g, ":");
+      const unlisten = await listen<T>(safeEvent, (ev) => handler(ev.payload));
       return unlisten;
     } catch (err) {
-      console.error(`[IPC] Failed to listen for event '${event}':`, err);
+      console.warn(`[IPC] Failed to listen for event '${event}':`, err);
     }
   }
   return () => {};

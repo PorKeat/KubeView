@@ -247,6 +247,24 @@ func (m *Manager) SwitchContext(contextName string) (*SwitchContextResult, error
 	}, nil
 }
 
+// GetContextNamespace returns the namespace configured for the given context, or "default"
+func (m *Manager) GetContextNamespace(contextName string) string {
+	m.mu.RLock()
+	defer m.mu.RUnlock()
+
+	if m.rawConfig == nil {
+		return "default"
+	}
+	if contextName == "" {
+		contextName = m.currentContext
+	}
+	ctx := m.rawConfig.Contexts[contextName]
+	if ctx != nil && ctx.Namespace != "" {
+		return ctx.Namespace
+	}
+	return "default"
+}
+
 // GetClientForContext returns a kubernetes.Interface for the given or active context
 func (m *Manager) GetClientForContext(ctxName string) (kubernetes.Interface, *rest.Config, error) {
 	m.mu.Lock()

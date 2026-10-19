@@ -139,15 +139,19 @@ func main() {
 			_ = json.Unmarshal(params, &p)
 		}
 
-		ctx, cancel := context.WithTimeout(context.Background(), 8*time.Second)
+		ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
 		defer cancel()
 
 		namespaces, err := mgr.ListNamespaces(ctx, p.ContextName)
 		if err != nil {
-			return nil, &ipc.RPCError{
-				Code:    ipc.ErrK8sForbidden,
-				Message: fmt.Sprintf("Failed to list namespaces: %v", err),
+			server.Log("Listing namespaces for '%s' returned error (%v); falling back to default context namespace", p.ContextName, err)
+			defaultNs := mgr.GetContextNamespace(p.ContextName)
+			if defaultNs == "" {
+				defaultNs = "default"
 			}
+			return &cluster.ListNamespacesResult{
+				Namespaces: []string{defaultNs},
+			}, nil
 		}
 
 		return &cluster.ListNamespacesResult{

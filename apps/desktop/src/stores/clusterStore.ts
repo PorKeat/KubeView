@@ -211,7 +211,7 @@ export const useClusterStore = create<ClusterState>((set, get) => ({
 
   initEventListener: async () => {
     const unlisten = await listenNotification<ListContextsResult>(
-      "clusters.contextsChanged",
+      "clusters:contextsChanged",
       (res) => {
         console.log("[ClusterStore] Kubeconfig contexts changed on disk:", res);
         if (res && res.contexts) {
