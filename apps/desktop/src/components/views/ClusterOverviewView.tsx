@@ -189,30 +189,27 @@ export function ClusterOverviewView() {
         </div>
       </div>
 
-      {/* 2. Unified Metric Strip (30% Surface Scaffolding with 10% Semantic Capacity Indicators) */}
+      {/* 2. Unified Metric Strip (design-taste-frontend: Type-led KPIs, no redundant icon tiles, sentence-case) */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         {/* Card 1: CPU Capacity */}
-        <div className="group p-5 rounded-xl border border-[var(--border)] bg-[var(--surface)] flex flex-col justify-between space-y-3.5 shadow-xs hover:border-[var(--accent)]/40 hover:bg-[var(--surface-hover)]/30 transition-all">
+        <div className="group p-5 rounded-xl border border-[var(--border)] bg-[var(--surface)] flex flex-col justify-between space-y-3.5 shadow-2xs hover:border-[var(--accent)]/40 hover:bg-[var(--surface-hover)]/30 transition-all">
           <div className="flex items-center justify-between">
-            <span className="text-xs font-semibold text-[var(--muted)] uppercase tracking-wider">
+            <span className="text-xs font-medium text-[var(--muted)]">
               CPU Allocation
             </span>
-            <div className="p-2 rounded-lg bg-black/5 dark:bg-white/5 text-[var(--muted)] border border-[var(--border)] group-hover:text-[var(--accent)] transition-colors">
-              <Cpu className="w-4 h-4" />
-            </div>
+            <span className="text-xs font-mono text-[var(--muted)]">
+              {clusterOverview?.totalCpuCores ?? 0} Cores Total
+            </span>
           </div>
 
           <div>
             <div className="flex items-baseline gap-2">
-              <span className="text-2xl font-bold font-mono text-[var(--foreground)] tracking-tight">
+              <span className="text-3xl font-bold font-mono text-[var(--foreground)] tracking-tight">
                 {clusterOverview?.cpuPercent ?? 0}%
-              </span>
-              <span className="text-xs text-[var(--muted)] font-mono">
-                / {clusterOverview?.totalCpuCores ?? 0} Cores
               </span>
             </div>
 
-            {/* Semantic Utilization Progress Bar (Emerald <70%, Amber 70-85%, Rose >85%) */}
+            {/* Semantic Utilization Progress Bar */}
             <div className="w-full h-1.5 bg-black/5 dark:bg-white/10 rounded-full overflow-hidden mt-3">
               <div
                 className={cn(
@@ -246,27 +243,24 @@ export function ClusterOverviewView() {
         </div>
 
         {/* Card 2: Memory Usage */}
-        <div className="group p-5 rounded-xl border border-[var(--border)] bg-[var(--surface)] flex flex-col justify-between space-y-3.5 shadow-xs hover:border-[var(--accent)]/40 hover:bg-[var(--surface-hover)]/30 transition-all">
+        <div className="group p-5 rounded-xl border border-[var(--border)] bg-[var(--surface)] flex flex-col justify-between space-y-3.5 shadow-2xs hover:border-[var(--accent)]/40 hover:bg-[var(--surface-hover)]/30 transition-all">
           <div className="flex items-center justify-between">
-            <span className="text-xs font-semibold text-[var(--muted)] uppercase tracking-wider">
+            <span className="text-xs font-medium text-[var(--muted)]">
               Memory Usage
             </span>
-            <div className="p-2 rounded-lg bg-black/5 dark:bg-white/5 text-[var(--muted)] border border-[var(--border)] group-hover:text-[var(--accent)] transition-colors">
-              <Database className="w-4 h-4" />
-            </div>
+            <span className="text-xs font-mono text-[var(--muted)]">
+              {clusterOverview?.totalMemoryGiB ?? 0} GiB Total
+            </span>
           </div>
 
           <div>
             <div className="flex items-baseline gap-2">
-              <span className="text-2xl font-bold font-mono text-[var(--foreground)] tracking-tight">
+              <span className="text-3xl font-bold font-mono text-[var(--foreground)] tracking-tight">
                 {clusterOverview?.memoryPercent ?? 0}%
-              </span>
-              <span className="text-xs text-[var(--muted)] font-mono">
-                / {clusterOverview?.totalMemoryGiB ?? 0} GiB
               </span>
             </div>
 
-            {/* Semantic Utilization Progress Bar (Emerald <70%, Amber 70-85%, Rose >85%) */}
+            {/* Semantic Utilization Progress Bar */}
             <div className="w-full h-1.5 bg-black/5 dark:bg-white/10 rounded-full overflow-hidden mt-3">
               <div
                 className={cn(
@@ -306,24 +300,24 @@ export function ClusterOverviewView() {
             openTab({ id: "pods", title: "Pods", closable: true });
             loadPods("all");
           }}
-          className="group p-5 rounded-xl border border-[var(--border)] bg-[var(--surface)] flex flex-col justify-between space-y-3.5 shadow-xs cursor-pointer hover:border-[var(--accent)]/40 hover:bg-[var(--surface-hover)]/40 transition-all"
+          className="group p-5 rounded-xl border border-[var(--border)] bg-[var(--surface)] flex flex-col justify-between space-y-3.5 shadow-2xs cursor-pointer hover:border-[var(--accent)]/40 hover:bg-[var(--surface-hover)]/40 transition-all"
         >
           <div className="flex items-center justify-between">
-            <span className="text-xs font-semibold text-[var(--muted)] uppercase tracking-wider">
+            <span className="text-xs font-medium text-[var(--muted)]">
               Pod Density
             </span>
-            <div className="p-2 rounded-lg bg-black/5 dark:bg-white/5 text-[var(--muted)] border border-[var(--border)] group-hover:text-[var(--accent)] transition-colors">
-              <Box className="w-4 h-4" />
-            </div>
+            <span className="text-xs font-mono text-[var(--muted)]">
+              {clusterOverview?.podCapacity ?? 0} Capacity
+            </span>
           </div>
 
           <div>
             <div className="flex items-baseline gap-2">
-              <span className="text-2xl font-bold font-mono text-[var(--foreground)] tracking-tight">
+              <span className="text-3xl font-bold font-mono text-[var(--foreground)] tracking-tight">
                 {clusterOverview?.totalPods ?? 0}
               </span>
               <span className="text-xs text-[var(--muted)] font-mono">
-                / {clusterOverview?.podCapacity ?? 0} Max
+                / {clusterOverview?.podCapacity ?? 0}
               </span>
             </div>
 
@@ -358,19 +352,19 @@ export function ClusterOverviewView() {
         </div>
 
         {/* Card 4: Cluster Nodes */}
-        <div className="group p-5 rounded-xl border border-[var(--border)] bg-[var(--surface)] flex flex-col justify-between space-y-3.5 shadow-xs hover:border-[var(--accent)]/40 hover:bg-[var(--surface-hover)]/30 transition-all">
+        <div className="group p-5 rounded-xl border border-[var(--border)] bg-[var(--surface)] flex flex-col justify-between space-y-3.5 shadow-2xs hover:border-[var(--accent)]/40 hover:bg-[var(--surface-hover)]/30 transition-all">
           <div className="flex items-center justify-between">
-            <span className="text-xs font-semibold text-[var(--muted)] uppercase tracking-wider">
+            <span className="text-xs font-medium text-[var(--muted)]">
               Cluster Nodes
             </span>
-            <div className="p-2 rounded-lg bg-black/5 dark:bg-white/5 text-[var(--muted)] border border-[var(--border)] group-hover:text-[var(--accent)] transition-colors">
-              <Server className="w-4 h-4" />
-            </div>
+            <span className="text-xs font-mono text-[var(--muted)]">
+              {clusterOverview?.totalNodes ?? 0} Total
+            </span>
           </div>
 
           <div>
             <div className="flex items-baseline gap-2">
-              <span className="text-2xl font-bold font-mono text-[var(--foreground)] tracking-tight">
+              <span className="text-3xl font-bold font-mono text-[var(--foreground)] tracking-tight">
                 {clusterOverview?.readyNodes ?? 0}
               </span>
               <span className="text-xs text-[var(--muted)] font-mono">
@@ -575,7 +569,7 @@ export function ClusterOverviewView() {
             {/* Seamless Divided Stages */}
             <div className="divide-y divide-[var(--border)]/60">
               {/* Stage 1: Network & TCP */}
-              <div className="py-3 flex items-center justify-between gap-3">
+              <div className="py-2.5 flex items-center justify-between gap-3">
                 <div className="flex items-center gap-3 min-w-0">
                   {netStage?.passed ? (
                     <CheckCircle2 className="w-4 h-4 text-emerald-500 shrink-0" />
@@ -599,7 +593,7 @@ export function ClusterOverviewView() {
               </div>
 
               {/* Stage 2: Authentication */}
-              <div className="py-3 flex items-center justify-between gap-3">
+              <div className="py-2.5 flex items-center justify-between gap-3">
                 <div className="flex items-center gap-3 min-w-0">
                   {authStage?.passed ? (
                     <CheckCircle2 className="w-4 h-4 text-emerald-500 shrink-0" />
@@ -630,7 +624,7 @@ export function ClusterOverviewView() {
               </div>
 
               {/* Stage 3: TLS */}
-              <div className="py-3 flex items-center justify-between gap-3">
+              <div className="py-2.5 flex items-center justify-between gap-3">
                 <div className="flex items-center gap-3 min-w-0">
                   {tlsStage?.passed ? (
                     <CheckCircle2 className="w-4 h-4 text-emerald-500 shrink-0" />
@@ -661,7 +655,7 @@ export function ClusterOverviewView() {
               </div>
 
               {/* Stage 4: RBAC */}
-              <div className="py-3 flex items-center justify-between gap-3">
+              <div className="py-2.5 flex items-center justify-between gap-3">
                 <div className="flex items-center gap-3 min-w-0">
                   {rbacStage?.passed ? (
                     <CheckCircle2 className="w-4 h-4 text-emerald-500 shrink-0" />
@@ -703,7 +697,7 @@ export function ClusterOverviewView() {
         </div>
 
         {/* Right: Live Cluster Events & Warning Stream (Semantic Warning & Error Mapping) */}
-        <div className="p-5 rounded-xl border border-[var(--border)] bg-[var(--surface)] flex flex-col justify-between space-y-4 shadow-xs">
+        <div className="p-5 rounded-xl border border-[var(--border)] bg-[var(--surface)] flex flex-col justify-between space-y-4 shadow-2xs">
           <div>
             <div className="flex items-center justify-between pb-3.5 border-b border-[var(--border)]/70">
               <div className="flex items-center gap-2.5">
@@ -754,7 +748,7 @@ export function ClusterOverviewView() {
                         </div>
                         <span className="text-[11px] text-[var(--muted)] font-mono">{ev.lastTimestamp}</span>
                       </div>
-                      <p className="text-xs text-[var(--muted)] font-mono line-clamp-1 pl-3.5">
+                      <p className="text-xs text-[var(--muted)] font-mono line-clamp-1 pl-3.5" title={ev.message}>
                         {ev.message}
                       </p>
                       <div className="flex items-center justify-between text-[10px] text-[var(--muted)] font-mono pl-3.5 pt-0.5">
