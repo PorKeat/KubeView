@@ -51,78 +51,37 @@ export async function listenNotification<T>(
 function mockRpcFallback<T>(method: string, _params?: unknown): T {
   if (method === "clusters.listContexts") {
     return {
-      currentContext: "kind-kubeview",
-      configPath: "~/.kube/config",
-      contexts: [
-        {
-          name: "kind-kubeview",
-          cluster: "kind-kubeview",
-          server: "https://127.0.0.1:51443",
-          user: "kind-kubeview",
-          namespace: "default",
-          isCurrent: true,
-          provider: "kind",
-          authType: "cert",
-        },
-        {
-          name: "minikube",
-          cluster: "minikube",
-          server: "https://192.168.49.2:8443",
-          user: "minikube",
-          namespace: "default",
-          isCurrent: false,
-          provider: "minikube",
-          authType: "cert",
-        },
-      ],
+      currentContext: "",
+      configPath: "",
+      contexts: [],
     } as T;
   }
 
   if (method === "clusters.switchContext") {
     return {
-      activeContext: "kind-kubeview",
+      activeContext: "",
       status: "ready",
-      context: {
-        name: "kind-kubeview",
-        cluster: "kind-kubeview",
-        server: "https://127.0.0.1:51443",
-        user: "kind-kubeview",
-        namespace: "default",
-        isCurrent: true,
-        provider: "kind",
-        authType: "cert",
-      },
+      context: null,
     } as T;
   }
 
   if (method === "clusters.diagnose") {
-    return {
-      clusterId: "kind-kubeview",
-      status: "connected",
-      serverVersion: "v1.34.1",
-      latencyMs: 14,
-      stages: {
-        network: { name: "network", passed: true, latencyMs: 3, message: "TCP handshake successful" },
-        authentication: { name: "authentication", passed: true, latencyMs: 2, message: "Certificate verified" },
-        tls: { name: "tls", passed: true, latencyMs: 6, message: "TLS verified" },
-        rbac: { name: "rbac", passed: true, latencyMs: 3, message: "Cluster-admin permissions verified" },
-      },
-    } as T;
+    return null as T;
   }
 
   if (method === "clusters.listNamespaces") {
     return {
-      namespaces: ["default", "kube-system", "kube-public", "monitoring"],
+      namespaces: [],
     } as T;
   }
 
   if (method === "clusters.importKubeconfig") {
     return {
       success: true,
-      importedContexts: ["imported-cluster"],
-      activeContext: "imported-cluster",
-      savedPath: "~/.kube/kubeview_imported.yaml",
-      totalContexts: 3,
+      importedContexts: [],
+      activeContext: "",
+      savedPath: "",
+      totalContexts: 0,
     } as T;
   }
 

@@ -63,6 +63,8 @@ interface ClusterState {
   closeKubeconfigModal: () => void;
   setSplashDismissed: (dismissed: boolean) => void;
   importKubeconfig: (params: ImportKubeconfigParams) => Promise<ImportKubeconfigResult>;
+  deleteContext: (contextName: string) => Promise<void>;
+  clearAllContexts: () => Promise<void>;
   initEventListener: () => Promise<() => void>;
 }
 
@@ -243,6 +245,31 @@ export const useClusterStore = create<ClusterState>((set, get) => ({
     } catch (err) {
       set({ isLoading: false });
       throw err;
+    }
+  },
+
+  deleteContext: async (contextName: string) => {
+    try {
+      await invokeRpc("clusters.deleteContext", { contextName });
+      await get().loadContexts();
+    } catch (err) {
+      console.error("Failed to delete context:", err);
+    }
+  },
+
+  clearAllContexts: async () => {
+    try {
+      await invokeRpc("clusters.clearAll");
+      set({
+        availableContexts: [],
+        currentContext: "",
+        connectionStatus: "offline",
+        serverVersion: "No cluster connected",
+        latencyMs: 0,
+        availableNamespaces: ["all", "default"],
+      });
+    } catch (err) {
+      console.error("Failed to clear contexts:", err);
     }
   },
 

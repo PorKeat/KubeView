@@ -120,6 +120,39 @@ func main() {
 		return res, nil
 	})
 
+	// Method: clusters.deleteContext
+	server.Register("clusters.deleteContext", func(params json.RawMessage) (interface{}, *ipc.RPCError) {
+		var p struct {
+			ContextName string `json:"contextName"`
+		}
+		if err := json.Unmarshal(params, &p); err != nil {
+			return nil, &ipc.RPCError{
+				Code:    ipc.ErrCodeInvalidParams,
+				Message: fmt.Sprintf("Invalid params: %v", err),
+			}
+		}
+		if err := mgr.DeleteContext(p.ContextName); err != nil {
+			return nil, &ipc.RPCError{
+				Code:    ipc.ErrCodeInternalError,
+				Message: err.Error(),
+			}
+		}
+		server.Log("Deleted context: %s", p.ContextName)
+		return map[string]interface{}{"success": true}, nil
+	})
+
+	// Method: clusters.clearAll
+	server.Register("clusters.clearAll", func(params json.RawMessage) (interface{}, *ipc.RPCError) {
+		if err := mgr.ClearAllContexts(); err != nil {
+			return nil, &ipc.RPCError{
+				Code:    ipc.ErrCodeInternalError,
+				Message: err.Error(),
+			}
+		}
+		server.Log("Cleared all managed clusters (clean slate)")
+		return map[string]interface{}{"success": true}, nil
+	})
+
 	// Method: clusters.diagnose
 	server.Register("clusters.diagnose", func(params json.RawMessage) (interface{}, *ipc.RPCError) {
 		var p struct {

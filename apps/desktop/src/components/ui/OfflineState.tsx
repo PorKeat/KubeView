@@ -64,6 +64,55 @@ export function OfflineState({ className }: { className?: string }) {
     setTimeout(() => setCopiedCmd(false), 2000);
   };
 
+  // 1. Clean State: When user has 0 clusters configured
+  if (availableContexts.length === 0) {
+    return (
+      <div
+        className={cn(
+          "flex-1 flex flex-col items-center justify-center p-8 select-none relative overflow-hidden",
+          className
+        )}
+      >
+        <div className="absolute w-96 h-96 bg-[#F08A42]/10 rounded-full blur-3xl pointer-events-none -top-24" />
+
+        <div className="relative z-10 max-w-md w-full p-8 rounded-3xl glass-panel border border-[var(--border)] shadow-2xl space-y-5 text-center">
+          <div className="relative mx-auto w-16 h-16 rounded-2xl bg-[#F08A42]/10 border border-[#F08A42]/30 flex items-center justify-center text-[#F08A42] shadow-[0_0_24px_rgba(240,138,66,0.2)]">
+            <Layers className="w-8 h-8" />
+          </div>
+
+          <div className="space-y-2">
+            <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-mono font-semibold bg-[#F08A42]/10 text-[#F08A42] border border-[#F08A42]/20 mb-1">
+              <span>CLEAN_SLATE • READY FOR CONFIG</span>
+            </div>
+            <h2 className="text-base font-bold text-[var(--foreground)] tracking-tight">
+              No Kubernetes Cluster Connected
+            </h2>
+            <p className="text-xs text-[var(--muted)] leading-relaxed max-w-sm mx-auto">
+              Your workspace is completely clean. Import your Kubeconfig file (with any extension or no extension), select a folder, or paste YAML to connect.
+            </p>
+          </div>
+
+          <div className="flex items-center justify-center gap-3 pt-2">
+            <button
+              onClick={() => openKubeconfigModal("browse")}
+              className="px-5 py-2.5 rounded-xl bg-[#F08A42] hover:bg-[#E07931] text-white text-xs font-semibold shadow-md transition-all cursor-pointer flex items-center gap-2"
+            >
+              <UploadCloud className="w-4 h-4" />
+              <span>Import Kubeconfig</span>
+            </button>
+
+            <button
+              onClick={() => openKubeconfigModal("paste")}
+              className="px-4 py-2.5 rounded-xl bg-[var(--surface-active)] hover:bg-[var(--surface-hover)] border border-[var(--border)] text-[var(--foreground)] text-xs font-semibold shadow-xs transition-all cursor-pointer flex items-center gap-2"
+            >
+              <span>Paste YAML</span>
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div
       className={cn(

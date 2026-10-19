@@ -94,6 +94,18 @@ func (m *Manager) ReloadConfig() error {
 	return nil
 }
 
+func getKubeViewDir() (string, error) {
+	home, err := os.UserHomeDir()
+	if err != nil {
+		return "", err
+	}
+	dir := filepath.Join(home, ".kubeview", "clusters")
+	if err := os.MkdirAll(dir, 0700); err != nil {
+		return "", err
+	}
+	return dir, nil
+}
+
 func discoverConfigFiles(explicitPath string) []string {
 	if explicitPath != "" {
 		return []string{explicitPath}
@@ -108,26 +120,16 @@ func discoverConfigFiles(explicitPath string) []string {
 		}
 	}
 
-	home, err := os.UserHomeDir()
-	if err == nil {
-		defaultConfig := filepath.Join(home, ".kube", "config")
-		candidates = append(candidates, defaultConfig)
-
-		// Scan ~/.kube for additional .yaml/.yml configurations
-		kubeDir := filepath.Join(home, ".kube")
-		entries, err := os.ReadDir(kubeDir)
+	// Solely load configurations managed by KubeView in ~/.kubeview/clusters/
+	if dir, err := getKubeViewDir(); err == nil {
+		entries, err := os.ReadDir(dir)
 		if err == nil {
 			for _, entry := range entries {
-				if entry.IsDir() {
+				if entry.IsDir() || strings.HasPrefix(entry.Name(), ".") {
 					continue
 				}
-				name := entry.Name()
-				if strings.Contains(name, ".bak") || strings.Contains(name, ".backup") || strings.HasPrefix(name, ".") {
-					continue
-				}
-				if strings.HasSuffix(name, ".yaml") || strings.HasSuffix(name, ".yml") {
-					candidates = append(candidates, filepath.Join(kubeDir, name))
-				}
+				// Load any file regardless of extension or no extension
+				candidates = append(candidates, filepath.Join(dir, entry.Name()))
 			}
 		}
 	}
@@ -386,41 +388,37 @@ func sanitizeConfigName(cleanName string) string {
 
 // ImportKubeconfig imports a kubeconfig from raw YAML, file path, directory, or multiple files into ~/.kube/kubeview_*.yaml
 func (m *Manager) ImportKubeconfig(params ImportKubeconfigParams) (*ImportKubeconfigResult, error) {
-	// If filePath is a directory, expand its entries into params.Files
+	// If filePath is a directory, dynamically discover all valid kubeconfigs inside it (no extension restriction!)
 	if strings.TrimSpace(params.FilePath) != "" {
 		if fi, err := os.Stat(params.FilePath); err == nil && fi.IsDir() {
 			entries, readErr := os.ReadDir(params.FilePath)
 			if readErr == nil {
 				for _, entry := range entries {
-					if entry.IsDir() {
+					if entry.IsDir() || strings.HasPrefix(entry.Name(), ".") {
 						continue
 					}
-					nameLower := strings.ToLower(entry.Name())
-					ext := filepath.Ext(nameLower)
-					if ext == ".yaml" || ext == ".yml" || ext == ".config" || ext == ".kubeconfig" || !strings.Contains(entry.Name(), ".") {
-						fullPath := filepath.Join(params.FilePath, entry.Name())
-						params.Files = append(params.Files, ImportKubeconfigFileItem{
-							FilePath: fullPath,
-							Name:     entry.Name(),
-						})
+					fullPath := filepath.Join(params.FilePath, entry.Name())
+					data, err := os.ReadFile(fullPath)
+					if err == nil {
+						if testCfg, err := clientcmd.Load(data); err == nil && testCfg != nil && len(testCfg.Contexts) > 0 {
+							params.Files = append(params.Files, ImportKubeconfigFileItem{
+								FilePath: fullPath,
+								Name:     entry.Name(),
+							})
+						}
 					}
 				}
 			}
 		}
 	}
 
+	targetDir, err := getKubeViewDir()
+	if err != nil {
+		return nil, fmt.Errorf("cannot resolve KubeView data directory: %w", err)
+	}
+
 	// Handle batch import (multiple files or folder contents)
 	if len(params.Files) > 0 {
-		home, err := os.UserHomeDir()
-		if err != nil {
-			return nil, fmt.Errorf("cannot resolve home directory: %w", err)
-		}
-
-		kubeDir := filepath.Join(home, ".kube")
-		if err := os.MkdirAll(kubeDir, 0700); err != nil {
-			return nil, fmt.Errorf("failed to create .kube directory: %w", err)
-		}
-
 		var allImported []string
 		var firstActive string
 		var lastSavedPath string
@@ -442,7 +440,7 @@ func (m *Manager) ImportKubeconfig(params ImportKubeconfigParams) (*ImportKubeco
 				continue
 			}
 
-			cleanName := "imported"
+			cleanName := "cluster"
 			if f.Name != "" {
 				cleanName = strings.ReplaceAll(f.Name, " ", "_")
 			} else if fileCfg.CurrentContext != "" {
@@ -450,7 +448,7 @@ func (m *Manager) ImportKubeconfig(params ImportKubeconfigParams) (*ImportKubeco
 			}
 			cleanName = sanitizeConfigName(cleanName)
 
-			targetPath := filepath.Join(kubeDir, fmt.Sprintf("kubeview_%s_%d_%d.yaml", cleanName, timestamp, idx))
+			targetPath := filepath.Join(targetDir, fmt.Sprintf("%s_%d_%d.kubeconfig", cleanName, timestamp, idx))
 			if err := clientcmd.WriteToFile(*fileCfg, targetPath); err != nil {
 				continue
 			}
@@ -493,7 +491,6 @@ func (m *Manager) ImportKubeconfig(params ImportKubeconfigParams) (*ImportKubeco
 
 	// Single config import (raw YAML or single file)
 	var cfg *clientcmdapi.Config
-	var err error
 
 	if strings.TrimSpace(params.RawYAML) != "" {
 		cfg, err = clientcmd.Load([]byte(params.RawYAML))
@@ -513,26 +510,15 @@ func (m *Manager) ImportKubeconfig(params ImportKubeconfigParams) (*ImportKubeco
 		return nil, fmt.Errorf("kubeconfig contains no valid contexts")
 	}
 
-	home, err := os.UserHomeDir()
-	if err != nil {
-		return nil, fmt.Errorf("cannot resolve home directory: %w", err)
-	}
-
-	kubeDir := filepath.Join(home, ".kube")
-	if err := os.MkdirAll(kubeDir, 0700); err != nil {
-		return nil, fmt.Errorf("failed to create .kube directory: %w", err)
-	}
-
-	cleanName := "imported"
+	cleanName := "cluster"
 	if params.Name != "" {
 		cleanName = strings.ReplaceAll(params.Name, " ", "_")
 	} else if cfg.CurrentContext != "" {
 		cleanName = strings.ReplaceAll(cfg.CurrentContext, " ", "_")
 	}
-
 	cleanName = sanitizeConfigName(cleanName)
 
-	targetPath := filepath.Join(kubeDir, fmt.Sprintf("kubeview_%s_%d.yaml", cleanName, time.Now().Unix()))
+	targetPath := filepath.Join(targetDir, fmt.Sprintf("%s_%d.kubeconfig", cleanName, time.Now().Unix()))
 
 	if err := clientcmd.WriteToFile(*cfg, targetPath); err != nil {
 		return nil, fmt.Errorf("failed to write kubeconfig to %s: %w", targetPath, err)
@@ -564,4 +550,62 @@ func (m *Manager) ImportKubeconfig(params ImportKubeconfigParams) (*ImportKubeco
 		SavedPath:        targetPath,
 		TotalContexts:    len(m.rawConfig.Contexts),
 	}, nil
+}
+
+// DeleteContext removes a specific context from KubeView managed clusters
+func (m *Manager) DeleteContext(contextName string) error {
+	dir, err := getKubeViewDir()
+	if err != nil {
+		return err
+	}
+
+	entries, err := os.ReadDir(dir)
+	if err == nil {
+		for _, entry := range entries {
+			if entry.IsDir() || strings.HasPrefix(entry.Name(), ".") {
+				continue
+			}
+			filePath := filepath.Join(dir, entry.Name())
+			cfg, err := clientcmd.LoadFromFile(filePath)
+			if err != nil || cfg == nil {
+				continue
+			}
+			if _, exists := cfg.Contexts[contextName]; exists {
+				delete(cfg.Contexts, contextName)
+				if len(cfg.Contexts) == 0 {
+					_ = os.Remove(filePath)
+				} else {
+					_ = clientcmd.WriteToFile(*cfg, filePath)
+				}
+			}
+		}
+	}
+
+	return m.ReloadConfig()
+}
+
+// ClearAllContexts deletes all managed clusters in ~/.kubeview/clusters/ for a clean slate
+func (m *Manager) ClearAllContexts() error {
+	dir, err := getKubeViewDir()
+	if err != nil {
+		return err
+	}
+
+	entries, err := os.ReadDir(dir)
+	if err == nil {
+		for _, entry := range entries {
+			if !entry.IsDir() {
+				_ = os.Remove(filepath.Join(dir, entry.Name()))
+			}
+		}
+	}
+
+	m.mu.Lock()
+	m.rawConfig = clientcmdapi.NewConfig()
+	m.currentContext = ""
+	m.clientsets = make(map[string]kubernetes.Interface)
+	m.restConfigs = make(map[string]*rest.Config)
+	m.mu.Unlock()
+
+	return nil
 }

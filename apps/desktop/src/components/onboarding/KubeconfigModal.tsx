@@ -46,6 +46,8 @@ export function KubeconfigModal() {
     availableContexts,
     currentContext,
     switchContext,
+    deleteContext,
+    clearAllContexts,
   } = useClusterStore();
 
   const [activeTab, setActiveTab] = React.useState<"browse" | "paste" | "manage">(
@@ -153,13 +155,18 @@ export function KubeconfigModal() {
       const { file, path } = fileItems[i];
       const nameLower = file.name.toLowerCase();
 
-      // Skip common non-config noise
+      // Only skip known binary formats and hidden system files; allow files with NO extension or ANY extension
       if (
         nameLower.startsWith(".") ||
         nameLower.endsWith(".png") ||
         nameLower.endsWith(".jpg") ||
-        nameLower.endsWith(".md") ||
-        nameLower.endsWith(".txt") && !nameLower.includes("kube") && !nameLower.includes("config")
+        nameLower.endsWith(".jpeg") ||
+        nameLower.endsWith(".gif") ||
+        nameLower.endsWith(".zip") ||
+        nameLower.endsWith(".tar") ||
+        nameLower.endsWith(".gz") ||
+        nameLower.endsWith(".exe") ||
+        nameLower.endsWith(".bin")
       ) {
         nonConfigCount++;
         continue;
@@ -175,11 +182,11 @@ export function KubeconfigModal() {
 
         const contexts = extractContexts(text);
         const hasK8sStructure =
-          text.includes("clusters:") ||
-          text.includes("apiVersion:") ||
-          text.includes("kind: Config");
+          (text.includes("clusters:") && text.includes("contexts:")) ||
+          (text.includes("apiVersion:") && text.includes("kind:")) ||
+          (text.includes("clusters:") && text.includes("server:"));
 
-        const isValid = contexts.length > 0 || (hasK8sStructure && text.includes("server:"));
+        const isValid = contexts.length > 0 || hasK8sStructure;
 
         if (!isValid && fileItems.length > 1) {
           // In a folder scan, silently skip files that are clearly not kubeconfigs
@@ -490,7 +497,6 @@ export function KubeconfigModal() {
                   ref={fileInputRef}
                   onChange={handleFilesSelect}
                   multiple
-                  accept=".yaml,.yml,.config,.kubeconfig,text/*"
                   className="hidden"
                 />
                 <input
@@ -846,11 +852,26 @@ export function KubeconfigModal() {
                           ) : (
                             <button
                               type="button"
-                              className="px-2.5 py-1 text-xs rounded-lg bg-[var(--surface-active)] text-[var(--muted)] group-hover:text-[var(--foreground)] group-hover:border-[var(--accent)] border border-[var(--border)] transition-colors"
+                              className="px-2.5 py-1 text-xs rounded-lg bg-[var(--surface-active)] text-[var(--muted)] group-hover:text-[var(--foreground)] group-hover:border-[var(--accent)] border border-[var(--border)] transition-colors cursor-pointer"
                             >
                               Connect
                             </button>
                           )}
+
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              if (confirm(`Remove cluster context '${ctx.name}' from KubeView?`)) {
+                                deleteContext(ctx.name);
+                                toast.success(`Removed context '${ctx.name}'`);
+                              }
+                            }}
+                            className="p-1.5 rounded-lg hover:bg-black/10 dark:hover:bg-white/10 text-[var(--muted)] hover:text-rose-500 transition-colors cursor-pointer"
+                            title="Remove this context"
+                          >
+                            <Trash2 className="w-3.5 h-3.5" />
+                          </button>
                         </div>
                       </div>
                     );
@@ -858,13 +879,13 @@ export function KubeconfigModal() {
 
                   {availableContexts.length === 0 && (
                     <div className="text-center py-8 text-xs text-[var(--muted)]">
-                      No cluster contexts detected yet. Import your first kubeconfig using the tabs above.
+                      No cluster contexts configured yet. Import your first kubeconfig using the tabs above.
                     </div>
                   )}
                 </div>
 
-                {/* Add More Contexts Trigger Button */}
-                <div className="pt-2 border-t border-[var(--border)]">
+                {/* Add More Contexts Trigger Button & Reset Button */}
+                <div className="pt-2 border-t border-[var(--border)] space-y-2">
                   <button
                     onClick={() => setActiveTab("browse")}
                     className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl border border-dashed border-[var(--border)] hover:border-[#F08A42] hover:bg-[#F08A42]/5 text-xs text-[var(--muted)] hover:text-[#F08A42] transition-all cursor-pointer font-medium"
@@ -872,6 +893,22 @@ export function KubeconfigModal() {
                     <Plus className="w-4 h-4" />
                     <span>Import More Kubeconfigs or Select a Folder</span>
                   </button>
+
+                  {availableContexts.length > 0 && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        if (confirm("Are you sure you want to remove all clusters from KubeView and start completely clean?")) {
+                          clearAllContexts();
+                          toast.success("All cluster configs removed. Clean slate ready.");
+                        }
+                      }}
+                      className="w-full flex items-center justify-center gap-2 py-1.5 rounded-xl text-xs text-rose-500/80 hover:text-rose-500 hover:bg-rose-500/10 border border-rose-500/20 transition-all cursor-pointer font-medium"
+                    >
+                      <Trash2 className="w-3.5 h-3.5" />
+                      <span>Reset All Clusters (Clean Slate)</span>
+                    </button>
+                  )}
                 </div>
               </div>
             )}
