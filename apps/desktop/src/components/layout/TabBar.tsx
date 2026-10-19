@@ -47,8 +47,8 @@ export function TabBar() {
   };
 
   return (
-    <div className="h-9 w-full border-b border-[var(--border)] bg-[var(--surface)] flex items-center px-1 overflow-x-auto select-none shrink-0 scrollbar-none" role="tablist" aria-label="Open tabs">
-      <div className="flex items-center gap-1 flex-1">
+    <div className="h-10 w-full border-b border-[var(--border)] bg-[var(--surface)] flex items-center px-3 overflow-x-auto select-none shrink-0 scrollbar-none" role="tablist" aria-label="Open tabs">
+      <div className="flex items-center gap-1.5 flex-1">
         {openTabs.map((tab: TabItem) => {
           const isActive = activeTabId === tab.id;
           const Icon = getTabIcon(tab.id);
@@ -68,17 +68,14 @@ export function TabBar() {
                 }
               }}
               className={cn(
-                "group h-7 px-3 flex items-center gap-2 text-xs rounded-t-lg cursor-pointer transition-all shrink-0 relative focus-visible:ring-2 focus-visible:ring-[var(--accent)] focus-visible:outline-hidden",
+                "group h-7 px-3 flex items-center gap-2 text-xs rounded-md cursor-pointer transition-colors shrink-0 select-none focus-visible:ring-2 focus-visible:ring-[var(--accent)] focus-visible:outline-hidden",
                 isActive
-                  ? "bg-[var(--background)] text-[var(--foreground)] font-semibold shadow-xs border-t border-x border-[var(--border)]"
-                  : "bg-transparent text-[var(--muted)] hover:bg-black/[0.04] dark:hover:bg-white/[0.04] hover:text-[var(--foreground)]"
+                  ? "bg-black/[0.06] dark:bg-white/[0.08] text-[var(--foreground)] font-medium border border-[var(--border)] shadow-xs"
+                  : "bg-transparent text-[var(--muted)] hover:bg-black/[0.03] dark:hover:bg-white/[0.04] hover:text-[var(--foreground)]"
               )}
             >
-              {isActive && (
-                <span className="absolute top-0 left-0 right-0 h-[2px] bg-gradient-to-r from-[var(--accent)] to-amber-400 rounded-t-lg shadow-[0_0_8px_rgba(240,138,66,0.6)]" />
-              )}
               <Icon className={cn("w-3.5 h-3.5 shrink-0 transition-colors", isActive ? "text-[var(--accent)]" : "text-[var(--muted)]")} aria-hidden="true" />
-              <span className="truncate max-w-[130px] font-mono text-[11px]">{tab.title}</span>
+              <span className="truncate max-w-[130px] font-sans text-xs">{tab.title}</span>
 
               {tab.closable && (
                 <button
@@ -88,7 +85,7 @@ export function TabBar() {
                     e.stopPropagation();
                     closeTab(tab.id);
                   }}
-                  className="p-0.5 rounded hover:bg-black/10 dark:hover:bg-white/10 text-[var(--muted)] hover:text-[var(--foreground)] opacity-40 group-hover:opacity-100 transition-opacity ml-1 focus-visible:ring-1 focus-visible:ring-[var(--accent)] focus-visible:outline-hidden"
+                  className="p-0.5 rounded hover:bg-black/10 dark:hover:bg-white/10 text-[var(--muted)] hover:text-[var(--foreground)] opacity-50 group-hover:opacity-100 transition-opacity ml-0.5 focus-visible:ring-1 focus-visible:ring-[var(--accent)] focus-visible:outline-hidden"
                   title="Close tab (Cmd+W)"
                 >
                   <X className="w-3 h-3" aria-hidden="true" />
@@ -103,7 +100,7 @@ export function TabBar() {
           type="button"
           onClick={() => setCommandPaletteOpen(true)}
           aria-label="Open new tab (Command K)"
-          className="p-1 rounded hover:bg-[var(--surface-hover)] text-[var(--muted)] hover:text-[var(--foreground)] transition-colors ml-1 focus-visible:ring-2 focus-visible:ring-[var(--accent)] focus-visible:outline-hidden"
+          className="h-7 w-7 rounded-md flex items-center justify-center hover:bg-black/[0.04] dark:hover:bg-white/[0.06] text-[var(--muted)] hover:text-[var(--foreground)] transition-colors ml-0.5 focus-visible:ring-2 focus-visible:ring-[var(--accent)] focus-visible:outline-hidden cursor-pointer"
           title="Open New Tab (Cmd+K)"
         >
           <Plus className="w-3.5 h-3.5" aria-hidden="true" />

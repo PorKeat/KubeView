@@ -61,49 +61,50 @@ export function AppHeader() {
   return (
     <header
       data-tauri-drag-region
-      className="h-11 w-full border-b border-[var(--border)] glass-panel flex items-center justify-between px-4 sm:px-5 select-none shrink-0 z-30 gap-3"
+      className="h-14 w-full border-b border-[var(--border)] bg-[var(--surface)] flex items-center justify-between px-4 sm:px-6 select-none shrink-0 z-30 gap-4"
     >
-      {/* Left: Window Controls Inset & Brand */}
-      <div className="flex items-center gap-3 pl-16 shrink-0">
+      {/* Left: Window Controls Inset & Brand & Integrated Scope Control */}
+      <div className="flex items-center gap-3.5 pl-16 shrink-0">
         <Logo size="sm" />
 
-        <div className="h-4 w-[1px] bg-[var(--border)] hidden sm:block" />
-
-        {/* Interactive Cluster Context Switcher */}
-        <ContextSwitcherDropdown />
-
-        {/* Interactive Namespace Selector */}
-        {connectionStatus !== "offline" && (
-          <div className="hidden md:block">
-            <NamespaceSelectorDropdown />
-          </div>
-        )}
+        {/* Integrated Cluster & Namespace Scope Bar (Single Quiet Border, No Line Clutter) */}
+        <div className="flex items-center rounded-lg bg-black/[0.03] dark:bg-white/[0.04] border border-[var(--border)] p-0.5 shrink-0">
+          <ContextSwitcherDropdown variant="unified" />
+          {connectionStatus !== "offline" && (
+            <>
+              <div className="h-3.5 w-[1px] bg-[var(--border)] opacity-60 shrink-0 mx-0.5" />
+              <div className="hidden md:block">
+                <NamespaceSelectorDropdown variant="unified" />
+              </div>
+            </>
+          )}
+        </div>
       </div>
 
-      {/* Center: Search Trigger (Cmd+K) */}
+      {/* Center: Search Trigger (Cmd+K) - 36px High-Craft Command Pill */}
       <div className="flex-1 max-w-md mx-2 sm:mx-4 min-w-0">
         <button
           onClick={() => setCommandPaletteOpen(true)}
           aria-label="Search resources, pods, logs (Press Command K or Control K to open)"
-          className="w-full flex items-center justify-between px-3 py-1 text-xs rounded-lg bg-black/[0.04] dark:bg-black/30 border border-black/10 dark:border-white/10 text-[var(--muted)] hover:border-[var(--accent)]/50 hover:text-[var(--foreground)] focus-visible:ring-2 focus-visible:ring-[var(--accent)] focus-visible:outline-hidden transition-all shadow-inner group cursor-pointer"
+          className="w-full h-9 flex items-center justify-between px-3 text-xs rounded-lg bg-black/[0.03] dark:bg-white/[0.04] border border-[var(--border)] hover:border-[var(--muted)]/40 hover:bg-black/[0.05] dark:hover:bg-white/[0.06] text-[var(--muted)] hover:text-[var(--foreground)] focus-visible:ring-2 focus-visible:ring-[var(--accent)] focus-visible:outline-hidden transition-all group cursor-pointer"
         >
-          <div className="flex items-center gap-2 min-w-0">
-            <Search className="w-3.5 h-3.5 group-hover:text-[var(--accent)] transition-colors shrink-0" aria-hidden="true" />
+          <div className="flex items-center gap-2.5 min-w-0">
+            <Search className="w-3.5 h-3.5 text-[var(--muted)] group-hover:text-[var(--foreground)] transition-colors shrink-0" aria-hidden="true" />
             <span className="truncate hidden sm:inline">Search resources, pods, logs...</span>
             <span className="truncate sm:hidden">Search...</span>
           </div>
-          <kbd className="px-1.5 py-0.5 text-[11px] bg-black/[0.05] dark:bg-white/[0.06] border border-black/10 dark:border-white/10 rounded text-[var(--muted)] group-hover:text-[var(--accent)] font-mono tabular-nums transition-colors shrink-0">
+          <kbd className="px-1.5 py-0.5 text-[11px] bg-black/[0.04] dark:bg-white/[0.06] border border-[var(--border)] rounded text-[var(--muted)] font-mono tabular-nums transition-colors shrink-0">
             ⌘K
           </kbd>
         </button>
       </div>
 
-      {/* Right: Quick Actions & Utilities */}
-      <div className="flex items-center gap-1.5">
+      {/* Right: Quick Actions & Utilities - 36px Tactile Buttons */}
+      <div className="flex items-center gap-1">
         <button
           onClick={handleRefresh}
           aria-label="Refresh Resources"
-          className="p-1.5 rounded-lg hover:bg-[var(--surface-hover)] text-[var(--muted)] hover:text-[var(--foreground)] focus-visible:ring-2 focus-visible:ring-[var(--accent)] focus-visible:outline-hidden transition-colors cursor-pointer"
+          className="h-9 w-9 rounded-lg flex items-center justify-center hover:bg-black/[0.05] dark:hover:bg-white/[0.06] text-[var(--muted)] hover:text-[var(--foreground)] focus-visible:ring-2 focus-visible:ring-[var(--accent)] focus-visible:outline-hidden transition-colors cursor-pointer"
           title="Refresh Resources"
         >
           <RefreshCw className="w-4 h-4" aria-hidden="true" />
@@ -112,7 +113,7 @@ export function AppHeader() {
         <button
           onClick={() => setTheme(resolvedTheme === "dark" ? "light" : "dark")}
           aria-label={`Switch to ${resolvedTheme === "dark" ? "light" : "dark"} theme`}
-          className="p-1.5 rounded-lg hover:bg-[var(--surface-hover)] text-[var(--muted)] hover:text-[var(--foreground)] focus-visible:ring-2 focus-visible:ring-[var(--accent)] focus-visible:outline-hidden transition-colors cursor-pointer"
+          className="h-9 w-9 rounded-lg flex items-center justify-center hover:bg-black/[0.05] dark:hover:bg-white/[0.06] text-[var(--muted)] hover:text-[var(--foreground)] focus-visible:ring-2 focus-visible:ring-[var(--accent)] focus-visible:outline-hidden transition-colors cursor-pointer"
           title="Toggle Theme"
         >
           {mounted ? (
@@ -125,7 +126,7 @@ export function AppHeader() {
         <button
           disabled
           aria-label="Settings and global preferences (coming soon)"
-          className="p-1.5 rounded-lg opacity-35 cursor-not-allowed text-[var(--muted)]"
+          className="h-9 w-9 rounded-lg flex items-center justify-center opacity-30 cursor-not-allowed text-[var(--muted)]"
           title="Settings & Global Preferences (Coming Soon)"
         >
           <Settings className="w-4 h-4" aria-hidden="true" />

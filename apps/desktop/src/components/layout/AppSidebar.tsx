@@ -131,7 +131,7 @@ export function AppSidebar() {
       )}
     >
       {/* Sidebar Header / Collapse Toggle */}
-      <div className="h-9 px-4 flex items-center justify-between border-b border-[var(--border)] shrink-0">
+      <div className="h-10 px-4 flex items-center justify-between border-b border-[var(--border)] shrink-0">
         {!sidebarCollapsed && (
           <span className="text-xs font-medium text-[var(--muted)]">
             Resources
@@ -139,7 +139,7 @@ export function AppSidebar() {
         )}
         <button
           onClick={toggleSidebar}
-          className="p-1 rounded hover:bg-[var(--surface-hover)] text-[var(--muted)] hover:text-[var(--foreground)] transition-colors ml-auto cursor-pointer"
+          className="p-1.5 rounded-md hover:bg-black/[0.04] dark:hover:bg-white/[0.06] text-[var(--muted)] hover:text-[var(--foreground)] transition-colors ml-auto cursor-pointer"
           title={sidebarCollapsed ? "Expand Sidebar" : "Collapse Sidebar"}
         >
           {sidebarCollapsed ? <PanelLeftOpen className="w-4 h-4" /> : <PanelLeftClose className="w-4 h-4" />}

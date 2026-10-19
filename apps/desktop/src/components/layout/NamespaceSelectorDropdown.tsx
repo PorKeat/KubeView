@@ -8,7 +8,7 @@ import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 
 interface NamespaceSelectorDropdownProps {
-  variant?: "header" | "toolbar";
+  variant?: "header" | "toolbar" | "unified";
   className?: string;
 }
 
@@ -69,12 +69,15 @@ export function NamespaceSelectorDropdown({
           type="button"
           aria-label={`Select Kubernetes namespace (current: ${currentNamespace === "all" ? "All Namespaces" : currentNamespace})`}
           className={cn(
-            "flex items-center gap-1.5 text-xs font-mono transition-all outline-hidden select-none group cursor-pointer focus-visible:ring-2 focus-visible:ring-[#F08A42] focus-visible:outline-hidden",
+            "flex items-center gap-1.5 text-xs font-mono transition-colors outline-hidden select-none group cursor-pointer focus-visible:ring-2 focus-visible:ring-[#F08A42] focus-visible:outline-hidden",
             variant === "header" &&
-              "px-2.5 py-1 rounded-lg bg-[var(--background)] border border-[var(--border)] hover:bg-[var(--surface-hover)] hover:border-[#F08A42] text-[var(--foreground)] shadow-xs",
+              "px-2.5 py-1.5 rounded-lg bg-[var(--background)] border border-[var(--border)] hover:bg-[var(--surface-hover)] hover:border-[#F08A42] text-[var(--foreground)] shadow-xs",
             variant === "toolbar" &&
-              "px-2.5 py-1 rounded-lg bg-slate-100/90 dark:bg-black/40 border border-[var(--border)] hover:border-[#F08A42] text-[var(--foreground)] shrink-0",
-            isOpen && "border-[#F08A42] ring-1 ring-[#F08A42]/30",
+              "px-2.5 py-1.5 rounded-lg bg-slate-100/90 dark:bg-black/40 border border-[var(--border)] hover:border-[#F08A42] text-[var(--foreground)] shrink-0",
+            variant === "unified" &&
+              "px-2.5 py-1.5 rounded-md hover:bg-black/[0.05] dark:hover:bg-white/[0.06] text-[var(--foreground)]",
+            isOpen && variant !== "unified" && "border-[#F08A42] ring-1 ring-[#F08A42]/30",
+            isOpen && variant === "unified" && "bg-black/[0.08] dark:bg-white/[0.1]",
             className
           )}
           title={`Filter by Namespace (Current: ${currentNamespace})`}

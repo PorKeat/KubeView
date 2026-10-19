@@ -20,7 +20,15 @@ import { isInternalEndpoint } from "@/lib/endpointUtils";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 
-export function ContextSwitcherDropdown() {
+interface ContextSwitcherDropdownProps {
+  variant?: "default" | "unified";
+  className?: string;
+}
+
+export function ContextSwitcherDropdown({
+  variant = "default",
+  className,
+}: ContextSwitcherDropdownProps = {}) {
   const {
     currentContext,
     availableContexts,
@@ -87,7 +95,14 @@ export function ContextSwitcherDropdown() {
         <button
           data-testid="context-switcher-trigger"
           aria-label={`Active Kubernetes cluster: ${currentContext || "Select Cluster"}, status ${connectionStatus}`}
-          className="flex items-center gap-2 px-2.5 py-1 text-xs rounded-md bg-[var(--background)] border border-[var(--border)] hover:bg-[var(--surface-hover)] hover:border-[var(--accent)] focus-visible:ring-2 focus-visible:ring-[var(--accent)] focus-visible:outline-hidden transition-all text-[var(--foreground)] outline-hidden group select-none cursor-pointer"
+          className={cn(
+            "flex items-center gap-2 text-xs transition-colors text-[var(--foreground)] outline-hidden group select-none cursor-pointer focus-visible:ring-2 focus-visible:ring-[var(--accent)] focus-visible:outline-hidden",
+            variant === "default" &&
+              "px-2.5 py-1.5 rounded-md bg-[var(--background)] border border-[var(--border)] hover:bg-[var(--surface-hover)] hover:border-[var(--accent)]",
+            variant === "unified" &&
+              "px-2.5 py-1.5 rounded-md hover:bg-black/[0.05] dark:hover:bg-white/[0.06]",
+            className
+          )}
           title={`Active Context: ${currentContext || "None"} (${connectionStatus})`}
         >
           <div className="flex items-center gap-1.5">
