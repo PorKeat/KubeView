@@ -16,6 +16,7 @@ import {
 import { useClusterStore } from "@/stores/clusterStore";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
+import { CustomSelect } from "@/components/ui/CustomSelect";
 
 interface CommandHistoryItem {
   command: string;
@@ -170,20 +171,13 @@ export function PodExecModal() {
           <div className="flex items-center gap-2">
             {/* Container Selector */}
             {containerList.length > 1 && (
-              <div className="flex items-center gap-1 bg-[var(--surface-hover)] border border-[var(--border)] rounded-lg px-2 py-1 text-xs">
-                <Layers className="w-3.5 h-3.5 text-[var(--muted)]" />
-                <select
-                  value={selectedContainer}
-                  onChange={(e) => setSelectedContainer(e.target.value)}
-                  className="bg-transparent text-xs font-mono text-[var(--foreground)] focus:outline-hidden cursor-pointer"
-                >
-                  {containerList.map((c) => (
-                    <option key={c} value={c} className="bg-[var(--surface)] text-[var(--foreground)]">
-                      {c}
-                    </option>
-                  ))}
-                </select>
-              </div>
+              <CustomSelect
+                value={selectedContainer}
+                onChange={setSelectedContainer}
+                options={containerList.map((c) => ({ value: c, label: c }))}
+                icon={<Layers className="w-3.5 h-3.5 text-[#F08A42]" />}
+                placeholder="Container"
+              />
             )}
 
             {/* Clear Screen */}

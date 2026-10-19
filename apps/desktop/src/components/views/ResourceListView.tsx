@@ -28,6 +28,7 @@ import { cn } from "@/lib/utils";
 import { useClusterStore } from "@/stores/clusterStore";
 import type { PodSummary } from "@kubeview/contracts";
 import { TableSkeleton, ErrorState, EmptyState } from "@/components/ui";
+import { NamespaceSelectorDropdown } from "@/components/layout/NamespaceSelectorDropdown";
 
 interface ResourceListViewProps {
   resourceType: string;
@@ -207,22 +208,9 @@ export function ResourceListView({ resourceType }: ResourceListViewProps) {
             )}
           </div>
 
-          {/* Namespace Dropdown filter */}
-          {availableNamespaces.length > 2 && (
-            <div className="flex items-center gap-1 bg-slate-50 dark:bg-black/30 border border-[var(--border)] rounded-lg px-2 py-1 shrink-0 text-xs font-mono">
-              <Layers className="w-3 h-3 text-[var(--muted)]" />
-              <select
-                value={currentNamespace}
-                onChange={(e) => setCurrentNamespace(e.target.value)}
-                className="bg-transparent text-[11px] text-[var(--foreground)] focus:outline-hidden cursor-pointer"
-              >
-                {availableNamespaces.map((ns) => (
-                  <option key={ns} value={ns} className="bg-[var(--surface)] text-[var(--foreground)]">
-                    {ns}
-                  </option>
-                ))}
-              </select>
-            </div>
+          {/* Modern Namespace Dropdown filter */}
+          {availableNamespaces.length > 1 && (
+            <NamespaceSelectorDropdown variant="toolbar" />
           )}
         </div>
 

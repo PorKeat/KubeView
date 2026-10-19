@@ -17,6 +17,7 @@ import {
 import { useClusterStore } from "@/stores/clusterStore";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
+import { CustomSelect } from "@/components/ui/CustomSelect";
 
 export function PodLogsModal() {
   const { logsModalPod, closeLogsModal, getPodLogs } = useClusterStore();
@@ -147,33 +148,27 @@ export function PodLogsModal() {
           <div className="flex items-center gap-2">
             {/* Container Selector */}
             {containers.length > 1 && (
-              <div className="flex items-center gap-1 bg-[var(--surface-hover)] border border-[var(--border)] rounded-lg px-2 py-1 text-xs">
-                <Layers className="w-3.5 h-3.5 text-[var(--muted)]" />
-                <select
-                  value={selectedContainer}
-                  onChange={(e) => setSelectedContainer(e.target.value)}
-                  className="bg-transparent text-xs font-mono text-[var(--foreground)] focus:outline-hidden cursor-pointer"
-                >
-                  {containers.map((c) => (
-                    <option key={c} value={c} className="bg-[var(--surface)] text-[var(--foreground)]">
-                      {c}
-                    </option>
-                  ))}
-                </select>
-              </div>
+              <CustomSelect
+                value={selectedContainer}
+                onChange={setSelectedContainer}
+                options={containers.map((c) => ({ value: c, label: c }))}
+                icon={<Layers className="w-3.5 h-3.5 text-[#F08A42]" />}
+                placeholder="Container"
+              />
             )}
 
             {/* Tail Lines */}
-            <select
+            <CustomSelect
               value={tailLines}
-              onChange={(e) => setTailLines(Number(e.target.value))}
-              className="bg-[var(--surface-hover)] border border-[var(--border)] rounded-lg px-2 py-1 text-xs font-mono text-[var(--foreground)] focus:outline-hidden cursor-pointer"
-            >
-              <option value={100} className="bg-[var(--surface)] text-[var(--foreground)]">100 lines</option>
-              <option value={500} className="bg-[var(--surface)] text-[var(--foreground)]">500 lines</option>
-              <option value={1000} className="bg-[var(--surface)] text-[var(--foreground)]">1,000 lines</option>
-              <option value={5000} className="bg-[var(--surface)] text-[var(--foreground)]">5,000 lines</option>
-            </select>
+              onChange={setTailLines}
+              options={[
+                { value: 100, label: "100 lines" },
+                { value: 500, label: "500 lines" },
+                { value: 1000, label: "1,000 lines" },
+                { value: 5000, label: "5,000 lines" },
+              ]}
+              dropdownWidth="w-36"
+            />
 
             {/* Previous flag */}
             <label className="flex items-center gap-1.5 px-2 py-1 rounded-lg border border-[var(--border)] text-[11px] text-[var(--muted)] hover:text-[var(--foreground)] cursor-pointer">

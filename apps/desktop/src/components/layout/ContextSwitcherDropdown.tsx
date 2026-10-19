@@ -100,33 +100,34 @@ export function ContextSwitcherDropdown() {
       <DropdownMenu.Portal>
         <DropdownMenu.Content
           align="start"
-          sideOffset={6}
-          className="w-80 p-1.5 rounded-lg bg-[var(--surface-elevated)] border border-[var(--border)] shadow-2xl z-50 animate-in fade-in zoom-in-95 duration-100 outline-hidden select-none"
+          sideOffset={8}
+          className="w-84 p-2 rounded-2xl bg-[var(--surface-elevated)] border border-[var(--border)] shadow-2xl z-50 animate-in fade-in zoom-in-95 duration-100 outline-hidden select-none backdrop-blur-xl"
         >
           {/* Header & Quick Filter */}
-          <div className="p-2 border-b border-[var(--border)] mb-1">
+          <div className="px-2 pt-1 pb-2 border-b border-[var(--border)] mb-1">
             <div className="flex items-center justify-between mb-2">
-              <span className="text-[11px] font-semibold text-[var(--foreground)] uppercase tracking-wider">
-                Cluster Contexts
+              <span className="text-[11px] font-bold text-[var(--foreground)] uppercase tracking-wider flex items-center gap-1.5">
+                <Server className="w-3.5 h-3.5 text-[#F08A42]" />
+                <span>Cluster Contexts</span>
               </span>
               <span className="text-[10px] text-[var(--muted)] font-mono">
                 {availableContexts.length} configured
               </span>
             </div>
             <div className="relative">
-              <Search className="w-3.5 h-3.5 absolute left-2 top-1/2 -translate-y-1/2 text-[var(--muted)]" />
+              <Search className="w-3.5 h-3.5 absolute left-2.5 top-1/2 -translate-y-1/2 text-[var(--muted)]" />
               <input
                 type="text"
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
                 placeholder="Search cluster or endpoint..."
-                className="w-full pl-7 pr-2.5 py-1 text-xs bg-[var(--background)] border border-[var(--border)] rounded text-[var(--foreground)] placeholder:text-[var(--muted)] outline-hidden focus:border-[var(--accent)]"
+                className="w-full pl-8 pr-2.5 py-1.5 text-xs bg-[var(--background)] border border-[var(--border)] rounded-xl text-[var(--foreground)] placeholder:text-[var(--muted)] outline-hidden focus:border-[#F08A42] font-mono transition-all"
               />
             </div>
           </div>
 
           {/* Contexts List */}
-          <div className="max-h-56 overflow-y-auto space-y-0.5">
+          <div className="max-h-60 overflow-y-auto p-1 space-y-1">
             {filteredContexts.map((ctx) => {
               const isSelected = ctx.name === currentContext;
 
@@ -138,15 +139,15 @@ export function ContextSwitcherDropdown() {
                     toast.info(`Connecting to cluster: ${ctx.name}...`);
                   }}
                   className={cn(
-                    "flex items-center justify-between p-2 rounded-md cursor-pointer outline-hidden transition-colors text-xs",
+                    "flex items-center justify-between p-2.5 rounded-xl cursor-pointer outline-hidden transition-all text-xs font-mono",
                     isSelected
-                      ? "bg-[var(--surface-active)] text-[var(--accent)]"
+                      ? "bg-[#F08A42]/12 text-[#F08A42] font-bold border border-[#F08A42]/20"
                       : "hover:bg-[var(--surface-hover)] text-[var(--foreground)]"
                   )}
                 >
                   <div className="flex flex-col min-w-0 pr-2">
                     <div className="flex items-center gap-1.5">
-                      <span className="font-medium truncate">{ctx.name}</span>
+                      <span className="font-bold truncate">{ctx.name}</span>
                       {getProviderBadge(ctx.provider)}
                     </div>
                     <span className="text-[10px] text-[var(--muted)] font-mono truncate mt-0.5">
@@ -158,14 +159,14 @@ export function ContextSwitcherDropdown() {
                     <span className="text-[10px] text-[var(--muted)] font-mono">
                       {ctx.latencyMs > 0 ? `${ctx.latencyMs}ms` : ""}
                     </span>
-                    {isSelected && <Check className="w-4 h-4 text-[var(--accent)]" />}
+                    {isSelected && <Check className="w-4 h-4 text-[#F08A42]" />}
                   </div>
                 </DropdownMenu.Item>
               );
             })}
 
             {filteredContexts.length === 0 && (
-              <div className="py-4 text-center text-xs text-[var(--muted)]">
+              <div className="py-6 text-center text-xs text-[var(--muted)]">
                 No matching clusters found.
               </div>
             )}
