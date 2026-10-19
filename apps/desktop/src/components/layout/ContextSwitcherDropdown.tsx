@@ -13,6 +13,7 @@ import {
   ExternalLink,
   RefreshCw,
   SlidersHorizontal,
+  Trash2,
 } from "lucide-react";
 import { useClusterStore, ClusterContextInfo } from "@/stores/clusterStore";
 import { isInternalEndpoint } from "@/lib/endpointUtils";
@@ -29,8 +30,10 @@ export function ContextSwitcherDropdown() {
     latencyMs,
     openKubeconfigModal,
     openEndpointModal,
+    deleteContext,
   } = useClusterStore();
   const [search, setSearch] = React.useState("");
+  const [isOpen, setIsOpen] = React.useState(false);
 
   const currentInfo = availableContexts.find((c) => c.name === currentContext) || {
     name: currentContext || "Select Cluster",
@@ -79,7 +82,7 @@ export function ContextSwitcherDropdown() {
   };
 
   return (
-    <DropdownMenu.Root>
+    <DropdownMenu.Root open={isOpen} onOpenChange={setIsOpen}>
       <DropdownMenu.Trigger asChild>
         <button
           className="flex items-center gap-2 px-2.5 py-1 text-xs rounded-md bg-[var(--background)] border border-[var(--border)] hover:bg-[var(--surface-hover)] hover:border-[var(--accent)] transition-all text-[var(--foreground)] outline-hidden group select-none"
@@ -147,6 +150,7 @@ export function ContextSwitcherDropdown() {
                 >
                   <div
                     onClick={() => {
+                      setIsOpen(false);
                       switchContext(ctx.name);
                       toast.info(`Connecting to cluster: ${ctx.name}...`);
                     }}
@@ -171,12 +175,28 @@ export function ContextSwitcherDropdown() {
                       type="button"
                       onClick={(e) => {
                         e.stopPropagation();
-                        openEndpointModal(ctx.name, ctx.server);
+                        setIsOpen(false);
+                        setTimeout(() => {
+                          openEndpointModal(ctx.name, ctx.server);
+                        }, 50);
                       }}
                       className="p-1 rounded hover:bg-black/10 dark:hover:bg-white/10 text-[var(--muted)] hover:text-[#F08A42] transition-colors cursor-pointer opacity-70 group-hover:opacity-100"
                       title="Configure cluster IP / endpoint"
                     >
                       <SlidersHorizontal className="w-3.5 h-3.5" />
+                    </button>
+                    <button
+                      type="button"
+                      onClick={async (e) => {
+                        e.stopPropagation();
+                        toast.info(`Removing ${ctx.name}...`);
+                        await deleteContext(ctx.name);
+                        toast.success(`Cluster removed: ${ctx.name}`);
+                      }}
+                      className="p-1 rounded hover:bg-rose-500/15 text-[var(--muted)] hover:text-rose-500 transition-colors cursor-pointer opacity-70 group-hover:opacity-100"
+                      title="Delete / remove this cluster"
+                    >
+                      <Trash2 className="w-3.5 h-3.5" />
                     </button>
                     <span className="text-[10px] text-[var(--muted)] font-mono">
                       {ctx.latencyMs > 0 ? `${ctx.latencyMs}ms` : ""}

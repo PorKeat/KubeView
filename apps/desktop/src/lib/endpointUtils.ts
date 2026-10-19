@@ -35,22 +35,31 @@ export function replaceEndpointHost(serverUrl: string, newHostOrIp: string): str
   const trimmed = newHostOrIp.trim();
   if (!trimmed) return serverUrl;
 
-  // If user typed a full URL like "https://10.1.16.11:6443"
+  // Extract fallback port and protocol from serverUrl (defaults to 6443 and https:)
+  let fallbackPort = "6443";
+  let fallbackProtocol = "https:";
+  try {
+    const origUrl = serverUrl.includes("://") ? new URL(serverUrl) : new URL(`https://${serverUrl}`);
+    if (origUrl.port) fallbackPort = origUrl.port;
+    if (origUrl.protocol) fallbackProtocol = origUrl.protocol;
+  } catch {}
+
+  // If user typed a full URL like "https://10.1.16.11:6443" or "https://10.1.15.11"
   if (trimmed.startsWith("http://") || trimmed.startsWith("https://")) {
-    return trimmed;
+    try {
+      const u = new URL(trimmed);
+      const port = u.port || fallbackPort;
+      return `${u.protocol}//${u.hostname}:${port}`;
+    } catch {
+      return trimmed;
+    }
   }
 
   // If user typed "10.1.16.11:6443"
   if (trimmed.includes(":")) {
-    return `https://${trimmed}`;
+    return `${fallbackProtocol}//${trimmed}`;
   }
 
-  try {
-    const url = serverUrl.includes("://") ? new URL(serverUrl) : new URL(`https://${serverUrl}`);
-    const port = url.port || "6443";
-    const protocol = url.protocol || "https:";
-    return `${protocol}//${trimmed}:${port}`;
-  } catch {
-    return `https://${trimmed}:6443`;
-  }
+  // If user typed just an IP or hostname like "10.1.16.11"
+  return `${fallbackProtocol}//${trimmed}:${fallbackPort}`;
 }

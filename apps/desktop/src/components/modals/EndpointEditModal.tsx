@@ -12,6 +12,7 @@ import {
   Copy,
   Info,
   Sparkles,
+  Trash2,
 } from "lucide-react";
 import { useClusterStore } from "@/stores/clusterStore";
 import { isInternalEndpoint, replaceEndpointHost } from "@/lib/endpointUtils";
@@ -26,6 +27,7 @@ export function EndpointEditModal() {
     closeEndpointModal,
     updateEndpoint,
     switchContext,
+    deleteContext,
     availableContexts,
   } = useClusterStore();
 
@@ -235,24 +237,41 @@ export function EndpointEditModal() {
           </div>
 
           {/* Footer Controls */}
-          <div className="flex items-center justify-end gap-2.5 pt-3 border-t border-[var(--border)]">
+          <div className="flex items-center justify-between gap-2.5 pt-3 border-t border-[var(--border)]">
             <button
               type="button"
-              onClick={closeEndpointModal}
-              disabled={isSaving}
-              className="px-4 py-2 rounded-xl text-xs font-medium text-[var(--muted)] hover:text-[var(--foreground)] hover:bg-[var(--surface-hover)] border border-[var(--border)] transition-colors cursor-pointer"
+              onClick={async () => {
+                const target = endpointModalContextName;
+                closeEndpointModal();
+                toast.info(`Removing ${target}...`);
+                await deleteContext(target);
+                toast.success(`Removed cluster: ${target}`);
+              }}
+              className="flex items-center gap-1.5 px-3 py-2 text-xs font-medium text-rose-500 hover:text-rose-400 hover:bg-rose-500/10 rounded-xl transition-colors cursor-pointer border border-rose-500/20"
             >
-              Cancel
+              <Trash2 className="w-3.5 h-3.5" />
+              <span>Remove Cluster</span>
             </button>
-            <button
-              type="button"
-              onClick={() => handleSave(true)}
-              disabled={isSaving || resolvedServer === endpointModalCurrentServer}
-              className="px-4 py-2 rounded-xl text-xs font-semibold bg-[#F08A42] hover:bg-[#E07931] disabled:opacity-50 text-white shadow-md transition-all cursor-pointer flex items-center gap-1.5"
-            >
-              {isSaving ? <RotateCw className="w-3.5 h-3.5 animate-spin" /> : <Check className="w-3.5 h-3.5" />}
-              <span>Save & Connect</span>
-            </button>
+
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={closeEndpointModal}
+                disabled={isSaving}
+                className="px-4 py-2 rounded-xl text-xs font-medium text-[var(--muted)] hover:text-[var(--foreground)] hover:bg-[var(--surface-hover)] border border-[var(--border)] transition-colors cursor-pointer"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={() => handleSave(true)}
+                disabled={isSaving || resolvedServer === endpointModalCurrentServer}
+                className="px-4 py-2 rounded-xl text-xs font-semibold bg-[#F08A42] hover:bg-[#E07931] disabled:opacity-50 text-white shadow-md transition-all cursor-pointer flex items-center gap-1.5"
+              >
+                {isSaving ? <RotateCw className="w-3.5 h-3.5 animate-spin" /> : <Check className="w-3.5 h-3.5" />}
+                <span>Save & Connect</span>
+              </button>
+            </div>
           </div>
         </Dialog.Content>
       </Dialog.Portal>

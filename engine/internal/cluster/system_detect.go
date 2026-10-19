@@ -271,6 +271,12 @@ func (m *Manager) ImportDetectedContexts(params ImportDetectedContextsParams) (*
 				if !strings.HasPrefix(newSrv, "http://") && !strings.HasPrefix(newSrv, "https://") {
 					newSrv = "https://" + newSrv
 				}
+				if parsed, err := url.Parse(newSrv); err == nil {
+					if parsed.Port() == "" {
+						parsed.Host = parsed.Host + ":6443"
+						newSrv = parsed.String()
+					}
+				}
 				clCopy.Server = newSrv
 			}
 			singleCfg.Clusters[targetClusterName] = &clCopy
@@ -279,6 +285,21 @@ func (m *Manager) ImportDetectedContexts(params ImportDetectedContextsParams) (*
 			singleCfg.AuthInfos[targetAuthName] = userObj
 		}
 		singleCfg.CurrentContext = targetCtxName
+
+		// Deduplicate: remove any existing file in targetDir that already defines targetCtxName
+		if existingEntries, err := os.ReadDir(targetDir); err == nil {
+			for _, e := range existingEntries {
+				if e.IsDir() || strings.HasPrefix(e.Name(), ".") {
+					continue
+				}
+				oldPath := filepath.Join(targetDir, e.Name())
+				if oldCfg, err := clientcmd.LoadFromFile(oldPath); err == nil && oldCfg != nil {
+					if _, exists := oldCfg.Contexts[targetCtxName]; exists {
+						_ = os.Remove(oldPath)
+					}
+				}
+			}
+		}
 
 		cleanName := sanitizeConfigName(targetCtxName)
 		targetPath := filepath.Join(targetDir, fmt.Sprintf("%s_%d_%d.kubeconfig", cleanName, timestamp, idx))

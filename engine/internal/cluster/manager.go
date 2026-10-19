@@ -3,6 +3,7 @@ package cluster
 import (
 	"context"
 	"fmt"
+	"net/url"
 	"os"
 	"path/filepath"
 	"strings"
@@ -582,6 +583,7 @@ func (m *Manager) ImportKubeconfig(params ImportKubeconfigParams) (*ImportKubeco
 
 // DeleteContext removes a specific context from KubeView managed clusters
 func (m *Manager) DeleteContext(contextName string) error {
+	contextName = strings.TrimSpace(contextName)
 	dir, err := getKubeViewDir()
 	if err != nil {
 		return err
@@ -598,8 +600,16 @@ func (m *Manager) DeleteContext(contextName string) error {
 			if err != nil || cfg == nil {
 				continue
 			}
-			if _, exists := cfg.Contexts[contextName]; exists {
-				delete(cfg.Contexts, contextName)
+
+			removed := false
+			for cName := range cfg.Contexts {
+				if cName == contextName || strings.EqualFold(cName, contextName) {
+					delete(cfg.Contexts, cName)
+					removed = true
+				}
+			}
+
+			if removed {
 				if len(cfg.Contexts) == 0 {
 					_ = os.Remove(filePath)
 				} else {
@@ -640,12 +650,21 @@ func (m *Manager) ClearAllContexts() error {
 
 // UpdateEndpoint updates the API server endpoint URL for a specific cluster context
 func (m *Manager) UpdateEndpoint(contextName, newServerUrl string) error {
+	contextName = strings.TrimSpace(contextName)
 	newServerUrl = strings.TrimSpace(newServerUrl)
 	if newServerUrl == "" {
 		return fmt.Errorf("new server URL cannot be empty")
 	}
 	if !strings.HasPrefix(newServerUrl, "http://") && !strings.HasPrefix(newServerUrl, "https://") {
 		newServerUrl = "https://" + newServerUrl
+	}
+
+	// Guarantee port is present (default :6443)
+	if parsed, err := url.Parse(newServerUrl); err == nil {
+		if parsed.Port() == "" {
+			parsed.Host = parsed.Host + ":6443"
+			newServerUrl = parsed.String()
+		}
 	}
 
 	dir, err := getKubeViewDir()
@@ -658,8 +677,7 @@ func (m *Manager) UpdateEndpoint(contextName, newServerUrl string) error {
 		return err
 	}
 
-	updated := false
-	// Pass 1: Exact context name match
+	updatedCount := 0
 	for _, entry := range entries {
 		if entry.IsDir() || strings.HasPrefix(entry.Name(), ".") {
 			continue
@@ -670,58 +688,35 @@ func (m *Manager) UpdateEndpoint(contextName, newServerUrl string) error {
 			continue
 		}
 
+		matched := false
 		for cName, cObj := range cfg.Contexts {
-			if cName == contextName {
+			if cName == contextName || strings.EqualFold(cName, contextName) ||
+				strings.HasPrefix(contextName, cName) || strings.HasPrefix(cName, contextName) {
 				clusterName := cObj.Cluster
 				if clusterObj, exists := cfg.Clusters[clusterName]; exists {
 					clusterObj.Server = newServerUrl
-					_ = clientcmd.WriteToFile(*cfg, filePath)
-					updated = true
-					break
+					matched = true
 				}
 			}
 		}
-		if updated {
-			break
-		}
-	}
 
-	// Pass 2: Prefix match fallback
-	if !updated {
-		for _, entry := range entries {
-			if entry.IsDir() || strings.HasPrefix(entry.Name(), ".") {
-				continue
-			}
-			filePath := filepath.Join(dir, entry.Name())
-			cfg, err := clientcmd.LoadFromFile(filePath)
-			if err != nil || cfg == nil {
-				continue
-			}
-
-			for cName, cObj := range cfg.Contexts {
-				if strings.HasPrefix(contextName, cName) || strings.HasPrefix(cName, contextName) {
-					clusterName := cObj.Cluster
-					if clusterObj, exists := cfg.Clusters[clusterName]; exists {
-						clusterObj.Server = newServerUrl
-						_ = clientcmd.WriteToFile(*cfg, filePath)
-						updated = true
-						break
-					}
-				}
-			}
-			if updated {
-				break
+		if matched {
+			if updatedCount > 0 {
+				// Remove redundant duplicate file for same context
+				_ = os.Remove(filePath)
+			} else {
+				_ = clientcmd.WriteToFile(*cfg, filePath)
+				updatedCount++
 			}
 		}
 	}
 
-	if !updated {
+	if updatedCount == 0 {
 		m.mu.Lock()
 		if m.rawConfig != nil {
 			if ctxObj, ok := m.rawConfig.Contexts[contextName]; ok {
 				if clObj, ok := m.rawConfig.Clusters[ctxObj.Cluster]; ok {
 					clObj.Server = newServerUrl
-					updated = true
 				}
 			}
 		}
