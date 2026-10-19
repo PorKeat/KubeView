@@ -82,6 +82,13 @@ interface ClusterState {
   deleteConfirmPod: { name: string; namespace: string } | null;
   restartConfirmPod: { name: string; namespace: string } | null;
 
+  // Endpoint configuration modal
+  isEndpointModalOpen: boolean;
+  endpointModalContextName: string;
+  endpointModalCurrentServer: string;
+  openEndpointModal: (contextName: string, currentServer: string) => void;
+  closeEndpointModal: () => void;
+
   // Actions
   loadContexts: () => Promise<void>;
   switchContext: (contextName: string) => Promise<void>;
@@ -154,6 +161,22 @@ export const useClusterStore = create<ClusterState>((set, get) => ({
   execModalPod: null,
   deleteConfirmPod: null,
   restartConfirmPod: null,
+
+  isEndpointModalOpen: false,
+  endpointModalContextName: "",
+  endpointModalCurrentServer: "",
+  openEndpointModal: (contextName, currentServer) =>
+    set({
+      isEndpointModalOpen: true,
+      endpointModalContextName: contextName,
+      endpointModalCurrentServer: currentServer,
+    }),
+  closeEndpointModal: () =>
+    set({
+      isEndpointModalOpen: false,
+      endpointModalContextName: "",
+      endpointModalCurrentServer: "",
+    }),
 
   openLogsModal: (pod) => set({ logsModalPod: pod }),
   closeLogsModal: () => set({ logsModalPod: null }),

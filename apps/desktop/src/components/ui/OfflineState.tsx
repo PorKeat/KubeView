@@ -18,6 +18,7 @@ import {
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { useClusterStore } from "@/stores/clusterStore";
+import { isInternalEndpoint, replaceEndpointHost } from "@/lib/endpointUtils";
 
 export function OfflineState({ className }: { className?: string }) {
   const {
@@ -44,15 +45,36 @@ export function OfflineState({ className }: { className?: string }) {
   const [customEndpoint, setCustomEndpoint] = React.useState(serverUrl);
   const [isUpdatingEndpoint, setIsUpdatingEndpoint] = React.useState(false);
 
+  // Candidate IP suggestions from other active clusters
+  const suggestedIps = React.useMemo(() => {
+    const ips: { ip: string; source: string }[] = [];
+    for (const ctx of availableContexts) {
+      if (ctx.name !== currentContext && ctx.server) {
+        try {
+          const u = ctx.server.includes("://") ? new URL(ctx.server) : new URL(`https://${ctx.server}`);
+          if (/^(\d{1,3}\.){3}\d{1,3}$/.test(u.hostname) && !u.hostname.startsWith("127.")) {
+            if (!ips.some((item) => item.ip === u.hostname)) {
+              ips.push({ ip: u.hostname, source: ctx.name });
+            }
+          }
+        } catch {}
+      }
+    }
+    return ips;
+  }, [availableContexts, currentContext]);
+
   React.useEffect(() => {
     setCustomEndpoint(serverUrl);
   }, [serverUrl]);
 
-  const handleSaveEndpoint = async () => {
-    if (!customEndpoint.trim()) return;
+  const handleSaveEndpoint = async (targetEndpoint?: string) => {
+    const raw = (targetEndpoint || customEndpoint).trim();
+    if (!raw) return;
+    const finalEndpoint = replaceEndpointHost(serverUrl, raw);
     setIsUpdatingEndpoint(true);
     try {
-      await updateEndpoint(currentContext, customEndpoint.trim());
+      await updateEndpoint(currentContext, finalEndpoint);
+      setCustomEndpoint(finalEndpoint);
       toast.success("Updated cluster API server endpoint");
     } catch (err: any) {
       toast.error(`Update failed: ${err.message || err}`);
@@ -218,17 +240,35 @@ export function OfflineState({ className }: { className?: string }) {
               type="text"
               value={customEndpoint}
               onChange={(e) => setCustomEndpoint(e.target.value)}
-              placeholder="https://<master-ip>:6443"
+              placeholder="e.g. 10.1.16.11 or https://10.1.16.11:6443"
               className="flex-1 px-3 py-1.5 rounded-lg bg-black/[0.05] dark:bg-black/50 border border-[var(--border)] text-xs font-mono text-[var(--foreground)] focus:outline-none focus:border-[#F08A42]"
             />
             <button
-              onClick={handleSaveEndpoint}
+              onClick={() => handleSaveEndpoint()}
               disabled={isUpdatingEndpoint || customEndpoint === serverUrl}
               className="px-3.5 py-1.5 rounded-lg bg-[#F08A42] hover:bg-[#E07931] disabled:opacity-50 text-white text-xs font-medium cursor-pointer transition-colors whitespace-nowrap"
             >
               {isUpdatingEndpoint ? "Updating..." : "Save & Reconnect"}
             </button>
           </div>
+
+          {suggestedIps.length > 0 && (
+            <div className="flex items-center gap-1.5 flex-wrap">
+              <span className="text-[10px] text-[var(--muted)]">Reachable IP from other cluster:</span>
+              {suggestedIps.map((sug) => (
+                <button
+                  key={sug.ip}
+                  type="button"
+                  onClick={() => handleSaveEndpoint(sug.ip)}
+                  className="px-2 py-0.5 rounded-md bg-[#F08A42]/10 hover:bg-[#F08A42]/20 border border-[#F08A42]/30 text-[10px] font-mono text-[#F08A42] flex items-center gap-1 cursor-pointer transition-colors"
+                  title={`Apply ${sug.ip} from ${sug.source}`}
+                >
+                  <Sparkles className="w-2.5 h-2.5" />
+                  <span>Use {sug.ip}</span>
+                </button>
+              ))}
+            </div>
+          )}
 
           {(serverUrl.includes(".local") || serverUrl.includes(".internal") || serverUrl.includes("127.0.0.1")) && (
             <p className="text-[11px] text-[var(--muted)] leading-normal">

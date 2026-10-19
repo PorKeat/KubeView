@@ -32,8 +32,9 @@ type DetectSystemConfigsResult struct {
 }
 
 type ImportDetectedContextItem struct {
-	ContextName string `json:"contextName"`
-	FilePath    string `json:"filePath"`
+	ContextName    string `json:"contextName"`
+	FilePath       string `json:"filePath"`
+	OverrideServer string `json:"overrideServer,omitempty"`
 }
 
 type ImportDetectedContextsParams struct {
@@ -264,7 +265,15 @@ func (m *Manager) ImportDetectedContexts(params ImportDetectedContextsParams) (*
 		singleCfg.Contexts[targetCtxName] = &newCtx
 
 		if clusterObj, ok := cfg.Clusters[ctxObj.Cluster]; ok {
-			singleCfg.Clusters[targetClusterName] = clusterObj
+			clCopy := *clusterObj
+			if strings.TrimSpace(item.OverrideServer) != "" {
+				newSrv := strings.TrimSpace(item.OverrideServer)
+				if !strings.HasPrefix(newSrv, "http://") && !strings.HasPrefix(newSrv, "https://") {
+					newSrv = "https://" + newSrv
+				}
+				clCopy.Server = newSrv
+			}
+			singleCfg.Clusters[targetClusterName] = &clCopy
 		}
 		if userObj, ok := cfg.AuthInfos[ctxObj.AuthInfo]; ok {
 			singleCfg.AuthInfos[targetAuthName] = userObj

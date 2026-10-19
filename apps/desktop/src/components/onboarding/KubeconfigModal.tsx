@@ -24,8 +24,11 @@ import {
   Sparkles,
   RotateCw,
   Compass,
+  AlertTriangle,
+  SlidersHorizontal,
 } from "lucide-react";
 import { useClusterStore, ClusterContextInfo } from "@/stores/clusterStore";
+import { isInternalEndpoint, replaceEndpointHost } from "@/lib/endpointUtils";
 import type { DetectedContextInfo } from "@kubeview/contracts";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
@@ -56,12 +59,32 @@ export function KubeconfigModal() {
     isDetectingConfigs,
     detectSystemConfigs,
     importDetectedContexts,
+    openEndpointModal,
   } = useClusterStore();
 
   const [activeTab, setActiveTab] = React.useState<"auto" | "browse" | "paste" | "manage">(
     kubeconfigModalTab || "browse"
   );
   const [selectedDetected, setSelectedDetected] = React.useState<Set<string>>(new Set());
+  const [overrideEndpoints, setOverrideEndpoints] = React.useState<Record<string, string>>({});
+
+  // Suggest reachable IPs from already configured clusters
+  const suggestedIps = React.useMemo(() => {
+    const ips: { ip: string; source: string }[] = [];
+    for (const ctx of availableContexts) {
+      if (ctx.server) {
+        try {
+          const u = ctx.server.includes("://") ? new URL(ctx.server) : new URL(`https://${ctx.server}`);
+          if (/^(\d{1,3}\.){3}\d{1,3}$/.test(u.hostname) && !u.hostname.startsWith("127.")) {
+            if (!ips.some((item) => item.ip === u.hostname)) {
+              ips.push({ ip: u.hostname, source: ctx.name });
+            }
+          }
+        } catch {}
+      }
+    }
+    return ips;
+  }, [availableContexts]);
 
   // Auto detect system configs when modal opens
   React.useEffect(() => {
@@ -399,10 +422,21 @@ export function KubeconfigModal() {
 
   const handleImportDetected = async (specificContext?: DetectedContextInfo) => {
     const toImport = specificContext
-      ? [{ contextName: specificContext.contextName, filePath: specificContext.filePath }]
+      ? [
+          {
+            contextName: specificContext.contextName,
+            filePath: specificContext.filePath,
+            overrideServer:
+              overrideEndpoints[`${specificContext.filePath}::${specificContext.contextName}`],
+          },
+        ]
       : detectedSystemConfigs
           .filter((c) => selectedDetected.has(`${c.filePath}::${c.contextName}`))
-          .map((c) => ({ contextName: c.contextName, filePath: c.filePath }));
+          .map((c) => ({
+            contextName: c.contextName,
+            filePath: c.filePath,
+            overrideServer: overrideEndpoints[`${c.filePath}::${c.contextName}`],
+          }));
 
     if (toImport.length === 0) return;
 
@@ -658,6 +692,11 @@ export function KubeconfigModal() {
                       {detectedSystemConfigs.map((c) => {
                         const itemKey = `${c.filePath}::${c.contextName}`;
                         const isSelected = selectedDetected.has(itemKey);
+                        const isInternal = isInternalEndpoint(c.server);
+                        const effectiveServer = overrideEndpoints[itemKey]
+                          ? replaceEndpointHost(c.server, overrideEndpoints[itemKey])
+                          : c.server;
+
                         return (
                           <div
                             key={itemKey}
@@ -673,7 +712,7 @@ export function KubeconfigModal() {
                               }
                             }}
                             className={cn(
-                              "p-4 rounded-2xl border transition-all flex flex-col sm:flex-row sm:items-center justify-between gap-3.5",
+                              "p-4 rounded-2xl border transition-all flex flex-col gap-3",
                               c.isImported
                                 ? "bg-slate-50/50 dark:bg-white/[0.02] border-[var(--border)] opacity-85"
                                 : isSelected
@@ -681,69 +720,125 @@ export function KubeconfigModal() {
                                 : "bg-slate-50 dark:bg-black/30 border border-[var(--border)] hover:border-slate-300 dark:hover:border-white/20 cursor-pointer"
                             )}
                           >
-                            <div className="flex items-center gap-3.5 min-w-0">
-                              <div className="shrink-0" onClick={(e) => e.stopPropagation()}>
-                                {c.isImported ? (
-                                  <div className="w-5 h-5 rounded-lg bg-emerald-500/20 text-emerald-500 flex items-center justify-center">
-                                    <Check className="w-3.5 h-3.5" />
-                                  </div>
-                                ) : (
-                                  <input
-                                    type="checkbox"
-                                    checked={isSelected}
-                                    onChange={() => {
-                                      const next = new Set(selectedDetected);
-                                      if (next.has(itemKey)) {
-                                        next.delete(itemKey);
-                                      } else {
-                                        next.add(itemKey);
-                                      }
-                                      setSelectedDetected(next);
-                                    }}
-                                    className="w-4 h-4 rounded accent-[#F08A42] cursor-pointer"
-                                  />
-                                )}
-                              </div>
-
-                              <div className="min-w-0">
-                                <div className="flex items-center gap-2 flex-wrap">
-                                  <span className="font-mono font-bold text-sm text-[var(--foreground)] truncate">
-                                    {c.contextName}
-                                  </span>
-                                  {getProviderBadge(c.provider)}
-                                  {c.authType && (
-                                    <span className="px-1.5 py-0.5 text-[9px] font-mono rounded bg-black/5 dark:bg-white/5 text-[var(--muted)] border border-[var(--border)]">
-                                      auth: {c.authType}
-                                    </span>
+                            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3.5 w-full">
+                              <div className="flex items-center gap-3.5 min-w-0">
+                                <div className="shrink-0" onClick={(e) => e.stopPropagation()}>
+                                  {c.isImported ? (
+                                    <div className="w-5 h-5 rounded-lg bg-emerald-500/20 text-emerald-500 flex items-center justify-center">
+                                      <Check className="w-3.5 h-3.5" />
+                                    </div>
+                                  ) : (
+                                    <input
+                                      type="checkbox"
+                                      checked={isSelected}
+                                      onChange={() => {
+                                        const next = new Set(selectedDetected);
+                                        if (next.has(itemKey)) {
+                                          next.delete(itemKey);
+                                        } else {
+                                          next.add(itemKey);
+                                        }
+                                        setSelectedDetected(next);
+                                      }}
+                                      className="w-4 h-4 rounded accent-[#F08A42] cursor-pointer"
+                                    />
                                   )}
                                 </div>
-                                <div className="flex items-center gap-2 text-xs text-[var(--muted)] font-mono mt-1 flex-wrap">
-                                  <span className="text-[var(--foreground)] font-medium">{c.server || "local server"}</span>
-                                  <span>•</span>
-                                  <span className="truncate max-w-sm text-[11px]" title={c.filePath}>
-                                    {c.filePath}
-                                  </span>
+
+                                <div className="min-w-0">
+                                  <div className="flex items-center gap-2 flex-wrap">
+                                    <span className="font-mono font-bold text-sm text-[var(--foreground)] truncate">
+                                      {c.contextName}
+                                    </span>
+                                    {getProviderBadge(c.provider)}
+                                    {isInternal && (
+                                      <span className="px-1.5 py-0.5 text-[9px] font-mono rounded bg-amber-500/15 text-amber-600 dark:text-amber-400 border border-amber-500/30">
+                                        Internal Domain
+                                      </span>
+                                    )}
+                                    {c.authType && (
+                                      <span className="px-1.5 py-0.5 text-[9px] font-mono rounded bg-black/5 dark:bg-white/5 text-[var(--muted)] border border-[var(--border)]">
+                                        auth: {c.authType}
+                                      </span>
+                                    )}
+                                  </div>
+                                  <div className="flex items-center gap-2 text-xs text-[var(--muted)] font-mono mt-1 flex-wrap">
+                                    <span className={cn(
+                                      "font-medium",
+                                      overrideEndpoints[itemKey] ? "text-[#F08A42]" : "text-[var(--foreground)]"
+                                    )}>
+                                      {effectiveServer || "local server"}
+                                    </span>
+                                    <span>•</span>
+                                    <span className="truncate max-w-sm text-[11px]" title={c.filePath}>
+                                      {c.filePath}
+                                    </span>
+                                  </div>
                                 </div>
+                              </div>
+
+                              <div className="shrink-0 flex items-center gap-2 self-end sm:self-auto" onClick={(e) => e.stopPropagation()}>
+                                {c.isImported ? (
+                                  <span className="px-3 py-1.5 rounded-xl text-xs font-semibold bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20 flex items-center gap-1.5">
+                                    <Check className="w-3.5 h-3.5" />
+                                    <span>Added</span>
+                                  </span>
+                                ) : (
+                                  <button
+                                    onClick={() => handleImportDetected(c)}
+                                    disabled={isSubmitting}
+                                    className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-[#F08A42] hover:bg-[#E07931] text-white text-xs font-semibold shadow-xs transition-all cursor-pointer"
+                                  >
+                                    <span>Add to KubeView</span>
+                                    <ArrowRight className="w-3.5 h-3.5" />
+                                  </button>
+                                )}
                               </div>
                             </div>
 
-                            <div className="shrink-0 flex items-center gap-2 self-end sm:self-auto" onClick={(e) => e.stopPropagation()}>
-                              {c.isImported ? (
-                                <span className="px-3 py-1.5 rounded-xl text-xs font-semibold bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20 flex items-center gap-1.5">
-                                  <Check className="w-3.5 h-3.5" />
-                                  <span>Added</span>
-                                </span>
-                              ) : (
-                                <button
-                                  onClick={() => handleImportDetected(c)}
-                                  disabled={isSubmitting}
-                                  className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-[#F08A42] hover:bg-[#E07931] text-white text-xs font-semibold shadow-xs transition-all cursor-pointer"
-                                >
-                                  <span>Add to KubeView</span>
-                                  <ArrowRight className="w-3.5 h-3.5" />
-                                </button>
-                              )}
-                            </div>
+                            {/* Internal Domain IP Input Prompt */}
+                            {!c.isImported && isInternal && (
+                              <div
+                                className="pt-2.5 border-t border-[var(--border)] space-y-1.5 w-full text-left"
+                                onClick={(e) => e.stopPropagation()}
+                              >
+                                <div className="flex items-center justify-between text-[11px]">
+                                  <span className="flex items-center gap-1.5 text-amber-600 dark:text-amber-400 font-medium">
+                                    <AlertTriangle className="w-3.5 h-3.5 shrink-0" />
+                                    Internal hostname detected. Enter node IP to connect from this computer:
+                                  </span>
+                                  {suggestedIps.length > 0 && !overrideEndpoints[itemKey] && (
+                                    <button
+                                      type="button"
+                                      onClick={() =>
+                                        setOverrideEndpoints({
+                                          ...overrideEndpoints,
+                                          [itemKey]: suggestedIps[0].ip,
+                                        })
+                                      }
+                                      className="text-[10px] text-[#F08A42] hover:underline font-mono cursor-pointer"
+                                    >
+                                      Use {suggestedIps[0].ip}
+                                    </button>
+                                  )}
+                                </div>
+
+                                <div className="flex items-center gap-2">
+                                  <input
+                                    type="text"
+                                    placeholder="Enter Master IP (e.g. 10.1.16.11)"
+                                    value={overrideEndpoints[itemKey] || ""}
+                                    onChange={(e) =>
+                                      setOverrideEndpoints({
+                                        ...overrideEndpoints,
+                                        [itemKey]: e.target.value,
+                                      })
+                                    }
+                                    className="flex-1 px-3 py-1.5 text-xs font-mono bg-[var(--background)] border border-[var(--border)] rounded-lg text-[var(--foreground)] placeholder:text-[var(--muted)]/50 focus:border-[#F08A42] outline-none"
+                                  />
+                                </div>
+                              </div>
+                            )}
                           </div>
                         );
                       })}
@@ -1085,6 +1180,7 @@ export function KubeconfigModal() {
                 <div className="max-h-72 overflow-y-auto space-y-1.5 pr-1">
                   {availableContexts.map((ctx) => {
                     const isSelected = ctx.name === currentContext;
+                    const isInternal = isInternalEndpoint(ctx.server);
                     return (
                       <div
                         key={ctx.name}
@@ -1114,7 +1210,7 @@ export function KubeconfigModal() {
                           </div>
 
                           <div className="min-w-0">
-                            <div className="flex items-center gap-2">
+                            <div className="flex items-center gap-2 flex-wrap">
                               <span className="text-xs font-semibold text-[var(--foreground)] truncate">
                                 {ctx.name}
                               </span>
@@ -1122,6 +1218,11 @@ export function KubeconfigModal() {
                               {isSelected && (
                                 <span className="px-1.5 py-0.2 text-[9px] font-mono font-medium rounded-full bg-[#F08A42]/20 text-[#F08A42] border border-[#F08A42]/30">
                                   ACTIVE
+                                </span>
+                              )}
+                              {isInternal && (
+                                <span className="px-1.5 py-0.2 text-[9px] font-mono font-medium rounded-full bg-amber-500/15 text-amber-500 border border-amber-500/30">
+                                  INTERNAL HOST
                                 </span>
                               )}
                             </div>
@@ -1145,6 +1246,18 @@ export function KubeconfigModal() {
                               Connect
                             </button>
                           )}
+
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              openEndpointModal(ctx.name, ctx.server);
+                            }}
+                            className="p-1.5 rounded-lg hover:bg-black/10 dark:hover:bg-white/10 text-[var(--muted)] hover:text-[#F08A42] transition-colors cursor-pointer"
+                            title="Configure API Server IP / Endpoint"
+                          >
+                            <SlidersHorizontal className="w-3.5 h-3.5" />
+                          </button>
 
                           <button
                             type="button"

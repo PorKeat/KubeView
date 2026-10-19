@@ -100,6 +100,7 @@ export interface DetectSystemConfigsResult {
 export interface ImportDetectedContextItem {
   contextName: string;
   filePath: string;
+  overrideServer?: string;
 }
 
 export interface ImportDetectedContextsParams {

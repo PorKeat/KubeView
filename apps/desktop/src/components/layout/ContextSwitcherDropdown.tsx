@@ -12,8 +12,10 @@ import {
   Search,
   ExternalLink,
   RefreshCw,
+  SlidersHorizontal,
 } from "lucide-react";
 import { useClusterStore, ClusterContextInfo } from "@/stores/clusterStore";
+import { isInternalEndpoint } from "@/lib/endpointUtils";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 
@@ -26,6 +28,7 @@ export function ContextSwitcherDropdown() {
     connectionStatus,
     latencyMs,
     openKubeconfigModal,
+    openEndpointModal,
   } = useClusterStore();
   const [search, setSearch] = React.useState("");
 
@@ -130,25 +133,33 @@ export function ContextSwitcherDropdown() {
           <div className="max-h-60 overflow-y-auto p-1 space-y-1">
             {filteredContexts.map((ctx) => {
               const isSelected = ctx.name === currentContext;
+              const isInternal = isInternalEndpoint(ctx.server);
 
               return (
-                <DropdownMenu.Item
+                <div
                   key={ctx.name}
-                  onSelect={() => {
-                    switchContext(ctx.name);
-                    toast.info(`Connecting to cluster: ${ctx.name}...`);
-                  }}
                   className={cn(
-                    "flex items-center justify-between p-2.5 rounded-xl cursor-pointer outline-hidden transition-all text-xs font-mono",
+                    "flex items-center justify-between p-2 rounded-xl transition-all text-xs font-mono group",
                     isSelected
                       ? "bg-[#F08A42]/12 text-[#F08A42] font-bold border border-[#F08A42]/20"
                       : "hover:bg-[var(--surface-hover)] text-[var(--foreground)]"
                   )}
                 >
-                  <div className="flex flex-col min-w-0 pr-2">
-                    <div className="flex items-center gap-1.5">
+                  <div
+                    onClick={() => {
+                      switchContext(ctx.name);
+                      toast.info(`Connecting to cluster: ${ctx.name}...`);
+                    }}
+                    className="flex flex-col min-w-0 pr-2 flex-1 cursor-pointer"
+                  >
+                    <div className="flex items-center gap-1.5 flex-wrap">
                       <span className="font-bold truncate">{ctx.name}</span>
                       {getProviderBadge(ctx.provider)}
+                      {isInternal && (
+                        <span className="px-1.5 py-0.2 text-[8px] font-sans font-medium rounded bg-amber-500/15 text-amber-500 border border-amber-500/30">
+                          Internal Host
+                        </span>
+                      )}
                     </div>
                     <span className="text-[10px] text-[var(--muted)] font-mono truncate mt-0.5">
                       {ctx.server}
@@ -156,12 +167,23 @@ export function ContextSwitcherDropdown() {
                   </div>
 
                   <div className="flex items-center gap-1.5 shrink-0">
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        openEndpointModal(ctx.name, ctx.server);
+                      }}
+                      className="p-1 rounded hover:bg-black/10 dark:hover:bg-white/10 text-[var(--muted)] hover:text-[#F08A42] transition-colors cursor-pointer opacity-70 group-hover:opacity-100"
+                      title="Configure cluster IP / endpoint"
+                    >
+                      <SlidersHorizontal className="w-3.5 h-3.5" />
+                    </button>
                     <span className="text-[10px] text-[var(--muted)] font-mono">
                       {ctx.latencyMs > 0 ? `${ctx.latencyMs}ms` : ""}
                     </span>
                     {isSelected && <Check className="w-4 h-4 text-[#F08A42]" />}
                   </div>
-                </DropdownMenu.Item>
+                </div>
               );
             })}
 
