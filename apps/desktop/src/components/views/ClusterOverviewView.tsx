@@ -81,8 +81,8 @@ export function ClusterOverviewView() {
       <div className="p-3.5 px-4 rounded-xl glass-panel border border-[var(--border)] shadow-xs flex flex-wrap items-center justify-between gap-3">
         <div className="flex items-center gap-3 min-w-0">
           <div className="relative shrink-0">
-            <div className="p-2 rounded-lg bg-[var(--accent)]/15 text-[var(--accent)] border border-[var(--accent)]/20 shadow-2xs">
-              <Activity className="w-4 h-4" />
+            <div className="p-1.5 rounded-xl bg-black/5 dark:bg-white/5 border border-[var(--border)] flex items-center justify-center shadow-2xs">
+              <Logo variant="mark" size="md" className="drop-shadow-[0_2px_8px_rgba(240,138,66,0.35)]" />
             </div>
             <span className="absolute -bottom-0.5 -right-0.5 flex h-2.5 w-2.5">
               <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
