@@ -79,6 +79,34 @@ export interface PatchResourceRequest {
   patchType: "strategic" | "merge" | "json";
 }
 
+export interface ContainerEnvVar {
+  name: string;
+  value?: string;
+  valueFrom?: string;
+}
+
+export interface ContainerPortInfo {
+  name?: string;
+  containerPort: number;
+  protocol?: string;
+}
+
+export interface ContainerVolumeMountInfo {
+  name: string;
+  mountPath: string;
+  readOnly?: boolean;
+}
+
+export interface ContainerResourceItem {
+  cpu?: string;
+  memory?: string;
+}
+
+export interface ContainerResourcesInfo {
+  requests?: ContainerResourceItem;
+  limits?: ContainerResourceItem;
+}
+
 export interface ContainerInfo {
   name: string;
   image: string;
@@ -86,6 +114,10 @@ export interface ContainerInfo {
   restartCount: number;
   state: string;
   stateReason?: string;
+  env?: ContainerEnvVar[];
+  ports?: ContainerPortInfo[];
+  volumeMounts?: ContainerVolumeMountInfo[];
+  resources?: ContainerResourcesInfo;
 }
 
 export interface PodConditionItem {
@@ -135,6 +167,8 @@ export interface PodLogsParams {
   container?: string;
   tailLines?: number;
   previous?: boolean;
+  timestamps?: boolean;
+  sinceSeconds?: number;
 }
 
 export interface PodLogsResult {

@@ -1,39 +1,74 @@
 "use client";
 
 import * as React from "react";
-import { X, Trash2, AlertTriangle, RotateCw } from "lucide-react";
+import { X, Trash2, AlertTriangle, RotateCw, CheckCircle2 } from "lucide-react";
 import { useClusterStore } from "@/stores/clusterStore";
 import { toast } from "sonner";
 
 export function PodDeleteModal() {
-  const { deleteConfirmPod, closeDeleteConfirm, deletePod, closeInspector } = useClusterStore();
+  const {
+    deleteConfirmPod,
+    closeDeleteConfirm,
+    bulkDeleteConfirmPods,
+    closeBulkDeleteConfirm,
+    deletePod,
+    bulkDeletePods,
+    closeInspector,
+  } = useClusterStore();
+
   const [isDeleting, setIsDeleting] = React.useState(false);
   const [forceDelete, setForceDelete] = React.useState(false);
+
+  const isBulk = Boolean(bulkDeleteConfirmPods && bulkDeleteConfirmPods.length > 0);
+  const targetPods = isBulk
+    ? bulkDeleteConfirmPods!
+    : deleteConfirmPod
+    ? [deleteConfirmPod]
+    : [];
+
+  const handleClose = () => {
+    if (isBulk) {
+      closeBulkDeleteConfirm();
+    } else {
+      closeDeleteConfirm();
+    }
+  };
 
   // Escape to close
   React.useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === "Escape" && deleteConfirmPod) {
-        closeDeleteConfirm();
+      if (e.key === "Escape" && (deleteConfirmPod || bulkDeleteConfirmPods)) {
+        handleClose();
       }
     };
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [deleteConfirmPod, closeDeleteConfirm]);
+  }, [deleteConfirmPod, bulkDeleteConfirmPods]);
 
-  if (!deleteConfirmPod) return null;
+  if (!deleteConfirmPod && !bulkDeleteConfirmPods) return null;
 
   const handleDelete = async () => {
     setIsDeleting(true);
     try {
-      await deletePod({
-        namespace: deleteConfirmPod.namespace,
-        podName: deleteConfirmPod.name,
-        gracePeriodSeconds: forceDelete ? 0 : undefined,
-      });
-      toast.success(`Pod ${deleteConfirmPod.name} successfully deleted`);
-      closeInspector();
-      closeDeleteConfirm();
+      if (isBulk) {
+        const res = await bulkDeletePods(targetPods, forceDelete);
+        if (res.failed === 0) {
+          toast.success(`Successfully deleted ${res.succeeded} pod${res.succeeded > 1 ? "s" : ""}`);
+        } else {
+          toast.warning(`Deleted ${res.succeeded} pod(s), ${res.failed} failed`);
+        }
+        closeInspector();
+        closeBulkDeleteConfirm();
+      } else {
+        await deletePod({
+          namespace: deleteConfirmPod!.namespace,
+          podName: deleteConfirmPod!.name,
+          gracePeriodSeconds: forceDelete ? 0 : undefined,
+        });
+        toast.success(`Pod ${deleteConfirmPod!.name} successfully deleted`);
+        closeInspector();
+        closeDeleteConfirm();
+      }
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : String(err);
       toast.error(`Failed to delete pod: ${msg}`);
@@ -51,20 +86,40 @@ export function PodDeleteModal() {
           </div>
           <div className="flex-1 min-w-0">
             <h3 className="text-sm font-bold text-[var(--foreground)] tracking-tight">
-              Delete Pod
+              {isBulk ? `Delete ${targetPods.length} Selected Pods` : "Delete Pod"}
             </h3>
-            <p className="text-xs text-[var(--muted)] mt-1 leading-relaxed">
-              Are you sure you want to delete pod{" "}
-              <strong className="text-[var(--foreground)] font-mono">{deleteConfirmPod.name}</strong>{" "}
-              in namespace <strong className="text-[var(--foreground)] font-mono">{deleteConfirmPod.namespace}</strong>?
-            </p>
+            {isBulk ? (
+              <p className="text-xs text-[var(--muted)] mt-1 leading-relaxed">
+                You are about to terminate <strong className="text-[var(--foreground)] font-mono">{targetPods.length}</strong> pods across the cluster.
+              </p>
+            ) : (
+              <p className="text-xs text-[var(--muted)] mt-1 leading-relaxed">
+                Are you sure you want to delete pod{" "}
+                <strong className="text-[var(--foreground)] font-mono">{deleteConfirmPod?.name}</strong>{" "}
+                in namespace <strong className="text-[var(--foreground)] font-mono">{deleteConfirmPod?.namespace}</strong>?
+              </p>
+            )}
           </div>
         </div>
+
+        {/* Bulk Pods List */}
+        {isBulk && (
+          <div className="max-h-36 overflow-y-auto border border-[var(--border)] rounded-xl bg-black/[0.02] dark:bg-white/[0.02] divide-y divide-[var(--border)] p-1 text-[11px] font-mono">
+            {targetPods.map((p) => (
+              <div key={`${p.namespace}/${p.name}`} className="px-2 py-1 flex items-center justify-between">
+                <span className="text-[var(--foreground)] truncate max-w-[240px]">{p.name}</span>
+                <span className="text-[10px] text-[var(--muted)] px-1.5 py-0.5 rounded bg-black/5 dark:bg-white/5 border border-[var(--border)]">
+                  {p.namespace}
+                </span>
+              </div>
+            ))}
+          </div>
+        )}
 
         <div className="p-3 rounded-xl bg-amber-500/10 border border-amber-500/20 text-amber-600 dark:text-amber-400 text-xs flex items-start gap-2">
           <AlertTriangle className="w-4 h-4 shrink-0 mt-0.5" />
           <span className="leading-relaxed text-[11px]">
-            If this pod is managed by a Deployment, ReplicaSet, or StatefulSet, Kubernetes will immediately spin up a replacement replica. If standalone, it will be permanently terminated.
+            If any pod is managed by a Deployment, ReplicaSet, or StatefulSet, Kubernetes will immediately spin up a replacement replica. Standalone pods will be permanently terminated.
           </span>
         </div>
 
@@ -80,7 +135,7 @@ export function PodDeleteModal() {
 
         <div className="flex items-center justify-end gap-2 pt-2 border-t border-[var(--border)]">
           <button
-            onClick={closeDeleteConfirm}
+            onClick={handleClose}
             disabled={isDeleting}
             className="px-3.5 py-1.5 rounded-lg border border-[var(--border)] text-xs font-medium text-[var(--foreground)] hover:bg-[var(--surface-hover)] transition-all cursor-pointer"
           >
@@ -99,7 +154,7 @@ export function PodDeleteModal() {
             ) : (
               <>
                 <Trash2 className="w-3.5 h-3.5" />
-                <span>Delete Pod</span>
+                <span>{isBulk ? `Delete ${targetPods.length} Pods` : "Delete Pod"}</span>
               </>
             )}
           </button>

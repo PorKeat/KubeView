@@ -81,6 +81,12 @@ interface ClusterState {
   execModalPod: { name: string; namespace: string; container?: string } | null;
   deleteConfirmPod: { name: string; namespace: string } | null;
   restartConfirmPod: { name: string; namespace: string } | null;
+  bulkDeleteConfirmPods: { name: string; namespace: string }[] | null;
+  bulkRestartConfirmPods: { name: string; namespace: string }[] | null;
+
+  // Auto-refresh interval (0 = off, 3000, 5000, 10000, 30000)
+  autoRefreshInterval: number;
+  setAutoRefreshInterval: (interval: number) => void;
 
   // Endpoint configuration modal
   isEndpointModalOpen: boolean;
@@ -99,6 +105,8 @@ interface ClusterState {
   getPodLogs: (params: PodLogsParams) => Promise<PodLogsResult>;
   deletePod: (params: DeletePodParams) => Promise<void>;
   restartPod: (params: RestartPodParams) => Promise<void>;
+  bulkDeletePods: (pods: { name: string; namespace: string }[], force?: boolean) => Promise<{ succeeded: number; failed: number }>;
+  bulkRestartPods: (pods: { name: string; namespace: string }[]) => Promise<{ succeeded: number; failed: number }>;
   execPod: (params: ExecPodParams) => Promise<ExecPodResult>;
   getPodYaml: (podName: string, namespace: string, contextName?: string) => Promise<string>;
   getPodEvents: (podName: string, namespace: string, contextName?: string) => Promise<PodEventItem[]>;
@@ -111,6 +119,10 @@ interface ClusterState {
   closeDeleteConfirm: () => void;
   openRestartConfirm: (pod: { name: string; namespace: string }) => void;
   closeRestartConfirm: () => void;
+  openBulkDeleteConfirm: (pods: { name: string; namespace: string }[]) => void;
+  closeBulkDeleteConfirm: () => void;
+  openBulkRestartConfirm: (pods: { name: string; namespace: string }[]) => void;
+  closeBulkRestartConfirm: () => void;
 
   setCurrentContext: (context: string) => void;
   setCurrentNamespace: (namespace: string) => void;
@@ -161,6 +173,11 @@ export const useClusterStore = create<ClusterState>((set, get) => ({
   execModalPod: null,
   deleteConfirmPod: null,
   restartConfirmPod: null,
+  bulkDeleteConfirmPods: null,
+  bulkRestartConfirmPods: null,
+
+  autoRefreshInterval: 0,
+  setAutoRefreshInterval: (interval) => set({ autoRefreshInterval: interval }),
 
   isEndpointModalOpen: false,
   endpointModalContextName: "",
@@ -186,6 +203,10 @@ export const useClusterStore = create<ClusterState>((set, get) => ({
   closeDeleteConfirm: () => set({ deleteConfirmPod: null }),
   openRestartConfirm: (pod) => set({ restartConfirmPod: pod }),
   closeRestartConfirm: () => set({ restartConfirmPod: null }),
+  openBulkDeleteConfirm: (pods) => set({ bulkDeleteConfirmPods: pods }),
+  closeBulkDeleteConfirm: () => set({ bulkDeleteConfirmPods: null }),
+  openBulkRestartConfirm: (pods) => set({ bulkRestartConfirmPods: pods }),
+  closeBulkRestartConfirm: () => set({ bulkRestartConfirmPods: null }),
 
   loadContexts: async () => {
     set({ isLoading: true });
@@ -420,6 +441,51 @@ export const useClusterStore = create<ClusterState>((set, get) => ({
     // Refresh live pods list and overview telemetry
     await get().loadPods();
     await get().loadClusterOverview();
+  },
+
+  bulkDeletePods: async (pods: { name: string; namespace: string }[], force?: boolean) => {
+    const targetCtx = get().currentContext;
+    let succeeded = 0;
+    let failed = 0;
+    for (const p of pods) {
+      try {
+        await invokeRpc("pods.delete", {
+          contextName: targetCtx,
+          namespace: p.namespace,
+          podName: p.name,
+          gracePeriodSeconds: force ? 0 : undefined,
+        });
+        succeeded++;
+      } catch (err) {
+        console.error(`Failed to delete pod ${p.namespace}/${p.name}:`, err);
+        failed++;
+      }
+    }
+    await get().loadPods();
+    await get().loadClusterOverview();
+    return { succeeded, failed };
+  },
+
+  bulkRestartPods: async (pods: { name: string; namespace: string }[]) => {
+    const targetCtx = get().currentContext;
+    let succeeded = 0;
+    let failed = 0;
+    for (const p of pods) {
+      try {
+        await invokeRpc("pods.restart", {
+          contextName: targetCtx,
+          namespace: p.namespace,
+          podName: p.name,
+        });
+        succeeded++;
+      } catch (err) {
+        console.error(`Failed to restart pod ${p.namespace}/${p.name}:`, err);
+        failed++;
+      }
+    }
+    await get().loadPods();
+    await get().loadClusterOverview();
+    return { succeeded, failed };
   },
 
   execPod: async (params: ExecPodParams) => {

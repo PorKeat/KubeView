@@ -12,6 +12,10 @@ import {
   Layers,
   Sparkles,
   CornerDownLeft,
+  ArrowUp,
+  ArrowDown,
+  Maximize2,
+  Minimize2,
 } from "lucide-react";
 import { useClusterStore } from "@/stores/clusterStore";
 import { toast } from "sonner";
@@ -30,10 +34,12 @@ interface CommandHistoryItem {
 const QUICK_COMMANDS = [
   { label: "Directory", cmd: "ls -la" },
   { label: "Environment", cmd: "env" },
-  { label: "Process List", cmd: "ps aux" },
+  { label: "Processes", cmd: "ps aux || ps -ef" },
   { label: "Disk Usage", cmd: "df -h" },
   { label: "OS Info", cmd: "uname -a" },
-  { label: "Network", cmd: "cat /etc/resolv.conf" },
+  { label: "Network DNS", cmd: "cat /etc/resolv.conf" },
+  { label: "Listening Ports", cmd: "netstat -tuln || ss -tulpn || cat /proc/net/tcp" },
+  { label: "Memory Info", cmd: "free -m || cat /proc/meminfo" },
 ];
 
 export function PodExecModal() {
@@ -41,8 +47,11 @@ export function PodExecModal() {
   const [selectedContainer, setSelectedContainer] = React.useState<string>("");
   const [inputCommand, setInputCommand] = React.useState<string>("");
   const [history, setHistory] = React.useState<CommandHistoryItem[]>([]);
+  const [historyIndex, setHistoryIndex] = React.useState<number>(-1);
+  const [draftCommand, setDraftCommand] = React.useState<string>("");
   const [isExecuting, setIsExecuting] = React.useState(false);
   const [copied, setCopied] = React.useState(false);
+  const [isMaximized, setIsMaximized] = React.useState(false);
   const outputEndRef = React.useRef<HTMLDivElement>(null);
   const inputRef = React.useRef<HTMLInputElement>(null);
 
@@ -56,11 +65,11 @@ export function PodExecModal() {
   React.useEffect(() => {
     if (execModalPod) {
       setSelectedContainer(execModalPod.container || containerList[0] || "");
-      // Focus command input
       setTimeout(() => inputRef.current?.focus(), 150);
     } else {
       setHistory([]);
       setInputCommand("");
+      setHistoryIndex(-1);
     }
   }, [execModalPod]);
 
@@ -86,10 +95,10 @@ export function PodExecModal() {
     if (!cmd || isExecuting) return;
 
     setIsExecuting(true);
+    setHistoryIndex(-1);
     const startTime = performance.now();
 
     try {
-      // Split command into sh -c format for arbitrary pipeline support
       const res = await execPod({
         namespace: execModalPod.namespace,
         podName: execModalPod.name,
@@ -134,6 +143,42 @@ export function PodExecModal() {
     }
   };
 
+  // Keyboard navigation for command history (Up / Down)
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === "Enter") {
+      handleRunCommand();
+      return;
+    }
+
+    if (e.key === "ArrowUp") {
+      e.preventDefault();
+      if (history.length === 0) return;
+
+      if (historyIndex === -1) {
+        setDraftCommand(inputCommand);
+        const nextIdx = history.length - 1;
+        setHistoryIndex(nextIdx);
+        setInputCommand(history[nextIdx].command);
+      } else if (historyIndex > 0) {
+        const nextIdx = historyIndex - 1;
+        setHistoryIndex(nextIdx);
+        setInputCommand(history[nextIdx].command);
+      }
+    } else if (e.key === "ArrowDown") {
+      e.preventDefault();
+      if (historyIndex === -1) return;
+
+      if (historyIndex < history.length - 1) {
+        const nextIdx = historyIndex + 1;
+        setHistoryIndex(nextIdx);
+        setInputCommand(history[nextIdx].command);
+      } else {
+        setHistoryIndex(-1);
+        setInputCommand(draftCommand);
+      }
+    }
+  };
+
   const handleCopyHistory = () => {
     const text = history
       .map((h) => `$ ${h.command}\n${h.stdout}${h.stderr ? `\nSTDERR:\n${h.stderr}` : ""}`)
@@ -146,11 +191,16 @@ export function PodExecModal() {
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-md animate-in fade-in duration-150">
-      <div className="w-full max-w-4xl h-[80vh] bg-[var(--surface)] border border-[var(--border)] rounded-2xl shadow-2xl flex flex-col overflow-hidden animate-in zoom-in-95 duration-150">
+      <div
+        className={cn(
+          "bg-[var(--surface)] border border-[var(--border)] rounded-2xl shadow-2xl flex flex-col overflow-hidden transition-all duration-200 animate-in zoom-in-95",
+          isMaximized ? "w-full h-full max-w-none" : "w-full max-w-5xl h-[85vh]"
+        )}
+      >
         {/* Header */}
-        <div className="h-14 border-b border-[var(--border)] px-4 flex items-center justify-between shrink-0 bg-slate-50/80 dark:bg-black/30">
+        <div className="h-14 border-b border-[var(--border)] px-4 flex items-center justify-between shrink-0 bg-slate-50/80 dark:bg-black/30 gap-2">
           <div className="flex items-center gap-3 min-w-0">
-            <div className="p-2 rounded-lg bg-[var(--accent)]/15 text-[var(--accent)] border border-[var(--accent)]/20 shadow-xs">
+            <div className="p-2 rounded-lg bg-[var(--accent)]/15 text-[var(--accent)] border border-[var(--accent)]/20 shadow-xs shrink-0">
               <Terminal className="w-4 h-4" />
             </div>
             <div className="min-w-0">
@@ -161,14 +211,18 @@ export function PodExecModal() {
                 <span className="px-2 py-0.5 rounded-full text-[10px] font-mono bg-black/[0.05] dark:bg-white/[0.08] text-[var(--muted)] border border-[var(--border)]">
                   ns: {execModalPod.namespace}
                 </span>
+                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[9px] font-semibold font-mono bg-emerald-500/15 text-emerald-500 border border-emerald-500/30">
+                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+                  SPDY
+                </span>
               </div>
-              <p className="text-[10px] text-[var(--muted)] mt-0.5">
-                Interactive remote pod execution via client-go SPDY stream
+              <p className="text-[10px] text-[var(--muted)] mt-0.5 font-mono">
+                Interactive shell session &bull; Up/Down arrow for history &bull; Container: {selectedContainer || "primary"}
               </p>
             </div>
           </div>
 
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 shrink-0">
             {/* Container Selector */}
             {containerList.length > 1 && (
               <CustomSelect
@@ -184,7 +238,7 @@ export function PodExecModal() {
             <button
               onClick={() => setHistory([])}
               className="p-1.5 rounded-lg hover:bg-[var(--surface-hover)] text-[var(--muted)] hover:text-[var(--foreground)] transition-colors cursor-pointer"
-              title="Clear Terminal"
+              title="Clear Terminal Output"
             >
               <Trash2 className="w-4 h-4" />
             </button>
@@ -193,9 +247,18 @@ export function PodExecModal() {
             <button
               onClick={handleCopyHistory}
               className="p-1.5 rounded-lg hover:bg-[var(--surface-hover)] text-[var(--muted)] hover:text-[var(--foreground)] transition-colors cursor-pointer"
-              title="Copy Terminal History"
+              title="Copy All Terminal History"
             >
               {copied ? <Check className="w-4 h-4 text-emerald-500" /> : <Copy className="w-4 h-4" />}
+            </button>
+
+            {/* Maximize / Restore */}
+            <button
+              onClick={() => setIsMaximized(!isMaximized)}
+              className="p-1.5 rounded-lg hover:bg-[var(--surface-hover)] text-[var(--muted)] hover:text-[var(--foreground)] transition-colors cursor-pointer"
+              title={isMaximized ? "Restore" : "Maximize"}
+            >
+              {isMaximized ? <Minimize2 className="w-4 h-4" /> : <Maximize2 className="w-4 h-4" />}
             </button>
 
             {/* Close */}
@@ -211,7 +274,7 @@ export function PodExecModal() {
         {/* Quick Command Chips */}
         <div className="px-4 py-2 border-b border-[var(--border)] bg-black/[0.02] dark:bg-black/20 flex items-center gap-1.5 overflow-x-auto shrink-0 text-xs">
           <span className="text-[10px] text-[var(--muted)] uppercase font-semibold mr-1 shrink-0 flex items-center gap-1">
-            <Sparkles className="w-3 h-3 text-[var(--accent)]" /> Quick:
+            <Sparkles className="w-3 h-3 text-[var(--accent)]" /> Quick Diagnostics:
           </span>
           {QUICK_COMMANDS.map((qc) => (
             <button
@@ -219,8 +282,9 @@ export function PodExecModal() {
               onClick={() => handleRunCommand(qc.cmd)}
               disabled={isExecuting}
               className="px-2.5 py-1 rounded-md bg-[var(--surface)] hover:bg-[var(--surface-hover)] border border-[var(--border)] text-[11px] font-mono text-[var(--foreground)] hover:border-[var(--accent)] transition-all cursor-pointer shrink-0 disabled:opacity-50"
+              title={qc.cmd}
             >
-              {qc.label} <span className="text-[var(--muted)]">({qc.cmd})</span>
+              {qc.label}
             </button>
           ))}
         </div>
@@ -228,24 +292,27 @@ export function PodExecModal() {
         {/* Terminal Canvas */}
         <div className="flex-1 overflow-y-auto bg-slate-950 p-4 font-mono text-[12px] text-slate-200 select-text space-y-4">
           {history.length === 0 ? (
-            <div className="text-slate-500 text-xs">
-              <p className="text-emerald-400 font-semibold mb-1">
-                Connected to container {selectedContainer || "primary"} on {execModalPod.name}
+            <div className="text-slate-500 text-xs space-y-1.5 border border-slate-900 rounded-xl p-4 bg-slate-900/30">
+              <p className="text-emerald-400 font-semibold flex items-center gap-2">
+                <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+                Live interactive remote shell connected to {execModalPod.name} [{selectedContainer || "primary"}]
               </p>
-              <p>Type a command below or click a quick action chip to execute inside the pod.</p>
+              <p className="text-slate-400">
+                Type commands below or click quick diagnostic chips above. Press <kbd className="px-1.5 py-0.5 rounded bg-slate-800 text-slate-300 border border-slate-700 text-[10px]">↑</kbd> and <kbd className="px-1.5 py-0.5 rounded bg-slate-800 text-slate-300 border border-slate-700 text-[10px]">↓</kbd> to cycle through command history.
+              </p>
             </div>
           ) : (
             history.map((item, idx) => (
-              <div key={idx} className="space-y-1">
+              <div key={idx} className="space-y-1.5">
                 <div className="flex items-center justify-between text-[11px] text-slate-500 border-b border-slate-800/80 pb-1">
                   <div className="flex items-center gap-2">
-                    <span className="text-[var(--accent)] font-bold">$</span>
+                    <span className="text-emerald-400 font-semibold font-mono">root@{execModalPod.name.slice(0, 16)}:~#</span>
                     <span className="text-white font-semibold">{item.command}</span>
                   </div>
                   <div className="flex items-center gap-2">
                     <span
                       className={cn(
-                        "px-1.5 py-0.2 rounded text-[10px] font-bold",
+                        "px-1.5 py-0.2 rounded text-[10px] font-bold font-mono",
                         item.exitCode === 0 ? "bg-emerald-500/20 text-emerald-400" : "bg-rose-500/20 text-rose-400"
                       )}
                     >
@@ -263,7 +330,7 @@ export function PodExecModal() {
                 )}
 
                 {item.stderr && (
-                  <pre className="text-rose-400 whitespace-pre-wrap break-all leading-relaxed pl-2 font-mono text-[12px]">
+                  <pre className="text-rose-400 whitespace-pre-wrap break-all leading-relaxed pl-2 font-mono text-[12px] bg-rose-950/20 p-2 rounded-lg border border-rose-900/30">
                     {item.stderr}
                   </pre>
                 )}
@@ -272,9 +339,9 @@ export function PodExecModal() {
           )}
 
           {isExecuting && (
-            <div className="flex items-center gap-2 text-[var(--accent)] text-xs animate-pulse">
+            <div className="flex items-center gap-2 text-[var(--accent)] text-xs animate-pulse font-mono">
               <RotateCw className="w-3.5 h-3.5 animate-spin" />
-              <span>Executing command in pod...</span>
+              <span>Executing in pod container...</span>
             </div>
           )}
 
@@ -282,19 +349,22 @@ export function PodExecModal() {
         </div>
 
         {/* Input Bar */}
-        <div className="h-12 border-t border-[var(--border)] px-4 flex items-center gap-2 bg-[var(--surface)] shrink-0">
-          <span className="text-[var(--accent)] font-mono font-bold text-sm">$</span>
+        <div className="h-12 border-t border-[var(--border)] px-4 flex items-center gap-2.5 bg-[var(--surface)] shrink-0">
+          <span className="text-emerald-500 font-mono font-bold text-xs shrink-0 select-none">
+            root@{selectedContainer || "app"}:~#
+          </span>
           <input
             ref={inputRef}
             type="text"
-            placeholder="Enter shell command (e.g. ls -la, cat /etc/hosts, top -b -n 1)..."
+            placeholder="Type command (e.g. ls -la, ps aux, cat config.json)... Press ↑/↓ for history"
             value={inputCommand}
-            onChange={(e) => setInputCommand(e.target.value)}
-            onKeyDown={(e) => {
-              if (e.key === "Enter") {
-                handleRunCommand();
+            onChange={(e) => {
+              setInputCommand(e.target.value);
+              if (historyIndex === -1) {
+                setDraftCommand(e.target.value);
               }
             }}
+            onKeyDown={handleKeyDown}
             disabled={isExecuting}
             className="flex-1 bg-transparent text-xs font-mono text-[var(--foreground)] placeholder-[var(--muted)] focus:outline-hidden"
           />

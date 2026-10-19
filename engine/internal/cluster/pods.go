@@ -17,14 +17,46 @@ import (
 	"sigs.k8s.io/yaml"
 )
 
+type ContainerEnvVar struct {
+	Name      string `json:"name"`
+	Value     string `json:"value,omitempty"`
+	ValueFrom string `json:"valueFrom,omitempty"`
+}
+
+type ContainerPortInfo struct {
+	Name          string `json:"name,omitempty"`
+	ContainerPort int32  `json:"containerPort"`
+	Protocol      string `json:"protocol,omitempty"`
+}
+
+type ContainerVolumeMountInfo struct {
+	Name      string `json:"name"`
+	MountPath string `json:"mountPath"`
+	ReadOnly  bool   `json:"readOnly,omitempty"`
+}
+
+type ContainerResourceItem struct {
+	Cpu    string `json:"cpu,omitempty"`
+	Memory string `json:"memory,omitempty"`
+}
+
+type ContainerResourcesInfo struct {
+	Requests *ContainerResourceItem `json:"requests,omitempty"`
+	Limits   *ContainerResourceItem `json:"limits,omitempty"`
+}
+
 // ContainerInfo provides runtime status of an individual container
 type ContainerInfo struct {
-	Name         string `json:"name"`
-	Image        string `json:"image"`
-	Ready        bool   `json:"ready"`
-	RestartCount int32  `json:"restartCount"`
-	State        string `json:"state"`
-	StateReason  string `json:"stateReason,omitempty"`
+	Name         string                  `json:"name"`
+	Image        string                  `json:"image"`
+	Ready        bool                    `json:"ready"`
+	RestartCount int32                   `json:"restartCount"`
+	State        string                  `json:"state"`
+	StateReason  string                  `json:"stateReason,omitempty"`
+	Env          []ContainerEnvVar       `json:"env,omitempty"`
+	Ports        []ContainerPortInfo     `json:"ports,omitempty"`
+	VolumeMounts []ContainerVolumeMountInfo `json:"volumeMounts,omitempty"`
+	Resources    *ContainerResourcesInfo `json:"resources,omitempty"`
 }
 
 // PodConditionItem represents a live Kubernetes status condition
@@ -70,12 +102,14 @@ type ListPodsResult struct {
 }
 
 type PodLogsParams struct {
-	ContextName string `json:"contextName"`
-	Namespace   string `json:"namespace"`
-	PodName     string `json:"podName"`
-	Container   string `json:"container,omitempty"`
-	TailLines   int64  `json:"tailLines,omitempty"`
-	Previous    bool   `json:"previous,omitempty"`
+	ContextName  string `json:"contextName"`
+	Namespace    string `json:"namespace"`
+	PodName      string `json:"podName"`
+	Container    string `json:"container,omitempty"`
+	TailLines    int64  `json:"tailLines,omitempty"`
+	Previous     bool   `json:"previous,omitempty"`
+	Timestamps   bool   `json:"timestamps,omitempty"`
+	SinceSeconds *int64 `json:"sinceSeconds,omitempty"`
 }
 
 type PodLogsResult struct {
@@ -184,8 +218,12 @@ func (m *Manager) GetPodLogs(ctx context.Context, p PodLogsParams) (*PodLogsResu
 	}
 
 	opts := &corev1.PodLogOptions{
-		Container: selectedContainer,
-		Previous:  p.Previous,
+		Container:  selectedContainer,
+		Previous:   p.Previous,
+		Timestamps: p.Timestamps,
+	}
+	if p.SinceSeconds != nil && *p.SinceSeconds > 0 {
+		opts.SinceSeconds = p.SinceSeconds
 	}
 	if p.TailLines > 0 {
 		opts.TailLines = &p.TailLines
@@ -429,6 +467,14 @@ func convertPodToSummary(pod *corev1.Pod) PodSummary {
 	var totalRestarts int32 = 0
 	var containerInfos []ContainerInfo
 
+	specContainerMap := make(map[string]corev1.Container)
+	for _, sc := range pod.Spec.Containers {
+		specContainerMap[sc.Name] = sc
+	}
+	for _, sc := range pod.Spec.InitContainers {
+		specContainerMap[sc.Name] = sc
+	}
+
 	for _, cs := range pod.Status.ContainerStatuses {
 		if cs.Ready {
 			readyContainers++
@@ -447,6 +493,75 @@ func convertPodToSummary(pod *corev1.Pod) PodSummary {
 			reasonStr = cs.State.Terminated.Reason
 		}
 
+		var envList []ContainerEnvVar
+		var portsList []ContainerPortInfo
+		var volumeMountsList []ContainerVolumeMountInfo
+		var resourcesInfo *ContainerResourcesInfo
+
+		if sc, found := specContainerMap[cs.Name]; found {
+			for _, env := range sc.Env {
+				valFrom := ""
+				if env.ValueFrom != nil {
+					if env.ValueFrom.SecretKeyRef != nil {
+						valFrom = fmt.Sprintf("Secret:%s[%s]", env.ValueFrom.SecretKeyRef.Name, env.ValueFrom.SecretKeyRef.Key)
+					} else if env.ValueFrom.ConfigMapKeyRef != nil {
+						valFrom = fmt.Sprintf("ConfigMap:%s[%s]", env.ValueFrom.ConfigMapKeyRef.Name, env.ValueFrom.ConfigMapKeyRef.Key)
+					} else if env.ValueFrom.FieldRef != nil {
+						valFrom = fmt.Sprintf("Field:%s", env.ValueFrom.FieldRef.FieldPath)
+					} else {
+						valFrom = "DynamicRef"
+					}
+				}
+				envList = append(envList, ContainerEnvVar{
+					Name:      env.Name,
+					Value:     env.Value,
+					ValueFrom: valFrom,
+				})
+			}
+
+			for _, p := range sc.Ports {
+				portsList = append(portsList, ContainerPortInfo{
+					Name:          p.Name,
+					ContainerPort: p.ContainerPort,
+					Protocol:      string(p.Protocol),
+				})
+			}
+
+			for _, vm := range sc.VolumeMounts {
+				volumeMountsList = append(volumeMountsList, ContainerVolumeMountInfo{
+					Name:      vm.Name,
+					MountPath: vm.MountPath,
+					ReadOnly:  vm.ReadOnly,
+				})
+			}
+
+			var reqItem, limItem *ContainerResourceItem
+			if len(sc.Resources.Requests) > 0 {
+				reqItem = &ContainerResourceItem{}
+				if cpu, ok := sc.Resources.Requests[corev1.ResourceCPU]; ok {
+					reqItem.Cpu = cpu.String()
+				}
+				if mem, ok := sc.Resources.Requests[corev1.ResourceMemory]; ok {
+					reqItem.Memory = mem.String()
+				}
+			}
+			if len(sc.Resources.Limits) > 0 {
+				limItem = &ContainerResourceItem{}
+				if cpu, ok := sc.Resources.Limits[corev1.ResourceCPU]; ok {
+					limItem.Cpu = cpu.String()
+				}
+				if mem, ok := sc.Resources.Limits[corev1.ResourceMemory]; ok {
+					limItem.Memory = mem.String()
+				}
+			}
+			if reqItem != nil || limItem != nil {
+				resourcesInfo = &ContainerResourcesInfo{
+					Requests: reqItem,
+					Limits:   limItem,
+				}
+			}
+		}
+
 		containerInfos = append(containerInfos, ContainerInfo{
 			Name:         cs.Name,
 			Image:        cs.Image,
@@ -454,6 +569,10 @@ func convertPodToSummary(pod *corev1.Pod) PodSummary {
 			RestartCount: cs.RestartCount,
 			State:        stateStr,
 			StateReason:  reasonStr,
+			Env:          envList,
+			Ports:        portsList,
+			VolumeMounts: volumeMountsList,
+			Resources:    resourcesInfo,
 		})
 	}
 

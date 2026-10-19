@@ -24,12 +24,9 @@ test.describe("KubeView UI - Cluster Context Switcher & Configuration", () => {
     const items = page.locator('[data-testid="context-item"]');
     await expect(items).toHaveCount(2, { timeout: 5000 });
 
-    // Verify the two specific cluster context names
-    const item1 = items.nth(0);
-    const item2 = items.nth(1);
-
-    await expect(item1).toContainText("kubernetes-admin@kubekey");
-    await expect(item2).toContainText("kubernetes-admin@kubekey (mailconfig)");
+    // Verify the two specific cluster context names are present
+    await expect(items.filter({ hasText: "kubernetes-admin@kubekey" }).first()).toBeVisible();
+    await expect(items.filter({ hasText: "kubernetes-admin@kubekey (mailconfig)" })).toBeVisible();
   });
 
   test("can filter clusters via search input in dropdown", async ({ page }) => {

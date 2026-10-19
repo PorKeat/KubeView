@@ -1,36 +1,69 @@
 "use client";
 
 import * as React from "react";
-import { X, RotateCw, RefreshCw } from "lucide-react";
+import { X, RotateCw, RefreshCw, Layers } from "lucide-react";
 import { useClusterStore } from "@/stores/clusterStore";
 import { toast } from "sonner";
 
 export function PodRestartModal() {
-  const { restartConfirmPod, closeRestartConfirm, restartPod } = useClusterStore();
+  const {
+    restartConfirmPod,
+    closeRestartConfirm,
+    bulkRestartConfirmPods,
+    closeBulkRestartConfirm,
+    restartPod,
+    bulkRestartPods,
+  } = useClusterStore();
+
   const [isRestarting, setIsRestarting] = React.useState(false);
+
+  const isBulk = Boolean(bulkRestartConfirmPods && bulkRestartConfirmPods.length > 0);
+  const targetPods = isBulk
+    ? bulkRestartConfirmPods!
+    : restartConfirmPod
+    ? [restartConfirmPod]
+    : [];
+
+  const handleClose = () => {
+    if (isBulk) {
+      closeBulkRestartConfirm();
+    } else {
+      closeRestartConfirm();
+    }
+  };
 
   // Escape to close
   React.useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === "Escape" && restartConfirmPod) {
-        closeRestartConfirm();
+      if (e.key === "Escape" && (restartConfirmPod || bulkRestartConfirmPods)) {
+        handleClose();
       }
     };
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [restartConfirmPod, closeRestartConfirm]);
+  }, [restartConfirmPod, bulkRestartConfirmPods]);
 
-  if (!restartConfirmPod) return null;
+  if (!restartConfirmPod && !bulkRestartConfirmPods) return null;
 
   const handleRestart = async () => {
     setIsRestarting(true);
     try {
-      await restartPod({
-        namespace: restartConfirmPod.namespace,
-        podName: restartConfirmPod.name,
-      });
-      toast.success(`Pod ${restartConfirmPod.name} restarted successfully`);
-      closeRestartConfirm();
+      if (isBulk) {
+        const res = await bulkRestartPods(targetPods);
+        if (res.failed === 0) {
+          toast.success(`Successfully restarted ${res.succeeded} pod${res.succeeded > 1 ? "s" : ""}`);
+        } else {
+          toast.warning(`Restarted ${res.succeeded} pod(s), ${res.failed} failed`);
+        }
+        closeBulkRestartConfirm();
+      } else {
+        await restartPod({
+          namespace: restartConfirmPod!.namespace,
+          podName: restartConfirmPod!.name,
+        });
+        toast.success(`Pod ${restartConfirmPod!.name} restarted successfully`);
+        closeRestartConfirm();
+      }
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : String(err);
       toast.error(`Failed to restart pod: ${msg}`);
@@ -48,25 +81,45 @@ export function PodRestartModal() {
           </div>
           <div className="flex-1 min-w-0">
             <h3 className="text-sm font-bold text-[var(--foreground)] tracking-tight">
-              Restart Pod
+              {isBulk ? `Restart ${targetPods.length} Selected Pods` : "Restart Pod"}
             </h3>
-            <p className="text-xs text-[var(--muted)] mt-1 leading-relaxed">
-              Are you sure you want to restart pod{" "}
-              <strong className="text-[var(--foreground)] font-mono">{restartConfirmPod.name}</strong>{" "}
-              in namespace <strong className="text-[var(--foreground)] font-mono">{restartConfirmPod.namespace}</strong>?
-            </p>
+            {isBulk ? (
+              <p className="text-xs text-[var(--muted)] mt-1 leading-relaxed">
+                You are about to rolling-restart <strong className="text-[var(--foreground)] font-mono">{targetPods.length}</strong> pods across the cluster.
+              </p>
+            ) : (
+              <p className="text-xs text-[var(--muted)] mt-1 leading-relaxed">
+                Are you sure you want to restart pod{" "}
+                <strong className="text-[var(--foreground)] font-mono">{restartConfirmPod?.name}</strong>{" "}
+                in namespace <strong className="text-[var(--foreground)] font-mono">{restartConfirmPod?.namespace}</strong>?
+              </p>
+            )}
           </div>
         </div>
 
+        {/* Bulk Pods List */}
+        {isBulk && (
+          <div className="max-h-36 overflow-y-auto border border-[var(--border)] rounded-xl bg-black/[0.02] dark:bg-white/[0.02] divide-y divide-[var(--border)] p-1 text-[11px] font-mono">
+            {targetPods.map((p) => (
+              <div key={`${p.namespace}/${p.name}`} className="px-2 py-1 flex items-center justify-between">
+                <span className="text-[var(--foreground)] truncate max-w-[240px]">{p.name}</span>
+                <span className="text-[10px] text-[var(--muted)] px-1.5 py-0.5 rounded bg-black/5 dark:bg-white/5 border border-[var(--border)]">
+                  {p.namespace}
+                </span>
+              </div>
+            ))}
+          </div>
+        )}
+
         <div className="p-3 rounded-xl bg-cyan-500/10 border border-cyan-500/20 text-cyan-600 dark:text-cyan-400 text-xs">
           <p className="leading-relaxed text-[11px]">
-            If this pod is managed by a Deployment or ReplicaSet, Kubernetes will immediately recreate it with a fresh pod instance and re-pull containers if configured.
+            Kubernetes controllers (Deployments, StatefulSets, DaemonSets) will recreate fresh pod instances with clean memory space and restart containers automatically.
           </p>
         </div>
 
         <div className="flex items-center justify-end gap-2 pt-2 border-t border-[var(--border)]">
           <button
-            onClick={closeRestartConfirm}
+            onClick={handleClose}
             disabled={isRestarting}
             className="px-3.5 py-1.5 rounded-lg border border-[var(--border)] text-xs font-medium text-[var(--foreground)] hover:bg-[var(--surface-hover)] transition-all cursor-pointer"
           >
@@ -85,7 +138,7 @@ export function PodRestartModal() {
             ) : (
               <>
                 <RotateCw className="w-3.5 h-3.5" />
-                <span>Restart Pod</span>
+                <span>{isBulk ? `Restart ${targetPods.length} Pods` : "Restart Pod"}</span>
               </>
             )}
           </button>

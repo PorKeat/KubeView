@@ -48,6 +48,10 @@ export function ResourceListView({ resourceType }: ResourceListViewProps) {
     openExecModal,
     openRestartConfirm,
     openDeleteConfirm,
+    openBulkRestartConfirm,
+    openBulkDeleteConfirm,
+    autoRefreshInterval,
+    setAutoRefreshInterval,
     openKubeconfigModal,
   } = useClusterStore();
 
@@ -63,6 +67,20 @@ export function ResourceListView({ resourceType }: ResourceListViewProps) {
       loadPods(currentNamespace, currentContext);
     }
   }, [currentNamespace, connectionStatus, currentContext]);
+
+  // Background auto-refresh timer
+  React.useEffect(() => {
+    if (autoRefreshInterval <= 0) return;
+    if (connectionStatus !== "connected" && connectionStatus !== "degraded") return;
+
+    const timer = setInterval(() => {
+      if (!isPodsLoading) {
+        loadPods(currentNamespace, currentContext);
+      }
+    }, autoRefreshInterval);
+
+    return () => clearInterval(timer);
+  }, [autoRefreshInterval, connectionStatus, currentNamespace, currentContext, isPodsLoading, loadPods]);
 
   const handleRefresh = async () => {
     await loadPods(currentNamespace);
@@ -232,6 +250,26 @@ export function ResourceListView({ resourceType }: ResourceListViewProps) {
 
         {/* Right: Actions */}
         <div className="flex items-center gap-2 text-xs text-[var(--muted)] shrink-0">
+          {/* Auto Refresh Interval Dropdown */}
+          <div className="flex items-center gap-1.5 px-2 py-0.5 rounded-lg border border-[var(--border)] bg-slate-100/70 dark:bg-black/20 text-[11px]">
+            <span className="text-[var(--muted)] flex items-center gap-1 text-[10px]">
+              <span className={cn("w-1.5 h-1.5 rounded-full transition-all", autoRefreshInterval > 0 ? "bg-emerald-500 shadow-[0_0_6px_#10b981]" : "bg-[var(--muted)]/50")} />
+              <span>Auto:</span>
+            </span>
+            <select
+              value={autoRefreshInterval}
+              onChange={(e) => setAutoRefreshInterval(Number(e.target.value))}
+              className="bg-transparent text-[var(--foreground)] font-mono text-[10px] outline-hidden cursor-pointer"
+              title="Set automatic poll/refresh interval"
+            >
+              <option value={0} className="bg-[var(--surface)] text-[var(--foreground)]">Off</option>
+              <option value={3000} className="bg-[var(--surface)] text-[var(--foreground)]">3s</option>
+              <option value={5000} className="bg-[var(--surface)] text-[var(--foreground)]">5s</option>
+              <option value={10000} className="bg-[var(--surface)] text-[var(--foreground)]">10s</option>
+              <option value={30000} className="bg-[var(--surface)] text-[var(--foreground)]">30s</option>
+            </select>
+          </div>
+
           <span className="font-mono text-[11px]">{sortedItems.length} items</span>
           <div className="h-3 w-[1px] bg-[var(--border)]" />
           <button
@@ -250,39 +288,40 @@ export function ResourceListView({ resourceType }: ResourceListViewProps) {
         <div className="h-9 bg-[var(--surface-active)] border-b border-[var(--border)] px-4 flex items-center justify-between text-xs text-[var(--foreground)] animate-in fade-in duration-100">
           <div className="flex items-center gap-2">
             <span className="font-semibold text-[var(--accent)] font-mono">{selectedItems.size}</span>
-            <span>selected</span>
+            <span>pod{selectedItems.size > 1 ? "s" : ""} selected</span>
           </div>
 
           <div className="flex items-center gap-1.5">
             <button
               onClick={() => {
-                const first = Array.from(selectedItems)[0];
-                if (first) {
-                  const [ns, name] = first.split("/");
-                  openRestartConfirm({ name, namespace: ns });
-                }
+                const list = Array.from(selectedItems).map((k) => {
+                  const [ns, name] = k.split("/");
+                  return { namespace: ns, name };
+                });
+                openBulkRestartConfirm(list);
               }}
-              className="px-2.5 py-1 rounded bg-[var(--surface)] border border-[var(--border)] hover:bg-[var(--surface-hover)] text-xs font-medium flex items-center gap-1.5 transition-colors cursor-pointer"
+              className="px-2.5 py-1 rounded bg-[var(--surface)] border border-[var(--border)] hover:bg-[var(--surface-hover)] text-xs font-medium flex items-center gap-1.5 transition-colors cursor-pointer shadow-2xs"
             >
-              <RotateCw className="w-3.5 h-3.5" />
-              <span>Restart Workload</span>
+              <RotateCw className="w-3.5 h-3.5 text-cyan-500" />
+              <span>Restart Workloads ({selectedItems.size})</span>
             </button>
             <button
               onClick={() => {
-                const first = Array.from(selectedItems)[0];
-                if (first) {
-                  const [ns, name] = first.split("/");
-                  openDeleteConfirm({ name, namespace: ns });
-                }
+                const list = Array.from(selectedItems).map((k) => {
+                  const [ns, name] = k.split("/");
+                  return { namespace: ns, name };
+                });
+                openBulkDeleteConfirm(list);
               }}
-              className="px-2.5 py-1 rounded bg-rose-500/10 border border-rose-500/20 text-rose-500 hover:bg-rose-500/20 text-xs font-medium flex items-center gap-1.5 transition-colors cursor-pointer"
+              className="px-2.5 py-1 rounded bg-rose-500/10 border border-rose-500/20 text-rose-500 hover:bg-rose-500/20 text-xs font-medium flex items-center gap-1.5 transition-colors cursor-pointer shadow-2xs"
             >
               <Trash2 className="w-3.5 h-3.5" />
-              <span>Delete Selected</span>
+              <span>Delete Selected ({selectedItems.size})</span>
             </button>
             <button
               onClick={() => setSelectedItems(new Set())}
-              className="p-1 rounded text-[var(--muted)] hover:text-[var(--foreground)]"
+              className="p-1 rounded text-[var(--muted)] hover:text-[var(--foreground)] cursor-pointer"
+              title="Clear Selection"
             >
               <X className="w-3.5 h-3.5" />
             </button>
