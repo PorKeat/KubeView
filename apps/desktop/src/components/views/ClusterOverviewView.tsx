@@ -67,7 +67,11 @@ export function ClusterOverviewView() {
   const nodes = clusterOverview?.nodes || [];
 
   return (
-    <div className="flex-1 overflow-y-auto p-6 md:p-8 space-y-6 select-none max-w-7xl mx-auto w-full">
+    <div className="flex-1 overflow-y-auto p-6 md:p-8 space-y-6 select-none max-w-7xl mx-auto w-full relative">
+      {/* Subtle Ambient Gradient Glows (Depth & Polish) */}
+      <div className="pointer-events-none absolute -top-12 left-1/4 -translate-x-1/2 w-[540px] h-[260px] bg-gradient-to-br from-[var(--accent)]/8 via-amber-500/4 to-transparent blur-3xl opacity-70 -z-10" />
+      <div className="pointer-events-none absolute top-36 right-1/4 w-[420px] h-[220px] bg-gradient-to-bl from-cyan-500/6 via-blue-500/3 to-transparent blur-3xl opacity-60 -z-10" />
+
       {/* Degraded Warning Banner */}
       {connectionStatus === "degraded" && (
         <ErrorBanner
@@ -77,12 +81,12 @@ export function ClusterOverviewView() {
         />
       )}
 
-      {/* 1. Open, Airy Header Bar */}
+      {/* 1. Open, Airy Header Bar with Subtle Gradient Highlights */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-1">
         <div className="flex items-center gap-3.5 min-w-0">
           <div className="relative shrink-0">
-            <div className="w-11 h-11 rounded-xl bg-[var(--surface)] border border-[var(--border)] flex items-center justify-center shadow-xs">
-              <Logo variant="mark" size="md" className="drop-shadow-[0_2px_8px_rgba(240,138,66,0.25)]" />
+            <div className="w-11 h-11 rounded-xl bg-gradient-to-br from-[var(--surface-hover)] to-[var(--surface)] border border-[var(--border)] flex items-center justify-center shadow-xs">
+              <Logo variant="mark" size="md" className="drop-shadow-[0_2px_10px_rgba(240,138,66,0.35)]" />
             </div>
             <span className="absolute -bottom-0.5 -right-0.5 flex h-3 w-3">
               <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
@@ -92,20 +96,20 @@ export function ClusterOverviewView() {
 
           <div className="min-w-0">
             <div className="flex items-center gap-2.5 flex-wrap">
-              <h1 className="text-lg font-bold text-[var(--foreground)] tracking-tight">
+              <h1 className="text-lg font-bold text-transparent bg-clip-text bg-gradient-to-r from-[var(--foreground)] via-[var(--foreground)] to-[var(--muted)] tracking-tight">
                 Cluster Overview
               </h1>
-              <span className="px-2.5 py-0.5 rounded-md text-xs font-mono font-medium bg-[var(--surface)] text-[var(--foreground)] border border-[var(--border)]">
+              <span className="px-2.5 py-0.5 rounded-md text-xs font-mono font-medium bg-gradient-to-r from-[var(--surface)] to-[var(--surface-hover)] text-[var(--foreground)] border border-[var(--border)] shadow-2xs">
                 {currentContext || "default"}
               </span>
               <span
                 className={cn(
                   "px-2.5 py-0.5 rounded-full text-[10px] font-semibold font-mono border inline-flex items-center gap-1.5 uppercase tracking-wider",
                   connectionStatus === "connected"
-                    ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20"
+                    ? "bg-gradient-to-r from-emerald-500/15 via-emerald-500/10 to-teal-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/25"
                     : connectionStatus === "checking"
-                    ? "bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/20"
-                    : "bg-rose-500/10 text-rose-600 dark:text-rose-400 border-rose-500/20"
+                    ? "bg-gradient-to-r from-amber-500/15 via-amber-500/10 to-orange-500/10 text-amber-600 dark:text-amber-400 border-amber-500/25"
+                    : "bg-gradient-to-r from-rose-500/15 via-rose-500/10 to-red-500/10 text-rose-600 dark:text-rose-400 border-rose-500/25"
                 )}
               >
                 <span
@@ -140,7 +144,7 @@ export function ClusterOverviewView() {
               loadPods("all");
               toast.info(`Showing all ${clusterOverview?.totalPods ?? 0} pods across namespaces`);
             }}
-            className="flex items-center gap-2 px-3.5 py-2 rounded-lg bg-[var(--surface)] hover:bg-[var(--surface-hover)] border border-[var(--border)] text-xs font-medium text-[var(--foreground)] transition-colors cursor-pointer shadow-xs hover:border-[var(--accent)]/40"
+            className="flex items-center gap-2 px-3.5 py-2 rounded-lg bg-[var(--surface)] hover:bg-[var(--surface-hover)] border border-[var(--border)] text-xs font-medium text-[var(--foreground)] transition-all cursor-pointer shadow-xs hover:border-[var(--accent)]/40 hover:shadow-sm"
           >
             <Box className="w-4 h-4 text-[var(--accent)]" />
             <span>Browse Pods ({clusterOverview?.totalPods ?? 0})</span>
@@ -152,7 +156,7 @@ export function ClusterOverviewView() {
               await Promise.all([diagnoseContext(), loadClusterOverview()]);
               toast.success("Telemetry refreshed!");
             }}
-            className="flex items-center gap-2 px-3.5 py-2 rounded-lg bg-[var(--accent)] hover:bg-[var(--accent-hover)] text-white text-xs font-semibold shadow-xs transition-colors cursor-pointer"
+            className="flex items-center gap-2 px-3.5 py-2 rounded-lg bg-gradient-to-r from-[var(--accent)] to-amber-500 hover:from-[var(--accent-hover)] hover:to-amber-600 text-white text-xs font-semibold shadow-[0_2px_10px_rgba(240,138,66,0.3)] hover:shadow-[0_4px_16px_rgba(240,138,66,0.4)] transition-all cursor-pointer active:scale-[0.98]"
           >
             <RotateCw className="w-3.5 h-3.5" />
             <span>Refresh</span>
@@ -160,15 +164,18 @@ export function ClusterOverviewView() {
         </div>
       </div>
 
-      {/* 2. Unified Metric Strip (4 Clean Cards) */}
+      {/* 2. Unified Metric Strip (4 Cards with Subtle Gradient Highlights) */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         {/* Card 1: CPU Capacity */}
-        <div className="p-5 rounded-xl border border-[var(--border)] bg-[var(--surface)] flex flex-col justify-between space-y-3 shadow-xs hover:border-[var(--accent)]/30 transition-all">
+        <div className="relative overflow-hidden p-5 rounded-xl border border-[var(--border)] bg-gradient-to-b from-[var(--accent)]/[0.03] to-[var(--surface)] flex flex-col justify-between space-y-3 shadow-xs hover:border-[var(--accent)]/40 hover:shadow-[0_4px_20px_-4px_rgba(240,138,66,0.15)] transition-all group">
+          {/* Top Hairline Gradient Highlight */}
+          <div className="absolute top-0 inset-x-0 h-[1.5px] bg-gradient-to-r from-transparent via-[var(--accent)]/60 to-transparent" />
+
           <div className="flex items-center justify-between">
             <span className="text-xs font-semibold text-[var(--muted)] uppercase tracking-wider">
               CPU Allocation
             </span>
-            <div className="p-2 rounded-lg bg-[var(--accent)]/10 text-[var(--accent)]">
+            <div className="p-2 rounded-lg bg-gradient-to-br from-[var(--accent)]/15 to-[var(--accent)]/5 text-[var(--accent)] border border-[var(--accent)]/20 shadow-2xs">
               <Cpu className="w-4 h-4" />
             </div>
           </div>
@@ -183,10 +190,10 @@ export function ClusterOverviewView() {
               </span>
             </div>
 
-            {/* Sleek Progress Bar */}
+            {/* Vibrant Gradient Progress Bar */}
             <div className="w-full h-1.5 bg-black/5 dark:bg-white/10 rounded-full overflow-hidden mt-3">
               <div
-                className="h-full bg-[var(--accent)] rounded-full transition-all duration-700 ease-out"
+                className="h-full bg-gradient-to-r from-[var(--accent)] to-amber-400 rounded-full transition-all duration-700 ease-out shadow-[0_0_8px_rgba(240,138,66,0.4)]"
                 style={{ width: `${Math.min(100, clusterOverview?.cpuPercent ?? 0)}%` }}
               />
             </div>
@@ -199,12 +206,15 @@ export function ClusterOverviewView() {
         </div>
 
         {/* Card 2: Memory Usage */}
-        <div className="p-5 rounded-xl border border-[var(--border)] bg-[var(--surface)] flex flex-col justify-between space-y-3 shadow-xs hover:border-cyan-500/30 transition-all">
+        <div className="relative overflow-hidden p-5 rounded-xl border border-[var(--border)] bg-gradient-to-b from-cyan-500/[0.03] to-[var(--surface)] flex flex-col justify-between space-y-3 shadow-xs hover:border-cyan-500/40 hover:shadow-[0_4px_20px_-4px_rgba(6,182,212,0.15)] transition-all group">
+          {/* Top Hairline Gradient Highlight */}
+          <div className="absolute top-0 inset-x-0 h-[1.5px] bg-gradient-to-r from-transparent via-cyan-500/60 to-transparent" />
+
           <div className="flex items-center justify-between">
             <span className="text-xs font-semibold text-[var(--muted)] uppercase tracking-wider">
               Memory Usage
             </span>
-            <div className="p-2 rounded-lg bg-cyan-500/10 text-cyan-500">
+            <div className="p-2 rounded-lg bg-gradient-to-br from-cyan-500/15 to-cyan-500/5 text-cyan-500 border border-cyan-500/20 shadow-2xs">
               <Database className="w-4 h-4" />
             </div>
           </div>
@@ -219,10 +229,10 @@ export function ClusterOverviewView() {
               </span>
             </div>
 
-            {/* Sleek Progress Bar */}
+            {/* Vibrant Gradient Progress Bar */}
             <div className="w-full h-1.5 bg-black/5 dark:bg-white/10 rounded-full overflow-hidden mt-3">
               <div
-                className="h-full bg-cyan-500 dark:bg-cyan-400 rounded-full transition-all duration-700 ease-out"
+                className="h-full bg-gradient-to-r from-cyan-500 to-sky-400 rounded-full transition-all duration-700 ease-out shadow-[0_0_8px_rgba(6,182,212,0.4)]"
                 style={{ width: `${Math.min(100, clusterOverview?.memoryPercent ?? 0)}%` }}
               />
             </div>
@@ -241,13 +251,16 @@ export function ClusterOverviewView() {
             openTab({ id: "pods", title: "Pods", closable: true });
             loadPods("all");
           }}
-          className="p-5 rounded-xl border border-[var(--border)] bg-[var(--surface)] flex flex-col justify-between space-y-3 shadow-xs cursor-pointer hover:border-[var(--accent)]/50 hover:bg-[var(--surface-hover)] transition-all group"
+          className="relative overflow-hidden p-5 rounded-xl border border-[var(--border)] bg-gradient-to-b from-purple-500/[0.03] to-[var(--surface)] flex flex-col justify-between space-y-3 shadow-xs cursor-pointer hover:border-purple-500/40 hover:shadow-[0_4px_20px_-4px_rgba(168,85,247,0.15)] hover:bg-[var(--surface-hover)] transition-all group"
         >
+          {/* Top Hairline Gradient Highlight */}
+          <div className="absolute top-0 inset-x-0 h-[1.5px] bg-gradient-to-r from-transparent via-purple-500/60 to-transparent" />
+
           <div className="flex items-center justify-between">
             <span className="text-xs font-semibold text-[var(--muted)] uppercase tracking-wider">
               Pod Density
             </span>
-            <div className="p-2 rounded-lg bg-purple-500/10 text-purple-500">
+            <div className="p-2 rounded-lg bg-gradient-to-br from-purple-500/15 to-purple-500/5 text-purple-500 border border-purple-500/20 shadow-2xs">
               <Box className="w-4 h-4" />
             </div>
           </div>
@@ -262,10 +275,10 @@ export function ClusterOverviewView() {
               </span>
             </div>
 
-            {/* Sleek Progress Bar */}
+            {/* Vibrant Gradient Progress Bar */}
             <div className="w-full h-1.5 bg-black/5 dark:bg-white/10 rounded-full overflow-hidden mt-3">
               <div
-                className="h-full bg-purple-500 dark:bg-purple-400 rounded-full transition-all duration-700 ease-out"
+                className="h-full bg-gradient-to-r from-purple-500 to-indigo-400 rounded-full transition-all duration-700 ease-out shadow-[0_0_8px_rgba(168,85,247,0.4)]"
                 style={{ width: `${Math.min(100, clusterOverview?.podPercent ?? 0)}%` }}
               />
             </div>
@@ -280,12 +293,15 @@ export function ClusterOverviewView() {
         </div>
 
         {/* Card 4: Cluster Nodes */}
-        <div className="p-5 rounded-xl border border-[var(--border)] bg-[var(--surface)] flex flex-col justify-between space-y-3 shadow-xs hover:border-emerald-500/30 transition-all">
+        <div className="relative overflow-hidden p-5 rounded-xl border border-[var(--border)] bg-gradient-to-b from-emerald-500/[0.03] to-[var(--surface)] flex flex-col justify-between space-y-3 shadow-xs hover:border-emerald-500/40 hover:shadow-[0_4px_20px_-4px_rgba(16,185,129,0.15)] transition-all group">
+          {/* Top Hairline Gradient Highlight */}
+          <div className="absolute top-0 inset-x-0 h-[1.5px] bg-gradient-to-r from-transparent via-emerald-500/60 to-transparent" />
+
           <div className="flex items-center justify-between">
             <span className="text-xs font-semibold text-[var(--muted)] uppercase tracking-wider">
               Cluster Nodes
             </span>
-            <div className="p-2 rounded-lg bg-emerald-500/10 text-emerald-500">
+            <div className="p-2 rounded-lg bg-gradient-to-br from-emerald-500/15 to-emerald-500/5 text-emerald-500 border border-emerald-500/20 shadow-2xs">
               <Server className="w-4 h-4" />
             </div>
           </div>
@@ -300,10 +316,10 @@ export function ClusterOverviewView() {
               </span>
             </div>
 
-            {/* Sleek Progress Bar */}
+            {/* Vibrant Gradient Progress Bar */}
             <div className="w-full h-1.5 bg-black/5 dark:bg-white/10 rounded-full overflow-hidden mt-3">
               <div
-                className="h-full bg-emerald-500 dark:bg-emerald-400 rounded-full transition-all duration-700 ease-out"
+                className="h-full bg-gradient-to-r from-emerald-500 to-teal-400 rounded-full transition-all duration-700 ease-out shadow-[0_0_8px_rgba(16,185,129,0.4)]"
                 style={{
                   width: `${
                     clusterOverview?.totalNodes
@@ -322,7 +338,7 @@ export function ClusterOverviewView() {
         </div>
       </div>
 
-      {/* 3. Node Topology (Unboxed, Airy Grid) */}
+      {/* 3. Node Topology (Unboxed, Airy Grid with Subtle Gradient Highlights) */}
       <div className="space-y-3.5">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2.5">
@@ -374,12 +390,22 @@ export function ClusterOverviewView() {
                     });
                   }}
                   className={cn(
-                    "p-4 rounded-xl border transition-all cursor-pointer bg-[var(--surface)] shadow-xs space-y-3.5",
+                    "relative overflow-hidden p-4 rounded-xl border transition-all cursor-pointer bg-[var(--surface)] shadow-xs space-y-3.5 group",
                     isSelected
-                      ? "border-[var(--accent)] ring-1 ring-[var(--accent)]/30 bg-[var(--surface-hover)]"
-                      : "border-[var(--border)] hover:border-[var(--accent)]/40 hover:bg-[var(--surface-hover)] hover:shadow-sm"
+                      ? "border-[var(--accent)] ring-1 ring-[var(--accent)]/30 bg-gradient-to-b from-[var(--accent)]/[0.04] to-[var(--surface-hover)] shadow-[0_4px_20px_-4px_rgba(240,138,66,0.15)]"
+                      : "border-[var(--border)] hover:border-[var(--accent)]/40 hover:bg-gradient-to-b hover:from-white/[0.02] hover:to-[var(--surface-hover)] hover:shadow-sm"
                   )}
                 >
+                  {/* Subtle Top Hairline Gradient Highlight */}
+                  <div
+                    className={cn(
+                      "absolute top-0 inset-x-0 h-[1.5px] transition-opacity duration-300",
+                      isSelected
+                        ? "bg-gradient-to-r from-transparent via-[var(--accent)] to-transparent opacity-100"
+                        : "bg-gradient-to-r from-transparent via-emerald-500/50 to-transparent opacity-0 group-hover:opacity-100"
+                    )}
+                  />
+
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2.5 min-w-0">
                       <span
@@ -407,7 +433,7 @@ export function ClusterOverviewView() {
                       </div>
                       <div className="w-full h-1.5 bg-black/5 dark:bg-white/10 rounded-full overflow-hidden">
                         <div
-                          className="h-full bg-[var(--accent)] rounded-full transition-all duration-500"
+                          className="h-full bg-gradient-to-r from-[var(--accent)] to-amber-400 rounded-full transition-all duration-500 shadow-[0_0_6px_rgba(240,138,66,0.4)]"
                           style={{ width: `${Math.min(100, n.cpuPercent)}%` }}
                         />
                       </div>
@@ -420,7 +446,7 @@ export function ClusterOverviewView() {
                       </div>
                       <div className="w-full h-1.5 bg-black/5 dark:bg-white/10 rounded-full overflow-hidden">
                         <div
-                          className="h-full bg-cyan-500 dark:bg-cyan-400 rounded-full transition-all duration-500"
+                          className="h-full bg-gradient-to-r from-cyan-500 to-sky-400 rounded-full transition-all duration-500 shadow-[0_0_6px_rgba(6,182,212,0.4)]"
                           style={{ width: `${Math.min(100, n.memoryPercent)}%` }}
                         />
                       </div>
@@ -438,10 +464,13 @@ export function ClusterOverviewView() {
         )}
       </div>
 
-      {/* 4. Split Grid: Diagnostics & Warning Incidents (Seamless, No Inner Double-Boxes) */}
+      {/* 4. Split Grid: Diagnostics & Warning Incidents (Seamless, with Subtle Top Highlights) */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
         {/* Left: 4-Stage Diagnostic Security Pipeline */}
-        <div className="p-5 rounded-xl border border-[var(--border)] bg-[var(--surface)] flex flex-col justify-between space-y-4 shadow-xs">
+        <div className="relative overflow-hidden p-5 rounded-xl border border-[var(--border)] bg-gradient-to-b from-emerald-500/[0.02] to-[var(--surface)] flex flex-col justify-between space-y-4 shadow-xs">
+          {/* Top Hairline Gradient Highlight */}
+          <div className="absolute top-0 inset-x-0 h-[1.5px] bg-gradient-to-r from-transparent via-emerald-500/40 to-transparent" />
+
           <div>
             <div className="flex items-center justify-between pb-3.5 border-b border-[var(--border)]/70">
               <div className="flex items-center gap-2.5">
@@ -498,7 +527,7 @@ export function ClusterOverviewView() {
                     </div>
                   </div>
                 </div>
-                <span className="text-[10px] font-mono font-medium px-2 py-0.5 rounded bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20 shrink-0">
+                <span className="text-[10px] font-mono font-medium px-2 py-0.5 rounded bg-gradient-to-r from-emerald-500/15 to-emerald-500/5 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20 shrink-0">
                   {authStage?.passed ? "Authorized" : "Pending"}
                 </span>
               </div>
@@ -522,7 +551,7 @@ export function ClusterOverviewView() {
                     </div>
                   </div>
                 </div>
-                <span className="text-[10px] font-mono font-medium px-2 py-0.5 rounded bg-cyan-500/10 text-cyan-600 dark:text-cyan-400 border border-cyan-500/20 shrink-0">
+                <span className="text-[10px] font-mono font-medium px-2 py-0.5 rounded bg-gradient-to-r from-cyan-500/15 to-cyan-500/5 text-cyan-600 dark:text-cyan-400 border border-cyan-500/20 shrink-0">
                   {tlsStage?.passed ? "Verified" : "Failed"}
                 </span>
               </div>
@@ -546,7 +575,7 @@ export function ClusterOverviewView() {
                     </div>
                   </div>
                 </div>
-                <span className="text-[10px] font-mono font-medium px-2 py-0.5 rounded bg-purple-500/10 text-purple-600 dark:text-purple-400 border border-purple-500/20 shrink-0">
+                <span className="text-[10px] font-mono font-medium px-2 py-0.5 rounded bg-gradient-to-r from-purple-500/15 to-purple-500/5 text-purple-600 dark:text-purple-400 border border-purple-500/20 shrink-0">
                   {rbacStage?.details?.clusterAdmin !== false ? "ClusterAdmin" : "Scoped"}
                 </span>
               </div>
@@ -563,7 +592,10 @@ export function ClusterOverviewView() {
         </div>
 
         {/* Right: Live Cluster Events & Warning Stream */}
-        <div className="p-5 rounded-xl border border-[var(--border)] bg-[var(--surface)] flex flex-col justify-between space-y-4 shadow-xs">
+        <div className="relative overflow-hidden p-5 rounded-xl border border-[var(--border)] bg-gradient-to-b from-amber-500/[0.02] to-[var(--surface)] flex flex-col justify-between space-y-4 shadow-xs">
+          {/* Top Hairline Gradient Highlight */}
+          <div className="absolute top-0 inset-x-0 h-[1.5px] bg-gradient-to-r from-transparent via-amber-500/40 to-transparent" />
+
           <div>
             <div className="flex items-center justify-between pb-3.5 border-b border-[var(--border)]/70">
               <div className="flex items-center gap-2.5">
@@ -572,7 +604,7 @@ export function ClusterOverviewView() {
                   Warning Events & Incidents
                 </h3>
               </div>
-              <span className="px-2.5 py-0.5 rounded-full text-xs font-mono bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20">
+              <span className="px-2.5 py-0.5 rounded-full text-xs font-mono bg-gradient-to-r from-amber-500/15 to-orange-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/25">
                 {clusterOverview?.warningEvents?.length ?? 0} Active
               </span>
             </div>
