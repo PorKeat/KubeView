@@ -32,14 +32,34 @@ export function AppHeader() {
     connectionStatus,
     latencyMs,
     openKubeconfigModal,
+    diagnoseContext,
+    loadClusterOverview,
+    loadPods,
+    loadNamespaces,
   } = useClusterStore();
+
+  const [isRefreshing, setIsRefreshing] = React.useState(false);
 
   React.useEffect(() => {
     setMounted(true);
   }, []);
 
-  const handleRefresh = () => {
-    toast.info("Refreshing cluster state...", { duration: 1500 });
+  const handleRefresh = async () => {
+    setIsRefreshing(true);
+    toast.info("Refreshing cluster telemetry...", { duration: 1500 });
+    try {
+      await Promise.all([
+        diagnoseContext(),
+        loadClusterOverview(),
+        loadPods(),
+        loadNamespaces(),
+      ]);
+      toast.success("Cluster state updated!");
+    } catch {
+      toast.error("Failed to refresh cluster state");
+    } finally {
+      setIsRefreshing(false);
+    }
   };
 
   return (

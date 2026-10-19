@@ -41,6 +41,7 @@ export function ResourceListView({ resourceType }: ResourceListViewProps) {
     totalPodsCount,
     loadPods,
     currentNamespace,
+    currentContext,
     availableNamespaces,
     setCurrentNamespace,
     connectionStatus,
@@ -61,9 +62,9 @@ export function ResourceListView({ resourceType }: ResourceListViewProps) {
   // Trigger load on mount or when context/namespace changes
   React.useEffect(() => {
     if (connectionStatus === "connected" || connectionStatus === "degraded") {
-      loadPods(currentNamespace);
+      loadPods(currentNamespace, currentContext);
     }
-  }, [currentNamespace, connectionStatus]);
+  }, [currentNamespace, connectionStatus, currentContext]);
 
   const handleRefresh = async () => {
     await loadPods(currentNamespace);

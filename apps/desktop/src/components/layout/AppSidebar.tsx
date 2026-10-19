@@ -25,6 +25,7 @@ import {
 } from "lucide-react";
 import { useLayoutStore } from "@/stores/layoutStore";
 import { useTabStore } from "@/stores/tabStore";
+import { useClusterStore } from "@/stores/clusterStore";
 import { cn } from "@/lib/utils";
 
 interface NavItem {
@@ -41,56 +42,65 @@ interface NavGroup {
   items: NavItem[];
 }
 
-const NAVIGATION_GROUPS: NavGroup[] = [
-  {
-    category: "Overview",
-    items: [
-      { id: "overview", title: "Cluster Overview", icon: LayoutDashboard },
-    ],
-  },
-  {
-    category: "Workloads",
-    items: [
-      { id: "pods", title: "Pods", icon: Box, badge: 42, badgeVariant: "accent" },
-      { id: "deployments", title: "Deployments", icon: Layers, badge: "Soon", badgeVariant: "soon", disabled: true },
-      { id: "replicasets", title: "ReplicaSets", icon: Repeat, badge: "Soon", badgeVariant: "soon", disabled: true },
-      { id: "statefulsets", title: "StatefulSets", icon: Database, badge: "Soon", badgeVariant: "soon", disabled: true },
-      { id: "daemonsets", title: "DaemonSets", icon: Cpu, badge: "Soon", badgeVariant: "soon", disabled: true },
-      { id: "jobs", title: "Jobs & CronJobs", icon: Clock, badge: "Soon", badgeVariant: "soon", disabled: true },
-    ],
-  },
-  {
-    category: "Networking",
-    items: [
-      { id: "services", title: "Services", icon: Network, badge: "Soon", badgeVariant: "soon", disabled: true },
-      { id: "endpoints", title: "Endpoints", icon: Radio, badge: "Soon", badgeVariant: "soon", disabled: true },
-      { id: "ingresses", title: "Ingresses & Gateways", icon: Network, badge: "Soon", badgeVariant: "soon", disabled: true },
-      { id: "networkpolicies", title: "Network Policies", icon: Shield, badge: "Soon", badgeVariant: "soon", disabled: true },
-    ],
-  },
-  {
-    category: "Config & Storage",
-    items: [
-      { id: "configmaps", title: "ConfigMaps", icon: FileCode, badge: "Soon", badgeVariant: "soon", disabled: true },
-      { id: "secrets", title: "Secrets", icon: FolderLock, badge: "Soon", badgeVariant: "soon", disabled: true },
-      { id: "persistentvolumes", title: "Persistent Volumes", icon: HardDrive, badge: "Soon", badgeVariant: "soon", disabled: true },
-      { id: "storageclasses", title: "Storage Classes", icon: HardDrive, badge: "Soon", badgeVariant: "soon", disabled: true },
-    ],
-  },
-  {
-    category: "Access & Custom",
-    items: [
-      { id: "serviceaccounts", title: "Service Accounts", icon: Users, badge: "Soon", badgeVariant: "soon", disabled: true },
-      { id: "rbac", title: "Roles & Bindings", icon: Key, badge: "Soon", badgeVariant: "soon", disabled: true },
-      { id: "crds", title: "Custom Resources", icon: Boxes, badge: "Soon", badgeVariant: "soon", disabled: true },
-    ],
-  },
-];
-
 export function AppSidebar() {
   const { sidebarCollapsed, toggleSidebar } = useLayoutStore();
   const { activeTabId, openTab } = useTabStore();
+  const { clusterOverview, totalPodsCount, pods, setCurrentNamespace, loadPods } = useClusterStore();
   const [collapsedGroups, setCollapsedGroups] = React.useState<Record<string, boolean>>({});
+
+  const realPodsCount = clusterOverview?.totalPods ?? (totalPodsCount > 0 ? totalPodsCount : pods.length);
+
+  const navigationGroups: NavGroup[] = React.useMemo(() => [
+    {
+      category: "Overview",
+      items: [
+        { id: "overview", title: "Cluster Overview", icon: LayoutDashboard },
+      ],
+    },
+    {
+      category: "Workloads",
+      items: [
+        {
+          id: "pods",
+          title: "Pods",
+          icon: Box,
+          badge: realPodsCount > 0 ? realPodsCount : undefined,
+          badgeVariant: "accent",
+        },
+        { id: "deployments", title: "Deployments", icon: Layers, badge: "Soon", badgeVariant: "soon", disabled: true },
+        { id: "replicasets", title: "ReplicaSets", icon: Repeat, badge: "Soon", badgeVariant: "soon", disabled: true },
+        { id: "statefulsets", title: "StatefulSets", icon: Database, badge: "Soon", badgeVariant: "soon", disabled: true },
+        { id: "daemonsets", title: "DaemonSets", icon: Cpu, badge: "Soon", badgeVariant: "soon", disabled: true },
+        { id: "jobs", title: "Jobs & CronJobs", icon: Clock, badge: "Soon", badgeVariant: "soon", disabled: true },
+      ],
+    },
+    {
+      category: "Networking",
+      items: [
+        { id: "services", title: "Services", icon: Network, badge: "Soon", badgeVariant: "soon", disabled: true },
+        { id: "endpoints", title: "Endpoints", icon: Radio, badge: "Soon", badgeVariant: "soon", disabled: true },
+        { id: "ingresses", title: "Ingresses & Gateways", icon: Network, badge: "Soon", badgeVariant: "soon", disabled: true },
+        { id: "networkpolicies", title: "Network Policies", icon: Shield, badge: "Soon", badgeVariant: "soon", disabled: true },
+      ],
+    },
+    {
+      category: "Config & Storage",
+      items: [
+        { id: "configmaps", title: "ConfigMaps", icon: FileCode, badge: "Soon", badgeVariant: "soon", disabled: true },
+        { id: "secrets", title: "Secrets", icon: FolderLock, badge: "Soon", badgeVariant: "soon", disabled: true },
+        { id: "persistentvolumes", title: "Persistent Volumes", icon: HardDrive, badge: "Soon", badgeVariant: "soon", disabled: true },
+        { id: "storageclasses", title: "Storage Classes", icon: HardDrive, badge: "Soon", badgeVariant: "soon", disabled: true },
+      ],
+    },
+    {
+      category: "Access & Custom",
+      items: [
+        { id: "serviceaccounts", title: "Service Accounts", icon: Users, badge: "Soon", badgeVariant: "soon", disabled: true },
+        { id: "rbac", title: "Roles & Bindings", icon: Key, badge: "Soon", badgeVariant: "soon", disabled: true },
+        { id: "crds", title: "Custom Resources", icon: Boxes, badge: "Soon", badgeVariant: "soon", disabled: true },
+      ],
+    },
+  ], [realPodsCount]);
 
   const toggleGroup = (category: string) => {
     setCollapsedGroups((prev) => ({ ...prev, [category]: !prev[category] }));
@@ -99,6 +109,11 @@ export function AppSidebar() {
   const handleItemClick = (item: NavItem) => {
     if (item.disabled) {
       return;
+    }
+
+    if (item.id === "pods") {
+      setCurrentNamespace("all");
+      loadPods("all");
     }
 
     openTab({
@@ -133,7 +148,7 @@ export function AppSidebar() {
 
       {/* Navigation Tree */}
       <div className="flex-1 overflow-y-auto py-2 px-1.5 space-y-3">
-        {NAVIGATION_GROUPS.map((group) => {
+        {navigationGroups.map((group) => {
           const isGroupCollapsed = collapsedGroups[group.category];
 
           return (

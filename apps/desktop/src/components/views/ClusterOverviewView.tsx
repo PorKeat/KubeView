@@ -35,6 +35,8 @@ export function ClusterOverviewView() {
     clusterOverview,
     isOverviewLoading,
     loadClusterOverview,
+    setCurrentNamespace,
+    loadPods,
   } = useClusterStore();
 
   const { openTab } = useTabStore();
@@ -134,8 +136,10 @@ export function ClusterOverviewView() {
           <div className="flex items-center gap-2">
             <button
               onClick={() => {
+                setCurrentNamespace("all");
                 openTab({ id: "pods", title: "Pods", closable: true });
-                toast.info("Navigated to Pods Explorer");
+                loadPods("all");
+                toast.info(`Showing all ${clusterOverview?.totalPods ?? 0} pods across namespaces`);
               }}
               className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[var(--surface)] hover:bg-[var(--surface-hover)] border border-[var(--border)] text-xs font-medium text-[var(--foreground)] transition-all cursor-pointer shadow-xs hover:border-[var(--accent)]/50"
             >
@@ -262,7 +266,11 @@ export function ClusterOverviewView() {
 
         {/* Pod Density Card */}
         <div
-          onClick={() => openTab({ id: "pods", title: "Pods", closable: true })}
+          onClick={() => {
+            setCurrentNamespace("all");
+            openTab({ id: "pods", title: "Pods", closable: true });
+            loadPods("all");
+          }}
           className="glass-card p-4 rounded-xl relative overflow-hidden group cursor-pointer hover:border-[var(--accent)]/50 transition-colors"
         >
           <div className="flex items-start justify-between">
@@ -394,7 +402,31 @@ export function ClusterOverviewView() {
               return (
                 <div
                   key={n.name}
-                  onClick={() => setSelectedNode(n.name)}
+                  onClick={() => {
+                    setSelectedNode(n.name);
+                    openInspector({
+                      kind: "Node",
+                      name: n.name,
+                      namespace: "Cluster Scope",
+                      status: n.status,
+                      data: {
+                        name: n.name,
+                        status: n.status,
+                        roles: n.roles.join(", "),
+                        version: n.version,
+                        architecture: n.architecture,
+                        internalIP: n.internalIP,
+                        cpuCapacity: n.cpuCapacity,
+                        cpuAllocated: n.cpuAllocated,
+                        cpuPercent: `${n.cpuPercent}%`,
+                        memoryCapacity: n.memoryCapacity,
+                        memoryAllocated: n.memoryAllocated,
+                        memoryPercent: `${n.memoryPercent}%`,
+                        podCapacity: n.podCapacity,
+                        activePods: n.activePods,
+                      },
+                    });
+                  }}
                   className={cn(
                     "p-3.5 rounded-xl border transition-all cursor-pointer relative",
                     isSelected
@@ -626,7 +658,9 @@ export function ClusterOverviewView() {
             <span>Aggregated across {availableNamespaces.length} namespaces</span>
             <button
               onClick={() => {
+                setCurrentNamespace("all");
                 openTab({ id: "pods", title: "Pods", closable: true });
+                loadPods("all");
               }}
               className="text-[var(--accent)] hover:underline cursor-pointer"
             >
