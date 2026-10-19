@@ -103,16 +103,45 @@ export function ResourceInspectorDrawer() {
   const [isLoadingYaml, setIsLoadingYaml] = React.useState(false);
   const [isLoadingEvents, setIsLoadingEvents] = React.useState(false);
 
+  // Smooth slide transition state
+  const [isRendered, setIsRendered] = React.useState(isInspectorOpen);
+  const [isMounted, setIsMounted] = React.useState(false);
+  const [cachedResource, setCachedResource] = React.useState<SelectedResource | null>(selectedResource);
+
+  React.useEffect(() => {
+    if (selectedResource) {
+      setCachedResource(selectedResource);
+    }
+  }, [selectedResource]);
+
+  React.useEffect(() => {
+    if (isInspectorOpen) {
+      setIsRendered(true);
+      const timer = setTimeout(() => {
+        setIsMounted(true);
+      }, 20);
+      return () => clearTimeout(timer);
+    } else {
+      setIsMounted(false);
+      const timer = setTimeout(() => {
+        setIsRendered(false);
+      }, 300);
+      return () => clearTimeout(timer);
+    }
+  }, [isInspectorOpen]);
+
+  const currentResource = selectedResource || cachedResource;
+
   // Distinguish between Pod and Node resources
-  const isNode = selectedResource?.kind === "Node";
-  const podData = !isNode ? (selectedResource?.data as unknown as PodSummary | undefined) : undefined;
-  const nodeData = isNode ? (selectedResource?.data as unknown as NodeSummary | undefined) : undefined;
+  const isNode = currentResource?.kind === "Node";
+  const podData = !isNode ? (currentResource?.data as unknown as PodSummary | undefined) : undefined;
+  const nodeData = isNode ? (currentResource?.data as unknown as NodeSummary | undefined) : undefined;
 
   // Load real YAML when YAML tab is active (Pods only)
   React.useEffect(() => {
-    if (isInspectorOpen && selectedResource && activeTab === "yaml" && !isNode) {
+    if (isInspectorOpen && currentResource && activeTab === "yaml" && !isNode) {
       setIsLoadingYaml(true);
-      getPodYaml(selectedResource.name, selectedResource.namespace)
+      getPodYaml(currentResource.name, currentResource.namespace)
         .then((yamlStr) => {
           setLiveYaml(yamlStr || "# No YAML returned from cluster");
         })
@@ -121,13 +150,13 @@ export function ResourceInspectorDrawer() {
         })
         .finally(() => setIsLoadingYaml(false));
     }
-  }, [isInspectorOpen, selectedResource?.name, selectedResource?.namespace, activeTab, getPodYaml, isNode]);
+  }, [isInspectorOpen, currentResource?.name, currentResource?.namespace, activeTab, getPodYaml, isNode]);
 
   // Load real Events when events tab is active (Pods only)
   React.useEffect(() => {
-    if (isInspectorOpen && selectedResource && activeTab === "events" && !isNode) {
+    if (isInspectorOpen && currentResource && activeTab === "events" && !isNode) {
       setIsLoadingEvents(true);
-      getPodEvents(selectedResource.name, selectedResource.namespace)
+      getPodEvents(currentResource.name, currentResource.namespace)
         .then((evList) => {
           setLiveEvents(evList || []);
         })
@@ -136,7 +165,7 @@ export function ResourceInspectorDrawer() {
         })
         .finally(() => setIsLoadingEvents(false));
     }
-  }, [isInspectorOpen, selectedResource?.name, selectedResource?.namespace, activeTab, getPodEvents, isNode]);
+  }, [isInspectorOpen, currentResource?.name, currentResource?.namespace, activeTab, getPodEvents, isNode]);
 
   // Close on Escape key
   React.useEffect(() => {
@@ -149,12 +178,13 @@ export function ResourceInspectorDrawer() {
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [isInspectorOpen, closeInspector]);
 
-  if (!isInspectorOpen || !selectedResource) return null;
+  if (!isRendered || !currentResource) return null;
 
   const handleCopyTitle = () => {
-    navigator.clipboard.writeText(selectedResource.name);
+    if (!currentResource) return;
+    navigator.clipboard.writeText(currentResource.name);
     setCopiedTitle(true);
-    toast.success(`Copied: ${selectedResource.name}`);
+    toast.success(`Copied: ${currentResource.name}`);
     setTimeout(() => setCopiedTitle(false), 2000);
   };
 
@@ -166,11 +196,12 @@ export function ResourceInspectorDrawer() {
   };
 
   const downloadYaml = () => {
+    if (!currentResource) return;
     const blob = new Blob([liveYaml], { type: "text/yaml" });
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url;
-    a.download = `${selectedResource.name}.yaml`;
+    a.download = `${currentResource.name}.yaml`;
     a.click();
     URL.revokeObjectURL(url);
     toast.success("YAML manifest downloaded");
@@ -243,19 +274,31 @@ export function ResourceInspectorDrawer() {
   }
 
   return (
-    <div className="fixed inset-0 z-40">
-      {/* Modal Backdrop / Dim Overlay ("modal bg a bit") */}
+    <div
+      className={cn(
+        "fixed inset-0 z-40 overflow-hidden transition-all duration-300",
+        isMounted ? "pointer-events-auto" : "pointer-events-none"
+      )}
+    >
+      {/* Modal Backdrop / Dim Overlay with smooth fade */}
       <div
         data-testid="resource-inspector-backdrop"
         onClick={closeInspector}
-        className="fixed inset-0 bg-black/35 dark:bg-black/60 backdrop-blur-[2px] transition-opacity animate-in fade-in duration-200 cursor-pointer"
+        className={cn(
+          "fixed inset-0 bg-black/35 dark:bg-black/60 backdrop-blur-[2px] transition-opacity duration-300 ease-out cursor-pointer",
+          isMounted ? "opacity-100" : "opacity-0"
+        )}
         aria-hidden="true"
       />
 
-      {/* Slide-Over Drawer */}
+      {/* Slide-Over Drawer with smooth spring-like slide transition */}
       <div
         data-testid="resource-inspector-drawer"
-        className="fixed inset-y-0 right-0 z-40 w-full max-w-xl md:max-w-2xl glass-panel border-l border-[var(--border)] shadow-2xl flex flex-col select-none animate-in slide-in-from-right duration-200 backdrop-blur-xl"
+        className={cn(
+          "fixed inset-y-0 right-0 z-40 w-full max-w-xl md:max-w-2xl glass-panel border-l border-[var(--border)] shadow-2xl flex flex-col select-none backdrop-blur-xl",
+          "transform transition-transform duration-300 ease-[cubic-bezier(0.16,1,0.3,1)]",
+          isMounted ? "translate-x-0" : "translate-x-full"
+        )}
       >
       {/* Top Header */}
       <div className="h-16 border-b border-[var(--border)] px-4 flex items-center justify-between shrink-0 bg-slate-50/80 dark:bg-black/40">
@@ -267,10 +310,10 @@ export function ResourceInspectorDrawer() {
             <div className="flex items-center gap-2">
               <span
                 onClick={handleCopyTitle}
-                title={`Click to copy: ${selectedResource.name}`}
+                title={`Click to copy: ${currentResource.name}`}
                 className="text-xs font-bold text-[var(--foreground)] truncate font-mono hover:text-[var(--accent)] cursor-pointer transition-colors max-w-[280px] sm:max-w-[340px]"
               >
-                {selectedResource.name}
+                {currentResource.name}
               </span>
               <button
                 onClick={handleCopyTitle}
@@ -279,13 +322,13 @@ export function ResourceInspectorDrawer() {
               >
                 {copiedTitle ? <Check className="w-3 h-3 text-emerald-500" /> : <Copy className="w-3 h-3" />}
               </button>
-              {renderStatusBadge(selectedResource.status)}
+              {renderStatusBadge(currentResource.status)}
             </div>
 
             {/* Semantic Micro-Badges Subheader */}
             <div className="flex flex-wrap items-center gap-1.5 text-[10px] text-[var(--muted)] mt-1 font-mono">
               <span className="px-1.5 py-0.2 rounded font-semibold bg-black/5 dark:bg-white/5 text-[var(--foreground)] border border-[var(--border)]">
-                {selectedResource.kind}
+                {currentResource.kind}
               </span>
               <span>•</span>
               {isNode ? (
@@ -302,7 +345,7 @@ export function ResourceInspectorDrawer() {
                 <>
                   <div className="flex items-center gap-1">
                     <span>ns:</span>
-                    <strong className="text-[var(--foreground)]">{selectedResource.namespace}</strong>
+                    <strong className="text-[var(--foreground)]">{currentResource.namespace}</strong>
                   </div>
                   {podData?.nodeName && (
                     <>
@@ -325,7 +368,7 @@ export function ResourceInspectorDrawer() {
             <>
               {/* View Logs */}
               <button
-                onClick={() => openLogsModal({ name: selectedResource.name, namespace: selectedResource.namespace })}
+                onClick={() => openLogsModal({ name: currentResource.name, namespace: currentResource.namespace })}
                 className="p-1.5 rounded-lg hover:bg-[var(--surface-hover)] text-[var(--muted)] hover:text-[var(--foreground)] transition-colors cursor-pointer"
                 title="View Real-Time Logs"
               >
@@ -334,7 +377,7 @@ export function ResourceInspectorDrawer() {
 
               {/* Exec Shell */}
               <button
-                onClick={() => openExecModal({ name: selectedResource.name, namespace: selectedResource.namespace })}
+                onClick={() => openExecModal({ name: currentResource.name, namespace: currentResource.namespace })}
                 className="p-1.5 rounded-lg hover:bg-[var(--surface-hover)] text-[var(--muted)] hover:text-[var(--foreground)] transition-colors cursor-pointer"
                 title="Interactive Exec Shell"
               >
@@ -343,7 +386,7 @@ export function ResourceInspectorDrawer() {
 
               {/* Restart */}
               <button
-                onClick={() => openRestartConfirm({ name: selectedResource.name, namespace: selectedResource.namespace })}
+                onClick={() => openRestartConfirm({ name: currentResource.name, namespace: currentResource.namespace })}
                 className="p-1.5 rounded-lg hover:bg-[var(--surface-hover)] text-[var(--muted)] hover:text-[var(--foreground)] transition-colors cursor-pointer"
                 title="Restart Pod"
               >
@@ -352,7 +395,7 @@ export function ResourceInspectorDrawer() {
 
               {/* Delete */}
               <button
-                onClick={() => openDeleteConfirm({ name: selectedResource.name, namespace: selectedResource.namespace })}
+                onClick={() => openDeleteConfirm({ name: currentResource.name, namespace: currentResource.namespace })}
                 className="p-1.5 rounded-lg hover:bg-rose-500/15 text-[var(--muted)] hover:text-rose-500 transition-colors cursor-pointer"
                 title="Delete Pod"
               >
@@ -362,8 +405,8 @@ export function ResourceInspectorDrawer() {
           ) : (
             <button
               onClick={() => {
-                navigator.clipboard.writeText(selectedResource.name);
-                toast.success(`Node name copied: ${selectedResource.name}`);
+                navigator.clipboard.writeText(currentResource.name);
+                toast.success(`Node name copied: ${currentResource.name}`);
               }}
               className="p-1.5 rounded-lg hover:bg-[var(--surface-hover)] text-[var(--muted)] hover:text-[var(--foreground)] transition-colors cursor-pointer"
               title="Copy Node Name"
@@ -889,11 +932,11 @@ export function ResourceInspectorDrawer() {
                 )}
 
                 {/* Status Incident Warning */}
-                {selectedResource.status !== "Running" && selectedResource.status !== "Completed" && (
+                {currentResource.status !== "Running" && currentResource.status !== "Completed" && (
                   <div className="p-3.5 rounded-2xl bg-amber-500/10 border border-amber-500/25 space-y-1.5">
                     <div className="flex items-center gap-1.5 text-amber-500 font-semibold text-xs">
                       <AlertTriangle className="w-4 h-4 shrink-0" />
-                      <span>Status: {selectedResource.status}</span>
+                      <span>Status: {currentResource.status}</span>
                     </div>
                     <p className="text-[11px] text-[var(--muted)] leading-relaxed">
                       Pod state is currently not in steady running phase. Open the logs or events tab for root-cause diagnosis.
@@ -970,14 +1013,14 @@ export function ResourceInspectorDrawer() {
                       {/* Direct container actions */}
                       <div className="flex items-center justify-end gap-2 pt-1 border-t border-[var(--border)]">
                         <button
-                          onClick={() => openLogsModal({ name: selectedResource.name, namespace: selectedResource.namespace, container: c.name })}
+                          onClick={() => openLogsModal({ name: currentResource.name, namespace: currentResource.namespace, container: c.name })}
                           className="flex items-center gap-1 px-3 py-1.5 text-xs rounded-xl hover:bg-[var(--surface-hover)] text-[var(--foreground)] border border-[var(--border)] transition-colors cursor-pointer"
                         >
                           <FileText className="w-3.5 h-3.5 text-[#F08A42]" />
                           <span>Container Logs</span>
                         </button>
                         <button
-                          onClick={() => openExecModal({ name: selectedResource.name, namespace: selectedResource.namespace, container: c.name })}
+                          onClick={() => openExecModal({ name: currentResource.name, namespace: currentResource.namespace, container: c.name })}
                           className="flex items-center gap-1 px-3 py-1.5 text-xs rounded-xl hover:bg-[var(--surface-hover)] text-[var(--foreground)] border border-[var(--border)] transition-colors cursor-pointer"
                         >
                           <Terminal className="w-3.5 h-3.5 text-[#F08A42]" />
@@ -998,8 +1041,8 @@ export function ResourceInspectorDrawer() {
                 {[
                   { type: "PodScheduled", status: "True", reason: "Pod Scheduled to Node", description: "All pods have been placed on an active cluster worker node" },
                   { type: "Initialized", status: "True", reason: "Init Containers Complete", description: "All init containers have executed and exited cleanly" },
-                  { type: "ContainersReady", status: selectedResource.status === "Running" ? "True" : "False", reason: selectedResource.status, description: "All primary application containers in the pod are ready" },
-                  { type: "Ready", status: selectedResource.status === "Running" ? "True" : "False", reason: selectedResource.status, description: "Pod is capable of serving ingress traffic and endpoints" },
+                  { type: "ContainersReady", status: currentResource.status === "Running" ? "True" : "False", reason: currentResource.status, description: "All primary application containers in the pod are ready" },
+                  { type: "Ready", status: currentResource.status === "Running" ? "True" : "False", reason: currentResource.status, description: "Pod is capable of serving ingress traffic and endpoints" },
                 ].map((c) => {
                   const isOk = c.status === "True";
                   return (
