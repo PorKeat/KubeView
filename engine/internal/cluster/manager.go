@@ -375,8 +375,123 @@ func detectAuthType(authInfo *clientcmdapi.AuthInfo) AuthType {
 	return AuthUnknown
 }
 
-// ImportKubeconfig imports a kubeconfig from raw YAML or a file path into ~/.kube/kubeview_*.yaml
+func sanitizeConfigName(cleanName string) string {
+	return strings.Map(func(r rune) rune {
+		if (r >= 'a' && r <= 'z') || (r >= 'A' && r <= 'Z') || (r >= '0' && r <= '9') || r == '-' || r == '_' {
+			return r
+		}
+		return '_'
+	}, cleanName)
+}
+
+// ImportKubeconfig imports a kubeconfig from raw YAML, file path, directory, or multiple files into ~/.kube/kubeview_*.yaml
 func (m *Manager) ImportKubeconfig(params ImportKubeconfigParams) (*ImportKubeconfigResult, error) {
+	// If filePath is a directory, expand its entries into params.Files
+	if strings.TrimSpace(params.FilePath) != "" {
+		if fi, err := os.Stat(params.FilePath); err == nil && fi.IsDir() {
+			entries, readErr := os.ReadDir(params.FilePath)
+			if readErr == nil {
+				for _, entry := range entries {
+					if entry.IsDir() {
+						continue
+					}
+					nameLower := strings.ToLower(entry.Name())
+					ext := filepath.Ext(nameLower)
+					if ext == ".yaml" || ext == ".yml" || ext == ".config" || ext == ".kubeconfig" || !strings.Contains(entry.Name(), ".") {
+						fullPath := filepath.Join(params.FilePath, entry.Name())
+						params.Files = append(params.Files, ImportKubeconfigFileItem{
+							FilePath: fullPath,
+							Name:     entry.Name(),
+						})
+					}
+				}
+			}
+		}
+	}
+
+	// Handle batch import (multiple files or folder contents)
+	if len(params.Files) > 0 {
+		home, err := os.UserHomeDir()
+		if err != nil {
+			return nil, fmt.Errorf("cannot resolve home directory: %w", err)
+		}
+
+		kubeDir := filepath.Join(home, ".kube")
+		if err := os.MkdirAll(kubeDir, 0700); err != nil {
+			return nil, fmt.Errorf("failed to create .kube directory: %w", err)
+		}
+
+		var allImported []string
+		var firstActive string
+		var lastSavedPath string
+		validCount := 0
+
+		timestamp := time.Now().Unix()
+
+		for idx, f := range params.Files {
+			var fileCfg *clientcmdapi.Config
+			var loadErr error
+
+			if strings.TrimSpace(f.RawYAML) != "" {
+				fileCfg, loadErr = clientcmd.Load([]byte(f.RawYAML))
+			} else if strings.TrimSpace(f.FilePath) != "" {
+				fileCfg, loadErr = clientcmd.LoadFromFile(f.FilePath)
+			}
+
+			if loadErr != nil || fileCfg == nil || len(fileCfg.Contexts) == 0 {
+				continue
+			}
+
+			cleanName := "imported"
+			if f.Name != "" {
+				cleanName = strings.ReplaceAll(f.Name, " ", "_")
+			} else if fileCfg.CurrentContext != "" {
+				cleanName = strings.ReplaceAll(fileCfg.CurrentContext, " ", "_")
+			}
+			cleanName = sanitizeConfigName(cleanName)
+
+			targetPath := filepath.Join(kubeDir, fmt.Sprintf("kubeview_%s_%d_%d.yaml", cleanName, timestamp, idx))
+			if err := clientcmd.WriteToFile(*fileCfg, targetPath); err != nil {
+				continue
+			}
+
+			validCount++
+			lastSavedPath = targetPath
+
+			for ctxName := range fileCfg.Contexts {
+				allImported = append(allImported, ctxName)
+				if firstActive == "" {
+					firstActive = ctxName
+				}
+			}
+			if fileCfg.CurrentContext != "" && firstActive == "" {
+				firstActive = fileCfg.CurrentContext
+			}
+		}
+
+		if validCount == 0 {
+			return nil, fmt.Errorf("no valid kubeconfig files found among provided items")
+		}
+
+		// Reload manager to merge the new configurations
+		if err := m.ReloadConfig(); err != nil {
+			return nil, fmt.Errorf("failed to reload configs after batch import: %w", err)
+		}
+
+		if firstActive != "" {
+			_, _ = m.SwitchContext(firstActive)
+		}
+
+		return &ImportKubeconfigResult{
+			Success:          true,
+			ImportedContexts: allImported,
+			ActiveContext:    firstActive,
+			SavedPath:        lastSavedPath,
+			TotalContexts:    len(m.rawConfig.Contexts),
+		}, nil
+	}
+
+	// Single config import (raw YAML or single file)
 	var cfg *clientcmdapi.Config
 	var err error
 
@@ -391,7 +506,7 @@ func (m *Manager) ImportKubeconfig(params ImportKubeconfigParams) (*ImportKubeco
 			return nil, fmt.Errorf("failed to read kubeconfig file '%s': %w", params.FilePath, err)
 		}
 	} else {
-		return nil, fmt.Errorf("either rawYaml or filePath must be provided")
+		return nil, fmt.Errorf("either rawYaml, filePath, or files array must be provided")
 	}
 
 	if cfg == nil || len(cfg.Contexts) == 0 {
@@ -415,12 +530,7 @@ func (m *Manager) ImportKubeconfig(params ImportKubeconfigParams) (*ImportKubeco
 		cleanName = strings.ReplaceAll(cfg.CurrentContext, " ", "_")
 	}
 
-	cleanName = strings.Map(func(r rune) rune {
-		if (r >= 'a' && r <= 'z') || (r >= 'A' && r <= 'Z') || (r >= '0' && r <= '9') || r == '-' || r == '_' {
-			return r
-		}
-		return '_'
-	}, cleanName)
+	cleanName = sanitizeConfigName(cleanName)
 
 	targetPath := filepath.Join(kubeDir, fmt.Sprintf("kubeview_%s_%d.yaml", cleanName, time.Now().Unix()))
 

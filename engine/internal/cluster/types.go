@@ -64,11 +64,19 @@ type ListNamespacesResult struct {
 	Namespaces []string `json:"namespaces"`
 }
 
-// ImportKubeconfigParams provides either raw YAML text or a local file path
-type ImportKubeconfigParams struct {
+// ImportKubeconfigFileItem represents an individual kubeconfig in a batch/folder import
+type ImportKubeconfigFileItem struct {
 	RawYAML  string `json:"rawYaml,omitempty"`
 	FilePath string `json:"filePath,omitempty"`
 	Name     string `json:"name,omitempty"`
+}
+
+// ImportKubeconfigParams provides either raw YAML text, local file path, or multiple files/folder
+type ImportKubeconfigParams struct {
+	RawYAML  string                     `json:"rawYaml,omitempty"`
+	FilePath string                     `json:"filePath,omitempty"`
+	Name     string                     `json:"name,omitempty"`
+	Files    []ImportKubeconfigFileItem `json:"files,omitempty"`
 }
 
 // ImportKubeconfigResult returned after successfully parsing and persisting kubeconfig

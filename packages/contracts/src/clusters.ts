@@ -59,10 +59,17 @@ export interface ClusterSummary {
   latencyMs?: number;
 }
 
+export interface ImportKubeconfigFileItem {
+  rawYaml?: string;
+  filePath?: string;
+  name?: string;
+}
+
 export interface ImportKubeconfigParams {
   rawYaml?: string;
   filePath?: string;
   name?: string;
+  files?: ImportKubeconfigFileItem[];
 }
 
 export interface ImportKubeconfigResult {
