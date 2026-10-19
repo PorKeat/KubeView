@@ -86,7 +86,8 @@ export function ContextSwitcherDropdown() {
       <DropdownMenu.Trigger asChild>
         <button
           data-testid="context-switcher-trigger"
-          className="flex items-center gap-2 px-2.5 py-1 text-xs rounded-md bg-[var(--background)] border border-[var(--border)] hover:bg-[var(--surface-hover)] hover:border-[var(--accent)] transition-all text-[var(--foreground)] outline-hidden group select-none cursor-pointer"
+          aria-label={`Active Kubernetes cluster: ${currentContext || "Select Cluster"}, status ${connectionStatus}`}
+          className="flex items-center gap-2 px-2.5 py-1 text-xs rounded-md bg-[var(--background)] border border-[var(--border)] hover:bg-[var(--surface-hover)] hover:border-[var(--accent)] focus-visible:ring-2 focus-visible:ring-[var(--accent)] focus-visible:outline-hidden transition-all text-[var(--foreground)] outline-hidden group select-none cursor-pointer"
           title={`Active Context: ${currentContext || "None"} (${connectionStatus})`}
         >
           <div className="flex items-center gap-1.5">
@@ -122,48 +123,55 @@ export function ContextSwitcherDropdown() {
               </span>
             </div>
             <div className="relative">
-              <Search className="w-3.5 h-3.5 absolute left-2.5 top-1/2 -translate-y-1/2 text-[var(--muted)]" />
+              <Search className="w-3.5 h-3.5 absolute left-2.5 top-1/2 -translate-y-1/2 text-[var(--muted)]" aria-hidden="true" />
               <input
                 type="text"
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
+                onKeyDown={(e) => {
+                  e.stopPropagation();
+                  if (e.key === "ArrowDown") {
+                    e.preventDefault();
+                    const firstItem = document.querySelector<HTMLElement>('[data-testid="context-item"]');
+                    firstItem?.focus();
+                  }
+                }}
+                aria-label="Filter cluster contexts"
                 placeholder="Search cluster or endpoint..."
-                className="w-full pl-8 pr-2.5 py-1.5 text-xs bg-[var(--background)] border border-[var(--border)] rounded-xl text-[var(--foreground)] placeholder:text-[var(--muted)] outline-hidden focus:border-[#F08A42] font-mono transition-all"
+                className="w-full pl-8 pr-2.5 py-1.5 text-xs bg-[var(--background)] border border-[var(--border)] rounded-xl text-[var(--foreground)] placeholder:text-[var(--muted)] outline-hidden focus:border-[#F08A42] focus-visible:ring-2 focus-visible:ring-[#F08A42]/50 font-mono transition-all"
               />
             </div>
           </div>
 
-          {/* Contexts List */}
-          <div className="max-h-60 overflow-y-auto p-1 space-y-1">
+          {/* Contexts List (Keyboard Accessible via Radix DropdownMenu.Item) */}
+          <div className="max-h-60 overflow-y-auto p-1 space-y-1" role="menu" aria-label="Available Clusters">
             {filteredContexts.map((ctx) => {
               const isSelected = ctx.name === currentContext;
               const isInternal = isInternalEndpoint(ctx.server);
 
               return (
-                <div
+                <DropdownMenu.Item
                   key={ctx.name}
                   data-testid="context-item"
                   data-context-name={ctx.name}
+                  onSelect={() => {
+                    switchContext(ctx.name);
+                    toast.info(`Connecting to cluster: ${ctx.name}...`);
+                  }}
                   className={cn(
-                    "flex items-center justify-between p-2 rounded-xl transition-all text-xs font-mono group",
+                    "flex items-center justify-between p-2 rounded-xl transition-all text-xs font-mono group cursor-pointer outline-hidden select-none",
+                    "focus:bg-[var(--surface-active)] focus-visible:ring-2 focus-visible:ring-[#F08A42]",
                     isSelected
                       ? "bg-[#F08A42]/12 text-[#F08A42] font-bold border border-[#F08A42]/20"
                       : "hover:bg-[var(--surface-hover)] text-[var(--foreground)]"
                   )}
                 >
-                  <div
-                    onClick={() => {
-                      setIsOpen(false);
-                      switchContext(ctx.name);
-                      toast.info(`Connecting to cluster: ${ctx.name}...`);
-                    }}
-                    className="flex flex-col min-w-0 pr-2 flex-1 cursor-pointer"
-                  >
+                  <div className="flex flex-col min-w-0 pr-2 flex-1">
                     <div className="flex items-center gap-1.5 flex-wrap">
                       <span className="font-bold truncate">{ctx.name}</span>
                       {getProviderBadge(ctx.provider)}
                       {isInternal && (
-                        <span className="px-1.5 py-0.2 text-[8px] font-sans font-medium rounded bg-amber-500/15 text-amber-500 border border-amber-500/30">
+                        <span className="px-1.5 py-0.2 text-[8px] font-sans font-medium rounded bg-amber-500/15 text-amber-700 dark:text-amber-300 border border-amber-500/30">
                           Internal Host
                         </span>
                       )}
@@ -177,6 +185,7 @@ export function ContextSwitcherDropdown() {
                     <button
                       type="button"
                       data-testid="configure-endpoint-btn"
+                      aria-label={`Configure endpoint for ${ctx.name}`}
                       onClick={(e) => {
                         e.stopPropagation();
                         setIsOpen(false);
@@ -184,36 +193,54 @@ export function ContextSwitcherDropdown() {
                           openEndpointModal(ctx.name, ctx.server);
                         }, 50);
                       }}
-                      className="p-1 rounded hover:bg-black/10 dark:hover:bg-white/10 text-[var(--muted)] hover:text-[#F08A42] transition-colors cursor-pointer opacity-70 group-hover:opacity-100"
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter" || e.key === " ") {
+                          e.stopPropagation();
+                          setIsOpen(false);
+                          setTimeout(() => {
+                            openEndpointModal(ctx.name, ctx.server);
+                          }, 50);
+                        }
+                      }}
+                      className="p-1 rounded hover:bg-black/10 dark:hover:bg-white/10 text-[var(--muted)] hover:text-[#F08A42] focus-visible:ring-1 focus-visible:ring-[#F08A42] transition-colors cursor-pointer opacity-70 group-hover:opacity-100 group-focus:opacity-100"
                       title="Configure cluster IP / endpoint"
                     >
-                      <SlidersHorizontal className="w-3.5 h-3.5" />
+                      <SlidersHorizontal className="w-3.5 h-3.5" aria-hidden="true" />
                     </button>
                     <button
                       type="button"
                       data-testid="remove-cluster-btn"
+                      aria-label={`Remove cluster ${ctx.name}`}
                       onClick={async (e) => {
                         e.stopPropagation();
                         toast.info(`Removing ${ctx.name}...`);
                         await deleteContext(ctx.name);
                         toast.success(`Cluster removed: ${ctx.name}`);
                       }}
-                      className="p-1 rounded hover:bg-rose-500/15 text-[var(--muted)] hover:text-rose-500 transition-colors cursor-pointer opacity-70 group-hover:opacity-100"
+                      onKeyDown={async (e) => {
+                        if (e.key === "Enter" || e.key === " ") {
+                          e.stopPropagation();
+                          toast.info(`Removing ${ctx.name}...`);
+                          await deleteContext(ctx.name);
+                          toast.success(`Cluster removed: ${ctx.name}`);
+                        }
+                      }}
+                      className="p-1 rounded hover:bg-rose-500/15 text-[var(--muted)] hover:text-rose-500 focus-visible:ring-1 focus-visible:ring-rose-500 transition-colors cursor-pointer opacity-70 group-hover:opacity-100 group-focus:opacity-100"
                       title="Delete / remove this cluster"
                     >
-                      <Trash2 className="w-3.5 h-3.5" />
+                      <Trash2 className="w-3.5 h-3.5" aria-hidden="true" />
                     </button>
                     <span className="text-[10px] text-[var(--muted)] font-mono">
                       {ctx.latencyMs > 0 ? `${ctx.latencyMs}ms` : ""}
                     </span>
-                    {isSelected && <Check className="w-4 h-4 text-[#F08A42]" />}
+                    {isSelected && <Check className="w-4 h-4 text-[#F08A42]" aria-hidden="true" />}
                   </div>
-                </div>
+                </DropdownMenu.Item>
               );
             })}
 
             {filteredContexts.length === 0 && (
-              <div className="py-6 text-center text-xs text-[var(--muted)]">
+              <div className="py-6 text-center text-xs text-[var(--muted)]" role="status">
                 No matching clusters found.
               </div>
             )}

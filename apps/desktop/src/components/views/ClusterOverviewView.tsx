@@ -169,9 +169,10 @@ export function ClusterOverviewView() {
               loadPods("all");
               toast.info(`Showing all ${clusterOverview?.totalPods ?? 0} pods across namespaces`);
             }}
-            className="flex items-center gap-2 px-3.5 py-2 rounded-lg bg-[var(--surface)] hover:bg-[var(--surface-hover)] border border-[var(--border)] text-xs font-medium text-[var(--foreground)] transition-colors cursor-pointer shadow-xs hover:border-[var(--accent)]/40"
+            aria-label={`Browse all ${clusterOverview?.totalPods ?? 0} pods across namespaces`}
+            className="flex items-center gap-2 px-3.5 py-2 rounded-lg bg-[var(--surface)] hover:bg-[var(--surface-hover)] border border-[var(--border)] text-xs font-medium text-[var(--foreground)] transition-colors cursor-pointer shadow-xs hover:border-[var(--accent)]/40 focus-visible:ring-2 focus-visible:ring-[var(--accent)] focus-visible:outline-hidden"
           >
-            <Box className="w-4 h-4 text-[var(--muted)]" />
+            <Box className="w-4 h-4 text-[var(--muted)]" aria-hidden="true" />
             <span>Browse Pods ({clusterOverview?.totalPods ?? 0})</span>
           </button>
 
@@ -181,9 +182,10 @@ export function ClusterOverviewView() {
               await Promise.all([diagnoseContext(), loadClusterOverview()]);
               toast.success("Telemetry refreshed!");
             }}
-            className="flex items-center gap-2 px-3.5 py-2 rounded-lg bg-[var(--accent)] hover:bg-[var(--accent-hover)] text-white text-xs font-semibold shadow-xs transition-colors cursor-pointer active:scale-[0.98]"
+            aria-label="Refresh cluster telemetry and diagnostics"
+            className="flex items-center gap-2 px-3.5 py-2 rounded-lg bg-[var(--accent)] hover:bg-[var(--accent-hover)] text-zinc-950 dark:text-zinc-950 text-xs font-semibold shadow-xs transition-colors cursor-pointer active:scale-[0.98] focus-visible:ring-2 focus-visible:ring-[var(--accent)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--background)] focus-visible:outline-hidden"
           >
-            <RotateCw className="w-3.5 h-3.5" />
+            <RotateCw className="w-3.5 h-3.5" aria-hidden="true" />
             <span>Refresh</span>
           </button>
         </div>
@@ -231,10 +233,10 @@ export function ClusterOverviewView() {
               className={cn(
                 "font-semibold",
                 (clusterOverview?.cpuPercent ?? 0) > 85
-                  ? "text-rose-500"
+                  ? "text-rose-600 dark:text-rose-400"
                   : (clusterOverview?.cpuPercent ?? 0) > 70
-                  ? "text-amber-500"
-                  : "text-emerald-500"
+                  ? "text-amber-600 dark:text-amber-400"
+                  : "text-emerald-600 dark:text-emerald-400"
               )}
             >
               {(clusterOverview?.cpuPercent ?? 0) > 85 ? "Critical" : (clusterOverview?.cpuPercent ?? 0) > 70 ? "High Load" : "Healthy"}
@@ -282,10 +284,10 @@ export function ClusterOverviewView() {
               className={cn(
                 "font-semibold",
                 (clusterOverview?.memoryPercent ?? 0) > 85
-                  ? "text-rose-500"
+                  ? "text-rose-600 dark:text-rose-400"
                   : (clusterOverview?.memoryPercent ?? 0) > 70
-                  ? "text-amber-500"
-                  : "text-emerald-500"
+                  ? "text-amber-600 dark:text-amber-400"
+                  : "text-emerald-600 dark:text-emerald-400"
               )}
             >
               {(clusterOverview?.memoryPercent ?? 0) > 85 ? "Critical" : (clusterOverview?.memoryPercent ?? 0) > 70 ? "High Load" : "Optimal"}
@@ -295,12 +297,23 @@ export function ClusterOverviewView() {
 
         {/* Card 3: Pod Density */}
         <div
+          role="button"
+          tabIndex={0}
+          aria-label={`Pod density: ${clusterOverview?.totalPods ?? 0} of ${clusterOverview?.podCapacity ?? 0} pods. Press Enter or Space to view pods explorer.`}
           onClick={() => {
             setCurrentNamespace("all");
             openTab({ id: "pods", title: "Pods", closable: true });
             loadPods("all");
           }}
-          className="group p-5 rounded-xl border border-[var(--border)] bg-[var(--surface)] flex flex-col justify-between space-y-3.5 shadow-2xs cursor-pointer hover:border-[var(--accent)]/40 hover:bg-[var(--surface-hover)]/40 transition-all"
+          onKeyDown={(e) => {
+            if (e.key === "Enter" || e.key === " ") {
+              e.preventDefault();
+              setCurrentNamespace("all");
+              openTab({ id: "pods", title: "Pods", closable: true });
+              loadPods("all");
+            }
+          }}
+          className="group p-5 rounded-xl border border-[var(--border)] bg-[var(--surface)] flex flex-col justify-between space-y-3.5 shadow-2xs cursor-pointer hover:border-[var(--accent)]/40 hover:bg-[var(--surface-hover)]/40 focus-visible:ring-2 focus-visible:ring-[var(--accent)] focus-visible:outline-hidden transition-all"
         >
           <div className="flex items-center justify-between">
             <span className="text-xs font-medium text-[var(--muted)]">
@@ -339,9 +352,9 @@ export function ClusterOverviewView() {
 
           <div className="pt-3 border-t border-[var(--border)]/70 flex items-center justify-between text-xs text-[var(--muted)] font-mono">
             <span>
-              <strong className="text-emerald-500 font-semibold">{clusterOverview?.runningPods ?? 0}</strong> Running
+              <strong className="text-emerald-600 dark:text-emerald-400 font-semibold">{clusterOverview?.runningPods ?? 0}</strong> Running
               {" "}&bull;{" "}
-              <strong className={clusterOverview?.pendingPods ? "text-amber-500 font-semibold" : "text-[var(--muted)] font-normal"}>
+              <strong className={clusterOverview?.pendingPods ? "text-amber-600 dark:text-amber-400 font-semibold" : "text-[var(--muted)] font-normal"}>
                 {clusterOverview?.pendingPods ?? 0}
               </strong> Pending
             </span>
@@ -398,10 +411,10 @@ export function ClusterOverviewView() {
               className={cn(
                 "font-semibold",
                 latencyMs < 300
-                  ? "text-emerald-500"
+                  ? "text-emerald-600 dark:text-emerald-400"
                   : latencyMs < 800
-                  ? "text-amber-500"
-                  : "text-rose-500"
+                  ? "text-amber-600 dark:text-amber-400"
+                  : "text-rose-600 dark:text-rose-400"
               )}
             >
               {latencyMs}ms Ping
@@ -437,6 +450,9 @@ export function ClusterOverviewView() {
               return (
                 <div
                   key={n.name}
+                  role="button"
+                  tabIndex={0}
+                  aria-label={`Node ${n.name}, status ${n.status}, CPU ${n.cpuPercent} percent, memory ${n.memoryPercent} percent. Press Enter or Space to inspect.`}
                   onClick={() => {
                     setSelectedNode(n.name);
                     openInspector({
@@ -462,8 +478,36 @@ export function ClusterOverviewView() {
                       },
                     });
                   }}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter" || e.key === " ") {
+                      e.preventDefault();
+                      setSelectedNode(n.name);
+                      openInspector({
+                        kind: "Node",
+                        name: n.name,
+                        namespace: "Cluster Scope",
+                        status: n.status,
+                        data: {
+                          name: n.name,
+                          status: n.status,
+                          roles: n.roles,
+                          version: n.version,
+                          architecture: n.architecture,
+                          internalIP: n.internalIP,
+                          cpuCapacity: n.cpuCapacity,
+                          cpuAllocated: n.cpuAllocated,
+                          cpuPercent: `${n.cpuPercent}%`,
+                          memoryCapacity: n.memoryCapacity,
+                          memoryAllocated: n.memoryAllocated,
+                          memoryPercent: `${n.memoryPercent}%`,
+                          podCapacity: n.podCapacity,
+                          activePods: n.activePods,
+                        },
+                      });
+                    }
+                  }}
                   className={cn(
-                    "p-4.5 rounded-xl border transition-all cursor-pointer bg-[var(--surface)] space-y-3.5 shadow-xs",
+                    "p-4.5 rounded-xl border transition-all cursor-pointer bg-[var(--surface)] space-y-3.5 shadow-xs focus-visible:ring-2 focus-visible:ring-[var(--accent)] focus-visible:outline-hidden",
                     isSelected
                       ? "border-[var(--accent)] ring-1 ring-[var(--accent)]/40 bg-[var(--surface-hover)]"
                       : "border-[var(--border)] hover:border-[var(--accent)]/40 hover:bg-[var(--surface-hover)]/50"
@@ -478,6 +522,7 @@ export function ClusterOverviewView() {
                             ? "bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.5)]"
                             : "bg-rose-500 shadow-[0_0_8px_rgba(239,68,68,0.5)]"
                         )}
+                        aria-hidden="true"
                       />
                       <span className="font-mono font-semibold text-xs text-[var(--foreground)] truncate">
                         {n.name}
@@ -494,7 +539,7 @@ export function ClusterOverviewView() {
                         <span>CPU: {n.cpuAllocated}</span>
                         <span className={cn(
                           "font-semibold",
-                          n.cpuPercent > 85 ? "text-rose-500" : n.cpuPercent > 70 ? "text-amber-500" : "text-[var(--foreground)]"
+                          n.cpuPercent > 85 ? "text-rose-600 dark:text-rose-400" : n.cpuPercent > 70 ? "text-amber-600 dark:text-amber-400" : "text-[var(--foreground)]"
                         )}>
                           {n.cpuPercent}%
                         </span>
@@ -519,7 +564,7 @@ export function ClusterOverviewView() {
                         <span>Memory: {n.memoryAllocated}</span>
                         <span className={cn(
                           "font-semibold",
-                          n.memoryPercent > 85 ? "text-rose-500" : n.memoryPercent > 70 ? "text-amber-500" : "text-[var(--foreground)]"
+                          n.memoryPercent > 85 ? "text-rose-600 dark:text-rose-400" : n.memoryPercent > 70 ? "text-amber-600 dark:text-amber-400" : "text-[var(--foreground)]"
                         )}>
                           {n.memoryPercent}%
                         </span>
@@ -770,10 +815,11 @@ export function ClusterOverviewView() {
                 openTab({ id: "pods", title: "Pods", closable: true });
                 loadPods("all");
               }}
-              className="text-[var(--accent)] hover:underline cursor-pointer flex items-center gap-1 font-medium"
+              aria-label="View pods explorer"
+              className="text-[var(--accent)] hover:underline cursor-pointer flex items-center gap-1 font-medium focus-visible:ring-2 focus-visible:ring-[var(--accent)] rounded focus-visible:outline-hidden"
             >
               <span>View Pods Explorer</span>
-              <ChevronRight className="w-3.5 h-3.5" />
+              <ChevronRight className="w-3.5 h-3.5" aria-hidden="true" />
             </button>
           </div>
         </div>

@@ -67,8 +67,9 @@ export function NamespaceSelectorDropdown({
       <DropdownMenu.Trigger asChild>
         <button
           type="button"
+          aria-label={`Select Kubernetes namespace (current: ${currentNamespace === "all" ? "All Namespaces" : currentNamespace})`}
           className={cn(
-            "flex items-center gap-1.5 text-xs font-mono transition-all outline-hidden select-none group cursor-pointer",
+            "flex items-center gap-1.5 text-xs font-mono transition-all outline-hidden select-none group cursor-pointer focus-visible:ring-2 focus-visible:ring-[#F08A42] focus-visible:outline-hidden",
             variant === "header" &&
               "px-2.5 py-1 rounded-lg bg-[var(--background)] border border-[var(--border)] hover:bg-[var(--surface-hover)] hover:border-[#F08A42] text-[var(--foreground)] shadow-xs",
             variant === "toolbar" &&
@@ -78,7 +79,7 @@ export function NamespaceSelectorDropdown({
           )}
           title={`Filter by Namespace (Current: ${currentNamespace})`}
         >
-          <Layers className="w-3.5 h-3.5 text-[#F08A42] shrink-0" />
+          <Layers className="w-3.5 h-3.5 text-[#F08A42] shrink-0" aria-hidden="true" />
           <span className="text-[10px] text-[var(--muted)] uppercase font-semibold tracking-wider">
             ns:
           </span>
@@ -90,6 +91,7 @@ export function NamespaceSelectorDropdown({
               "w-3 h-3 text-[var(--muted)] group-hover:text-[var(--foreground)] transition-transform duration-150 shrink-0",
               isOpen && "rotate-180 text-[#F08A42]"
             )}
+            aria-hidden="true"
           />
         </button>
       </DropdownMenu.Trigger>
@@ -104,7 +106,7 @@ export function NamespaceSelectorDropdown({
           <div className="px-2 pt-1 pb-2 border-b border-[var(--border)]">
             <div className="flex items-center justify-between mb-2">
               <span className="text-[11px] font-bold text-[var(--foreground)] uppercase tracking-wider flex items-center gap-1.5">
-                <Layers className="w-3.5 h-3.5 text-[#F08A42]" />
+                <Layers className="w-3.5 h-3.5 text-[#F08A42]" aria-hidden="true" />
                 <span>Namespaces</span>
               </span>
               <span className="text-[10px] text-[var(--muted)] font-mono">
@@ -114,35 +116,38 @@ export function NamespaceSelectorDropdown({
 
             {/* Search Input */}
             <div className="relative">
-              <Search className="w-3.5 h-3.5 absolute left-2.5 top-1/2 -translate-y-1/2 text-[var(--muted)]" />
+              <Search className="w-3.5 h-3.5 absolute left-2.5 top-1/2 -translate-y-1/2 text-[var(--muted)]" aria-hidden="true" />
               <input
                 type="text"
                 autoFocus
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
+                onKeyDown={(e) => e.stopPropagation()}
+                aria-label="Filter namespaces"
                 placeholder="Search namespace..."
-                className="w-full pl-8 pr-7 py-1.5 text-xs bg-[var(--background)] border border-[var(--border)] rounded-xl text-[var(--foreground)] placeholder:text-[var(--muted)] outline-hidden focus:border-[#F08A42] font-mono transition-all"
+                className="w-full pl-8 pr-7 py-1.5 text-xs bg-[var(--background)] border border-[var(--border)] rounded-xl text-[var(--foreground)] placeholder:text-[var(--muted)] outline-hidden focus:border-[#F08A42] focus:ring-1 focus:ring-[#F08A42] font-mono transition-all"
               />
               {search && (
                 <button
                   type="button"
                   onClick={() => setSearch("")}
+                  aria-label="Clear search"
                   className="absolute right-2 top-1/2 -translate-y-1/2 text-[var(--muted)] hover:text-[var(--foreground)] cursor-pointer"
                 >
-                  <X className="w-3.5 h-3.5" />
+                  <X className="w-3.5 h-3.5" aria-hidden="true" />
                 </button>
               )}
             </div>
 
             {/* Category Filter Pills */}
-            <div className="flex items-center gap-1 mt-2 pt-1">
+            <div className="flex items-center gap-1 mt-2 pt-1" role="group" aria-label="Filter namespace categories">
               <button
                 type="button"
                 onClick={() => setFilterCategory("all")}
                 className={cn(
-                  "px-2 py-0.5 rounded-md text-[10px] font-medium transition-all cursor-pointer font-mono",
+                  "px-2 py-0.5 rounded-md text-[10px] font-medium transition-all cursor-pointer font-mono focus-visible:ring-2 focus-visible:ring-[#F08A42] focus-visible:outline-hidden",
                   filterCategory === "all"
-                    ? "bg-[#F08A42] text-white font-semibold shadow-xs"
+                    ? "bg-[#F08A42] text-zinc-950 font-semibold shadow-xs"
                     : "bg-black/5 dark:bg-white/5 text-[var(--muted)] hover:text-[var(--foreground)]"
                 )}
               >
@@ -152,9 +157,9 @@ export function NamespaceSelectorDropdown({
                 type="button"
                 onClick={() => setFilterCategory("workloads")}
                 className={cn(
-                  "px-2 py-0.5 rounded-md text-[10px] font-medium transition-all cursor-pointer font-mono",
+                  "px-2 py-0.5 rounded-md text-[10px] font-medium transition-all cursor-pointer font-mono focus-visible:ring-2 focus-visible:ring-[#F08A42] focus-visible:outline-hidden",
                   filterCategory === "workloads"
-                    ? "bg-[#F08A42] text-white font-semibold shadow-xs"
+                    ? "bg-[#F08A42] text-zinc-950 font-semibold shadow-xs"
                     : "bg-black/5 dark:bg-white/5 text-[var(--muted)] hover:text-[var(--foreground)]"
                 )}
               >
@@ -164,9 +169,9 @@ export function NamespaceSelectorDropdown({
                 type="button"
                 onClick={() => setFilterCategory("system")}
                 className={cn(
-                  "px-2 py-0.5 rounded-md text-[10px] font-medium transition-all cursor-pointer font-mono",
+                  "px-2 py-0.5 rounded-md text-[10px] font-medium transition-all cursor-pointer font-mono focus-visible:ring-2 focus-visible:ring-[#F08A42] focus-visible:outline-hidden",
                   filterCategory === "system"
-                    ? "bg-[#F08A42] text-white font-semibold shadow-xs"
+                    ? "bg-[#F08A42] text-zinc-950 font-semibold shadow-xs"
                     : "bg-black/5 dark:bg-white/5 text-[var(--muted)] hover:text-[var(--foreground)]"
                 )}
               >
@@ -190,7 +195,7 @@ export function NamespaceSelectorDropdown({
                     toast.info(`Switched to namespace: ${isAll ? "All Namespaces" : ns}`);
                   }}
                   className={cn(
-                    "flex items-center justify-between px-2.5 py-1.5 rounded-xl cursor-pointer outline-hidden transition-all text-xs font-mono",
+                    "flex items-center justify-between px-2.5 py-1.5 rounded-xl cursor-pointer outline-hidden transition-all text-xs font-mono focus:bg-[var(--surface-hover)] focus:ring-1 focus:ring-[#F08A42]/40",
                     isSelected
                       ? "bg-[#F08A42]/12 text-[#F08A42] font-bold border border-[#F08A42]/20"
                       : "hover:bg-[var(--surface-hover)] text-[var(--foreground)]"

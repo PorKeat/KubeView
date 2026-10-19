@@ -80,10 +80,11 @@ export function AppHeader() {
       <div className="flex-1 max-w-md mx-4">
         <button
           onClick={() => setCommandPaletteOpen(true)}
-          className="w-full flex items-center justify-between px-3 py-1 text-xs rounded-lg bg-black/[0.04] dark:bg-black/30 border border-black/10 dark:border-white/10 text-[var(--muted)] hover:border-[var(--accent)]/50 hover:text-[var(--foreground)] transition-all shadow-inner group cursor-pointer"
+          aria-label="Search resources, pods, logs (Press Command K or Control K to open)"
+          className="w-full flex items-center justify-between px-3 py-1 text-xs rounded-lg bg-black/[0.04] dark:bg-black/30 border border-black/10 dark:border-white/10 text-[var(--muted)] hover:border-[var(--accent)]/50 hover:text-[var(--foreground)] focus-visible:ring-2 focus-visible:ring-[var(--accent)] focus-visible:outline-hidden transition-all shadow-inner group cursor-pointer"
         >
           <div className="flex items-center gap-2">
-            <Search className="w-3.5 h-3.5 group-hover:text-[var(--accent)] transition-colors" />
+            <Search className="w-3.5 h-3.5 group-hover:text-[var(--accent)] transition-colors" aria-hidden="true" />
             <span>Search resources, pods, logs...</span>
           </div>
           <kbd className="px-1.5 py-0.5 text-[10px] bg-black/[0.05] dark:bg-white/[0.06] border border-black/10 dark:border-white/10 rounded text-[var(--muted)] group-hover:text-[var(--accent)] font-mono transition-colors">
@@ -96,19 +97,21 @@ export function AppHeader() {
       <div className="flex items-center gap-1.5">
         <button
           onClick={handleRefresh}
-          className="p-1.5 rounded-lg hover:bg-[var(--surface-hover)] text-[var(--muted)] hover:text-[var(--foreground)] transition-colors cursor-pointer"
+          aria-label="Refresh Resources"
+          className="p-1.5 rounded-lg hover:bg-[var(--surface-hover)] text-[var(--muted)] hover:text-[var(--foreground)] focus-visible:ring-2 focus-visible:ring-[var(--accent)] focus-visible:outline-hidden transition-colors cursor-pointer"
           title="Refresh Resources"
         >
-          <RefreshCw className="w-4 h-4" />
+          <RefreshCw className="w-4 h-4" aria-hidden="true" />
         </button>
 
         <button
           onClick={() => setTheme(resolvedTheme === "dark" ? "light" : "dark")}
-          className="p-1.5 rounded-lg hover:bg-[var(--surface-hover)] text-[var(--muted)] hover:text-[var(--foreground)] transition-colors cursor-pointer"
+          aria-label={`Switch to ${resolvedTheme === "dark" ? "light" : "dark"} theme`}
+          className="p-1.5 rounded-lg hover:bg-[var(--surface-hover)] text-[var(--muted)] hover:text-[var(--foreground)] focus-visible:ring-2 focus-visible:ring-[var(--accent)] focus-visible:outline-hidden transition-colors cursor-pointer"
           title="Toggle Theme"
         >
           {mounted ? (
-            resolvedTheme === "dark" ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />
+            resolvedTheme === "dark" ? <Sun className="w-4 h-4" aria-hidden="true" /> : <Moon className="w-4 h-4" aria-hidden="true" />
           ) : (
             <div className="w-4 h-4" />
           )}
@@ -116,10 +119,11 @@ export function AppHeader() {
 
         <button
           disabled
+          aria-label="Settings and global preferences (coming soon)"
           className="p-1.5 rounded-lg opacity-35 cursor-not-allowed text-[var(--muted)]"
           title="Settings & Global Preferences (Coming Soon)"
         >
-          <Settings className="w-4 h-4" />
+          <Settings className="w-4 h-4" aria-hidden="true" />
         </button>
       </div>
     </header>

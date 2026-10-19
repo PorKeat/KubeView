@@ -47,7 +47,7 @@ export function TabBar() {
   };
 
   return (
-    <div className="h-9 w-full border-b border-[var(--border)] bg-[var(--surface)] flex items-center px-1 overflow-x-auto select-none shrink-0 scrollbar-none">
+    <div className="h-9 w-full border-b border-[var(--border)] bg-[var(--surface)] flex items-center px-1 overflow-x-auto select-none shrink-0 scrollbar-none" role="tablist" aria-label="Open tabs">
       <div className="flex items-center gap-1 flex-1">
         {openTabs.map((tab: TabItem) => {
           const isActive = activeTabId === tab.id;
@@ -56,9 +56,19 @@ export function TabBar() {
           return (
             <div
               key={tab.id}
+              role="tab"
+              tabIndex={0}
+              aria-selected={isActive}
+              aria-label={`${tab.title} tab`}
               onClick={() => setActiveTab(tab.id)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter" || e.key === " ") {
+                  e.preventDefault();
+                  setActiveTab(tab.id);
+                }
+              }}
               className={cn(
-                "group h-7 px-3 flex items-center gap-2 text-xs rounded-t-lg cursor-pointer transition-all shrink-0 relative",
+                "group h-7 px-3 flex items-center gap-2 text-xs rounded-t-lg cursor-pointer transition-all shrink-0 relative focus-visible:ring-2 focus-visible:ring-[var(--accent)] focus-visible:outline-hidden",
                 isActive
                   ? "bg-[var(--background)] text-[var(--foreground)] font-semibold shadow-xs border-t border-x border-[var(--border)]"
                   : "bg-transparent text-[var(--muted)] hover:bg-black/[0.04] dark:hover:bg-white/[0.04] hover:text-[var(--foreground)]"
@@ -67,19 +77,21 @@ export function TabBar() {
               {isActive && (
                 <span className="absolute top-0 left-0 right-0 h-[2px] bg-gradient-to-r from-[var(--accent)] to-amber-400 rounded-t-lg shadow-[0_0_8px_rgba(240,138,66,0.6)]" />
               )}
-              <Icon className={cn("w-3.5 h-3.5 shrink-0 transition-colors", isActive ? "text-[var(--accent)]" : "text-[var(--muted)]")} />
+              <Icon className={cn("w-3.5 h-3.5 shrink-0 transition-colors", isActive ? "text-[var(--accent)]" : "text-[var(--muted)]")} aria-hidden="true" />
               <span className="truncate max-w-[130px] font-mono text-[11px]">{tab.title}</span>
 
               {tab.closable && (
                 <button
+                  type="button"
+                  aria-label={`Close ${tab.title} tab`}
                   onClick={(e) => {
                     e.stopPropagation();
                     closeTab(tab.id);
                   }}
-                  className="p-0.5 rounded hover:bg-black/10 dark:hover:bg-white/10 text-[var(--muted)] hover:text-[var(--foreground)] opacity-40 group-hover:opacity-100 transition-opacity ml-1"
+                  className="p-0.5 rounded hover:bg-black/10 dark:hover:bg-white/10 text-[var(--muted)] hover:text-[var(--foreground)] opacity-40 group-hover:opacity-100 transition-opacity ml-1 focus-visible:ring-1 focus-visible:ring-[var(--accent)] focus-visible:outline-hidden"
                   title="Close tab (Cmd+W)"
                 >
-                  <X className="w-3 h-3" />
+                  <X className="w-3 h-3" aria-hidden="true" />
                 </button>
               )}
             </div>
@@ -88,11 +100,13 @@ export function TabBar() {
 
         {/* New Tab Quick-Open Trigger */}
         <button
+          type="button"
           onClick={() => setCommandPaletteOpen(true)}
-          className="p-1 rounded hover:bg-[var(--surface-hover)] text-[var(--muted)] hover:text-[var(--foreground)] transition-colors ml-1"
+          aria-label="Open new tab (Command K)"
+          className="p-1 rounded hover:bg-[var(--surface-hover)] text-[var(--muted)] hover:text-[var(--foreground)] transition-colors ml-1 focus-visible:ring-2 focus-visible:ring-[var(--accent)] focus-visible:outline-hidden"
           title="Open New Tab (Cmd+K)"
         >
-          <Plus className="w-3.5 h-3.5" />
+          <Plus className="w-3.5 h-3.5" aria-hidden="true" />
         </button>
       </div>
     </div>
