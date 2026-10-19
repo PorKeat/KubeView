@@ -243,10 +243,20 @@ export function ResourceInspectorDrawer() {
   }
 
   return (
-    <div
-      data-testid="resource-inspector-drawer"
-      className="fixed inset-y-0 right-0 z-50 w-full max-w-xl md:max-w-2xl glass-panel border-l border-[var(--border)] shadow-2xl flex flex-col select-none animate-in slide-in-from-right duration-200 backdrop-blur-xl"
-    >
+    <div className="fixed inset-0 z-40">
+      {/* Modal Backdrop / Dim Overlay ("modal bg a bit") */}
+      <div
+        data-testid="resource-inspector-backdrop"
+        onClick={closeInspector}
+        className="fixed inset-0 bg-black/35 dark:bg-black/60 backdrop-blur-[2px] transition-opacity animate-in fade-in duration-200 cursor-pointer"
+        aria-hidden="true"
+      />
+
+      {/* Slide-Over Drawer */}
+      <div
+        data-testid="resource-inspector-drawer"
+        className="fixed inset-y-0 right-0 z-40 w-full max-w-xl md:max-w-2xl glass-panel border-l border-[var(--border)] shadow-2xl flex flex-col select-none animate-in slide-in-from-right duration-200 backdrop-blur-xl"
+      >
       {/* Top Header */}
       <div className="h-16 border-b border-[var(--border)] px-4 flex items-center justify-between shrink-0 bg-slate-50/80 dark:bg-black/40">
         <div className="flex items-center gap-3 min-w-0 pr-2">
@@ -1089,5 +1099,6 @@ export function ResourceInspectorDrawer() {
         )}
       </div>
     </div>
-  );
+  </div>
+);
 }

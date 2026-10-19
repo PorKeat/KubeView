@@ -69,13 +69,15 @@ test.describe("KubeView UI - Pods Management View", () => {
     await expect(overviewTab).toBeVisible({ timeout: 5000 });
     await overviewTab.click();
 
-    // Capture screenshot of the polished drawer
+    // Verify modal backdrop overlay is visible
+    const backdrop = page.locator('[data-testid="resource-inspector-backdrop"]');
+    await expect(backdrop).toBeVisible({ timeout: 5000 });
+
+    // Capture screenshot of the polished drawer with modal background
     await page.screenshot({ path: "apps/desktop/test-results/polished-inspector-drawer.png" });
 
-    // Close drawer using Close button
-    const closeBtn = page.locator('[data-testid="inspector-close-btn"]');
-    await expect(closeBtn).toBeVisible({ timeout: 5000 });
-    await closeBtn.click();
+    // Dismiss drawer by clicking the modal backdrop
+    await backdrop.click({ position: { x: 50, y: 300 } });
 
     // Verify drawer closed
     await expect(metaHeader).not.toBeVisible({ timeout: 5000 });
