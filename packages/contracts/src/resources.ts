@@ -232,10 +232,14 @@ export interface NodeSummary {
   cpuCores: number;
   cpuAllocated: string;
   cpuPercent: number;
+  cpuUsage?: string;
+  cpuUsagePercent?: number;
   memoryCapacity: string;
   memoryGiB: number;
   memoryAllocated: string;
   memoryPercent: number;
+  memoryUsage?: string;
+  memoryUsagePercent?: number;
   podCapacity: number;
   activePods: number;
 }
@@ -256,12 +260,18 @@ export interface ClusterOverviewResult {
   totalCpuCores: number;
   allocatedCpuCores: number;
   cpuPercent: number;
+  usedCpuCores?: number;
+  cpuUsagePercent?: number;
   totalMemoryGiB: number;
   allocatedMemoryGiB: number;
   memoryPercent: number;
+  usedMemoryGiB?: number;
+  memoryUsagePercent?: number;
   podCapacity: number;
   podPercent: number;
+  hasMetrics?: boolean;
   nodes: NodeSummary[];
   warningEvents: PodEventItem[];
 }
+
 

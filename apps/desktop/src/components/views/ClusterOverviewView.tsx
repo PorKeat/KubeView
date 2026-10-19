@@ -51,12 +51,14 @@ export function ClusterOverviewView() {
   const { openTab } = useTabStore();
   const [selectedNode, setSelectedNode] = React.useState<string | null>(null);
   const [nodeViewMode, setNodeViewMode] = React.useState<"grid" | "table">("grid");
+  const [telemetryMode, setTelemetryMode] = React.useState<"usage" | "allocation">("usage");
 
   React.useEffect(() => {
     if (connectionStatus === "connected" || connectionStatus === "degraded") {
       loadClusterOverview();
     }
   }, [connectionStatus, currentContext]);
+
 
   // Derived Diagnostic status
   const netStage = diagnosticResult?.stages?.network;
@@ -73,6 +75,9 @@ export function ClusterOverviewView() {
   }
 
   const nodes = clusterOverview?.nodes || [];
+  const hasMetrics = Boolean(clusterOverview?.hasMetrics);
+  const effectiveMode = hasMetrics ? telemetryMode : "allocation";
+
 
   return (
     <div className="flex-1 overflow-y-auto p-6 md:p-8 space-y-6 select-none max-w-7xl mx-auto w-full">
@@ -194,105 +199,222 @@ export function ClusterOverviewView() {
         </div>
       </div>
 
-      {/* 2. Unified Telemetry Command Strip (Single Precision Container divided by 1px hairlines) */}
-      <div className="rounded-xl border border-[var(--border)] bg-[var(--surface)] grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 divide-y sm:divide-y-0 sm:divide-x divide-[var(--border)] overflow-hidden">
-        {/* Cell 1: CPU Allocation */}
-        <div className="p-5 flex flex-col justify-between space-y-3.5 hover:bg-[var(--surface-hover)]/30 transition-colors">
-          <div className="flex items-center justify-between text-xs">
-            <span className="font-medium text-[var(--muted)]">CPU Allocation</span>
-            <span className="font-mono text-[var(--muted)] tabular-nums">
-              {clusterOverview?.totalCpuCores ?? 0} Cores Total
-            </span>
+      {/* 2. Unified Telemetry Command Strip with Mode Switcher */}
+      <div className="space-y-2.5">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 px-0.5">
+          <div className="flex items-center gap-2">
+            <span className="text-xs font-semibold text-[var(--foreground)] tracking-tight">Cluster Telemetry</span>
+            {hasMetrics ? (
+              <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[11px] font-mono font-medium bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20">
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse motion-reduce:animate-none" />
+                Live Telemetry (metrics-server)
+              </span>
+            ) : (
+              <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[11px] font-mono font-medium bg-black/[0.04] dark:bg-white/[0.06] text-[var(--muted)] border border-[var(--border)]">
+                Pod Allocation Requests
+              </span>
+            )}
           </div>
 
-          <div>
-            <div className="flex items-baseline gap-2">
-              <span className="text-2xl sm:text-3xl font-bold font-mono text-[var(--foreground)] tracking-tight tabular-nums">
-                {clusterOverview?.cpuPercent ?? 0}%
+          {hasMetrics && (
+            <div className="flex items-center p-0.5 rounded-lg border border-[var(--border)] bg-[var(--surface)] text-xs font-mono self-start sm:self-auto" role="group" aria-label="Telemetry display mode">
+              <button
+                type="button"
+                onClick={() => setTelemetryMode("usage")}
+                aria-pressed={effectiveMode === "usage"}
+                className={cn(
+                  "px-2.5 py-1 rounded-md flex items-center gap-1.5 transition-all duration-150 cursor-pointer focus-visible:ring-2 focus-visible:ring-[var(--accent)] focus-visible:outline-hidden",
+                  effectiveMode === "usage"
+                    ? "bg-[var(--surface-active)] text-[var(--foreground)] font-semibold shadow-xs"
+                    : "text-[var(--muted)] hover:text-[var(--foreground)]"
+                )}
+                title="Live CPU & Memory consumption from metrics-server (kubectl top)"
+              >
+                <Activity className="w-3.5 h-3.5 text-emerald-500" />
+                <span>Live Usage (kubectl top)</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => setTelemetryMode("allocation")}
+                aria-pressed={effectiveMode === "allocation"}
+                className={cn(
+                  "px-2.5 py-1 rounded-md flex items-center gap-1.5 transition-all duration-150 cursor-pointer focus-visible:ring-2 focus-visible:ring-[var(--accent)] focus-visible:outline-hidden",
+                  effectiveMode === "allocation"
+                    ? "bg-[var(--surface-active)] text-[var(--foreground)] font-semibold shadow-xs"
+                    : "text-[var(--muted)] hover:text-[var(--foreground)]"
+                )}
+                title="Scheduled pod resource requests & capacity commitments"
+              >
+                <Layers className="w-3.5 h-3.5 text-amber-500" />
+                <span>Pod Allocation (Requests)</span>
+              </button>
+            </div>
+          )}
+        </div>
+
+        <div className="rounded-xl border border-[var(--border)] bg-[var(--surface)] grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 divide-y sm:divide-y-0 sm:divide-x divide-[var(--border)] overflow-hidden">
+          {/* Cell 1: CPU */}
+          <div className="p-5 flex flex-col justify-between space-y-3.5 hover:bg-[var(--surface-hover)]/30 transition-colors">
+            <div className="flex items-center justify-between text-xs">
+              <span className="font-medium text-[var(--muted)]">
+                {effectiveMode === "usage" ? "CPU Utilization" : "CPU Allocation"}
+              </span>
+              <span className="font-mono text-[var(--muted)] tabular-nums">
+                {clusterOverview?.totalCpuCores ?? 0} Cores Total
               </span>
             </div>
 
-            {/* Precision 2px Barometer */}
-            <div className="w-full h-1 bg-black/10 dark:bg-white/10 rounded-full overflow-hidden mt-3">
-              <div
-                className={cn(
-                  "h-full rounded-full transition-all duration-500 motion-reduce:transition-none",
-                  (clusterOverview?.cpuPercent ?? 0) > 85
-                    ? "bg-rose-500"
-                    : (clusterOverview?.cpuPercent ?? 0) > 70
-                    ? "bg-amber-500"
-                    : "bg-emerald-500 dark:bg-emerald-400"
+            <div>
+              <div className="flex items-baseline gap-2">
+                <span className="text-2xl sm:text-3xl font-bold font-mono text-[var(--foreground)] tracking-tight tabular-nums">
+                  {effectiveMode === "usage"
+                    ? `${clusterOverview?.cpuUsagePercent ?? 0}%`
+                    : `${clusterOverview?.cpuPercent ?? 0}%`}
+                </span>
+                {effectiveMode === "usage" && (
+                  <span className="text-xs text-[var(--muted)] font-mono tabular-nums">
+                    ({clusterOverview?.usedCpuCores ?? 0} Cores)
+                  </span>
                 )}
-                style={{ width: `${Math.min(100, clusterOverview?.cpuPercent ?? 0)}%` }}
-              />
+              </div>
+
+              {/* Precision Barometer */}
+              <div className="w-full h-1 bg-black/10 dark:bg-white/10 rounded-full overflow-hidden mt-3">
+                <div
+                  className={cn(
+                    "h-full rounded-full transition-all duration-500 motion-reduce:transition-none",
+                    (effectiveMode === "usage" ? (clusterOverview?.cpuUsagePercent ?? 0) : (clusterOverview?.cpuPercent ?? 0)) > 85
+                      ? "bg-rose-500"
+                      : (effectiveMode === "usage" ? (clusterOverview?.cpuUsagePercent ?? 0) : (clusterOverview?.cpuPercent ?? 0)) > 70
+                      ? "bg-amber-500"
+                      : "bg-emerald-500 dark:bg-emerald-400"
+                  )}
+                  style={{
+                    width: `${Math.min(
+                      100,
+                      effectiveMode === "usage"
+                        ? clusterOverview?.cpuUsagePercent ?? 0
+                        : clusterOverview?.cpuPercent ?? 0
+                    )}%`,
+                  }}
+                />
+              </div>
+            </div>
+
+            <div className="pt-2.5 border-t border-[var(--border)]/60 flex items-center justify-between text-xs text-[var(--muted)] font-mono">
+              <span className="tabular-nums">
+                {effectiveMode === "usage" ? (
+                  <>
+                    <strong className="text-[var(--foreground)] font-semibold">{clusterOverview?.usedCpuCores ?? 0} Cores</strong> Used
+                    {hasMetrics && ` · Req ${clusterOverview?.allocatedCpuCores ?? 0} Cores (${clusterOverview?.cpuPercent ?? 0}%)`}
+                  </>
+                ) : (
+                  <>
+                    <strong className="text-[var(--foreground)] font-semibold">{clusterOverview?.allocatedCpuCores ?? 0} Cores</strong> Allocated
+                    {hasMetrics && ` · Live ${clusterOverview?.usedCpuCores ?? 0} Cores (${clusterOverview?.cpuUsagePercent ?? 0}%)`}
+                  </>
+                )}
+              </span>
+              <span
+                className={cn(
+                  "font-semibold text-xs",
+                  (effectiveMode === "usage" ? (clusterOverview?.cpuUsagePercent ?? 0) : (clusterOverview?.cpuPercent ?? 0)) > 85
+                    ? "text-rose-600 dark:text-rose-400"
+                    : (effectiveMode === "usage" ? (clusterOverview?.cpuUsagePercent ?? 0) : (clusterOverview?.cpuPercent ?? 0)) > 70
+                    ? "text-amber-600 dark:text-amber-400"
+                    : "text-emerald-600 dark:text-emerald-400"
+                )}
+              >
+                {(effectiveMode === "usage" ? (clusterOverview?.cpuUsagePercent ?? 0) : (clusterOverview?.cpuPercent ?? 0)) > 85
+                  ? "Critical"
+                  : (effectiveMode === "usage" ? (clusterOverview?.cpuUsagePercent ?? 0) : (clusterOverview?.cpuPercent ?? 0)) > 70
+                  ? "High Load"
+                  : "Healthy"}
+              </span>
             </div>
           </div>
 
-          <div className="pt-2.5 border-t border-[var(--border)]/60 flex items-center justify-between text-xs text-[var(--muted)] font-mono">
-            <span className="tabular-nums">{clusterOverview?.allocatedCpuCores ?? 0} Cores Allocated</span>
-            <span
-              className={cn(
-                "font-semibold text-xs",
-                (clusterOverview?.cpuPercent ?? 0) > 85
-                  ? "text-rose-600 dark:text-rose-400"
-                  : (clusterOverview?.cpuPercent ?? 0) > 70
-                  ? "text-amber-600 dark:text-amber-400"
-                  : "text-emerald-600 dark:text-emerald-400"
-              )}
-            >
-              {(clusterOverview?.cpuPercent ?? 0) > 85 ? "Critical" : (clusterOverview?.cpuPercent ?? 0) > 70 ? "High Load" : "Healthy"}
-            </span>
-          </div>
-        </div>
-
-        {/* Cell 2: Memory Reserved */}
-        <div className="p-5 flex flex-col justify-between space-y-3.5 hover:bg-[var(--surface-hover)]/30 transition-colors">
-          <div className="flex items-center justify-between text-xs">
-            <span className="font-medium text-[var(--muted)]">Memory Reserved</span>
-            <span className="font-mono text-[var(--muted)] tabular-nums">
-              {clusterOverview?.totalMemoryGiB ?? 0} GiB Total
-            </span>
-          </div>
-
-          <div>
-            <div className="flex items-baseline gap-2">
-              <span className="text-2xl sm:text-3xl font-bold font-mono text-[var(--foreground)] tracking-tight tabular-nums">
-                {clusterOverview?.memoryPercent ?? 0}%
+          {/* Cell 2: Memory */}
+          <div className="p-5 flex flex-col justify-between space-y-3.5 hover:bg-[var(--surface-hover)]/30 transition-colors">
+            <div className="flex items-center justify-between text-xs">
+              <span className="font-medium text-[var(--muted)]">
+                {effectiveMode === "usage" ? "Memory Utilization" : "Memory Reserved"}
+              </span>
+              <span className="font-mono text-[var(--muted)] tabular-nums">
+                {clusterOverview?.totalMemoryGiB ?? 0} GiB Total
               </span>
             </div>
 
-            {/* Precision 2px Barometer */}
-            <div className="w-full h-1 bg-black/10 dark:bg-white/10 rounded-full overflow-hidden mt-3">
-              <div
-                className={cn(
-                  "h-full rounded-full transition-all duration-500 motion-reduce:transition-none",
-                  (clusterOverview?.memoryPercent ?? 0) > 85
-                    ? "bg-rose-500"
-                    : (clusterOverview?.memoryPercent ?? 0) > 70
-                    ? "bg-amber-500"
-                    : "bg-emerald-500 dark:bg-emerald-400"
+            <div>
+              <div className="flex items-baseline gap-2">
+                <span className="text-2xl sm:text-3xl font-bold font-mono text-[var(--foreground)] tracking-tight tabular-nums">
+                  {effectiveMode === "usage"
+                    ? `${clusterOverview?.memoryUsagePercent ?? 0}%`
+                    : `${clusterOverview?.memoryPercent ?? 0}%`}
+                </span>
+                {effectiveMode === "usage" && (
+                  <span className="text-xs text-[var(--muted)] font-mono tabular-nums">
+                    ({clusterOverview?.usedMemoryGiB ?? 0} GiB)
+                  </span>
                 )}
-                style={{ width: `${Math.min(100, clusterOverview?.memoryPercent ?? 0)}%` }}
-              />
+              </div>
+
+              {/* Precision Barometer */}
+              <div className="w-full h-1 bg-black/10 dark:bg-white/10 rounded-full overflow-hidden mt-3">
+                <div
+                  className={cn(
+                    "h-full rounded-full transition-all duration-500 motion-reduce:transition-none",
+                    (effectiveMode === "usage" ? (clusterOverview?.memoryUsagePercent ?? 0) : (clusterOverview?.memoryPercent ?? 0)) > 85
+                      ? "bg-rose-500"
+                      : (effectiveMode === "usage" ? (clusterOverview?.memoryUsagePercent ?? 0) : (clusterOverview?.memoryPercent ?? 0)) > 70
+                      ? "bg-amber-500"
+                      : "bg-emerald-500 dark:bg-emerald-400"
+                  )}
+                  style={{
+                    width: `${Math.min(
+                      100,
+                      effectiveMode === "usage"
+                        ? clusterOverview?.memoryUsagePercent ?? 0
+                        : clusterOverview?.memoryPercent ?? 0
+                    )}%`,
+                  }}
+                />
+              </div>
+            </div>
+
+            <div className="pt-2.5 border-t border-[var(--border)]/60 flex items-center justify-between text-xs text-[var(--muted)] font-mono">
+              <span className="tabular-nums">
+                {effectiveMode === "usage" ? (
+                  <>
+                    <strong className="text-[var(--foreground)] font-semibold">{clusterOverview?.usedMemoryGiB ?? 0} GiB</strong> Used
+                    {hasMetrics && ` · Req ${clusterOverview?.allocatedMemoryGiB ?? 0} GiB (${clusterOverview?.memoryPercent ?? 0}%)`}
+                  </>
+                ) : (
+                  <>
+                    <strong className="text-[var(--foreground)] font-semibold">{clusterOverview?.allocatedMemoryGiB ?? 0} GiB</strong> Reserved
+                    {hasMetrics && ` · Live ${clusterOverview?.usedMemoryGiB ?? 0} GiB (${clusterOverview?.memoryUsagePercent ?? 0}%)`}
+                  </>
+                )}
+              </span>
+              <span
+                className={cn(
+                  "font-semibold text-xs",
+                  (effectiveMode === "usage" ? (clusterOverview?.memoryUsagePercent ?? 0) : (clusterOverview?.memoryPercent ?? 0)) > 85
+                    ? "text-rose-600 dark:text-rose-400"
+                    : (effectiveMode === "usage" ? (clusterOverview?.memoryUsagePercent ?? 0) : (clusterOverview?.memoryPercent ?? 0)) > 70
+                    ? "text-amber-600 dark:text-amber-400"
+                    : "text-emerald-600 dark:text-emerald-400"
+                )}
+              >
+                {(effectiveMode === "usage" ? (clusterOverview?.memoryUsagePercent ?? 0) : (clusterOverview?.memoryPercent ?? 0)) > 85
+                  ? "Critical"
+                  : (effectiveMode === "usage" ? (clusterOverview?.memoryUsagePercent ?? 0) : (clusterOverview?.memoryPercent ?? 0)) > 70
+                  ? "High Load"
+                  : "Optimal"}
+              </span>
             </div>
           </div>
 
-          <div className="pt-2.5 border-t border-[var(--border)]/60 flex items-center justify-between text-xs text-[var(--muted)] font-mono">
-            <span className="tabular-nums">{clusterOverview?.allocatedMemoryGiB ?? 0} GiB Reserved</span>
-            <span
-              className={cn(
-                "font-semibold text-xs",
-                (clusterOverview?.memoryPercent ?? 0) > 85
-                  ? "text-rose-600 dark:text-rose-400"
-                  : (clusterOverview?.memoryPercent ?? 0) > 70
-                  ? "text-amber-600 dark:text-amber-400"
-                  : "text-emerald-600 dark:text-emerald-400"
-              )}
-            >
-              {(clusterOverview?.memoryPercent ?? 0) > 85 ? "Critical" : (clusterOverview?.memoryPercent ?? 0) > 70 ? "High Load" : "Optimal"}
-            </span>
-          </div>
-        </div>
 
         {/* Cell 3: Pod Fleet Density */}
         <div
@@ -428,6 +550,7 @@ export function ClusterOverviewView() {
           </div>
         </div>
       </div>
+    </div>
 
       {/* 3. Node Topology & Infrastructure (Architectural Layout & Typographic Rhythm) */}
       <div id="cluster-nodes-section" className="space-y-3.5 scroll-mt-6">
@@ -513,9 +636,13 @@ export function ClusterOverviewView() {
                     cpuCapacity: n.cpuCapacity,
                     cpuAllocated: n.cpuAllocated,
                     cpuPercent: n.cpuPercent,
+                    cpuUsage: n.cpuUsage,
+                    cpuUsagePercent: n.cpuUsagePercent,
                     memoryCapacity: n.memoryCapacity,
                     memoryAllocated: n.memoryAllocated,
                     memoryPercent: n.memoryPercent,
+                    memoryUsage: n.memoryUsage,
+                    memoryUsagePercent: n.memoryUsagePercent,
                     podCapacity: n.podCapacity,
                     activePods: n.activePods,
                   },
@@ -527,7 +654,7 @@ export function ClusterOverviewView() {
                   key={n.name}
                   role="button"
                   tabIndex={0}
-                  aria-label={`Node ${n.name}, status ${n.status}, CPU ${n.cpuPercent} percent, memory ${n.memoryPercent} percent. Press Enter or Space to inspect.`}
+                  aria-label={`Node ${n.name}, status ${n.status}, CPU ${effectiveMode === "usage" && n.cpuUsage ? n.cpuUsagePercent : n.cpuPercent} percent, memory ${effectiveMode === "usage" && n.memoryUsage ? n.memoryUsagePercent : n.memoryPercent} percent. Press Enter or Space to inspect.`}
                   onClick={openNodeInspector}
                   onKeyDown={(e) => {
                     if (e.key === "Enter" || e.key === " ") {
@@ -568,6 +695,12 @@ export function ClusterOverviewView() {
                       >
                         {n.status}
                       </span>
+                      {hasMetrics && n.cpuUsage && (
+                        <span className="px-1.5 py-0.5 rounded text-[11px] font-mono font-medium bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20 flex items-center gap-1">
+                          <span className="w-1 h-1 rounded-full bg-emerald-500 animate-pulse motion-reduce:animate-none" />
+                          Live
+                        </span>
+                      )}
                     </div>
 
                     <span className="px-2 py-0.5 rounded text-[11px] font-mono font-medium bg-[var(--surface-hover)] text-[var(--muted)] border border-[var(--border)] shrink-0">
@@ -581,40 +714,75 @@ export function ClusterOverviewView() {
                     <span>{n.architecture} &bull; {n.version}</span>
                   </div>
 
-                  {/* Precision Allocation Rhythms */}
+                  {/* Precision Allocation & Telemetry Rhythms */}
                   <div className="space-y-3 font-mono text-xs">
                     {/* CPU Barometer */}
                     <div className="space-y-1">
                       <div className="flex items-center justify-between text-xs">
-                        <span className="text-[var(--muted)]">CPU Allocation</span>
-                        <div className="flex items-center gap-1.5">
-                          <span className="text-[var(--foreground)] tabular-nums">{n.cpuAllocated ? n.cpuAllocated.replace(/\s*\(\d+%\)/, "") : "0"}</span>
-                          <span className="text-[var(--muted)]">/ {n.cpuCapacity}</span>
-                          <span
-                            className={cn(
-                              "font-semibold text-xs ml-1 tabular-nums",
-                              n.cpuPercent > 85
-                                ? "text-rose-600 dark:text-rose-400"
-                                : n.cpuPercent > 70
-                                ? "text-amber-600 dark:text-amber-400"
-                                : "text-[var(--foreground)]"
-                            )}
-                          >
-                            {n.cpuPercent}%
-                          </span>
+                        <span className="text-[var(--muted)]">
+                          {effectiveMode === "usage" && n.cpuUsage ? "CPU Usage (Live)" : "CPU Allocation"}
+                        </span>
+                        <div className="flex items-center gap-1 text-xs">
+                          {effectiveMode === "usage" && n.cpuUsage ? (
+                            <>
+                              <span className="text-[var(--foreground)] font-bold tabular-nums">{n.cpuUsage}</span>
+                              <span
+                                className={cn(
+                                  "font-semibold tabular-nums",
+                                  (n.cpuUsagePercent ?? 0) > 85
+                                    ? "text-rose-600 dark:text-rose-400"
+                                    : (n.cpuUsagePercent ?? 0) > 70
+                                    ? "text-amber-600 dark:text-amber-400"
+                                    : "text-emerald-600 dark:text-emerald-400"
+                                )}
+                              >
+                                ({n.cpuUsagePercent ?? 0}%)
+                              </span>
+                              <span className="text-[var(--muted)] text-[11px] ml-1">
+                                · Req {cleanAlloc(n.cpuAllocated)} ({n.cpuPercent}%)
+                              </span>
+                            </>
+                          ) : (
+                            <>
+                              <span className="text-[var(--foreground)] tabular-nums">{cleanAlloc(n.cpuAllocated)}</span>
+                              <span className="text-[var(--muted)]">/ {n.cpuCapacity}</span>
+                              <span
+                                className={cn(
+                                  "font-semibold tabular-nums ml-1",
+                                  n.cpuPercent > 85
+                                    ? "text-rose-600 dark:text-rose-400"
+                                    : n.cpuPercent > 70
+                                    ? "text-amber-600 dark:text-amber-400"
+                                    : "text-[var(--foreground)]"
+                                )}
+                              >
+                                {n.cpuPercent}%
+                              </span>
+                              {n.cpuUsage && (
+                                <span className="text-[var(--muted)] text-[11px] ml-1">
+                                  · Live {n.cpuUsage} ({n.cpuUsagePercent ?? 0}%)
+                                </span>
+                              )}
+                            </>
+                          )}
                         </div>
                       </div>
                       <div className="w-full h-1 bg-black/10 dark:bg-white/10 rounded-full overflow-hidden">
                         <div
                           className={cn(
                             "h-full rounded-full transition-all duration-500 motion-reduce:transition-none",
-                            n.cpuPercent > 85
+                            (effectiveMode === "usage" && n.cpuUsage ? (n.cpuUsagePercent ?? 0) : n.cpuPercent) > 85
                               ? "bg-rose-500"
-                              : n.cpuPercent > 70
+                              : (effectiveMode === "usage" && n.cpuUsage ? (n.cpuUsagePercent ?? 0) : n.cpuPercent) > 70
                               ? "bg-amber-500"
                               : "bg-emerald-500 dark:bg-emerald-400"
                           )}
-                          style={{ width: `${Math.min(100, n.cpuPercent)}%` }}
+                          style={{
+                            width: `${Math.min(
+                              100,
+                              effectiveMode === "usage" && n.cpuUsage ? (n.cpuUsagePercent ?? 0) : n.cpuPercent
+                            )}%`,
+                          }}
                         />
                       </div>
                     </div>
@@ -622,35 +790,70 @@ export function ClusterOverviewView() {
                     {/* Memory Barometer */}
                     <div className="space-y-1">
                       <div className="flex items-center justify-between text-xs">
-                        <span className="text-[var(--muted)]">Memory Reserved</span>
-                        <div className="flex items-center gap-1.5">
-                          <span className="text-[var(--foreground)] tabular-nums">{n.memoryAllocated ? n.memoryAllocated.replace(/\s*\(\d+%\)/, "") : "0"}</span>
-                          <span className="text-[var(--muted)]">/ {n.memoryCapacity}</span>
-                          <span
-                            className={cn(
-                              "font-semibold text-xs ml-1 tabular-nums",
-                              n.memoryPercent > 85
-                                ? "text-rose-600 dark:text-rose-400"
-                                : n.memoryPercent > 70
-                                ? "text-amber-600 dark:text-amber-400"
-                                : "text-[var(--foreground)]"
-                            )}
-                          >
-                            {n.memoryPercent}%
-                          </span>
+                        <span className="text-[var(--muted)]">
+                          {effectiveMode === "usage" && n.memoryUsage ? "Memory Usage (Live)" : "Memory Reserved"}
+                        </span>
+                        <div className="flex items-center gap-1 text-xs">
+                          {effectiveMode === "usage" && n.memoryUsage ? (
+                            <>
+                              <span className="text-[var(--foreground)] font-bold tabular-nums">{n.memoryUsage}</span>
+                              <span
+                                className={cn(
+                                  "font-semibold tabular-nums",
+                                  (n.memoryUsagePercent ?? 0) > 85
+                                    ? "text-rose-600 dark:text-rose-400"
+                                    : (n.memoryUsagePercent ?? 0) > 70
+                                    ? "text-amber-600 dark:text-amber-400"
+                                    : "text-emerald-600 dark:text-emerald-400"
+                                )}
+                              >
+                                ({n.memoryUsagePercent ?? 0}%)
+                              </span>
+                              <span className="text-[var(--muted)] text-[11px] ml-1">
+                                · Req {cleanAlloc(n.memoryAllocated)} ({n.memoryPercent}%)
+                              </span>
+                            </>
+                          ) : (
+                            <>
+                              <span className="text-[var(--foreground)] tabular-nums">{cleanAlloc(n.memoryAllocated)}</span>
+                              <span className="text-[var(--muted)]">/ {n.memoryCapacity}</span>
+                              <span
+                                className={cn(
+                                  "font-semibold tabular-nums ml-1",
+                                  n.memoryPercent > 85
+                                    ? "text-rose-600 dark:text-rose-400"
+                                    : n.memoryPercent > 70
+                                    ? "text-amber-600 dark:text-amber-400"
+                                    : "text-[var(--foreground)]"
+                                )}
+                              >
+                                {n.memoryPercent}%
+                              </span>
+                              {n.memoryUsage && (
+                                <span className="text-[var(--muted)] text-[11px] ml-1">
+                                  · Live {n.memoryUsage} ({n.memoryUsagePercent ?? 0}%)
+                                </span>
+                              )}
+                            </>
+                          )}
                         </div>
                       </div>
                       <div className="w-full h-1 bg-black/10 dark:bg-white/10 rounded-full overflow-hidden">
                         <div
                           className={cn(
                             "h-full rounded-full transition-all duration-500 motion-reduce:transition-none",
-                            n.memoryPercent > 85
+                            (effectiveMode === "usage" && n.memoryUsage ? (n.memoryUsagePercent ?? 0) : n.memoryPercent) > 85
                               ? "bg-rose-500"
-                              : n.memoryPercent > 70
+                              : (effectiveMode === "usage" && n.memoryUsage ? (n.memoryUsagePercent ?? 0) : n.memoryPercent) > 70
                               ? "bg-amber-500"
                               : "bg-emerald-500 dark:bg-emerald-400"
                           )}
-                          style={{ width: `${Math.min(100, n.memoryPercent)}%` }}
+                          style={{
+                            width: `${Math.min(
+                              100,
+                              effectiveMode === "usage" && n.memoryUsage ? (n.memoryUsagePercent ?? 0) : n.memoryPercent
+                            )}%`,
+                          }}
                         />
                       </div>
                     </div>
@@ -706,8 +909,10 @@ export function ClusterOverviewView() {
                     <th className="py-2.5 px-3 font-medium">Status</th>
                     <th className="py-2.5 px-3 font-medium">Roles</th>
                     <th className="py-2.5 px-3 font-medium">Internal IP</th>
-                    <th className="py-2.5 px-3 font-medium text-right">CPU Alloc</th>
-                    <th className="py-2.5 px-3 font-medium text-right">RAM Alloc</th>
+                    <th className="py-2.5 px-3 font-medium text-right">CPU Live</th>
+                    <th className="py-2.5 px-3 font-medium text-right">CPU Req</th>
+                    <th className="py-2.5 px-3 font-medium text-right">RAM Live</th>
+                    <th className="py-2.5 px-3 font-medium text-right">RAM Req</th>
                     <th className="py-2.5 px-3 font-medium text-right">Pods</th>
                     <th className="py-2.5 px-3 font-medium">Version</th>
                     <th className="py-2.5 px-3.5 font-medium text-right">Action</th>
@@ -734,9 +939,13 @@ export function ClusterOverviewView() {
                           cpuCapacity: n.cpuCapacity,
                           cpuAllocated: n.cpuAllocated,
                           cpuPercent: n.cpuPercent,
+                          cpuUsage: n.cpuUsage,
+                          cpuUsagePercent: n.cpuUsagePercent,
                           memoryCapacity: n.memoryCapacity,
                           memoryAllocated: n.memoryAllocated,
                           memoryPercent: n.memoryPercent,
+                          memoryUsage: n.memoryUsage,
+                          memoryUsagePercent: n.memoryUsagePercent,
                           podCapacity: n.podCapacity,
                           activePods: n.activePods,
                         },
@@ -788,13 +997,23 @@ export function ClusterOverviewView() {
                         </td>
                         <td className="py-3 px-3 text-[var(--foreground)]">{n.internalIP}</td>
                         <td className="py-3 px-3 text-right">
-                          <span className="tabular-nums text-[var(--foreground)] font-medium">
-                            {n.cpuAllocated ? n.cpuAllocated.replace(/\s*\(\d+%\)/, "") : "0"} ({n.cpuPercent}%)
+                          <span className="tabular-nums font-semibold text-emerald-600 dark:text-emerald-400">
+                            {n.cpuUsage ? `${n.cpuUsage} (${n.cpuUsagePercent ?? 0}%)` : "-"}
                           </span>
                         </td>
                         <td className="py-3 px-3 text-right">
                           <span className="tabular-nums text-[var(--foreground)] font-medium">
-                            {n.memoryAllocated ? n.memoryAllocated.replace(/\s*\(\d+%\)/, "") : "0"} ({n.memoryPercent}%)
+                            {cleanAlloc(n.cpuAllocated)} ({n.cpuPercent}%)
+                          </span>
+                        </td>
+                        <td className="py-3 px-3 text-right">
+                          <span className="tabular-nums font-semibold text-emerald-600 dark:text-emerald-400">
+                            {n.memoryUsage ? `${n.memoryUsage} (${n.memoryUsagePercent ?? 0}%)` : "-"}
+                          </span>
+                        </td>
+                        <td className="py-3 px-3 text-right">
+                          <span className="tabular-nums text-[var(--foreground)] font-medium">
+                            {cleanAlloc(n.memoryAllocated)} ({n.memoryPercent}%)
                           </span>
                         </td>
                         <td className="py-3 px-3 text-right">

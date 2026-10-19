@@ -675,86 +675,158 @@ export function ResourceInspectorDrawer() {
               };
 
               return (
-                <div className="p-4 rounded-xl bg-[var(--surface)] border border-[var(--border)] space-y-4">
-                  <span className="text-[10px] font-semibold text-[var(--muted)] uppercase tracking-wider block font-mono">
-                    Resource Allocations
-                  </span>
-
-                  {/* CPU Allocation */}
-                  <div className="space-y-1.5 font-mono">
-                    <div className="flex items-center justify-between text-xs">
-                      <span className="text-[var(--foreground)] font-medium flex items-center gap-1.5">
-                        <Cpu className="w-3.5 h-3.5 text-[var(--muted)]" aria-hidden="true" />
-                        <span>CPU Requested</span>
-                      </span>
-                      <div className="flex items-center gap-1 text-[11px]">
-                        <span className="text-[var(--foreground)] tabular-nums">{cleanAlloc(nodeData.cpuAllocated)}</span>
-                        <span className="text-[var(--muted)]">/ {nodeData.cpuCapacity}</span>
-                        <span className={cn("font-semibold text-xs ml-1.5", getTextColor(cpuNum))}>
-                          {cpuNum}%
+                <div className="space-y-4">
+                  {/* 1. Real-Time Telemetry from Metrics Server (kubectl top) */}
+                  {(nodeData.cpuUsage || nodeData.memoryUsage) && (
+                    <div className="p-4 rounded-xl bg-[var(--surface)] border border-[var(--border)] space-y-4">
+                      <div className="flex items-center justify-between">
+                        <span className="text-[10px] font-semibold text-[var(--muted)] uppercase tracking-wider block font-mono">
+                          Live Telemetry (metrics-server)
+                        </span>
+                        <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[10px] font-mono font-medium bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20">
+                          <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse motion-reduce:animate-none" />
+                          kubectl top node
                         </span>
                       </div>
-                    </div>
-                    <div className="h-1.5 rounded-full bg-black/10 dark:bg-white/10 overflow-hidden">
-                      <div
-                        className={cn(
-                          "h-full rounded-full transition-all duration-500 motion-reduce:transition-none",
-                          getGaugeColor(cpuNum)
-                        )}
-                        style={{ width: `${Math.min(100, Math.max(0, cpuNum))}%` }}
-                      />
-                    </div>
-                  </div>
 
-                  {/* Memory Allocation */}
-                  <div className="space-y-1.5 font-mono">
-                    <div className="flex items-center justify-between text-xs">
-                      <span className="text-[var(--foreground)] font-medium flex items-center gap-1.5">
-                        <Activity className="w-3.5 h-3.5 text-[var(--muted)]" aria-hidden="true" />
-                        <span>Memory Requested</span>
-                      </span>
-                      <div className="flex items-center gap-1 text-[11px]">
-                        <span className="text-[var(--foreground)] tabular-nums">{cleanAlloc(nodeData.memoryAllocated)}</span>
-                        <span className="text-[var(--muted)]">/ {nodeData.memoryCapacity}</span>
-                        <span className={cn("font-semibold text-xs ml-1.5", getTextColor(memNum))}>
-                          {memNum}%
-                        </span>
+                      {/* Live CPU Usage */}
+                      <div className="space-y-1.5 font-mono">
+                        <div className="flex items-center justify-between text-xs">
+                          <span className="text-[var(--foreground)] font-medium flex items-center gap-1.5">
+                            <Cpu className="w-3.5 h-3.5 text-emerald-500" aria-hidden="true" />
+                            <span>CPU Live Usage</span>
+                          </span>
+                          <div className="flex items-center gap-1.5 text-[11px]">
+                            <span className="text-[var(--foreground)] font-bold tabular-nums">
+                              {nodeData.cpuUsage || "-"}
+                            </span>
+                            <span className={cn("font-semibold text-xs ml-1 tabular-nums", getTextColor(nodeData.cpuUsagePercent ?? 0))}>
+                              ({nodeData.cpuUsagePercent ?? 0}%)
+                            </span>
+                          </div>
+                        </div>
+                        <div className="h-1.5 rounded-full bg-black/10 dark:bg-white/10 overflow-hidden">
+                          <div
+                            className={cn(
+                              "h-full rounded-full transition-all duration-500 motion-reduce:transition-none",
+                              getGaugeColor(nodeData.cpuUsagePercent ?? 0)
+                            )}
+                            style={{ width: `${Math.min(100, Math.max(0, nodeData.cpuUsagePercent ?? 0))}%` }}
+                          />
+                        </div>
+                      </div>
+
+                      {/* Live Memory Usage */}
+                      <div className="space-y-1.5 font-mono">
+                        <div className="flex items-center justify-between text-xs">
+                          <span className="text-[var(--foreground)] font-medium flex items-center gap-1.5">
+                            <Activity className="w-3.5 h-3.5 text-emerald-500" aria-hidden="true" />
+                            <span>Memory Live Usage</span>
+                          </span>
+                          <div className="flex items-center gap-1.5 text-[11px]">
+                            <span className="text-[var(--foreground)] font-bold tabular-nums">
+                              {nodeData.memoryUsage || "-"}
+                            </span>
+                            <span className={cn("font-semibold text-xs ml-1 tabular-nums", getTextColor(nodeData.memoryUsagePercent ?? 0))}>
+                              ({nodeData.memoryUsagePercent ?? 0}%)
+                            </span>
+                          </div>
+                        </div>
+                        <div className="h-1.5 rounded-full bg-black/10 dark:bg-white/10 overflow-hidden">
+                          <div
+                            className={cn(
+                              "h-full rounded-full transition-all duration-500 motion-reduce:transition-none",
+                              getGaugeColor(nodeData.memoryUsagePercent ?? 0)
+                            )}
+                            style={{ width: `${Math.min(100, Math.max(0, nodeData.memoryUsagePercent ?? 0))}%` }}
+                          />
+                        </div>
                       </div>
                     </div>
-                    <div className="h-1.5 rounded-full bg-black/10 dark:bg-white/10 overflow-hidden">
-                      <div
-                        className={cn(
-                          "h-full rounded-full transition-all duration-500 motion-reduce:transition-none",
-                          getGaugeColor(memNum)
-                        )}
-                        style={{ width: `${Math.min(100, Math.max(0, memNum))}%` }}
-                      />
-                    </div>
-                  </div>
+                  )}
 
-                  {/* Pod Density */}
-                  <div className="space-y-1.5 font-mono">
-                    <div className="flex items-center justify-between text-xs">
-                      <span className="text-[var(--foreground)] font-medium flex items-center gap-1.5">
-                        <Box className="w-3.5 h-3.5 text-[var(--muted)]" aria-hidden="true" />
-                        <span>Pod Density</span>
-                      </span>
-                      <div className="flex items-center gap-1 text-[11px]">
-                        <span className="text-[var(--foreground)] tabular-nums">{nodeData.activePods}</span>
-                        <span className="text-[var(--muted)]">/ {podCap}</span>
-                        <span className={cn("font-semibold text-xs ml-1.5", getTextColor(podNum))}>
-                          {podNum}%
+                  {/* 2. Scheduled Resource Allocations (Pod Requests) */}
+                  <div className="p-4 rounded-xl bg-[var(--surface)] border border-[var(--border)] space-y-4">
+                    <span className="text-[10px] font-semibold text-[var(--muted)] uppercase tracking-wider block font-mono">
+                      Scheduled Pod Allocations (Requests)
+                    </span>
+
+                    {/* CPU Allocation */}
+                    <div className="space-y-1.5 font-mono">
+                      <div className="flex items-center justify-between text-xs">
+                        <span className="text-[var(--foreground)] font-medium flex items-center gap-1.5">
+                          <Cpu className="w-3.5 h-3.5 text-[var(--muted)]" aria-hidden="true" />
+                          <span>CPU Requested</span>
                         </span>
+                        <div className="flex items-center gap-1 text-[11px]">
+                          <span className="text-[var(--foreground)] tabular-nums">{cleanAlloc(nodeData.cpuAllocated)}</span>
+                          <span className="text-[var(--muted)]">/ {nodeData.cpuCapacity}</span>
+                          <span className={cn("font-semibold text-xs ml-1.5", getTextColor(cpuNum))}>
+                            {cpuNum}%
+                          </span>
+                        </div>
+                      </div>
+                      <div className="h-1.5 rounded-full bg-black/10 dark:bg-white/10 overflow-hidden">
+                        <div
+                          className={cn(
+                            "h-full rounded-full transition-all duration-500 motion-reduce:transition-none",
+                            getGaugeColor(cpuNum)
+                          )}
+                          style={{ width: `${Math.min(100, Math.max(0, cpuNum))}%` }}
+                        />
                       </div>
                     </div>
-                    <div className="h-1.5 rounded-full bg-black/10 dark:bg-white/10 overflow-hidden">
-                      <div
-                        className={cn(
-                          "h-full rounded-full transition-all duration-500 motion-reduce:transition-none",
-                          getGaugeColor(podNum)
-                        )}
-                        style={{ width: `${Math.min(100, Math.max(0, podNum))}%` }}
-                      />
+
+                    {/* Memory Allocation */}
+                    <div className="space-y-1.5 font-mono">
+                      <div className="flex items-center justify-between text-xs">
+                        <span className="text-[var(--foreground)] font-medium flex items-center gap-1.5">
+                          <Activity className="w-3.5 h-3.5 text-[var(--muted)]" aria-hidden="true" />
+                          <span>Memory Reserved</span>
+                        </span>
+                        <div className="flex items-center gap-1 text-[11px]">
+                          <span className="text-[var(--foreground)] tabular-nums">{cleanAlloc(nodeData.memoryAllocated)}</span>
+                          <span className="text-[var(--muted)]">/ {nodeData.memoryCapacity}</span>
+                          <span className={cn("font-semibold text-xs ml-1.5", getTextColor(memNum))}>
+                            {memNum}%
+                          </span>
+                        </div>
+                      </div>
+                      <div className="h-1.5 rounded-full bg-black/10 dark:bg-white/10 overflow-hidden">
+                        <div
+                          className={cn(
+                            "h-full rounded-full transition-all duration-500 motion-reduce:transition-none",
+                            getGaugeColor(memNum)
+                          )}
+                          style={{ width: `${Math.min(100, Math.max(0, memNum))}%` }}
+                        />
+                      </div>
+                    </div>
+
+                    {/* Pod Density */}
+                    <div className="space-y-1.5 font-mono">
+                      <div className="flex items-center justify-between text-xs">
+                        <span className="text-[var(--foreground)] font-medium flex items-center gap-1.5">
+                          <Box className="w-3.5 h-3.5 text-[var(--muted)]" aria-hidden="true" />
+                          <span>Pod Density</span>
+                        </span>
+                        <div className="flex items-center gap-1 text-[11px]">
+                          <span className="text-[var(--foreground)] tabular-nums">{nodeData.activePods}</span>
+                          <span className="text-[var(--muted)]">/ {podCap}</span>
+                          <span className={cn("font-semibold text-xs ml-1.5", getTextColor(podNum))}>
+                            {podNum}%
+                          </span>
+                        </div>
+                      </div>
+                      <div className="h-1.5 rounded-full bg-black/10 dark:bg-white/10 overflow-hidden">
+                        <div
+                          className={cn(
+                            "h-full rounded-full transition-all duration-500 motion-reduce:transition-none",
+                            getGaugeColor(podNum)
+                          )}
+                          style={{ width: `${Math.min(100, Math.max(0, podNum))}%` }}
+                        />
+                      </div>
                     </div>
                   </div>
                 </div>
