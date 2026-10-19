@@ -602,15 +602,22 @@ export function ResourceInspectorDrawer() {
                 <div>
                   <span className="text-[var(--muted)] block text-[10px]">Role</span>
                   <div className="flex flex-wrap gap-1 mt-0.5">
-                    {nodeData.roles && nodeData.roles.length > 0 ? (
-                      nodeData.roles.map((role) => (
-                        <span key={role} className="px-1.5 py-0.5 rounded text-[10px] font-mono bg-[var(--surface-active)] text-[var(--foreground)] border border-[var(--border)]">
-                          {role}
-                        </span>
-                      ))
-                    ) : (
-                      <span className="font-mono text-[var(--foreground)]">worker</span>
-                    )}
+                    {(() => {
+                      const rolesList = Array.isArray(nodeData.roles)
+                        ? nodeData.roles
+                        : typeof nodeData.roles === "string"
+                        ? (nodeData.roles as string).split(",").map((r) => r.trim()).filter(Boolean)
+                        : [];
+                      return rolesList.length > 0 ? (
+                        rolesList.map((role: string) => (
+                          <span key={role} className="px-1.5 py-0.5 rounded text-[10px] font-mono bg-[var(--surface-active)] text-[var(--foreground)] border border-[var(--border)]">
+                            {role}
+                          </span>
+                        ))
+                      ) : (
+                        <span className="font-mono text-[var(--foreground)]">worker</span>
+                      );
+                    })()}
                   </div>
                 </div>
                 <div>
