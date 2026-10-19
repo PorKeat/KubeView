@@ -35,6 +35,7 @@ type ImportDetectedContextItem struct {
 	ContextName    string `json:"contextName"`
 	FilePath       string `json:"filePath"`
 	OverrideServer string `json:"overrideServer,omitempty"`
+	Insecure       *bool  `json:"insecure,omitempty"`
 }
 
 type ImportDetectedContextsParams struct {
@@ -278,6 +279,11 @@ func (m *Manager) ImportDetectedContexts(params ImportDetectedContextsParams) (*
 					}
 				}
 				clCopy.Server = newSrv
+			}
+			if item.Insecure != nil && *item.Insecure {
+				clCopy.InsecureSkipTLSVerify = true
+				clCopy.CertificateAuthorityData = nil
+				clCopy.CertificateAuthority = ""
 			}
 			singleCfg.Clusters[targetClusterName] = &clCopy
 		}

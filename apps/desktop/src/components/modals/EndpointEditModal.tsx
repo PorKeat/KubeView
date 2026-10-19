@@ -32,6 +32,7 @@ export function EndpointEditModal() {
   } = useClusterStore();
 
   const [inputVal, setInputVal] = React.useState("");
+  const [skipTLS, setSkipTLS] = React.useState(false);
   const [isSaving, setIsSaving] = React.useState(false);
   const [copiedHosts, setCopiedHosts] = React.useState(false);
 
@@ -69,6 +70,7 @@ export function EndpointEditModal() {
   React.useEffect(() => {
     if (isEndpointModalOpen) {
       setInputVal(endpointModalCurrentServer || "");
+      setSkipTLS(false);
     }
   }, [isEndpointModalOpen, endpointModalCurrentServer]);
 
@@ -84,7 +86,7 @@ export function EndpointEditModal() {
     if (!resolvedServer || !endpointModalContextName) return;
     setIsSaving(true);
     try {
-      await updateEndpoint(endpointModalContextName, resolvedServer);
+      await updateEndpoint(endpointModalContextName, resolvedServer, skipTLS);
       if (autoSwitch) {
         await switchContext(endpointModalContextName);
       }
@@ -210,6 +212,19 @@ export function EndpointEditModal() {
                 <span className="text-[var(--muted)]">Resulting Target:</span>
                 <span className="font-mono text-[#F08A42] font-semibold">{resolvedServer}</span>
               </div>
+
+              {/* Skip TLS Verify Toggle */}
+              <label className="flex items-center gap-2 pt-1 text-xs text-[var(--foreground)] cursor-pointer select-none">
+                <input
+                  type="checkbox"
+                  checked={skipTLS}
+                  onChange={(e) => setSkipTLS(e.target.checked)}
+                  className="rounded border-[var(--border)] text-[#F08A42] focus:ring-0 focus:ring-offset-0 cursor-pointer accent-[#F08A42]"
+                />
+                <span className="text-[11px] text-[var(--muted)]">
+                  Skip TLS certificate verification (<code className="font-mono text-[10px] text-[#F08A42]">insecure-skip-tls-verify</code>)
+                </span>
+              </label>
             </div>
 
             {/* Optional /etc/hosts tip */}

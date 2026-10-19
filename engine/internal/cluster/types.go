@@ -45,6 +45,7 @@ type ListContextsResult struct {
 // SwitchContextParams specifies the new context to activate
 type SwitchContextParams struct {
 	ContextName string `json:"contextName"`
+	Context     string `json:"context,omitempty"`
 }
 
 // SwitchContextResult returned after activating a context
@@ -57,6 +58,7 @@ type SwitchContextResult struct {
 // ListNamespacesParams for listing namespaces in the active or requested context
 type ListNamespacesParams struct {
 	ContextName string `json:"contextName,omitempty"`
+	Context     string `json:"context,omitempty"`
 }
 
 // ListNamespacesResult returned to caller

@@ -63,19 +63,32 @@ export function OfflineState({ className }: { className?: string }) {
     return ips;
   }, [availableContexts, currentContext]);
 
+  const [skipTLS, setSkipTLS] = React.useState(false);
+
   React.useEffect(() => {
     setCustomEndpoint(serverUrl);
+    setSkipTLS(false);
   }, [serverUrl]);
 
-  const handleSaveEndpoint = async (targetEndpoint?: string) => {
+  const handleSaveEndpoint = async (targetEndpoint?: string, forceInsecure?: boolean) => {
     const raw = (targetEndpoint || customEndpoint).trim();
     if (!raw) return;
     const finalEndpoint = replaceEndpointHost(serverUrl, raw);
     setIsUpdatingEndpoint(true);
+    const shouldUseInsecure = forceInsecure ?? skipTLS;
     try {
-      await updateEndpoint(currentContext, finalEndpoint);
+      await updateEndpoint(currentContext, finalEndpoint, shouldUseInsecure);
       setCustomEndpoint(finalEndpoint);
-      toast.success("Updated cluster API server endpoint");
+      toast.info(`Connecting to ${finalEndpoint}...`);
+      await switchContext(currentContext);
+      const res = await diagnoseContext(currentContext);
+      if (res?.status === "connected") {
+        toast.success(`Connected to cluster! (${res.latencyMs}ms)`);
+      } else if (res?.status === "degraded") {
+        toast.warning("Connected with restricted permissions.");
+      } else {
+        toast.error(`Connection failed: ${res?.remediation || "Check node IP & network"}`);
+      }
     } catch (err: any) {
       toast.error(`Update failed: ${err.message || err}`);
     } finally {
@@ -245,12 +258,42 @@ export function OfflineState({ className }: { className?: string }) {
             />
             <button
               onClick={() => handleSaveEndpoint()}
-              disabled={isUpdatingEndpoint || customEndpoint === serverUrl}
+              disabled={isUpdatingEndpoint}
               className="px-3.5 py-1.5 rounded-lg bg-[#F08A42] hover:bg-[#E07931] disabled:opacity-50 text-white text-xs font-medium cursor-pointer transition-colors whitespace-nowrap"
             >
-              {isUpdatingEndpoint ? "Updating..." : "Save & Reconnect"}
+              {isUpdatingEndpoint ? "Reconnecting..." : "Save & Reconnect"}
             </button>
           </div>
+
+          {/* Skip TLS Toggle */}
+          <label className="flex items-center gap-2 text-xs text-[var(--foreground)] cursor-pointer select-none">
+            <input
+              type="checkbox"
+              checked={skipTLS}
+              onChange={(e) => setSkipTLS(e.target.checked)}
+              className="rounded border-[var(--border)] text-[#F08A42] focus:ring-0 focus:ring-offset-0 cursor-pointer accent-[#F08A42]"
+            />
+            <span className="text-[11px] text-[var(--muted)]">
+              Skip TLS certificate verification (<code className="font-mono text-[10px] text-[#F08A42]">insecure-skip-tls-verify</code>)
+            </span>
+          </label>
+
+          {/* Quick Bypass button if TLS stage failed */}
+          {diagnosticResult?.stages?.tls && !diagnosticResult.stages.tls.passed && (
+            <div className="p-2.5 rounded-lg bg-amber-500/10 border border-amber-500/25 flex items-center justify-between gap-2">
+              <div className="text-[11px] text-amber-600 dark:text-amber-400">
+                <span className="font-semibold">TLS Error:</span> Certificate authority mismatch or untrusted cert.
+              </div>
+              <button
+                type="button"
+                onClick={() => handleSaveEndpoint(undefined, true)}
+                disabled={isUpdatingEndpoint}
+                className="px-2.5 py-1 rounded bg-amber-500/20 hover:bg-amber-500/30 text-amber-700 dark:text-amber-300 text-[11px] font-medium cursor-pointer transition-colors whitespace-nowrap"
+              >
+                Bypass TLS & Connect
+              </button>
+            </div>
+          )}
 
           {suggestedIps.length > 0 && (
             <div className="flex items-center gap-1.5 flex-wrap">

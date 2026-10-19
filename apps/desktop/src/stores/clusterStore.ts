@@ -125,7 +125,7 @@ interface ClusterState {
   detectSystemConfigs: () => Promise<DetectedContextInfo[]>;
   importDetectedContexts: (contexts: ImportDetectedContextItem[]) => Promise<ImportKubeconfigResult>;
   deleteContext: (contextName: string) => Promise<void>;
-  updateEndpoint: (contextName: string, newServer: string) => Promise<void>;
+  updateEndpoint: (contextName: string, newServer: string, insecure?: boolean) => Promise<void>;
   clearAllContexts: () => Promise<void>;
   initEventListener: () => Promise<() => void>;
 }
@@ -529,9 +529,9 @@ export const useClusterStore = create<ClusterState>((set, get) => ({
     }
   },
 
-  updateEndpoint: async (contextName: string, newServer: string) => {
+  updateEndpoint: async (contextName: string, newServer: string, insecure?: boolean) => {
     try {
-      await invokeRpc("clusters.updateEndpoint", { contextName, newServer });
+      await invokeRpc("clusters.updateEndpoint", { contextName, newServer, insecure });
       toast.success(`Updated endpoint for '${contextName}' to ${newServer}`);
       await get().loadContexts();
       if (get().currentContext === contextName) {

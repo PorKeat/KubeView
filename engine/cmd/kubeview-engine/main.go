@@ -79,14 +79,19 @@ func main() {
 			}
 		}
 
-		if p.ContextName == "" {
+		targetCtx := p.ContextName
+		if targetCtx == "" {
+			targetCtx = p.Context
+		}
+
+		if targetCtx == "" {
 			return nil, &ipc.RPCError{
 				Code:    ipc.ErrCodeInvalidParams,
 				Message: "contextName parameter is required",
 			}
 		}
 
-		res, err := mgr.SwitchContext(p.ContextName)
+		res, err := mgr.SwitchContext(targetCtx)
 		if err != nil {
 			return nil, &ipc.RPCError{
 				Code:    ipc.ErrK8sNotFound,
@@ -94,7 +99,7 @@ func main() {
 			}
 		}
 
-		server.Log("Switched active context to: %s", p.ContextName)
+		server.Log("Switched active context to: %s", targetCtx)
 		return res, nil
 	})
 
@@ -180,6 +185,7 @@ func main() {
 		var p struct {
 			ContextName string `json:"contextName"`
 			NewServer   string `json:"newServer"`
+			Insecure    *bool  `json:"insecure,omitempty"`
 		}
 		if err := json.Unmarshal(params, &p); err != nil {
 			return nil, &ipc.RPCError{
@@ -193,13 +199,17 @@ func main() {
 				Message: "contextName and newServer are required",
 			}
 		}
-		if err := mgr.UpdateEndpoint(p.ContextName, p.NewServer); err != nil {
+		var insecureArgs []bool
+		if p.Insecure != nil {
+			insecureArgs = append(insecureArgs, *p.Insecure)
+		}
+		if err := mgr.UpdateEndpoint(p.ContextName, p.NewServer, insecureArgs...); err != nil {
 			return nil, &ipc.RPCError{
 				Code:    ipc.ErrCodeInternalError,
 				Message: err.Error(),
 			}
 		}
-		server.Log("Updated endpoint for context '%s' to '%s'", p.ContextName, p.NewServer)
+		server.Log("Updated endpoint for context '%s' to '%s' (insecure: %v)", p.ContextName, p.NewServer, p.Insecure)
 		return map[string]interface{}{"success": true, "contextName": p.ContextName, "newServer": p.NewServer}, nil
 	})
 
@@ -219,12 +229,16 @@ func main() {
 	server.Register("clusters.diagnose", func(params json.RawMessage) (interface{}, *ipc.RPCError) {
 		var p struct {
 			ContextName string `json:"contextName"`
+			Context     string `json:"context"`
 		}
 		if len(params) > 0 {
 			_ = json.Unmarshal(params, &p)
 		}
 
 		ctxName := p.ContextName
+		if ctxName == "" {
+			ctxName = p.Context
+		}
 		if ctxName == "" {
 			listRes, err := mgr.ListContexts()
 			if err == nil {
@@ -259,10 +273,15 @@ func main() {
 		ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
 		defer cancel()
 
-		namespaces, err := mgr.ListNamespaces(ctx, p.ContextName)
+		targetCtx := p.ContextName
+		if targetCtx == "" {
+			targetCtx = p.Context
+		}
+
+		namespaces, err := mgr.ListNamespaces(ctx, targetCtx)
 		if err != nil {
-			server.Log("Listing namespaces for '%s' returned error (%v); falling back to default context namespace", p.ContextName, err)
-			defaultNs := mgr.GetContextNamespace(p.ContextName)
+			server.Log("Listing namespaces for '%s' returned error (%v); falling back to default context namespace", targetCtx, err)
+			defaultNs := mgr.GetContextNamespace(targetCtx)
 			if defaultNs == "" {
 				defaultNs = "default"
 			}

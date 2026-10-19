@@ -111,10 +111,19 @@ func (m *Manager) ReloadConfig() error {
 			newCtx.Cluster = targetClusterName
 			newCtx.AuthInfo = targetAuthName
 			mergedConfig.Contexts[targetCtxName] = &newCtx
+		}
 
-			if mergedConfig.CurrentContext == "" {
-				mergedConfig.CurrentContext = targetCtxName
+		if mergedConfig.CurrentContext == "" && cfg.CurrentContext != "" {
+			if _, exists := mergedConfig.Contexts[cfg.CurrentContext]; exists {
+				mergedConfig.CurrentContext = cfg.CurrentContext
 			}
+		}
+	}
+
+	if mergedConfig.CurrentContext == "" {
+		for cName := range mergedConfig.Contexts {
+			mergedConfig.CurrentContext = cName
+			break
 		}
 	}
 
@@ -649,7 +658,7 @@ func (m *Manager) ClearAllContexts() error {
 }
 
 // UpdateEndpoint updates the API server endpoint URL for a specific cluster context
-func (m *Manager) UpdateEndpoint(contextName, newServerUrl string) error {
+func (m *Manager) UpdateEndpoint(contextName, newServerUrl string, insecure ...bool) error {
 	contextName = strings.TrimSpace(contextName)
 	newServerUrl = strings.TrimSpace(newServerUrl)
 	if newServerUrl == "" {
@@ -690,11 +699,19 @@ func (m *Manager) UpdateEndpoint(contextName, newServerUrl string) error {
 
 		matched := false
 		for cName, cObj := range cfg.Contexts {
-			if cName == contextName || strings.EqualFold(cName, contextName) ||
-				strings.HasPrefix(contextName, cName) || strings.HasPrefix(cName, contextName) {
+			if strings.EqualFold(strings.TrimSpace(cName), contextName) {
 				clusterName := cObj.Cluster
 				if clusterObj, exists := cfg.Clusters[clusterName]; exists {
 					clusterObj.Server = newServerUrl
+					if len(insecure) > 0 {
+						if insecure[0] {
+							clusterObj.InsecureSkipTLSVerify = true
+							clusterObj.CertificateAuthorityData = nil
+							clusterObj.CertificateAuthority = ""
+						} else {
+							clusterObj.InsecureSkipTLSVerify = false
+						}
+					}
 					matched = true
 				}
 			}
@@ -702,7 +719,7 @@ func (m *Manager) UpdateEndpoint(contextName, newServerUrl string) error {
 
 		if matched {
 			if updatedCount > 0 {
-				// Remove redundant duplicate file for same context
+				// Remove redundant duplicate file for the EXACT same context
 				_ = os.Remove(filePath)
 			} else {
 				_ = clientcmd.WriteToFile(*cfg, filePath)
@@ -714,9 +731,20 @@ func (m *Manager) UpdateEndpoint(contextName, newServerUrl string) error {
 	if updatedCount == 0 {
 		m.mu.Lock()
 		if m.rawConfig != nil {
-			if ctxObj, ok := m.rawConfig.Contexts[contextName]; ok {
-				if clObj, ok := m.rawConfig.Clusters[ctxObj.Cluster]; ok {
-					clObj.Server = newServerUrl
+			for cName, ctxObj := range m.rawConfig.Contexts {
+				if strings.EqualFold(strings.TrimSpace(cName), contextName) {
+					if clObj, ok := m.rawConfig.Clusters[ctxObj.Cluster]; ok {
+						clObj.Server = newServerUrl
+						if len(insecure) > 0 {
+							if insecure[0] {
+								clObj.InsecureSkipTLSVerify = true
+								clObj.CertificateAuthorityData = nil
+								clObj.CertificateAuthority = ""
+							} else {
+								clObj.InsecureSkipTLSVerify = false
+							}
+						}
+					}
 				}
 			}
 		}
