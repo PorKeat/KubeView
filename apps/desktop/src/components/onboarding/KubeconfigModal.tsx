@@ -447,51 +447,56 @@ export function KubeconfigModal() {
         <Dialog.Overlay className="fixed inset-0 bg-black/55 backdrop-blur-sm z-50 animate-in fade-in duration-200" />
 
         {/* Modal Dialog Content */}
-        <Dialog.Content className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-2xl bg-[var(--surface-elevated)] border border-[var(--border)] rounded-2xl shadow-2xl z-50 outline-hidden flex flex-col max-h-[90vh] overflow-hidden animate-in fade-in zoom-in-95 duration-200">
+        <Dialog.Content className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[95vw] max-w-4xl lg:max-w-5xl h-[84vh] max-h-[820px] min-h-[580px] bg-[var(--surface-elevated)] border border-[var(--border)] rounded-3xl shadow-2xl z-50 outline-hidden flex flex-col overflow-hidden animate-in fade-in zoom-in-95 duration-200">
           {/* Header */}
-          <div className="flex items-center justify-between px-6 py-4 border-b border-[var(--border)] select-none">
-            <div className="flex items-center gap-3">
-              <div className="w-9 h-9 rounded-xl bg-[#F08A42]/15 border border-[#F08A42]/30 flex items-center justify-center text-[#F08A42]">
-                <Server className="w-4 h-4" />
+          <div className="flex items-center justify-between px-6 md:px-8 py-5 border-b border-[var(--border)] select-none">
+            <div className="flex items-center gap-3.5">
+              <div className="w-10 h-10 rounded-2xl bg-[#F08A42]/15 border border-[#F08A42]/30 flex items-center justify-center text-[#F08A42] shrink-0 shadow-[0_0_15px_rgba(240,138,66,0.15)]">
+                <Server className="w-5 h-5" />
               </div>
               <div>
-                <Dialog.Title className="text-sm font-bold text-[var(--foreground)] tracking-tight">
+                <Dialog.Title className="text-base font-bold text-[var(--foreground)] tracking-tight">
                   Kubeconfig & Cluster Management
                 </Dialog.Title>
-                <Dialog.Description className="text-xs text-[var(--muted)]">
-                  Import single files, select an entire folder, or paste YAML configurations
+                <Dialog.Description className="text-xs text-[var(--muted)] mt-0.5">
+                  Scan system directories (~/.kube), import files, select folders, or paste YAML configurations
                 </Dialog.Description>
               </div>
             </div>
 
-            <Dialog.Close asChild>
-              <button
-                className="p-1.5 rounded-lg hover:bg-[var(--surface-hover)] text-[var(--muted)] hover:text-[var(--foreground)] transition-colors cursor-pointer"
-                title="Close"
-              >
-                <X className="w-4 h-4" />
-              </button>
-            </Dialog.Close>
+            <div className="flex items-center gap-3">
+              <span className="hidden sm:inline-block px-2.5 py-1 text-[11px] font-mono text-[var(--muted)] rounded-lg border border-[var(--border)] bg-black/[0.02] dark:bg-white/[0.02]">
+                Esc to close
+              </span>
+              <Dialog.Close asChild>
+                <button
+                  className="p-2 rounded-xl hover:bg-[var(--surface-hover)] text-[var(--muted)] hover:text-[var(--foreground)] transition-colors cursor-pointer"
+                  title="Close"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              </Dialog.Close>
+            </div>
           </div>
 
           {/* Navigation Tabs */}
-          <div className="flex items-center gap-2 px-6 pt-3 border-b border-[var(--border)] bg-black/[0.02] dark:bg-white/[0.02] select-none">
+          <div className="flex items-center gap-1 sm:gap-2 px-6 md:px-8 pt-3 border-b border-[var(--border)] bg-black/[0.02] dark:bg-white/[0.02] select-none overflow-x-auto">
             <button
               onClick={() => {
                 setActiveTab("auto");
                 setErrorMsg(null);
               }}
               className={cn(
-                "flex items-center gap-2 px-3 py-2 text-xs font-semibold border-b-2 transition-all cursor-pointer",
+                "flex items-center gap-2 px-3.5 py-2.5 text-xs sm:text-sm font-semibold border-b-2 rounded-t-xl transition-all cursor-pointer shrink-0",
                 activeTab === "auto"
-                  ? "border-[#F08A42] text-[#F08A42]"
-                  : "border-transparent text-[var(--muted)] hover:text-[var(--foreground)]"
+                  ? "border-[#F08A42] text-[#F08A42] bg-[#F08A42]/5"
+                  : "border-transparent text-[var(--muted)] hover:text-[var(--foreground)] hover:bg-[var(--surface-hover)]"
               )}
             >
-              <Sparkles className="w-3.5 h-3.5" />
+              <Sparkles className="w-4 h-4" />
               <span>Auto-Detected (~/.kube)</span>
               {detectedSystemConfigs.length > 0 && (
-                <span className="px-1.5 py-0.2 text-[10px] rounded-full bg-[#F08A42]/20 text-[#F08A42] font-mono font-medium">
+                <span className="px-1.5 py-0.5 text-[10px] rounded-full bg-[#F08A42]/20 text-[#F08A42] font-mono font-medium">
                   {detectedSystemConfigs.length}
                 </span>
               )}
@@ -503,16 +508,16 @@ export function KubeconfigModal() {
                 setErrorMsg(null);
               }}
               className={cn(
-                "flex items-center gap-2 px-3 py-2 text-xs font-semibold border-b-2 transition-all cursor-pointer",
+                "flex items-center gap-2 px-3.5 py-2.5 text-xs sm:text-sm font-semibold border-b-2 rounded-t-xl transition-all cursor-pointer shrink-0",
                 activeTab === "browse"
-                  ? "border-[#F08A42] text-[#F08A42]"
-                  : "border-transparent text-[var(--muted)] hover:text-[var(--foreground)]"
+                  ? "border-[#F08A42] text-[#F08A42] bg-[#F08A42]/5"
+                  : "border-transparent text-[var(--muted)] hover:text-[var(--foreground)] hover:bg-[var(--surface-hover)]"
               )}
             >
-              <UploadCloud className="w-3.5 h-3.5" />
+              <UploadCloud className="w-4 h-4" />
               <span>Pick Files or Folder</span>
               {discoveredFiles.length > 0 && (
-                <span className="px-1.5 py-0.2 text-[10px] rounded-full bg-[#F08A42]/20 text-[#F08A42] font-mono font-medium">
+                <span className="px-1.5 py-0.5 text-[10px] rounded-full bg-[#F08A42]/20 text-[#F08A42] font-mono font-medium">
                   {discoveredFiles.length}
                 </span>
               )}
@@ -524,13 +529,13 @@ export function KubeconfigModal() {
                 setErrorMsg(null);
               }}
               className={cn(
-                "flex items-center gap-2 px-3 py-2 text-xs font-semibold border-b-2 transition-all cursor-pointer",
+                "flex items-center gap-2 px-3.5 py-2.5 text-xs sm:text-sm font-semibold border-b-2 rounded-t-xl transition-all cursor-pointer shrink-0",
                 activeTab === "paste"
-                  ? "border-[#F08A42] text-[#F08A42]"
-                  : "border-transparent text-[var(--muted)] hover:text-[var(--foreground)]"
+                  ? "border-[#F08A42] text-[#F08A42] bg-[#F08A42]/5"
+                  : "border-transparent text-[var(--muted)] hover:text-[var(--foreground)] hover:bg-[var(--surface-hover)]"
               )}
             >
-              <FileCode className="w-3.5 h-3.5" />
+              <FileCode className="w-4 h-4" />
               <span>Paste YAML</span>
             </button>
 
@@ -540,25 +545,25 @@ export function KubeconfigModal() {
                 setErrorMsg(null);
               }}
               className={cn(
-                "flex items-center gap-2 px-3 py-2 text-xs font-semibold border-b-2 transition-all cursor-pointer ml-auto",
+                "flex items-center gap-2 px-3.5 py-2.5 text-xs sm:text-sm font-semibold border-b-2 rounded-t-xl transition-all cursor-pointer ml-auto shrink-0",
                 activeTab === "manage"
-                  ? "border-[#F08A42] text-[#F08A42]"
-                  : "border-transparent text-[var(--muted)] hover:text-[var(--foreground)]"
+                  ? "border-[#F08A42] text-[#F08A42] bg-[#F08A42]/5"
+                  : "border-transparent text-[var(--muted)] hover:text-[var(--foreground)] hover:bg-[var(--surface-hover)]"
               )}
             >
-              <Layers className="w-3.5 h-3.5" />
+              <Layers className="w-4 h-4" />
               <span>Active Clusters</span>
-              <span className="px-1.5 py-0.2 text-[10px] rounded-full bg-black/10 dark:bg-white/10 font-mono">
+              <span className="px-1.5 py-0.5 text-[10px] rounded-full bg-black/10 dark:bg-white/10 font-mono">
                 {availableContexts.length}
               </span>
             </button>
           </div>
 
           {/* Tab Body */}
-          <div className="flex-1 overflow-y-auto p-6 space-y-4">
+          <div className="flex-1 overflow-y-auto p-6 md:p-8 space-y-5">
             {/* Error Banner */}
             {errorMsg && (
-              <div className="p-3 rounded-xl bg-rose-500/10 border border-rose-500/20 text-rose-500 text-xs flex items-center gap-2.5">
+              <div className="p-3.5 rounded-2xl bg-rose-500/10 border border-rose-500/20 text-rose-500 text-xs flex items-center gap-2.5">
                 <AlertCircle className="w-4 h-4 shrink-0" />
                 <span className="leading-snug">{errorMsg}</span>
               </div>
@@ -567,20 +572,20 @@ export function KubeconfigModal() {
             {/* TAB 0: AUTO-DETECTED OS KUBECONFIGS */}
             {activeTab === "auto" && (
               <div className="space-y-4">
-                <div className="flex items-center justify-between">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-4 rounded-2xl bg-black/[0.02] dark:bg-white/[0.02] border border-[var(--border)]">
                   <div>
-                    <h4 className="text-xs font-bold text-[var(--foreground)] uppercase tracking-wider flex items-center gap-1.5">
-                      <Sparkles className="w-3.5 h-3.5 text-[#F08A42]" />
+                    <h4 className="text-xs font-bold text-[var(--foreground)] uppercase tracking-wider flex items-center gap-2">
+                      <Sparkles className="w-4 h-4 text-[#F08A42]" />
                       <span>Auto-Detected System Clusters</span>
                     </h4>
-                    <p className="text-[11px] text-[var(--muted)] mt-0.5">
-                      Discovered from standard OS locations: <code>~/.kube/config</code>, <code>~/.kube/kubeconfig</code>, <code>$KUBECONFIG</code>. Select which clusters you want to add to KubeView.
+                    <p className="text-xs text-[var(--muted)] mt-1">
+                      Scanned standard OS paths: <code>~/.kube/config</code>, <code>~/.kube/kubeconfig</code>, <code>$KUBECONFIG</code>. Select which clusters to add.
                     </p>
                   </div>
                   <button
                     onClick={() => detectSystemConfigs()}
                     disabled={isDetectingConfigs}
-                    className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg border border-[var(--border)] hover:bg-[var(--surface-hover)] text-xs text-[var(--muted)] hover:text-[var(--foreground)] transition-colors cursor-pointer shrink-0"
+                    className="flex items-center gap-2 px-3.5 py-1.5 rounded-xl border border-[var(--border)] hover:bg-[var(--surface-hover)] text-xs font-semibold text-[var(--muted)] hover:text-[var(--foreground)] transition-colors cursor-pointer shrink-0 self-start sm:self-auto"
                   >
                     <RotateCw className={cn("w-3.5 h-3.5", isDetectingConfigs && "animate-spin text-[#F08A42]")} />
                     <span>Re-Scan</span>
@@ -588,25 +593,41 @@ export function KubeconfigModal() {
                 </div>
 
                 {isDetectingConfigs ? (
-                  <div className="py-12 flex flex-col items-center justify-center text-[var(--muted)] gap-2">
-                    <RotateCw className="w-5 h-5 animate-spin text-[#F08A42]" />
-                    <span className="text-xs">Scanning OS directories for Kubernetes configurations...</span>
+                  <div className="py-16 flex flex-col items-center justify-center text-[var(--muted)] gap-3">
+                    <RotateCw className="w-6 h-6 animate-spin text-[#F08A42]" />
+                    <span className="text-xs font-medium">Scanning OS directories for Kubernetes configurations...</span>
                   </div>
                 ) : detectedSystemConfigs.length === 0 ? (
-                  <div className="py-12 border-2 border-dashed border-[var(--border)] rounded-2xl flex flex-col items-center justify-center text-center p-6 text-[var(--muted)]">
-                    <Info className="w-8 h-8 opacity-40 mb-2" />
-                    <span className="text-xs font-semibold text-[var(--foreground)]">No Kubeconfigs Found in ~/.kube</span>
-                    <p className="text-[11px] max-w-sm mt-1">
+                  <div className="py-16 border-2 border-dashed border-[var(--border)] rounded-3xl flex flex-col items-center justify-center text-center p-8 text-[var(--muted)]">
+                    <div className="w-12 h-12 rounded-2xl bg-black/5 dark:bg-white/5 flex items-center justify-center mb-3">
+                      <Info className="w-6 h-6 opacity-40 text-[var(--foreground)]" />
+                    </div>
+                    <span className="text-sm font-semibold text-[var(--foreground)]">No Kubeconfigs Found in ~/.kube</span>
+                    <p className="text-xs max-w-md mt-1.5 leading-relaxed">
                       We scanned standard OS paths but didn't find any kubeconfig files. You can manually pick files, select a folder, or paste YAML using the other tabs.
                     </p>
+                    <div className="flex items-center gap-3 mt-4">
+                      <button
+                        onClick={() => setActiveTab("browse")}
+                        className="px-4 py-2 rounded-xl bg-[var(--surface-active)] hover:bg-[var(--surface-hover)] border border-[var(--border)] text-xs font-semibold text-[var(--foreground)] transition-all cursor-pointer"
+                      >
+                        Pick Files or Folder
+                      </button>
+                      <button
+                        onClick={() => setActiveTab("paste")}
+                        className="px-4 py-2 rounded-xl bg-[var(--surface-active)] hover:bg-[var(--surface-hover)] border border-[var(--border)] text-xs font-semibold text-[var(--foreground)] transition-all cursor-pointer"
+                      >
+                        Paste YAML
+                      </button>
+                    </div>
                   </div>
                 ) : (
                   <div className="space-y-3">
                     {/* Bulk Selection Header */}
-                    <div className="flex items-center justify-between px-1 text-xs">
+                    <div className="flex items-center justify-between px-2 py-1 text-xs">
                       <button
                         onClick={toggleSelectAllDetected}
-                        className="flex items-center gap-2 text-[var(--muted)] hover:text-[var(--foreground)] cursor-pointer"
+                        className="flex items-center gap-2.5 text-[var(--muted)] hover:text-[var(--foreground)] cursor-pointer font-medium"
                       >
                         {selectedDetected.size > 0 && selectedDetected.size === detectedSystemConfigs.filter((c) => !c.isImported).length ? (
                           <CheckSquare className="w-4 h-4 text-[#F08A42]" />
@@ -624,7 +645,7 @@ export function KubeconfigModal() {
                         <button
                           onClick={() => handleImportDetected()}
                           disabled={isSubmitting}
-                          className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[#F08A42] hover:bg-[#E07931] text-white text-xs font-semibold shadow-md transition-all cursor-pointer"
+                          className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-[#F08A42] hover:bg-[#E07931] text-white text-xs font-semibold shadow-md transition-all cursor-pointer"
                         >
                           <Plus className="w-3.5 h-3.5" />
                           <span>Import Selected ({selectedDetected.size})</span>
@@ -633,7 +654,7 @@ export function KubeconfigModal() {
                     </div>
 
                     {/* Cards List */}
-                    <div className="space-y-2">
+                    <div className="space-y-2.5">
                       {detectedSystemConfigs.map((c) => {
                         const isSelected = selectedDetected.has(c.contextName);
                         return (
@@ -651,19 +672,19 @@ export function KubeconfigModal() {
                               }
                             }}
                             className={cn(
-                              "p-3.5 rounded-xl border transition-all flex items-center justify-between gap-3",
+                              "p-4 rounded-2xl border transition-all flex flex-col sm:flex-row sm:items-center justify-between gap-3.5",
                               c.isImported
-                                ? "bg-slate-50/50 dark:bg-white/[0.02] border-[var(--border)] opacity-80"
+                                ? "bg-slate-50/50 dark:bg-white/[0.02] border-[var(--border)] opacity-85"
                                 : isSelected
-                                ? "bg-[#F08A42]/10 border-[#F08A42] shadow-xs cursor-pointer"
+                                ? "bg-[#F08A42]/10 border-[#F08A42] shadow-sm cursor-pointer"
                                 : "bg-slate-50 dark:bg-black/30 border border-[var(--border)] hover:border-slate-300 dark:hover:border-white/20 cursor-pointer"
                             )}
                           >
-                            <div className="flex items-center gap-3 min-w-0">
+                            <div className="flex items-center gap-3.5 min-w-0">
                               <div className="shrink-0" onClick={(e) => e.stopPropagation()}>
                                 {c.isImported ? (
-                                  <div className="w-4 h-4 rounded bg-emerald-500/20 text-emerald-500 flex items-center justify-center">
-                                    <Check className="w-3 h-3" />
+                                  <div className="w-5 h-5 rounded-lg bg-emerald-500/20 text-emerald-500 flex items-center justify-center">
+                                    <Check className="w-3.5 h-3.5" />
                                   </div>
                                 ) : (
                                   <input
@@ -678,42 +699,47 @@ export function KubeconfigModal() {
                                       }
                                       setSelectedDetected(next);
                                     }}
-                                    className="rounded accent-[#F08A42] cursor-pointer"
+                                    className="w-4 h-4 rounded accent-[#F08A42] cursor-pointer"
                                   />
                                 )}
                               </div>
 
                               <div className="min-w-0">
-                                <div className="flex items-center gap-2">
-                                  <span className="font-mono font-bold text-xs text-[var(--foreground)] truncate">
+                                <div className="flex items-center gap-2 flex-wrap">
+                                  <span className="font-mono font-bold text-sm text-[var(--foreground)] truncate">
                                     {c.contextName}
                                   </span>
                                   {getProviderBadge(c.provider)}
+                                  {c.authType && (
+                                    <span className="px-1.5 py-0.5 text-[9px] font-mono rounded bg-black/5 dark:bg-white/5 text-[var(--muted)] border border-[var(--border)]">
+                                      auth: {c.authType}
+                                    </span>
+                                  )}
                                 </div>
-                                <div className="flex items-center gap-2 text-[10px] text-[var(--muted)] font-mono mt-0.5 truncate">
-                                  <span>{c.server || "local server"}</span>
+                                <div className="flex items-center gap-2 text-xs text-[var(--muted)] font-mono mt-1 flex-wrap">
+                                  <span className="text-[var(--foreground)] font-medium">{c.server || "local server"}</span>
                                   <span>•</span>
-                                  <span className="truncate" title={c.filePath}>
+                                  <span className="truncate max-w-sm text-[11px]" title={c.filePath}>
                                     {c.filePath}
                                   </span>
                                 </div>
                               </div>
                             </div>
 
-                            <div className="shrink-0 flex items-center gap-2" onClick={(e) => e.stopPropagation()}>
+                            <div className="shrink-0 flex items-center gap-2 self-end sm:self-auto" onClick={(e) => e.stopPropagation()}>
                               {c.isImported ? (
-                                <span className="px-2.5 py-1 rounded-lg text-[11px] font-semibold bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20 flex items-center gap-1">
-                                  <Check className="w-3 h-3" />
+                                <span className="px-3 py-1.5 rounded-xl text-xs font-semibold bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20 flex items-center gap-1.5">
+                                  <Check className="w-3.5 h-3.5" />
                                   <span>Added</span>
                                 </span>
                               ) : (
                                 <button
                                   onClick={() => handleImportDetected(c)}
                                   disabled={isSubmitting}
-                                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[#F08A42] hover:bg-[#E07931] text-white text-xs font-semibold shadow-xs transition-all cursor-pointer"
+                                  className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-[#F08A42] hover:bg-[#E07931] text-white text-xs font-semibold shadow-xs transition-all cursor-pointer"
                                 >
                                   <span>Add to KubeView</span>
-                                  <ArrowRight className="w-3 h-3" />
+                                  <ArrowRight className="w-3.5 h-3.5" />
                                 </button>
                               )}
                             </div>
@@ -1176,16 +1202,17 @@ export function KubeconfigModal() {
           </div>
 
           {/* Footer Controls */}
-          <div className="flex items-center justify-between px-6 py-4 border-t border-[var(--border)] bg-black/[0.02] dark:bg-white/[0.02] select-none">
-            <span className="text-[11px] text-[var(--muted)] font-mono">
-              ~/.kube multi-config engine
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 px-6 md:px-8 py-4.5 border-t border-[var(--border)] bg-black/[0.02] dark:bg-white/[0.02] select-none">
+            <span className="text-xs text-[var(--muted)] font-mono flex items-center gap-2">
+              <span className="w-2 h-2 rounded-full bg-[#F08A42] animate-pulse" />
+              <span>~/.kube multi-config engine • Isolated in ~/.kubeview/clusters</span>
             </span>
 
-            <div className="flex items-center gap-2.5">
+            <div className="flex items-center gap-3 self-end sm:self-auto">
               <button
                 type="button"
                 onClick={closeKubeconfigModal}
-                className="px-3.5 py-1.5 rounded-lg text-xs font-medium text-[var(--muted)] hover:text-[var(--foreground)] hover:bg-[var(--surface-hover)] transition-colors cursor-pointer"
+                className="px-4 py-2 rounded-xl text-xs font-semibold text-[var(--muted)] hover:text-[var(--foreground)] hover:bg-[var(--surface-hover)] transition-colors cursor-pointer"
               >
                 Cancel
               </button>
@@ -1195,7 +1222,7 @@ export function KubeconfigModal() {
                   type="button"
                   onClick={() => handleImportDetected()}
                   disabled={selectedDetected.size === 0 || isSubmitting}
-                  className="px-4 py-1.5 rounded-lg bg-[#F08A42] hover:bg-[#E07931] disabled:opacity-50 disabled:cursor-not-allowed text-white text-xs font-semibold shadow-md transition-all cursor-pointer flex items-center gap-2"
+                  className="px-5 py-2 rounded-xl bg-[#F08A42] hover:bg-[#E07931] disabled:opacity-50 disabled:cursor-not-allowed text-white text-xs font-semibold shadow-md transition-all cursor-pointer flex items-center gap-2"
                 >
                   {isSubmitting ? (
                     <>

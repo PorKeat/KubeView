@@ -25,8 +25,27 @@ export async function invokeRpc<T>(method: string, params?: unknown): Promise<T>
     }
   }
 
-  // Fallback for non-Tauri browser preview
-  console.warn(`[IPC] Browser preview mode: mocked RPC for '${method}'`);
+  // When running in browser preview (Next.js dev server), proxy to /api/rpc
+  try {
+    const res = await fetch("/api/rpc", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ method, params: params ?? null }),
+    });
+
+    if (res.ok) {
+      const data = await res.json();
+      if (data.error) {
+        console.warn(`[IPC] /api/rpc error for '${method}':`, data.error);
+        throw new Error(data.error.message || JSON.stringify(data.error));
+      }
+      return data.result as T;
+    }
+  } catch (err: unknown) {
+    console.warn(`[IPC] /api/rpc failed for '${method}', falling back to mock:`, err);
+  }
+
+  // Fallback for offline or static environments
   return mockRpcFallback<T>(method, params);
 }
 
