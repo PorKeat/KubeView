@@ -163,7 +163,7 @@ export function ClusterOverviewView() {
                 <span className="text-2xl font-bold font-mono text-[var(--foreground)]">32%</span>
                 <span className="text-[10px] text-[var(--muted)] font-mono">/ 16 Cores</span>
               </div>
-              <span className="text-[11px] text-emerald-400 font-medium mt-0.5 inline-block">
+              <span className="text-[11px] text-emerald-600 dark:text-emerald-400 font-medium mt-0.5 inline-block">
                 4.8 Cores Allocated
               </span>
             </div>
@@ -195,7 +195,7 @@ export function ClusterOverviewView() {
           {/* Sparkline curve */}
           <div className="mt-3 pt-2 border-t border-[var(--border)] flex items-center justify-between text-[10px] text-[var(--muted)]">
             <span>Peak: 5.2 Cores</span>
-            <span className="text-emerald-400 font-mono">Optimal</span>
+            <span className="text-emerald-600 dark:text-emerald-400 font-mono font-medium">Optimal</span>
           </div>
         </div>
 
@@ -210,7 +210,7 @@ export function ClusterOverviewView() {
                 <span className="text-2xl font-bold font-mono text-[var(--foreground)]">58%</span>
                 <span className="text-[10px] text-[var(--muted)] font-mono">/ 32 GiB</span>
               </div>
-              <span className="text-[11px] text-cyan-400 font-medium mt-0.5 inline-block">
+              <span className="text-[11px] text-cyan-600 dark:text-cyan-400 font-medium mt-0.5 inline-block">
                 18.6 GiB Reserved
               </span>
             </div>
@@ -226,7 +226,7 @@ export function ClusterOverviewView() {
                   d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
                 />
                 <path
-                  className="text-cyan-400 transition-all duration-1000 ease-out"
+                  className="text-cyan-500 dark:text-cyan-400 transition-all duration-1000 ease-out"
                   strokeDasharray="58, 100"
                   strokeWidth="3.2"
                   strokeLinecap="round"
@@ -235,13 +235,13 @@ export function ClusterOverviewView() {
                   d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
                 />
               </svg>
-              <Database className="w-4 h-4 text-cyan-400 absolute" />
+              <Database className="w-4 h-4 text-cyan-500 dark:text-cyan-400 absolute" />
             </div>
           </div>
 
           <div className="mt-3 pt-2 border-t border-[var(--border)] flex items-center justify-between text-[10px] text-[var(--muted)]">
             <span>Buffer: 13.4 GiB free</span>
-            <span className="text-cyan-400 font-mono">No Pressure</span>
+            <span className="text-cyan-600 dark:text-cyan-400 font-mono font-medium">No Pressure</span>
           </div>
         </div>
 
@@ -259,7 +259,7 @@ export function ClusterOverviewView() {
                 <span className="text-2xl font-bold font-mono text-[var(--foreground)]">42</span>
                 <span className="text-[10px] text-[var(--muted)] font-mono">/ 110 Max</span>
               </div>
-              <span className="text-[11px] text-purple-400 font-medium mt-0.5 inline-block">
+              <span className="text-[11px] text-purple-600 dark:text-purple-400 font-medium mt-0.5 inline-block">
                 38% Node Density
               </span>
             </div>
@@ -275,7 +275,7 @@ export function ClusterOverviewView() {
                   d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
                 />
                 <path
-                  className="text-purple-400 transition-all duration-1000 ease-out"
+                  className="text-purple-500 dark:text-purple-400 transition-all duration-1000 ease-out"
                   strokeDasharray="38, 100"
                   strokeWidth="3.2"
                   strokeLinecap="round"
@@ -284,7 +284,7 @@ export function ClusterOverviewView() {
                   d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
                 />
               </svg>
-              <Box className="w-4 h-4 text-purple-400 absolute" />
+              <Box className="w-4 h-4 text-purple-500 dark:text-purple-400 absolute" />
             </div>
           </div>
 
@@ -307,7 +307,7 @@ export function ClusterOverviewView() {
                 <span className="text-2xl font-bold font-mono text-[var(--foreground)]">14.2</span>
                 <span className="text-[10px] text-[var(--muted)] font-mono">MB/s</span>
               </div>
-              <span className="text-[11px] text-emerald-400 font-medium mt-0.5 inline-block">
+              <span className="text-[11px] text-emerald-600 dark:text-emerald-400 font-medium mt-0.5 inline-block">
                 8 Services • 3 Ingresses
               </span>
             </div>
@@ -323,7 +323,7 @@ export function ClusterOverviewView() {
                   d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
                 />
                 <path
-                  className="text-emerald-400 transition-all duration-1000 ease-out"
+                  className="text-emerald-500 dark:text-emerald-400 transition-all duration-1000 ease-out"
                   strokeDasharray="45, 100"
                   strokeWidth="3.2"
                   strokeLinecap="round"
@@ -332,13 +332,13 @@ export function ClusterOverviewView() {
                   d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
                 />
               </svg>
-              <Radio className="w-4 h-4 text-emerald-400 absolute" />
+              <Radio className="w-4 h-4 text-emerald-500 dark:text-emerald-400 absolute" />
             </div>
           </div>
 
           <div className="mt-3 pt-2 border-t border-[var(--border)] flex items-center justify-between text-[10px] text-[var(--muted)]">
             <span>Latency: {latencyMs}ms roundtrip</span>
-            <span className="text-emerald-400 font-mono">Normal</span>
+            <span className="text-emerald-600 dark:text-emerald-400 font-mono font-medium">Normal</span>
           </div>
         </div>
       </div>
@@ -363,18 +363,18 @@ export function ClusterOverviewView() {
             className={cn(
               "p-3.5 rounded-xl border transition-all cursor-pointer relative",
               selectedNode === "kind-control-plane"
-                ? "bg-[var(--accent)]/10 dark:bg-white/[0.08] border-[var(--accent)] shadow-lg"
-                : "bg-slate-50/70 dark:bg-black/30 border-black/[0.08] dark:border-white/[0.08] hover:border-black/20 dark:hover:border-white/20"
+                ? "bg-[var(--accent)]/10 dark:bg-white/[0.08] border-[var(--accent)] shadow-md"
+                : "bg-slate-50 dark:bg-black/30 border border-[var(--border)] hover:border-slate-300 dark:hover:border-white/20"
             )}
           >
             <div className="flex items-center justify-between mb-2">
               <div className="flex items-center gap-2">
-                <span className="w-2 h-2 rounded-full bg-emerald-400 shadow-[0_0_8px_#34d399]" />
+                <span className="w-2 h-2 rounded-full bg-emerald-500 shadow-[0_0_8px_#10b981]" />
                 <span className="font-mono font-semibold text-xs text-[var(--foreground)] truncate">
                   kind-control-plane
                 </span>
               </div>
-              <span className="px-1.5 py-0.5 rounded text-[9px] font-mono font-medium bg-purple-500/15 text-purple-600 dark:text-purple-300 border border-purple-500/25">
+              <span className="px-1.5 py-0.5 rounded text-[9px] font-mono font-medium bg-purple-500/15 text-purple-700 dark:text-purple-300 border border-purple-500/25">
                 Control-Plane
               </span>
             </div>
@@ -384,22 +384,22 @@ export function ClusterOverviewView() {
                 <span>CPU Load:</span>
                 <span className="text-[var(--foreground)]">45m (2%)</span>
               </div>
-              <div className="w-full h-1 bg-black/[0.08] dark:bg-white/10 rounded-full overflow-hidden">
-                <div className="h-full bg-purple-400 rounded-full" style={{ width: "15%" }} />
+              <div className="w-full h-1 bg-slate-200 dark:bg-white/10 rounded-full overflow-hidden">
+                <div className="h-full bg-purple-500 dark:bg-purple-400 rounded-full" style={{ width: "15%" }} />
               </div>
 
               <div className="flex justify-between pt-1">
                 <span>Memory:</span>
                 <span className="text-[var(--foreground)]">482Mi (12%)</span>
               </div>
-              <div className="w-full h-1 bg-black/[0.08] dark:bg-white/10 rounded-full overflow-hidden">
-                <div className="h-full bg-cyan-400 rounded-full" style={{ width: "22%" }} />
+              <div className="w-full h-1 bg-slate-200 dark:bg-white/10 rounded-full overflow-hidden">
+                <div className="h-full bg-cyan-500 dark:bg-cyan-400 rounded-full" style={{ width: "22%" }} />
               </div>
             </div>
 
             <div className="mt-3 pt-2 border-t border-[var(--border)] flex items-center justify-between text-[10px] text-[var(--muted)] font-mono">
               <span>v1.34.1 • arm64</span>
-              <span className="text-emerald-500 dark:text-emerald-400">14 Pods</span>
+              <span className="text-emerald-600 dark:text-emerald-400 font-medium">14 Pods</span>
             </div>
           </div>
 
@@ -409,18 +409,18 @@ export function ClusterOverviewView() {
             className={cn(
               "p-3.5 rounded-xl border transition-all cursor-pointer relative",
               selectedNode === "kind-worker-1"
-                ? "bg-[var(--accent)]/10 dark:bg-white/[0.08] border-[var(--accent)] shadow-lg"
-                : "bg-slate-50/70 dark:bg-black/30 border-black/[0.08] dark:border-white/[0.08] hover:border-black/20 dark:hover:border-white/20"
+                ? "bg-[var(--accent)]/10 dark:bg-white/[0.08] border-[var(--accent)] shadow-md"
+                : "bg-slate-50 dark:bg-black/30 border border-[var(--border)] hover:border-slate-300 dark:hover:border-white/20"
             )}
           >
             <div className="flex items-center justify-between mb-2">
               <div className="flex items-center gap-2">
-                <span className="w-2 h-2 rounded-full bg-emerald-400 shadow-[0_0_8px_#34d399]" />
+                <span className="w-2 h-2 rounded-full bg-emerald-500 shadow-[0_0_8px_#10b981]" />
                 <span className="font-mono font-semibold text-xs text-[var(--foreground)] truncate">
                   kind-worker-1
                 </span>
               </div>
-              <span className="px-1.5 py-0.5 rounded text-[9px] font-mono font-medium bg-cyan-500/15 text-cyan-600 dark:text-cyan-300 border border-cyan-500/25">
+              <span className="px-1.5 py-0.5 rounded text-[9px] font-mono font-medium bg-cyan-500/15 text-cyan-700 dark:text-cyan-300 border border-cyan-500/25">
                 Worker
               </span>
             </div>
@@ -430,7 +430,7 @@ export function ClusterOverviewView() {
                 <span>CPU Load:</span>
                 <span className="text-[var(--foreground)]">210m (18%)</span>
               </div>
-              <div className="w-full h-1 bg-black/[0.08] dark:bg-white/10 rounded-full overflow-hidden">
+              <div className="w-full h-1 bg-slate-200 dark:bg-white/10 rounded-full overflow-hidden">
                 <div className="h-full bg-[var(--accent)] rounded-full" style={{ width: "35%" }} />
               </div>
 
@@ -438,14 +438,14 @@ export function ClusterOverviewView() {
                 <span>Memory:</span>
                 <span className="text-[var(--foreground)]">1.4Gi (44%)</span>
               </div>
-              <div className="w-full h-1 bg-black/[0.08] dark:bg-white/10 rounded-full overflow-hidden">
-                <div className="h-full bg-cyan-400 rounded-full" style={{ width: "44%" }} />
+              <div className="w-full h-1 bg-slate-200 dark:bg-white/10 rounded-full overflow-hidden">
+                <div className="h-full bg-cyan-500 dark:bg-cyan-400 rounded-full" style={{ width: "44%" }} />
               </div>
             </div>
 
             <div className="mt-3 pt-2 border-t border-[var(--border)] flex items-center justify-between text-[10px] text-[var(--muted)] font-mono">
               <span>v1.34.1 • arm64</span>
-              <span className="text-emerald-500 dark:text-emerald-400">16 Pods</span>
+              <span className="text-emerald-600 dark:text-emerald-400 font-medium">16 Pods</span>
             </div>
           </div>
 
@@ -455,18 +455,18 @@ export function ClusterOverviewView() {
             className={cn(
               "p-3.5 rounded-xl border transition-all cursor-pointer relative",
               selectedNode === "kind-worker-2"
-                ? "bg-[var(--accent)]/10 dark:bg-white/[0.08] border-[var(--accent)] shadow-lg"
-                : "bg-slate-50/70 dark:bg-black/30 border-black/[0.08] dark:border-white/[0.08] hover:border-black/20 dark:hover:border-white/20"
+                ? "bg-[var(--accent)]/10 dark:bg-white/[0.08] border-[var(--accent)] shadow-md"
+                : "bg-slate-50 dark:bg-black/30 border border-[var(--border)] hover:border-slate-300 dark:hover:border-white/20"
             )}
           >
             <div className="flex items-center justify-between mb-2">
               <div className="flex items-center gap-2">
-                <span className="w-2 h-2 rounded-full bg-emerald-400 shadow-[0_0_8px_#34d399]" />
+                <span className="w-2 h-2 rounded-full bg-emerald-500 shadow-[0_0_8px_#10b981]" />
                 <span className="font-mono font-semibold text-xs text-[var(--foreground)] truncate">
                   kind-worker-2
                 </span>
               </div>
-              <span className="px-1.5 py-0.5 rounded text-[9px] font-mono font-medium bg-cyan-500/15 text-cyan-600 dark:text-cyan-300 border border-cyan-500/25">
+              <span className="px-1.5 py-0.5 rounded text-[9px] font-mono font-medium bg-cyan-500/15 text-cyan-700 dark:text-cyan-300 border border-cyan-500/25">
                 Worker
               </span>
             </div>
@@ -476,7 +476,7 @@ export function ClusterOverviewView() {
                 <span>CPU Load:</span>
                 <span className="text-[var(--foreground)]">120m (11%)</span>
               </div>
-              <div className="w-full h-1 bg-black/[0.08] dark:bg-white/10 rounded-full overflow-hidden">
+              <div className="w-full h-1 bg-slate-200 dark:bg-white/10 rounded-full overflow-hidden">
                 <div className="h-full bg-[var(--accent)] rounded-full" style={{ width: "22%" }} />
               </div>
 
@@ -484,14 +484,14 @@ export function ClusterOverviewView() {
                 <span>Memory:</span>
                 <span className="text-[var(--foreground)]">980Mi (31%)</span>
               </div>
-              <div className="w-full h-1 bg-black/[0.08] dark:bg-white/10 rounded-full overflow-hidden">
-                <div className="h-full bg-cyan-400 rounded-full" style={{ width: "31%" }} />
+              <div className="w-full h-1 bg-slate-200 dark:bg-white/10 rounded-full overflow-hidden">
+                <div className="h-full bg-cyan-500 dark:bg-cyan-400 rounded-full" style={{ width: "31%" }} />
               </div>
             </div>
 
             <div className="mt-3 pt-2 border-t border-[var(--border)] flex items-center justify-between text-[10px] text-[var(--muted)] font-mono">
               <span>v1.34.1 • arm64</span>
-              <span className="text-emerald-500 dark:text-emerald-400">12 Pods</span>
+              <span className="text-emerald-600 dark:text-emerald-400 font-medium">12 Pods</span>
             </div>
           </div>
         </div>
@@ -515,10 +515,10 @@ export function ClusterOverviewView() {
             {/* Stages Flow */}
             <div className="space-y-2.5">
               {/* Stage 1 */}
-              <div className="p-2.5 rounded-lg bg-slate-50/70 dark:bg-black/30 border border-black/[0.08] dark:border-white/[0.08] flex items-center justify-between">
+              <div className="p-2.5 rounded-lg bg-slate-50 dark:bg-black/30 border border-[var(--border)] flex items-center justify-between">
                 <div className="flex items-center gap-2.5 min-w-0 pr-2">
                   {netStage?.passed ? (
-                    <CheckCircle2 className="w-4 h-4 text-emerald-500 dark:text-emerald-400 shrink-0" />
+                    <CheckCircle2 className="w-4 h-4 text-emerald-600 dark:text-emerald-400 shrink-0" />
                   ) : connectionStatus === "checking" ? (
                     <RotateCw className="w-4 h-4 text-amber-500 dark:text-amber-400 animate-spin shrink-0" />
                   ) : (
@@ -526,7 +526,7 @@ export function ClusterOverviewView() {
                   )}
                   <div>
                     <div className="text-xs font-semibold text-[var(--foreground)]">
-                      1. Network & TCP Handshake
+                       1. Network & TCP Handshake
                     </div>
                     <div className="text-[10px] text-[var(--muted)] font-mono truncate">
                       {netStage?.message || "Dialing host API server port..."}
@@ -539,10 +539,10 @@ export function ClusterOverviewView() {
               </div>
 
               {/* Stage 2 */}
-              <div className="p-2.5 rounded-lg bg-slate-50/70 dark:bg-black/30 border border-black/[0.08] dark:border-white/[0.08] flex items-center justify-between">
+              <div className="p-2.5 rounded-lg bg-slate-50 dark:bg-black/30 border border-[var(--border)] flex items-center justify-between">
                 <div className="flex items-center gap-2.5 min-w-0 pr-2">
                   {authStage?.passed ? (
-                    <CheckCircle2 className="w-4 h-4 text-emerald-500 dark:text-emerald-400 shrink-0" />
+                    <CheckCircle2 className="w-4 h-4 text-emerald-600 dark:text-emerald-400 shrink-0" />
                   ) : connectionStatus === "checking" ? (
                     <RotateCw className="w-4 h-4 text-amber-500 dark:text-amber-400 animate-spin shrink-0" />
                   ) : (
@@ -557,16 +557,16 @@ export function ClusterOverviewView() {
                     </div>
                   </div>
                 </div>
-                <span className="text-[10px] font-mono font-medium px-2 py-0.5 rounded bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20 shrink-0">
+                <span className="text-[10px] font-mono font-medium px-2 py-0.5 rounded bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border border-emerald-500/20 shrink-0">
                   {authStage?.passed ? "Authorized" : "Pending"}
                 </span>
               </div>
 
               {/* Stage 3 */}
-              <div className="p-2.5 rounded-lg bg-slate-50/70 dark:bg-black/30 border border-black/[0.08] dark:border-white/[0.08] flex items-center justify-between">
+              <div className="p-2.5 rounded-lg bg-slate-50 dark:bg-black/30 border border-[var(--border)] flex items-center justify-between">
                 <div className="flex items-center gap-2.5 min-w-0 pr-2">
                   {tlsStage?.passed ? (
-                    <CheckCircle2 className="w-4 h-4 text-emerald-500 dark:text-emerald-400 shrink-0" />
+                    <CheckCircle2 className="w-4 h-4 text-emerald-600 dark:text-emerald-400 shrink-0" />
                   ) : connectionStatus === "checking" ? (
                     <RotateCw className="w-4 h-4 text-amber-500 dark:text-amber-400 animate-spin shrink-0" />
                   ) : (
@@ -581,16 +581,16 @@ export function ClusterOverviewView() {
                     </div>
                   </div>
                 </div>
-                <span className="text-[10px] font-mono font-medium px-2 py-0.5 rounded bg-cyan-500/10 text-cyan-600 dark:text-cyan-400 border border-cyan-500/20 shrink-0">
+                <span className="text-[10px] font-mono font-medium px-2 py-0.5 rounded bg-cyan-500/10 text-cyan-700 dark:text-cyan-400 border border-cyan-500/20 shrink-0">
                   {tlsStage?.passed ? "Healthy" : "Failed"}
                 </span>
               </div>
 
               {/* Stage 4 */}
-              <div className="p-2.5 rounded-lg bg-slate-50/70 dark:bg-black/30 border border-black/[0.08] dark:border-white/[0.08] flex items-center justify-between">
+              <div className="p-2.5 rounded-lg bg-slate-50 dark:bg-black/30 border border-[var(--border)] flex items-center justify-between">
                 <div className="flex items-center gap-2.5 min-w-0 pr-2">
                   {rbacStage?.passed ? (
-                    <CheckCircle2 className="w-4 h-4 text-emerald-500 dark:text-emerald-400 shrink-0" />
+                    <CheckCircle2 className="w-4 h-4 text-emerald-600 dark:text-emerald-400 shrink-0" />
                   ) : connectionStatus === "checking" ? (
                     <RotateCw className="w-4 h-4 text-amber-500 dark:text-amber-400 animate-spin shrink-0" />
                   ) : (
@@ -605,7 +605,7 @@ export function ClusterOverviewView() {
                     </div>
                   </div>
                 </div>
-                <span className="text-[10px] font-mono font-medium px-2 py-0.5 rounded bg-purple-500/10 text-purple-600 dark:text-purple-400 border border-purple-500/20 shrink-0">
+                <span className="text-[10px] font-mono font-medium px-2 py-0.5 rounded bg-purple-500/10 text-purple-700 dark:text-purple-400 border border-purple-500/20 shrink-0">
                   {rbacStage?.details?.clusterAdmin !== false ? "ClusterAdmin" : "Scoped"}
                 </span>
               </div>
@@ -653,12 +653,12 @@ export function ClusterOverviewView() {
               {/* Event 1 */}
               <div
                 onClick={() => openInspector({ kind: "Pod", name: "api-gateway-7f8d-x9q", namespace: "production", status: "CrashLoopBackOff" })}
-                className="p-3 rounded-lg bg-slate-50/70 dark:bg-black/30 border border-black/[0.08] dark:border-white/[0.08] hover:border-amber-400/50 cursor-pointer transition-all hover:bg-black/[0.03] dark:hover:bg-white/[0.04] group"
+                className="p-3 rounded-lg bg-slate-50 dark:bg-black/30 border border-[var(--border)] hover:border-amber-400/50 cursor-pointer transition-all hover:bg-slate-100/60 dark:hover:bg-white/[0.04] group"
               >
                 <div className="flex items-center justify-between text-xs">
                   <div className="flex items-center gap-2">
-                    <span className="w-2 h-2 rounded-full bg-amber-400" />
-                    <span className="font-semibold text-amber-500 dark:text-amber-400 group-hover:text-amber-600 dark:group-hover:text-amber-300">
+                    <span className="w-2 h-2 rounded-full bg-amber-500 shadow-[0_0_6px_#f59e0b]" />
+                    <span className="font-semibold text-amber-600 dark:text-amber-400 group-hover:text-amber-700 dark:group-hover:text-amber-300">
                       CrashLoopBackOff
                     </span>
                   </div>
@@ -678,12 +678,12 @@ export function ClusterOverviewView() {
               {/* Event 2 */}
               <div
                 onClick={() => openInspector({ kind: "Pod", name: "analytics-worker-2", namespace: "default", status: "Pending" })}
-                className="p-3 rounded-lg bg-slate-50/70 dark:bg-black/30 border border-black/[0.08] dark:border-white/[0.08] hover:border-rose-400/50 cursor-pointer transition-all hover:bg-black/[0.03] dark:hover:bg-white/[0.04] group"
+                className="p-3 rounded-lg bg-slate-50 dark:bg-black/30 border border-[var(--border)] hover:border-rose-400/50 cursor-pointer transition-all hover:bg-slate-100/60 dark:hover:bg-white/[0.04] group"
               >
                 <div className="flex items-center justify-between text-xs">
                   <div className="flex items-center gap-2">
-                    <span className="w-2 h-2 rounded-full bg-rose-400" />
-                    <span className="font-semibold text-rose-500 dark:text-rose-400 group-hover:text-rose-600 dark:group-hover:text-rose-300">
+                    <span className="w-2 h-2 rounded-full bg-rose-500 shadow-[0_0_6px_#ef4444]" />
+                    <span className="font-semibold text-rose-600 dark:text-rose-400 group-hover:text-rose-700 dark:group-hover:text-rose-300">
                       FailedScheduling
                     </span>
                   </div>

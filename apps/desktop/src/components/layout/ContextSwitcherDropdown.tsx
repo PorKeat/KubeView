@@ -46,17 +46,17 @@ export function ContextSwitcherDropdown() {
   const getProviderBadge = (provider: ClusterContextInfo["provider"]) => {
     switch (provider) {
       case "kind":
-        return <span className="px-1.5 py-0.5 text-[9px] font-mono font-medium rounded bg-purple-500/15 text-purple-400 border border-purple-500/20">Kind</span>;
+        return <span className="px-1.5 py-0.5 text-[9px] font-mono font-medium rounded bg-purple-500/15 text-purple-700 dark:text-purple-300 border border-purple-500/25">Kind</span>;
       case "eks":
-        return <span className="px-1.5 py-0.5 text-[9px] font-mono font-medium rounded bg-amber-500/15 text-amber-400 border border-amber-500/20">AWS EKS</span>;
+        return <span className="px-1.5 py-0.5 text-[9px] font-mono font-medium rounded bg-amber-500/15 text-amber-700 dark:text-amber-300 border border-amber-500/25">AWS EKS</span>;
       case "gke":
-        return <span className="px-1.5 py-0.5 text-[9px] font-mono font-medium rounded bg-blue-500/15 text-blue-400 border border-blue-500/20">GCP GKE</span>;
+        return <span className="px-1.5 py-0.5 text-[9px] font-mono font-medium rounded bg-blue-500/15 text-blue-700 dark:text-blue-300 border border-blue-500/25">GCP GKE</span>;
       case "aks":
-        return <span className="px-1.5 py-0.5 text-[9px] font-mono font-medium rounded bg-cyan-500/15 text-cyan-400 border border-cyan-500/20">Azure AKS</span>;
+        return <span className="px-1.5 py-0.5 text-[9px] font-mono font-medium rounded bg-cyan-500/15 text-cyan-700 dark:text-cyan-300 border border-cyan-500/25">Azure AKS</span>;
       case "minikube":
-        return <span className="px-1.5 py-0.5 text-[9px] font-mono font-medium rounded bg-emerald-500/15 text-emerald-400 border border-emerald-500/20">Minikube</span>;
+        return <span className="px-1.5 py-0.5 text-[9px] font-mono font-medium rounded bg-emerald-500/15 text-emerald-700 dark:text-emerald-300 border border-emerald-500/25">Minikube</span>;
       default:
-        return <span className="px-1.5 py-0.5 text-[9px] font-mono font-medium rounded bg-[var(--surface-hover)] text-[var(--muted)]">K8s</span>;
+        return <span className="px-1.5 py-0.5 text-[9px] font-mono font-medium rounded bg-[var(--surface-active)] text-[var(--foreground)] border border-[var(--border)]">K8s</span>;
     }
   };
 
@@ -180,7 +180,7 @@ export function ContextSwitcherDropdown() {
                 <Plus className="w-3.5 h-3.5" />
                 <span>Import Kubeconfig File...</span>
               </div>
-              <span className="text-[9px] font-mono px-1.5 py-0.2 rounded bg-white/[0.04] border border-white/10">Auto-Loaded</span>
+              <span className="text-[9px] font-mono px-1.5 py-0.5 rounded bg-black/[0.04] dark:bg-white/[0.04] border border-[var(--border)]">Auto-Loaded</span>
             </DropdownMenu.Item>
 
             <DropdownMenu.Item

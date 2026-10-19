@@ -28,29 +28,29 @@ export function StatusBar() {
       case "connected":
         return {
           label: "Connected",
-          color: "text-emerald-400",
-          beacon: "bg-emerald-400",
+          color: "text-emerald-600 dark:text-emerald-400",
+          beacon: "bg-emerald-500",
           ping: true,
         };
       case "degraded":
         return {
           label: "Degraded",
-          color: "text-amber-400",
-          beacon: "bg-amber-400",
+          color: "text-amber-600 dark:text-amber-400",
+          beacon: "bg-amber-500",
           ping: false,
         };
       case "checking":
         return {
           label: "Diagnosing...",
-          color: "text-amber-400",
-          beacon: "bg-amber-400",
+          color: "text-amber-600 dark:text-amber-400",
+          beacon: "bg-amber-500",
           ping: true,
         };
       case "offline":
       default:
         return {
           label: "Offline",
-          color: "text-rose-400",
+          color: "text-rose-600 dark:text-rose-400",
           beacon: "bg-rose-500",
           ping: false,
         };
@@ -99,7 +99,7 @@ export function StatusBar() {
         <div className="h-3 w-[1px] bg-[var(--border)]" />
 
         <div
-          className="flex items-center gap-1 text-emerald-400 cursor-help"
+          className="flex items-center gap-1 text-emerald-600 dark:text-emerald-400 cursor-help"
           title="RBAC Guard: SelfSubjectAccessReview Pre-Flight Enforcement Active"
         >
           <ShieldCheck className="w-3.5 h-3.5" />
@@ -113,7 +113,7 @@ export function StatusBar() {
           className="flex items-center gap-1 hover:text-[var(--foreground)] transition-colors cursor-pointer"
           title="Click to copy Kubernetes version"
         >
-          {copied ? <Check className="w-3 h-3 text-emerald-400" /> : <Copy className="w-3 h-3 opacity-60" />}
+          {copied ? <Check className="w-3 h-3 text-emerald-600 dark:text-emerald-400" /> : <Copy className="w-3 h-3 opacity-60" />}
           <span>{serverVersion}</span>
         </button>
 

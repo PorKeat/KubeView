@@ -139,28 +139,28 @@ export function ResourceListView({ resourceType }: ResourceListViewProps) {
     switch (status) {
       case "Running":
         return (
-          <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-emerald-500/15 text-emerald-400 border border-emerald-500/25 shadow-xs">
-            <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse shadow-[0_0_6px_#34d399]" />
+          <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-emerald-500/15 text-emerald-700 dark:text-emerald-400 border border-emerald-500/25 shadow-xs">
+            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 shadow-[0_0_6px_#10b981]" />
             Running
           </span>
         );
       case "Pending":
         return (
-          <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-amber-500/15 text-amber-400 border border-amber-500/25 shadow-xs">
-            <span className="w-1.5 h-1.5 rounded-full bg-amber-400 animate-ping" />
+          <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-amber-500/15 text-amber-700 dark:text-amber-400 border border-amber-500/25 shadow-xs">
+            <span className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-ping" />
             Pending
           </span>
         );
       case "CrashLoopBackOff":
         return (
-          <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-rose-500/15 text-rose-400 border border-rose-500/25 shadow-xs">
-            <span className="w-1.5 h-1.5 rounded-full bg-rose-400 animate-pulse shadow-[0_0_6px_#f43f5e]" />
+          <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-rose-500/15 text-rose-700 dark:text-rose-400 border border-rose-500/25 shadow-xs">
+            <span className="w-1.5 h-1.5 rounded-full bg-rose-500 animate-pulse shadow-[0_0_6px_#ef4444]" />
             CrashLoopBackOff
           </span>
         );
       case "Completed":
         return (
-          <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-white/[0.06] text-[var(--muted)] border border-white/10">
+          <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-black/[0.04] dark:bg-white/[0.06] text-[var(--muted)] border border-[var(--border)]">
             <span className="w-1.5 h-1.5 rounded-full bg-[var(--muted)]" />
             Completed
           </span>
@@ -181,7 +181,7 @@ export function ResourceListView({ resourceType }: ResourceListViewProps) {
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               placeholder={`Filter ${resourceType.toLowerCase()} by name, namespace...`}
-              className="w-full pl-8 pr-7 py-1 text-xs bg-black/[0.04] dark:bg-black/30 border border-black/10 dark:border-white/10 rounded-lg text-[var(--foreground)] placeholder:text-[var(--muted)] outline-hidden focus:border-[var(--accent)] transition-all font-mono shadow-inner"
+              className="w-full pl-8 pr-7 py-1 text-xs bg-slate-50 dark:bg-black/30 border border-[var(--border)] rounded-lg text-[var(--foreground)] placeholder:text-[var(--muted)] outline-hidden focus:border-[var(--accent)] transition-all font-mono"
             />
             {search && (
               <button
@@ -195,7 +195,7 @@ export function ResourceListView({ resourceType }: ResourceListViewProps) {
         </div>
 
         {/* Center: Status Filter Pills */}
-        <div className="flex items-center gap-1 bg-black/[0.04] dark:bg-black/30 p-0.5 rounded-lg border border-black/10 dark:border-white/10 text-xs shadow-inner">
+        <div className="flex items-center gap-1 bg-slate-100/80 dark:bg-black/30 p-0.5 rounded-lg border border-[var(--border)] text-xs">
           {[
             { id: "all", label: "All", count: MOCK_PODS.length },
             { id: "running", label: "Running", count: MOCK_PODS.filter((p) => p.status === "Running").length },
@@ -366,7 +366,7 @@ export function ResourceListView({ resourceType }: ResourceListViewProps) {
                   <td className="py-1 px-3">{getStatusBadge(item.status)}</td>
                   <td className="py-1 px-3 font-mono text-[var(--muted)]">{item.ready}</td>
                   <td className="py-1 px-3 font-mono text-[var(--muted)]">
-                    <span className={cn(item.restarts > 0 && "text-amber-400 font-semibold")}>
+                    <span className={cn(item.restarts > 0 && "text-amber-600 dark:text-amber-400 font-semibold")}>
                       {item.restarts}
                     </span>
                   </td>
@@ -376,7 +376,7 @@ export function ResourceListView({ resourceType }: ResourceListViewProps) {
                       {item.cpuPercent > 0 && (
                         <div className="flex-1 h-1.5 rounded-full bg-[var(--surface-active)] overflow-hidden w-12">
                           <div
-                            className={cn("h-full rounded-full", item.cpuPercent > 70 ? "bg-rose-400" : "bg-emerald-400")}
+                            className={cn("h-full rounded-full", item.cpuPercent > 70 ? "bg-rose-500" : "bg-emerald-500 dark:bg-emerald-400")}
                             style={{ width: `${item.cpuPercent}%` }}
                           />
                         </div>
@@ -389,7 +389,7 @@ export function ResourceListView({ resourceType }: ResourceListViewProps) {
                       {item.memoryPercent > 0 && (
                         <div className="flex-1 h-1.5 rounded-full bg-[var(--surface-active)] overflow-hidden w-12">
                           <div
-                            className={cn("h-full rounded-full", item.memoryPercent > 70 ? "bg-rose-400" : "bg-cyan-400")}
+                            className={cn("h-full rounded-full", item.memoryPercent > 70 ? "bg-rose-500" : "bg-cyan-500 dark:bg-cyan-400")}
                             style={{ width: `${item.memoryPercent}%` }}
                           />
                         </div>
