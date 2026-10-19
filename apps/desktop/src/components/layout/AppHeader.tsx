@@ -38,13 +38,13 @@ export function AppHeader() {
   return (
     <header
       data-tauri-drag-region
-      className="h-11 w-full border-b border-white/[0.08] glass-panel flex items-center justify-between px-3 select-none shrink-0 z-30"
+      className="h-11 w-full border-b border-[var(--border)] glass-panel flex items-center justify-between px-3 select-none shrink-0 z-30"
     >
       {/* Left: Window Controls Inset & Brand */}
       <div className="flex items-center gap-3 pl-16">
         <Logo size="sm" />
 
-        <div className="h-4 w-[1px] bg-white/10" />
+        <div className="h-4 w-[1px] bg-[var(--border)]" />
 
         {/* Interactive Cluster Context Switcher */}
         <ContextSwitcherDropdown />
@@ -57,13 +57,13 @@ export function AppHeader() {
       <div className="flex-1 max-w-md mx-4">
         <button
           onClick={() => setCommandPaletteOpen(true)}
-          className="w-full flex items-center justify-between px-3 py-1 text-xs rounded-lg bg-black/30 border border-white/10 text-[var(--muted)] hover:border-[var(--accent)]/50 hover:text-[var(--foreground)] transition-all shadow-inner group cursor-pointer"
+          className="w-full flex items-center justify-between px-3 py-1 text-xs rounded-lg bg-black/[0.04] dark:bg-black/30 border border-black/10 dark:border-white/10 text-[var(--muted)] hover:border-[var(--accent)]/50 hover:text-[var(--foreground)] transition-all shadow-inner group cursor-pointer"
         >
           <div className="flex items-center gap-2">
             <Search className="w-3.5 h-3.5 group-hover:text-[var(--accent)] transition-colors" />
             <span>Search resources, pods, logs...</span>
           </div>
-          <kbd className="px-1.5 py-0.5 text-[10px] bg-white/[0.06] border border-white/10 rounded text-[var(--muted)] group-hover:text-[var(--accent)] font-mono transition-colors">
+          <kbd className="px-1.5 py-0.5 text-[10px] bg-black/[0.05] dark:bg-white/[0.06] border border-black/10 dark:border-white/10 rounded text-[var(--muted)] group-hover:text-[var(--accent)] font-mono transition-colors">
             ⌘K
           </kbd>
         </button>
@@ -73,7 +73,7 @@ export function AppHeader() {
       <div className="flex items-center gap-1.5">
         <button
           onClick={handleRefresh}
-          className="p-1.5 rounded-lg hover:bg-white/[0.08] text-[var(--muted)] hover:text-[var(--foreground)] transition-colors cursor-pointer"
+          className="p-1.5 rounded-lg hover:bg-[var(--surface-hover)] text-[var(--muted)] hover:text-[var(--foreground)] transition-colors cursor-pointer"
           title="Refresh Resources"
         >
           <RefreshCw className="w-4 h-4" />
@@ -81,7 +81,7 @@ export function AppHeader() {
 
         <button
           onClick={() => setTheme(resolvedTheme === "dark" ? "light" : "dark")}
-          className="p-1.5 rounded-lg hover:bg-white/[0.08] text-[var(--muted)] hover:text-[var(--foreground)] transition-colors cursor-pointer"
+          className="p-1.5 rounded-lg hover:bg-[var(--surface-hover)] text-[var(--muted)] hover:text-[var(--foreground)] transition-colors cursor-pointer"
           title="Toggle Theme"
         >
           {mounted ? (

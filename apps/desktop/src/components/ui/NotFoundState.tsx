@@ -59,9 +59,9 @@ export function NotFoundState({
       <div className="absolute w-80 h-80 bg-[var(--accent)]/10 rounded-full blur-3xl pointer-events-none -top-20" />
       <div className="absolute w-80 h-80 bg-blue-500/10 rounded-full blur-3xl pointer-events-none -bottom-20" />
 
-      <div className="relative z-10 max-w-md w-full p-6 rounded-2xl glass-panel border border-white/10 shadow-2xl space-y-5 text-center">
+      <div className="relative z-10 max-w-md w-full p-6 rounded-2xl glass-panel border border-[var(--border)] shadow-2xl space-y-5 text-center">
         {/* Visual 404 / Compass Graphic */}
-        <div className="relative mx-auto w-16 h-16 rounded-2xl bg-gradient-to-b from-white/[0.08] to-white/[0.02] border border-white/10 flex items-center justify-center text-[var(--accent)] shadow-[0_0_30px_rgba(240,138,66,0.18)]">
+        <div className="relative mx-auto w-16 h-16 rounded-2xl bg-black/[0.04] dark:bg-gradient-to-b dark:from-white/[0.08] dark:to-white/[0.02] border border-[var(--border)] flex items-center justify-center text-[var(--accent)] shadow-[0_0_30px_rgba(240,138,66,0.18)]">
           <FileQuestion className="w-8 h-8 stroke-[1.75]" />
           <span className="absolute -bottom-1 -right-1 px-1.5 py-0.5 rounded text-[9px] font-mono font-bold bg-[var(--accent)] text-white shadow-sm">
             404
@@ -72,7 +72,7 @@ export function NotFoundState({
         <div className="space-y-1.5">
           <div className="flex items-center justify-center gap-1.5 flex-wrap">
             {resourceKind && (
-              <span className="px-2 py-0.5 rounded text-[10px] font-mono font-medium bg-white/[0.06] text-white border border-white/10">
+              <span className="px-2 py-0.5 rounded text-[10px] font-mono font-medium bg-black/[0.05] dark:bg-white/[0.06] text-[var(--foreground)] border border-[var(--border)]">
                 {resourceKind}
               </span>
             )}
@@ -92,20 +92,20 @@ export function NotFoundState({
         </div>
 
         {/* Helpful Diagnostics / Suggestions */}
-        <div className="p-3 rounded-xl bg-black/30 border border-white/[0.06] text-[11px] text-left text-[var(--muted)] space-y-1.5 font-mono">
+        <div className="p-3 rounded-xl bg-black/[0.03] dark:bg-black/30 border border-[var(--border)] text-[11px] text-left text-[var(--muted)] space-y-1.5 font-mono">
           <div className="text-[10px] text-[var(--foreground)] font-semibold uppercase tracking-wider font-sans">
             Troubleshooting Tips:
           </div>
           <div className="flex items-center gap-2">
-            <span className="text-emerald-400">•</span>
+            <span className="text-emerald-500 dark:text-emerald-400">•</span>
             <span>Check namespace filter (current: <strong className="text-[var(--foreground)]">{currentNamespace}</strong>)</span>
           </div>
           <div className="flex items-center gap-2">
-            <span className="text-blue-400">•</span>
+            <span className="text-blue-500 dark:text-blue-400">•</span>
             <span>Resource may have terminated or moved nodes</span>
           </div>
           <div className="flex items-center gap-2">
-            <span className="text-purple-400">•</span>
+            <span className="text-purple-500 dark:text-purple-400">•</span>
             <span>Use Cmd+K to jump to any known resource</span>
           </div>
         </div>
@@ -125,16 +125,16 @@ export function NotFoundState({
           {currentNamespace !== "all" && (
             <button
               onClick={() => setCurrentNamespace("all")}
-              className="px-3.5 py-2 rounded-lg bg-white/[0.06] hover:bg-white/[0.1] text-xs font-medium text-[var(--foreground)] border border-white/10 transition-all cursor-pointer flex items-center gap-1.5"
+              className="px-3.5 py-2 rounded-lg bg-black/[0.04] dark:bg-white/[0.06] hover:bg-black/[0.08] dark:hover:bg-white/[0.1] text-xs font-medium text-[var(--foreground)] border border-[var(--border)] transition-all cursor-pointer flex items-center gap-1.5"
             >
-              <Layers className="w-3.5 h-3.5 text-blue-400" />
+              <Layers className="w-3.5 h-3.5 text-blue-500 dark:text-blue-400" />
               <span>Switch to All Namespaces</span>
             </button>
           )}
 
           <button
             onClick={() => openTab({ id: "overview", title: "Cluster Overview", closable: false })}
-            className="px-3.5 py-2 rounded-lg bg-white/[0.06] hover:bg-white/[0.1] text-xs font-medium text-[var(--foreground)] border border-white/10 transition-all cursor-pointer flex items-center gap-1.5"
+            className="px-3.5 py-2 rounded-lg bg-black/[0.04] dark:bg-white/[0.06] hover:bg-black/[0.08] dark:hover:bg-white/[0.1] text-xs font-medium text-[var(--foreground)] border border-[var(--border)] transition-all cursor-pointer flex items-center gap-1.5"
           >
             <ArrowLeft className="w-3.5 h-3.5 text-[var(--muted)]" />
             <span>Overview</span>
@@ -142,7 +142,7 @@ export function NotFoundState({
 
           <button
             onClick={() => openTab({ id: "pods", title: "Pods", closable: true })}
-            className="px-3.5 py-2 rounded-lg bg-white/[0.06] hover:bg-white/[0.1] text-xs font-medium text-[var(--foreground)] border border-white/10 transition-all cursor-pointer flex items-center gap-1.5"
+            className="px-3.5 py-2 rounded-lg bg-black/[0.04] dark:bg-white/[0.06] hover:bg-black/[0.08] dark:hover:bg-white/[0.1] text-xs font-medium text-[var(--foreground)] border border-[var(--border)] transition-all cursor-pointer flex items-center gap-1.5"
           >
             <Box className="w-3.5 h-3.5 text-[var(--accent)]" />
             <span>Pods</span>

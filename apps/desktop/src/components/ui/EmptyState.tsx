@@ -58,9 +58,9 @@ export function EmptyState({
       case "healthy":
         return "shadow-[0_0_24px_rgba(16,185,129,0.25)] border-emerald-500/30 bg-emerald-500/10";
       case "search":
-        return "shadow-[0_0_24px_rgba(240,138,66,0.15)] border-white/10 bg-white/[0.04]";
+        return "shadow-[0_0_24px_rgba(240,138,66,0.15)] border-[var(--border)] bg-black/[0.03] dark:bg-white/[0.04]";
       default:
-        return "shadow-[0_0_20px_rgba(255,255,255,0.05)] border-white/10 bg-white/[0.03]";
+        return "shadow-[0_0_20px_rgba(0,0,0,0.04)] dark:shadow-[0_0_20px_rgba(255,255,255,0.05)] border-[var(--border)] bg-black/[0.03] dark:bg-white/[0.03]";
     }
   };
 
@@ -107,7 +107,7 @@ export function EmptyState({
           {secondaryAction && (
             <button
               onClick={secondaryAction.onClick}
-              className="px-3 py-1.5 rounded-lg bg-white/[0.06] hover:bg-white/[0.1] text-xs font-medium text-[var(--foreground)] border border-white/10 transition-all cursor-pointer"
+              className="px-3 py-1.5 rounded-lg bg-black/[0.04] dark:bg-white/[0.06] hover:bg-black/[0.08] dark:hover:bg-white/[0.1] text-xs font-medium text-[var(--foreground)] border border-[var(--border)] transition-all cursor-pointer"
             >
               {secondaryAction.label}
             </button>

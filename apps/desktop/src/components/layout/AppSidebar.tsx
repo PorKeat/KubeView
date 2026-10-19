@@ -166,8 +166,8 @@ export function AppSidebar() {
                           item.disabled
                             ? "opacity-35 cursor-not-allowed select-none hover:bg-transparent text-[var(--muted)]"
                             : isActive
-                            ? "bg-white/[0.08] text-[var(--accent)] font-semibold shadow-inner cursor-pointer"
-                            : "text-[var(--foreground)] hover:bg-white/[0.04] cursor-pointer"
+                            ? "bg-[var(--accent)]/10 dark:bg-white/[0.08] text-[var(--accent)] font-semibold shadow-inner cursor-pointer"
+                            : "text-[var(--foreground)] hover:bg-black/[0.04] dark:hover:bg-white/[0.04] cursor-pointer"
                         )}
                         title={
                           item.disabled
@@ -191,12 +191,12 @@ export function AppSidebar() {
                             className={cn(
                               "px-1.5 py-0.2 rounded text-[9px] font-mono font-medium shrink-0 ml-1.5 border tracking-tight",
                               item.badgeVariant === "soon"
-                                ? "bg-white/[0.03] text-[var(--muted)] border-white/[0.06] opacity-75"
+                                ? "bg-black/[0.03] dark:bg-white/[0.03] text-[var(--muted)] border-black/[0.06] dark:border-white/[0.06] opacity-75"
                                 : item.badgeVariant === "warning"
-                                ? "bg-amber-500/15 text-amber-400 border-amber-500/25"
+                                ? "bg-amber-500/15 text-amber-500 dark:text-amber-400 border-amber-500/25"
                                 : item.badgeVariant === "accent"
                                 ? "bg-[var(--accent)]/15 text-[var(--accent)] border-[var(--accent)]/25"
-                                : "text-[var(--muted)] bg-white/[0.06] border-white/10"
+                                : "text-[var(--muted)] bg-black/[0.04] dark:bg-white/[0.06] border-black/10 dark:border-white/10"
                             )}
                           >
                             {item.badge}
@@ -214,8 +214,8 @@ export function AppSidebar() {
 
       {/* Bottom Mini Cluster Card */}
       {!sidebarCollapsed ? (
-        <div className="p-2 border-t border-[var(--border)] shrink-0 bg-black/20">
-          <div className="p-2 rounded-lg bg-white/[0.04] border border-white/[0.08] flex items-center justify-between text-xs">
+        <div className="p-2 border-t border-[var(--border)] shrink-0 bg-slate-50/50 dark:bg-black/20">
+          <div className="p-2 rounded-lg bg-white dark:bg-white/[0.04] border border-black/[0.06] dark:border-white/[0.08] flex items-center justify-between text-xs shadow-xs">
             <div className="flex items-center gap-2 min-w-0">
               <span className="w-2 h-2 rounded-full bg-emerald-400 shadow-[0_0_6px_#34d399]" />
               <div className="min-w-0">

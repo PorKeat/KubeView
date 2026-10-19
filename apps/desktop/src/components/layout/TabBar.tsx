@@ -60,8 +60,8 @@ export function TabBar() {
               className={cn(
                 "group h-7 px-3 flex items-center gap-2 text-xs rounded-t-lg cursor-pointer transition-all shrink-0 relative",
                 isActive
-                  ? "bg-[var(--background)] text-[var(--foreground)] font-semibold shadow-xs border-t border-x border-white/10"
-                  : "bg-transparent text-[var(--muted)] hover:bg-white/[0.04] hover:text-[var(--foreground)]"
+                  ? "bg-[var(--background)] text-[var(--foreground)] font-semibold shadow-xs border-t border-x border-[var(--border)]"
+                  : "bg-transparent text-[var(--muted)] hover:bg-black/[0.04] dark:hover:bg-white/[0.04] hover:text-[var(--foreground)]"
               )}
             >
               {isActive && (
@@ -76,7 +76,7 @@ export function TabBar() {
                     e.stopPropagation();
                     closeTab(tab.id);
                   }}
-                  className="p-0.5 rounded hover:bg-white/10 text-[var(--muted)] hover:text-white opacity-40 group-hover:opacity-100 transition-opacity ml-1"
+                  className="p-0.5 rounded hover:bg-black/10 dark:hover:bg-white/10 text-[var(--muted)] hover:text-[var(--foreground)] opacity-40 group-hover:opacity-100 transition-opacity ml-1"
                   title="Close tab (Cmd+W)"
                 >
                   <X className="w-3 h-3" />

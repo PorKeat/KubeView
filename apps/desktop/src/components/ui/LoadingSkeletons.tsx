@@ -20,7 +20,7 @@ export function TableSkeleton({
   return (
     <div className={cn("w-full overflow-hidden select-none", className)}>
       {/* Table Header Skeleton */}
-      <div className="h-9 px-3 bg-[var(--surface)]/80 border-b border-white/10 flex items-center gap-4 text-[10px] font-mono">
+      <div className="h-9 px-3 bg-[var(--surface)]/80 border-b border-[var(--border)] flex items-center gap-4 text-[10px] font-mono">
         <Skeleton className="w-3.5 h-3.5 rounded" />
         <Skeleton className="w-24 h-3 rounded" />
         <Skeleton className="w-20 h-3 rounded" />
@@ -34,11 +34,11 @@ export function TableSkeleton({
       </div>
 
       {/* Table Rows Skeleton */}
-      <div className="divide-y divide-white/[0.04]">
+      <div className="divide-y divide-black/[0.05] dark:divide-white/[0.04]">
         {Array.from({ length: rows }).map((_, i) => (
           <div
             key={i}
-            className="h-10 px-3 flex items-center gap-4 bg-transparent hover:bg-white/[0.02] transition-colors"
+            className="h-10 px-3 flex items-center gap-4 bg-transparent hover:bg-black/[0.02] dark:hover:bg-white/[0.02] transition-colors"
           >
             {/* Checkbox */}
             <Skeleton className="w-3.5 h-3.5 rounded shrink-0" />
@@ -112,7 +112,7 @@ export function OverviewSkeleton({ className }: { className?: string }) {
   return (
     <div className={cn("p-5 space-y-5 select-none animate-in fade-in duration-300", className)}>
       {/* 1. Hero Banner Skeleton */}
-      <div className="p-5 rounded-2xl glass-panel border border-white/10 relative overflow-hidden">
+      <div className="p-5 rounded-2xl glass-panel border border-[var(--border)] relative overflow-hidden">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-4">
             <SkeletonCircle size={48} className="rounded-2xl" />
@@ -149,7 +149,7 @@ export function OverviewSkeleton({ className }: { className?: string }) {
               </div>
               <SkeletonCircle size={48} />
             </div>
-            <div className="pt-2 border-t border-white/[0.06] flex justify-between">
+            <div className="pt-2 border-t border-[var(--border)] flex justify-between">
               <Skeleton className="h-2.5 w-16 rounded" />
               <Skeleton className="h-2.5 w-12 rounded" />
             </div>
@@ -158,7 +158,7 @@ export function OverviewSkeleton({ className }: { className?: string }) {
       </div>
 
       {/* 3. Node Topology Skeleton Strip */}
-      <div className="p-4 rounded-xl glass-panel border border-white/10 space-y-3">
+      <div className="p-4 rounded-xl glass-panel border border-[var(--border)] space-y-3">
         <div className="flex justify-between items-center">
           <div className="flex items-center gap-2">
             <Skeleton className="w-4 h-4 rounded" />
@@ -170,7 +170,7 @@ export function OverviewSkeleton({ className }: { className?: string }) {
 
         <div className="grid grid-cols-3 gap-3">
           {Array.from({ length: 3 }).map((_, i) => (
-            <div key={i} className="p-3.5 rounded-xl border border-white/[0.08] bg-black/30 space-y-3">
+            <div key={i} className="p-3.5 rounded-xl border border-[var(--border)] bg-black/[0.03] dark:bg-black/30 space-y-3">
               <div className="flex justify-between items-center">
                 <div className="flex items-center gap-2">
                   <SkeletonCircle size={8} />
@@ -192,14 +192,14 @@ export function OverviewSkeleton({ className }: { className?: string }) {
 
       {/* 4. Diagnostic & Events Grid Skeleton */}
       <div className="grid grid-cols-3 gap-3.5">
-        <div className="col-span-2 p-4 rounded-xl glass-panel border border-white/10 space-y-3">
+        <div className="col-span-2 p-4 rounded-xl glass-panel border border-[var(--border)] space-y-3">
           <div className="flex justify-between items-center">
             <Skeleton className="h-3.5 w-44 rounded" />
             <Skeleton className="h-3 w-24 rounded" />
           </div>
           <div className="grid grid-cols-2 gap-2.5">
             {Array.from({ length: 4 }).map((_, i) => (
-              <div key={i} className="p-3 rounded-lg border border-white/[0.06] bg-black/20 space-y-2">
+              <div key={i} className="p-3 rounded-lg border border-[var(--border)] bg-black/[0.03] dark:bg-black/20 space-y-2">
                 <div className="flex justify-between items-center">
                   <Skeleton className="h-3 w-24 rounded" />
                   <Skeleton className="h-4 w-12 rounded-full" />
@@ -210,14 +210,14 @@ export function OverviewSkeleton({ className }: { className?: string }) {
           </div>
         </div>
 
-        <div className="p-4 rounded-xl glass-panel border border-white/10 space-y-3">
+        <div className="p-4 rounded-xl glass-panel border border-[var(--border)] space-y-3">
           <div className="flex justify-between items-center">
             <Skeleton className="h-3.5 w-32 rounded" />
             <Skeleton className="h-4 w-14 rounded-full" />
           </div>
           <div className="space-y-2">
             {Array.from({ length: 3 }).map((_, i) => (
-              <div key={i} className="p-2.5 rounded-lg border border-white/[0.04] bg-white/[0.01] space-y-1.5">
+              <div key={i} className="p-2.5 rounded-lg border border-[var(--border)] bg-black/[0.02] dark:bg-white/[0.01] space-y-1.5">
                 <div className="flex justify-between">
                   <Skeleton className="h-3 w-20 rounded" />
                   <Skeleton className="h-2.5 w-10 rounded" />
@@ -240,7 +240,7 @@ export function InspectorSkeleton({ className }: { className?: string }) {
   return (
     <div className={cn("p-5 space-y-5 select-none", className)}>
       {/* Header */}
-      <div className="flex items-start justify-between pb-4 border-b border-white/10">
+      <div className="flex items-start justify-between pb-4 border-b border-[var(--border)]">
         <div className="flex items-center gap-3">
           <SkeletonCircle size={40} className="rounded-xl" />
           <div className="space-y-1.5">
@@ -255,7 +255,7 @@ export function InspectorSkeleton({ className }: { className?: string }) {
       </div>
 
       {/* Tabs */}
-      <div className="flex gap-2 border-b border-white/10 pb-2">
+      <div className="flex gap-2 border-b border-[var(--border)] pb-2">
         <Skeleton className="h-6 w-16 rounded" />
         <Skeleton className="h-6 w-20 rounded" />
         <Skeleton className="h-6 w-20 rounded" />
@@ -263,7 +263,7 @@ export function InspectorSkeleton({ className }: { className?: string }) {
       </div>
 
       {/* Key-Value Details */}
-      <div className="space-y-3 p-4 rounded-xl bg-black/20 border border-white/[0.06]">
+      <div className="space-y-3 p-4 rounded-xl bg-black/[0.03] dark:bg-black/20 border border-[var(--border)]">
         {Array.from({ length: 5 }).map((_, i) => (
           <div key={i} className="flex justify-between items-center py-1">
             <Skeleton className="h-3 w-24 rounded" />
@@ -273,8 +273,8 @@ export function InspectorSkeleton({ className }: { className?: string }) {
       </div>
 
       {/* Code / Spec Block Skeleton */}
-      <div className="p-4 rounded-xl bg-black/40 border border-white/[0.08] space-y-2">
-        <div className="flex justify-between items-center pb-2 border-b border-white/[0.06]">
+      <div className="p-4 rounded-xl bg-black/[0.04] dark:bg-black/40 border border-[var(--border)] space-y-2">
+        <div className="flex justify-between items-center pb-2 border-b border-[var(--border)]">
           <Skeleton className="h-3 w-24 rounded" />
           <Skeleton className="h-6 w-16 rounded" />
         </div>
@@ -304,7 +304,7 @@ export function CardSkeleton({
   className?: string;
 }) {
   return (
-    <div className={cn("p-4 rounded-xl glass-card border border-white/10 space-y-3", className)}>
+    <div className={cn("p-4 rounded-xl glass-card border border-[var(--border)] space-y-3", className)}>
       <div className="flex items-center justify-between">
         <Skeleton className="h-4 w-32 rounded" />
         <SkeletonCircle size={16} />

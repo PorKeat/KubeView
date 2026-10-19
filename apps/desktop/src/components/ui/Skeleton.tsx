@@ -27,7 +27,7 @@ export function Skeleton({
     <div
       aria-hidden="true"
       className={cn(
-        "bg-white/[0.05] border border-white/[0.04]",
+        "bg-black/[0.04] dark:bg-white/[0.05] border border-black/[0.03] dark:border-white/[0.04]",
         variant === "shimmer" ? "shimmer-wave" : "animate-pulse",
         roundedClass,
         className

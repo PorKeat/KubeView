@@ -171,7 +171,7 @@ export function ResourceListView({ resourceType }: ResourceListViewProps) {
   return (
     <div className="flex-1 flex flex-col h-full overflow-hidden select-none">
       {/* Table Command & Filter Toolbar */}
-      <div className="h-11 border-b border-white/10 px-3 flex items-center justify-between shrink-0 glass-panel gap-3">
+      <div className="h-11 border-b border-[var(--border)] px-3 flex items-center justify-between shrink-0 glass-panel gap-3">
         {/* Left: Search Bar & Namespace Filter */}
         <div className="flex items-center gap-2 flex-1 max-w-md">
           <div className="relative w-full">
@@ -181,7 +181,7 @@ export function ResourceListView({ resourceType }: ResourceListViewProps) {
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               placeholder={`Filter ${resourceType.toLowerCase()} by name, namespace...`}
-              className="w-full pl-8 pr-7 py-1 text-xs bg-black/30 border border-white/10 rounded-lg text-[var(--foreground)] placeholder:text-[var(--muted)] outline-hidden focus:border-[var(--accent)] transition-all font-mono shadow-inner"
+              className="w-full pl-8 pr-7 py-1 text-xs bg-black/[0.04] dark:bg-black/30 border border-black/10 dark:border-white/10 rounded-lg text-[var(--foreground)] placeholder:text-[var(--muted)] outline-hidden focus:border-[var(--accent)] transition-all font-mono shadow-inner"
             />
             {search && (
               <button
@@ -195,7 +195,7 @@ export function ResourceListView({ resourceType }: ResourceListViewProps) {
         </div>
 
         {/* Center: Status Filter Pills */}
-        <div className="flex items-center gap-1 bg-black/30 p-0.5 rounded-lg border border-white/10 text-xs shadow-inner">
+        <div className="flex items-center gap-1 bg-black/[0.04] dark:bg-black/30 p-0.5 rounded-lg border border-black/10 dark:border-white/10 text-xs shadow-inner">
           {[
             { id: "all", label: "All", count: MOCK_PODS.length },
             { id: "running", label: "Running", count: MOCK_PODS.filter((p) => p.status === "Running").length },
@@ -208,8 +208,8 @@ export function ResourceListView({ resourceType }: ResourceListViewProps) {
               className={cn(
                 "px-2.5 py-0.5 rounded-md text-[11px] font-medium transition-all flex items-center gap-1.5 cursor-pointer",
                 statusFilter === pill.id
-                  ? "bg-white/[0.12] text-white font-semibold shadow-xs"
-                  : "text-[var(--muted)] hover:text-white"
+                  ? "bg-white dark:bg-white/[0.12] text-[var(--foreground)] dark:text-white font-semibold shadow-xs"
+                  : "text-[var(--muted)] hover:text-[var(--foreground)]"
               )}
             >
               <span>{pill.label}</span>
@@ -221,11 +221,11 @@ export function ResourceListView({ resourceType }: ResourceListViewProps) {
         {/* Right: Actions */}
         <div className="flex items-center gap-2 text-xs text-[var(--muted)] shrink-0">
           <span className="font-mono text-[11px]">{sortedItems.length} items</span>
-          <div className="h-3 w-[1px] bg-white/10" />
+          <div className="h-3 w-[1px] bg-[var(--border)]" />
           <button
             onClick={handleRefresh}
             disabled={isLoading}
-            className="p-1.5 rounded-lg hover:bg-white/[0.08] text-[var(--muted)] hover:text-[var(--foreground)] transition-colors cursor-pointer"
+            className="p-1.5 rounded-lg hover:bg-[var(--surface-hover)] text-[var(--muted)] hover:text-[var(--foreground)] transition-colors cursor-pointer"
             title="Refresh list"
           >
             <RefreshCw className={cn("w-3.5 h-3.5", isLoading && "animate-spin text-[var(--accent)]")} />
@@ -287,7 +287,7 @@ export function ResourceListView({ resourceType }: ResourceListViewProps) {
       ) : (
         <div className="flex-1 overflow-auto">
           <table className="w-full text-left text-xs border-collapse">
-          <thead className="sticky top-0 bg-[var(--surface)]/95 backdrop-blur-md border-b border-white/10 text-[10px] font-semibold text-[var(--muted)] uppercase tracking-wider z-10 select-none font-mono">
+          <thead className="sticky top-0 bg-[var(--surface)]/95 backdrop-blur-md border-b border-[var(--border)] text-[10px] font-semibold text-[var(--muted)] uppercase tracking-wider z-10 select-none font-mono">
             <tr>
               <th className="py-2.5 px-3 w-8 text-center">
                 <button onClick={toggleSelectAll} className="p-0.5 hover:text-[var(--foreground)] cursor-pointer">
@@ -336,7 +336,7 @@ export function ResourceListView({ resourceType }: ResourceListViewProps) {
               <th className="py-2.5 px-3 text-right">Quick Actions</th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-white/[0.05]">
+          <tbody className="divide-y divide-black/[0.06] dark:divide-white/[0.05]">
             {sortedItems.map((item) => {
               const itemKey = `${item.namespace}/${item.name}`;
               const isSelected = selectedItems.has(itemKey);
@@ -345,7 +345,7 @@ export function ResourceListView({ resourceType }: ResourceListViewProps) {
                 <tr
                   key={itemKey}
                   className={cn(
-                    "h-9.5 hover:bg-white/[0.04] transition-colors cursor-pointer group relative",
+                    "h-9.5 hover:bg-black/[0.03] dark:hover:bg-white/[0.04] transition-colors cursor-pointer group relative",
                     isSelected ? "bg-[var(--accent)]/10" : ""
                   )}
                   onClick={() => openInspector({ kind: resourceType.slice(0, -1) || "Pod", name: item.name, namespace: item.namespace, status: item.status })}

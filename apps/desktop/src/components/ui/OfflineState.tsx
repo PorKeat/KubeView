@@ -91,7 +91,7 @@ export function OfflineState({ className }: { className?: string }) {
           </h2>
           <p className="text-xs text-[var(--muted)] leading-relaxed max-w-md mx-auto">
             The Kubernetes API server at{" "}
-            <span className="font-mono text-[var(--foreground)] bg-white/[0.06] px-1.5 py-0.5 rounded text-[11px]">
+            <span className="font-mono text-[var(--foreground)] bg-black/[0.05] dark:bg-white/[0.06] border border-[var(--border)] px-1.5 py-0.5 rounded text-[11px]">
               {serverUrl}
             </span>{" "}
             is not responding. The container daemon or local node may be stopped.
@@ -99,7 +99,7 @@ export function OfflineState({ className }: { className?: string }) {
         </div>
 
         {/* Suggested Quick Recovery Command */}
-        <div className="p-3.5 rounded-xl bg-black/40 border border-white/[0.08] text-left space-y-2">
+        <div className="p-3.5 rounded-xl bg-black/[0.03] dark:bg-black/40 border border-[var(--border)] text-left space-y-2">
           <div className="flex items-center justify-between text-[11px] text-[var(--muted)]">
             <span className="flex items-center gap-1.5 font-medium text-[var(--foreground)]">
               <Terminal className="w-3.5 h-3.5 text-[var(--accent)]" />
@@ -108,7 +108,7 @@ export function OfflineState({ className }: { className?: string }) {
             <span className="text-[10px] font-mono text-[var(--muted)]">Run in shell</span>
           </div>
 
-          <div className="flex items-center justify-between p-2 rounded-lg bg-black/60 border border-white/10 font-mono text-xs text-emerald-400">
+          <div className="flex items-center justify-between p-2 rounded-lg bg-slate-900 dark:bg-black/60 border border-[var(--border)] font-mono text-xs text-emerald-400">
             <span className="truncate select-all">{suggestedFixCmd}</span>
             <button
               onClick={handleCopyCmd}
@@ -122,7 +122,7 @@ export function OfflineState({ className }: { className?: string }) {
 
         {/* Alternative Contexts (if available) */}
         {availableContexts.length > 1 && (
-          <div className="text-left space-y-2 pt-1 border-t border-white/[0.06]">
+          <div className="text-left space-y-2 pt-1 border-t border-[var(--border)]">
             <span className="text-[10px] font-semibold text-[var(--muted)] uppercase tracking-wider block">
               Or Switch to Another Active Context:
             </span>
@@ -134,7 +134,7 @@ export function OfflineState({ className }: { className?: string }) {
                   <button
                     key={ctx.name}
                     onClick={() => switchContext(ctx.name)}
-                    className="px-2.5 py-1 rounded-lg bg-white/[0.05] hover:bg-white/[0.1] border border-white/10 text-xs font-mono text-[var(--foreground)] flex items-center gap-1.5 transition-all cursor-pointer"
+                    className="px-2.5 py-1 rounded-lg bg-black/[0.04] dark:bg-white/[0.05] hover:bg-black/[0.08] dark:hover:bg-white/[0.1] border border-[var(--border)] text-xs font-mono text-[var(--foreground)] flex items-center gap-1.5 transition-all cursor-pointer"
                   >
                     <span>{ctx.name}</span>
                     <ArrowRight className="w-3 h-3 text-[var(--muted)]" />
