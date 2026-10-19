@@ -85,7 +85,8 @@ export function ContextSwitcherDropdown() {
     <DropdownMenu.Root open={isOpen} onOpenChange={setIsOpen}>
       <DropdownMenu.Trigger asChild>
         <button
-          className="flex items-center gap-2 px-2.5 py-1 text-xs rounded-md bg-[var(--background)] border border-[var(--border)] hover:bg-[var(--surface-hover)] hover:border-[var(--accent)] transition-all text-[var(--foreground)] outline-hidden group select-none"
+          data-testid="context-switcher-trigger"
+          className="flex items-center gap-2 px-2.5 py-1 text-xs rounded-md bg-[var(--background)] border border-[var(--border)] hover:bg-[var(--surface-hover)] hover:border-[var(--accent)] transition-all text-[var(--foreground)] outline-hidden group select-none cursor-pointer"
           title={`Active Context: ${currentContext || "None"} (${connectionStatus})`}
         >
           <div className="flex items-center gap-1.5">
@@ -141,6 +142,8 @@ export function ContextSwitcherDropdown() {
               return (
                 <div
                   key={ctx.name}
+                  data-testid="context-item"
+                  data-context-name={ctx.name}
                   className={cn(
                     "flex items-center justify-between p-2 rounded-xl transition-all text-xs font-mono group",
                     isSelected
@@ -173,6 +176,7 @@ export function ContextSwitcherDropdown() {
                   <div className="flex items-center gap-1.5 shrink-0">
                     <button
                       type="button"
+                      data-testid="configure-endpoint-btn"
                       onClick={(e) => {
                         e.stopPropagation();
                         setIsOpen(false);
@@ -187,6 +191,7 @@ export function ContextSwitcherDropdown() {
                     </button>
                     <button
                       type="button"
+                      data-testid="remove-cluster-btn"
                       onClick={async (e) => {
                         e.stopPropagation();
                         toast.info(`Removing ${ctx.name}...`);

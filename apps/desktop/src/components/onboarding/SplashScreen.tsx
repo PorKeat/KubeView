@@ -16,6 +16,13 @@ export function SplashScreen() {
   const [isFadingOut, setIsFadingOut] = React.useState(false);
 
   React.useEffect(() => {
+    try {
+      if (localStorage.getItem("kubeview_splash_seen") === "true") {
+        setSplashDismissed(true);
+        return;
+      }
+    } catch {}
+
     // Quick, clean auto-dismissal after 1.1s
     const timer = setTimeout(() => {
       handleComplete();
@@ -29,12 +36,14 @@ export function SplashScreen() {
     setTimeout(() => {
       setSplashDismissed(true);
 
-      // On first launch or clean slate, smoothly open the Kubeconfig modal
+      // On first launch when clean slate, open Kubeconfig modal
       try {
         const hasOpened = localStorage.getItem("kubeview_splash_seen");
-        if (!hasOpened || availableContexts.length === 0) {
+        if (!hasOpened && availableContexts.length === 0) {
           localStorage.setItem("kubeview_splash_seen", "true");
           openKubeconfigModal("browse");
+        } else {
+          localStorage.setItem("kubeview_splash_seen", "true");
         }
       } catch (e) {
         if (availableContexts.length === 0) {

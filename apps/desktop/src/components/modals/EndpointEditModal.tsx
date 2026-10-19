@@ -199,6 +199,7 @@ export function EndpointEditModal() {
               <div className="relative">
                 <input
                   type="text"
+                  data-testid="endpoint-modal-input"
                   value={inputVal}
                   onChange={(e) => setInputVal(e.target.value)}
                   placeholder="e.g. 10.1.16.11 or https://10.1.16.11:6443"
@@ -217,6 +218,7 @@ export function EndpointEditModal() {
               <label className="flex items-center gap-2 pt-1 text-xs text-[var(--foreground)] cursor-pointer select-none">
                 <input
                   type="checkbox"
+                  data-testid="endpoint-modal-skip-tls"
                   checked={skipTLS}
                   onChange={(e) => setSkipTLS(e.target.checked)}
                   className="rounded border-[var(--border)] text-[#F08A42] focus:ring-0 focus:ring-offset-0 cursor-pointer accent-[#F08A42]"
@@ -271,6 +273,7 @@ export function EndpointEditModal() {
             <div className="flex items-center gap-2">
               <button
                 type="button"
+                data-testid="endpoint-modal-cancel"
                 onClick={closeEndpointModal}
                 disabled={isSaving}
                 className="px-4 py-2 rounded-xl text-xs font-medium text-[var(--muted)] hover:text-[var(--foreground)] hover:bg-[var(--surface-hover)] border border-[var(--border)] transition-colors cursor-pointer"
@@ -279,6 +282,7 @@ export function EndpointEditModal() {
               </button>
               <button
                 type="button"
+                data-testid="endpoint-modal-save"
                 onClick={() => handleSave(true)}
                 disabled={isSaving || resolvedServer === endpointModalCurrentServer}
                 className="px-4 py-2 rounded-xl text-xs font-semibold bg-[#F08A42] hover:bg-[#E07931] disabled:opacity-50 text-white shadow-md transition-all cursor-pointer flex items-center gap-1.5"

@@ -11,6 +11,8 @@
     "lint": "pnpm --recursive lint",
     "format": "prettier --write \"**/*.{ts,tsx,js,jsx,json,md,css}\"",
     "test": "pnpm --recursive test",
+    "test:e2e": "pnpm --filter @kubeview/desktop test:e2e",
+    "test:e2e:ui": "pnpm --filter @kubeview/desktop test:e2e:ui",
     "tauri:dev": "cargo tauri dev",
     "tauri:build": "cargo tauri build"
   },

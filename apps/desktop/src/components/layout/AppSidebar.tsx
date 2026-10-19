@@ -174,6 +174,7 @@ export function AppSidebar() {
                     return (
                       <button
                         key={item.id}
+                        data-testid={`nav-item-${item.id}`}
                         disabled={item.disabled}
                         onClick={() => handleItemClick(item)}
                         className={cn(
