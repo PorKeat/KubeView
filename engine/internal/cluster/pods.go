@@ -303,6 +303,9 @@ func executeInContainer(ctx context.Context, client kubernetes.Interface, execCo
 		} else {
 			exitCode = 1
 		}
+		if stderrBuf.Len() == 0 {
+			stderrBuf.WriteString(execErr.Error())
+		}
 	}
 
 	return &ExecPodResult{
