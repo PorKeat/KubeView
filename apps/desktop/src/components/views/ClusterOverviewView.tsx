@@ -520,10 +520,10 @@ export function ClusterOverviewView() {
                     internalIP: n.internalIP,
                     cpuCapacity: n.cpuCapacity,
                     cpuAllocated: n.cpuAllocated,
-                    cpuPercent: `${n.cpuPercent}%`,
+                    cpuPercent: n.cpuPercent,
                     memoryCapacity: n.memoryCapacity,
                     memoryAllocated: n.memoryAllocated,
-                    memoryPercent: `${n.memoryPercent}%`,
+                    memoryPercent: n.memoryPercent,
                     podCapacity: n.podCapacity,
                     activePods: n.activePods,
                   },
@@ -596,7 +596,7 @@ export function ClusterOverviewView() {
                       <div className="flex items-center justify-between text-[11px]">
                         <span className="text-[var(--muted)]">CPU Allocation</span>
                         <div className="flex items-center gap-1.5">
-                          <span className="text-[var(--foreground)] tabular-nums">{n.cpuAllocated}</span>
+                          <span className="text-[var(--foreground)] tabular-nums">{n.cpuAllocated ? n.cpuAllocated.replace(/\s*\(\d+%\)/, "") : "0"}</span>
                           <span className="text-[var(--muted)]">/ {n.cpuCapacity}</span>
                           <span
                             className={cn(
@@ -632,7 +632,7 @@ export function ClusterOverviewView() {
                       <div className="flex items-center justify-between text-[11px]">
                         <span className="text-[var(--muted)]">Memory Reserved</span>
                         <div className="flex items-center gap-1.5">
-                          <span className="text-[var(--foreground)] tabular-nums">{n.memoryAllocated}</span>
+                          <span className="text-[var(--foreground)] tabular-nums">{n.memoryAllocated ? n.memoryAllocated.replace(/\s*\(\d+%\)/, "") : "0"}</span>
                           <span className="text-[var(--muted)]">/ {n.memoryCapacity}</span>
                           <span
                             className={cn(
@@ -740,10 +740,10 @@ export function ClusterOverviewView() {
                           internalIP: n.internalIP,
                           cpuCapacity: n.cpuCapacity,
                           cpuAllocated: n.cpuAllocated,
-                          cpuPercent: `${n.cpuPercent}%`,
+                          cpuPercent: n.cpuPercent,
                           memoryCapacity: n.memoryCapacity,
                           memoryAllocated: n.memoryAllocated,
-                          memoryPercent: `${n.memoryPercent}%`,
+                          memoryPercent: n.memoryPercent,
                           podCapacity: n.podCapacity,
                           activePods: n.activePods,
                         },
@@ -796,12 +796,12 @@ export function ClusterOverviewView() {
                         <td className="py-3 px-3 text-[var(--foreground)]">{n.internalIP}</td>
                         <td className="py-3 px-3 text-right">
                           <span className="tabular-nums text-[var(--foreground)] font-medium">
-                            {n.cpuAllocated} ({n.cpuPercent}%)
+                            {n.cpuAllocated ? n.cpuAllocated.replace(/\s*\(\d+%\)/, "") : "0"} ({n.cpuPercent}%)
                           </span>
                         </td>
                         <td className="py-3 px-3 text-right">
                           <span className="tabular-nums text-[var(--foreground)] font-medium">
-                            {n.memoryAllocated} ({n.memoryPercent}%)
+                            {n.memoryAllocated ? n.memoryAllocated.replace(/\s*\(\d+%\)/, "") : "0"} ({n.memoryPercent}%)
                           </span>
                         </td>
                         <td className="py-3 px-3 text-right">

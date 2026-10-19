@@ -424,8 +424,8 @@ export function ResourceInspectorDrawer() {
       {/* Top Header */}
       <div className="h-16 border-b border-[var(--border)] px-4 flex items-center justify-between shrink-0 bg-slate-50/80 dark:bg-black/40">
         <div className="flex items-center gap-3 min-w-0 pr-2">
-          <div className="p-2.5 rounded-xl bg-[var(--accent)]/15 text-[var(--accent)] border border-[var(--accent)]/20 shrink-0">
-            {isNode ? <Server className="w-5 h-5" /> : <Box className="w-5 h-5" />}
+          <div className="p-2.5 rounded-xl bg-[var(--surface-hover)] text-[var(--foreground)] border border-[var(--border)] shrink-0">
+            {isNode ? <Server className="w-5 h-5 text-[var(--accent)]" /> : <Box className="w-5 h-5 text-[var(--accent)]" />}
           </div>
           <div className="min-w-0">
             <div className="flex items-center gap-2">
@@ -597,13 +597,13 @@ export function ResourceInspectorDrawer() {
         {isNode && nodeData ? (
           <div className="space-y-4 text-xs">
             {/* Node Specifications */}
-            <div className="p-4 rounded-2xl bg-[var(--surface)] border border-[var(--border)] space-y-3 shadow-2xs">
-              <span className="text-[11px] font-semibold text-[var(--muted)] uppercase tracking-wider block">
+            <div className="p-4 rounded-xl bg-[var(--surface)] border border-[var(--border)] space-y-3">
+              <span className="text-[10px] font-semibold text-[var(--muted)] uppercase tracking-wider block font-mono">
                 Node Specification & Status
               </span>
               <div className="grid grid-cols-2 gap-3 text-xs">
                 <div>
-                  <span className="text-[var(--muted)] block text-[10px]">Role</span>
+                  <span className="text-[var(--muted)] block text-[10px] font-mono">Role</span>
                   <div className="flex flex-wrap gap-1 mt-0.5">
                     {(() => {
                       const rolesList = Array.isArray(nodeData.roles)
@@ -613,30 +613,32 @@ export function ResourceInspectorDrawer() {
                         : [];
                       return rolesList.length > 0 ? (
                         rolesList.map((role: string) => (
-                          <span key={role} className="px-1.5 py-0.5 rounded text-[10px] font-mono bg-[var(--surface-active)] text-[var(--foreground)] border border-[var(--border)]">
+                          <span key={role} className="px-1.5 py-0.5 rounded text-[10px] font-mono bg-[var(--surface-hover)] text-[var(--foreground)] border border-[var(--border)]">
                             {role}
                           </span>
                         ))
                       ) : (
-                        <span className="font-mono text-[var(--foreground)]">worker</span>
+                        <span className="px-1.5 py-0.5 rounded text-[10px] font-mono bg-[var(--surface-hover)] text-[var(--foreground)] border border-[var(--border)]">
+                          worker
+                        </span>
                       );
                     })()}
                   </div>
                 </div>
                 <div>
-                  <span className="text-[var(--muted)] block text-[10px]">Kubelet Version</span>
+                  <span className="text-[var(--muted)] block text-[10px] font-mono">Kubelet Version</span>
                   <span className="font-mono text-[var(--foreground)] font-medium">
                     {nodeData.version || "-"}
                   </span>
                 </div>
                 <div>
-                  <span className="text-[var(--muted)] block text-[10px]">Internal IP</span>
+                  <span className="text-[var(--muted)] block text-[10px] font-mono">Internal IP</span>
                   <span className="font-mono text-[var(--foreground)] font-medium">
                     {nodeData.internalIP || "-"}
                   </span>
                 </div>
                 <div>
-                  <span className="text-[var(--muted)] block text-[10px]">Architecture</span>
+                  <span className="text-[var(--muted)] block text-[10px] font-mono">Architecture</span>
                   <span className="font-mono text-[var(--foreground)] font-medium">
                     {nodeData.architecture || "-"}
                   </span>
@@ -644,89 +646,124 @@ export function ResourceInspectorDrawer() {
               </div>
             </div>
 
-            {/* Real Resource Allocations Telemetry */}
-            <div className="p-4 rounded-2xl bg-[var(--surface)] border border-[var(--border)] space-y-3.5 shadow-2xs">
-              <span className="text-[11px] font-semibold text-[var(--muted)] uppercase tracking-wider block">
-                Resource Allocations
-              </span>
+            {/* Real Resource Allocations Telemetry (Calm, Unified Semantic Palette) */}
+            {(() => {
+              const cpuNum = typeof nodeData.cpuPercent === "number"
+                ? nodeData.cpuPercent
+                : parseFloat(String(nodeData.cpuPercent)) || 0;
+              const memNum = typeof nodeData.memoryPercent === "number"
+                ? nodeData.memoryPercent
+                : parseFloat(String(nodeData.memoryPercent)) || 0;
+              const podCap = nodeData.podCapacity || 110;
+              const podNum = Math.round(((nodeData.activePods || 0) / podCap) * 100);
 
-              {/* CPU Allocation */}
-              <div className="space-y-1.5">
-                <div className="flex items-center justify-between text-xs">
-                  <span className="text-[var(--foreground)] font-medium flex items-center gap-1.5">
-                    <Cpu className="w-3.5 h-3.5 text-[var(--accent)]" /> CPU Requested
-                  </span>
-                  <span className="font-mono text-[var(--muted)] text-[11px]">
-                    {nodeData.cpuAllocated || "0"} / {nodeData.cpuCapacity} ({nodeData.cpuPercent}%)
-                  </span>
-                </div>
-                <div className="h-2 rounded-full bg-[var(--surface-hover)] overflow-hidden">
-                  <div
-                    className={cn(
-                      "h-full rounded-full transition-all duration-300",
-                      nodeData.cpuPercent >= 90
-                        ? "bg-rose-500"
-                        : nodeData.cpuPercent >= 70
-                        ? "bg-amber-500"
-                        : "bg-emerald-500"
-                    )}
-                    style={{ width: `${Math.min(100, Math.max(0, nodeData.cpuPercent))}%` }}
-                  />
-                </div>
-              </div>
+              const getGaugeColor = (pct: number) => {
+                if (pct >= 90) return "bg-rose-500 dark:bg-rose-400";
+                if (pct >= 70) return "bg-amber-500 dark:bg-amber-400";
+                return "bg-emerald-500 dark:bg-emerald-400";
+              };
 
-              {/* Memory Allocation */}
-              <div className="space-y-1.5">
-                <div className="flex items-center justify-between text-xs">
-                  <span className="text-[var(--foreground)] font-medium flex items-center gap-1.5">
-                    <Activity className="w-3.5 h-3.5 text-blue-400" /> Memory Requested
-                  </span>
-                  <span className="font-mono text-[var(--muted)] text-[11px]">
-                    {nodeData.memoryAllocated || "0"} / {nodeData.memoryCapacity} ({nodeData.memoryPercent}%)
-                  </span>
-                </div>
-                <div className="h-2 rounded-full bg-[var(--surface-hover)] overflow-hidden">
-                  <div
-                    className={cn(
-                      "h-full rounded-full transition-all duration-300",
-                      nodeData.memoryPercent >= 90
-                        ? "bg-rose-500"
-                        : nodeData.memoryPercent >= 70
-                        ? "bg-amber-500"
-                        : "bg-blue-500"
-                    )}
-                    style={{ width: `${Math.min(100, Math.max(0, nodeData.memoryPercent))}%` }}
-                  />
-                </div>
-              </div>
+              const getTextColor = (pct: number) => {
+                if (pct >= 90) return "text-rose-600 dark:text-rose-400";
+                if (pct >= 70) return "text-amber-600 dark:text-amber-400";
+                return "text-[var(--foreground)]";
+              };
 
-              {/* Pod Density */}
-              <div className="space-y-1.5">
-                <div className="flex items-center justify-between text-xs">
-                  <span className="text-[var(--foreground)] font-medium flex items-center gap-1.5">
-                    <Box className="w-3.5 h-3.5 text-purple-400" /> Pod Density
-                  </span>
-                  <span className="font-mono text-[var(--muted)] text-[11px]">
-                    {nodeData.activePods} / {nodeData.podCapacity || 110} (
-                    {Math.round((nodeData.activePods / (nodeData.podCapacity || 110)) * 100)}%)
-                  </span>
-                </div>
-                <div className="h-2 rounded-full bg-[var(--surface-hover)] overflow-hidden">
-                  <div
-                    className="h-full rounded-full bg-purple-500 transition-all duration-300"
-                    style={{
-                      width: `${Math.min(
-                        100,
-                        Math.max(0, Math.round((nodeData.activePods / (nodeData.podCapacity || 110)) * 100))
-                      )}%`,
-                    }}
-                  />
-                </div>
-              </div>
-            </div>
+              const cleanAlloc = (val: string | undefined) => {
+                if (!val) return "0";
+                return val.replace(/\s*\(\d+%\)/, "");
+              };
 
-            {/* View Pods on this Node Button */}
+              return (
+                <div className="p-4 rounded-xl bg-[var(--surface)] border border-[var(--border)] space-y-4">
+                  <span className="text-[10px] font-semibold text-[var(--muted)] uppercase tracking-wider block font-mono">
+                    Resource Allocations
+                  </span>
+
+                  {/* CPU Allocation */}
+                  <div className="space-y-1.5 font-mono">
+                    <div className="flex items-center justify-between text-xs">
+                      <span className="text-[var(--foreground)] font-medium flex items-center gap-1.5">
+                        <Cpu className="w-3.5 h-3.5 text-[var(--muted)]" aria-hidden="true" />
+                        <span>CPU Requested</span>
+                      </span>
+                      <div className="flex items-center gap-1 text-[11px]">
+                        <span className="text-[var(--foreground)] tabular-nums">{cleanAlloc(nodeData.cpuAllocated)}</span>
+                        <span className="text-[var(--muted)]">/ {nodeData.cpuCapacity}</span>
+                        <span className={cn("font-semibold text-xs ml-1.5", getTextColor(cpuNum))}>
+                          {cpuNum}%
+                        </span>
+                      </div>
+                    </div>
+                    <div className="h-1.5 rounded-full bg-black/10 dark:bg-white/10 overflow-hidden">
+                      <div
+                        className={cn(
+                          "h-full rounded-full transition-all duration-500 motion-reduce:transition-none",
+                          getGaugeColor(cpuNum)
+                        )}
+                        style={{ width: `${Math.min(100, Math.max(0, cpuNum))}%` }}
+                      />
+                    </div>
+                  </div>
+
+                  {/* Memory Allocation */}
+                  <div className="space-y-1.5 font-mono">
+                    <div className="flex items-center justify-between text-xs">
+                      <span className="text-[var(--foreground)] font-medium flex items-center gap-1.5">
+                        <Activity className="w-3.5 h-3.5 text-[var(--muted)]" aria-hidden="true" />
+                        <span>Memory Requested</span>
+                      </span>
+                      <div className="flex items-center gap-1 text-[11px]">
+                        <span className="text-[var(--foreground)] tabular-nums">{cleanAlloc(nodeData.memoryAllocated)}</span>
+                        <span className="text-[var(--muted)]">/ {nodeData.memoryCapacity}</span>
+                        <span className={cn("font-semibold text-xs ml-1.5", getTextColor(memNum))}>
+                          {memNum}%
+                        </span>
+                      </div>
+                    </div>
+                    <div className="h-1.5 rounded-full bg-black/10 dark:bg-white/10 overflow-hidden">
+                      <div
+                        className={cn(
+                          "h-full rounded-full transition-all duration-500 motion-reduce:transition-none",
+                          getGaugeColor(memNum)
+                        )}
+                        style={{ width: `${Math.min(100, Math.max(0, memNum))}%` }}
+                      />
+                    </div>
+                  </div>
+
+                  {/* Pod Density */}
+                  <div className="space-y-1.5 font-mono">
+                    <div className="flex items-center justify-between text-xs">
+                      <span className="text-[var(--foreground)] font-medium flex items-center gap-1.5">
+                        <Box className="w-3.5 h-3.5 text-[var(--muted)]" aria-hidden="true" />
+                        <span>Pod Density</span>
+                      </span>
+                      <div className="flex items-center gap-1 text-[11px]">
+                        <span className="text-[var(--foreground)] tabular-nums">{nodeData.activePods}</span>
+                        <span className="text-[var(--muted)]">/ {podCap}</span>
+                        <span className={cn("font-semibold text-xs ml-1.5", getTextColor(podNum))}>
+                          {podNum}%
+                        </span>
+                      </div>
+                    </div>
+                    <div className="h-1.5 rounded-full bg-black/10 dark:bg-white/10 overflow-hidden">
+                      <div
+                        className={cn(
+                          "h-full rounded-full transition-all duration-500 motion-reduce:transition-none",
+                          getGaugeColor(podNum)
+                        )}
+                        style={{ width: `${Math.min(100, Math.max(0, podNum))}%` }}
+                      />
+                    </div>
+                  </div>
+                </div>
+              );
+            })()}
+
+            {/* View Pods on this Node Button (Calm, structured action button) */}
             <button
+              type="button"
               onClick={() => {
                 useClusterStore.getState().setCurrentNamespace("all");
                 useClusterStore.getState().loadPods("all");
@@ -738,9 +775,9 @@ export function ResourceInspectorDrawer() {
                 });
                 closeInspector();
               }}
-              className="w-full flex items-center justify-center gap-2 px-3 py-2.5 rounded-xl bg-[var(--accent)] hover:bg-[var(--accent-hover)] text-white font-medium text-xs transition-colors shadow-xs cursor-pointer"
+              className="w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-[var(--surface)] hover:bg-[var(--surface-hover)] border border-[var(--border)] hover:border-[var(--accent)]/40 text-[var(--foreground)] font-medium text-xs transition-colors cursor-pointer active:scale-[0.985] motion-reduce:transition-none motion-reduce:transform-none"
             >
-              <Box className="w-4 h-4" />
+              <Box className="w-4 h-4 text-[var(--accent)]" aria-hidden="true" />
               <span>Browse All Pods Across Cluster</span>
             </button>
           </div>
