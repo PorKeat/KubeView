@@ -61,33 +61,38 @@ export function AppHeader() {
   return (
     <header
       data-tauri-drag-region
-      className="h-11 w-full border-b border-[var(--border)] glass-panel flex items-center justify-between px-3 select-none shrink-0 z-30"
+      className="h-11 w-full border-b border-[var(--border)] glass-panel flex items-center justify-between px-4 sm:px-5 select-none shrink-0 z-30 gap-3"
     >
       {/* Left: Window Controls Inset & Brand */}
-      <div className="flex items-center gap-3 pl-16">
+      <div className="flex items-center gap-3 pl-16 shrink-0">
         <Logo size="sm" />
 
-        <div className="h-4 w-[1px] bg-[var(--border)]" />
+        <div className="h-4 w-[1px] bg-[var(--border)] hidden sm:block" />
 
         {/* Interactive Cluster Context Switcher */}
         <ContextSwitcherDropdown />
 
         {/* Interactive Namespace Selector */}
-        {connectionStatus !== "offline" && <NamespaceSelectorDropdown />}
+        {connectionStatus !== "offline" && (
+          <div className="hidden md:block">
+            <NamespaceSelectorDropdown />
+          </div>
+        )}
       </div>
 
       {/* Center: Search Trigger (Cmd+K) */}
-      <div className="flex-1 max-w-md mx-4">
+      <div className="flex-1 max-w-md mx-2 sm:mx-4 min-w-0">
         <button
           onClick={() => setCommandPaletteOpen(true)}
           aria-label="Search resources, pods, logs (Press Command K or Control K to open)"
           className="w-full flex items-center justify-between px-3 py-1 text-xs rounded-lg bg-black/[0.04] dark:bg-black/30 border border-black/10 dark:border-white/10 text-[var(--muted)] hover:border-[var(--accent)]/50 hover:text-[var(--foreground)] focus-visible:ring-2 focus-visible:ring-[var(--accent)] focus-visible:outline-hidden transition-all shadow-inner group cursor-pointer"
         >
-          <div className="flex items-center gap-2">
-            <Search className="w-3.5 h-3.5 group-hover:text-[var(--accent)] transition-colors" aria-hidden="true" />
-            <span>Search resources, pods, logs...</span>
+          <div className="flex items-center gap-2 min-w-0">
+            <Search className="w-3.5 h-3.5 group-hover:text-[var(--accent)] transition-colors shrink-0" aria-hidden="true" />
+            <span className="truncate hidden sm:inline">Search resources, pods, logs...</span>
+            <span className="truncate sm:hidden">Search...</span>
           </div>
-          <kbd className="px-1.5 py-0.5 text-[10px] bg-black/[0.05] dark:bg-white/[0.06] border border-black/10 dark:border-white/10 rounded text-[var(--muted)] group-hover:text-[var(--accent)] font-mono transition-colors">
+          <kbd className="px-1.5 py-0.5 text-[11px] bg-black/[0.05] dark:bg-white/[0.06] border border-black/10 dark:border-white/10 rounded text-[var(--muted)] group-hover:text-[var(--accent)] font-mono tabular-nums transition-colors shrink-0">
             ⌘K
           </kbd>
         </button>

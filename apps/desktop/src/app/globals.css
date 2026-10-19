@@ -2,6 +2,11 @@
 
 @custom-variant dark (&:where(.dark, .dark *));
 
+@theme {
+  --font-sans: var(--font-sans), "Inter", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  --font-mono: var(--font-geist-mono), "JetBrains Mono", ui-monospace, monospace;
+}
+
 @layer base {
   :root {
     --background: #f8fafc;
@@ -34,8 +39,8 @@
     --surface-hover: #171c24;
     --surface-active: #1f2530;
     --surface-elevated: #161a22;
-    --border: rgba(255, 255, 255, 0.08);
-    --border-subtle: rgba(255, 255, 255, 0.04);
+    --border: #1e222b;
+    --border-subtle: #161920;
     --accent: #f08a42;
     --accent-hover: #ff9d5c;
     --accent-foreground: #ffffff;

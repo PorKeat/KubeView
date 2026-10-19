@@ -80,7 +80,7 @@ export function NamespaceSelectorDropdown({
           title={`Filter by Namespace (Current: ${currentNamespace})`}
         >
           <Layers className="w-3.5 h-3.5 text-[#F08A42] shrink-0" aria-hidden="true" />
-          <span className="text-[10px] text-[var(--muted)] uppercase font-semibold tracking-wider">
+          <span className="text-[11px] text-[var(--muted)] uppercase font-semibold tracking-wider">
             ns:
           </span>
           <span className="font-bold max-w-[120px] truncate text-[var(--foreground)]">
@@ -109,7 +109,7 @@ export function NamespaceSelectorDropdown({
                 <Layers className="w-3.5 h-3.5 text-[#F08A42]" aria-hidden="true" />
                 <span>Namespaces</span>
               </span>
-              <span className="text-[10px] text-[var(--muted)] font-mono">
+              <span className="text-[11px] text-[var(--muted)] font-mono tabular-nums">
                 {availableNamespaces.length} available
               </span>
             </div>
@@ -145,7 +145,7 @@ export function NamespaceSelectorDropdown({
                 type="button"
                 onClick={() => setFilterCategory("all")}
                 className={cn(
-                  "px-2 py-0.5 rounded-md text-[10px] font-medium transition-all cursor-pointer font-mono focus-visible:ring-2 focus-visible:ring-[#F08A42] focus-visible:outline-hidden",
+                  "px-2 py-0.5 rounded-md text-[11px] font-medium transition-all cursor-pointer font-mono focus-visible:ring-2 focus-visible:ring-[#F08A42] focus-visible:outline-hidden",
                   filterCategory === "all"
                     ? "bg-[#F08A42] text-zinc-950 font-semibold shadow-xs"
                     : "bg-black/5 dark:bg-white/5 text-[var(--muted)] hover:text-[var(--foreground)]"
@@ -157,7 +157,7 @@ export function NamespaceSelectorDropdown({
                 type="button"
                 onClick={() => setFilterCategory("workloads")}
                 className={cn(
-                  "px-2 py-0.5 rounded-md text-[10px] font-medium transition-all cursor-pointer font-mono focus-visible:ring-2 focus-visible:ring-[#F08A42] focus-visible:outline-hidden",
+                  "px-2 py-0.5 rounded-md text-[11px] font-medium transition-all cursor-pointer font-mono focus-visible:ring-2 focus-visible:ring-[#F08A42] focus-visible:outline-hidden",
                   filterCategory === "workloads"
                     ? "bg-[#F08A42] text-zinc-950 font-semibold shadow-xs"
                     : "bg-black/5 dark:bg-white/5 text-[var(--muted)] hover:text-[var(--foreground)]"
@@ -169,7 +169,7 @@ export function NamespaceSelectorDropdown({
                 type="button"
                 onClick={() => setFilterCategory("system")}
                 className={cn(
-                  "px-2 py-0.5 rounded-md text-[10px] font-medium transition-all cursor-pointer font-mono focus-visible:ring-2 focus-visible:ring-[#F08A42] focus-visible:outline-hidden",
+                  "px-2 py-0.5 rounded-md text-[11px] font-medium transition-all cursor-pointer font-mono focus-visible:ring-2 focus-visible:ring-[#F08A42] focus-visible:outline-hidden",
                   filterCategory === "system"
                     ? "bg-[#F08A42] text-zinc-950 font-semibold shadow-xs"
                     : "bg-black/5 dark:bg-white/5 text-[var(--muted)] hover:text-[var(--foreground)]"
@@ -219,7 +219,7 @@ export function NamespaceSelectorDropdown({
 
                   <div className="flex items-center gap-1.5 shrink-0 ml-2">
                     {isSystem && !isAll && (
-                      <span className="px-1.5 py-0.2 text-[9px] rounded font-mono bg-black/5 dark:bg-white/5 text-[var(--muted)] border border-[var(--border)]">
+                      <span className="px-1.5 py-0.5 text-[11px] rounded font-mono bg-black/5 dark:bg-white/5 text-[var(--muted)] border border-[var(--border)]">
                         sys
                       </span>
                     )}
@@ -249,7 +249,7 @@ export function NamespaceSelectorDropdown({
           </div>
 
           {/* Footer Info */}
-          <div className="px-2.5 py-1.5 mt-1 border-t border-[var(--border)] flex items-center justify-between text-[10px] text-[var(--muted)] font-mono">
+          <div className="px-2.5 py-1.5 mt-1 border-t border-[var(--border)] flex items-center justify-between text-[11px] text-[var(--muted)] font-mono tabular-nums">
             <span>Active: {currentNamespace === "all" ? "All" : currentNamespace}</span>
             <span>{filteredNamespaces.length} shown</span>
           </div>

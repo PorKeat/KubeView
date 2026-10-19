@@ -126,20 +126,20 @@ export function AppSidebar() {
   return (
     <aside
       className={cn(
-        "h-full border-r border-[var(--border)] bg-[var(--surface)] flex flex-col select-none transition-all duration-200 shrink-0",
+        "h-full border-r border-[var(--border)] bg-[var(--surface)] hidden md:flex flex-col select-none transition-all duration-200 shrink-0",
         sidebarCollapsed ? "w-14" : "w-56"
       )}
     >
       {/* Sidebar Header / Collapse Toggle */}
-      <div className="h-9 px-3 flex items-center justify-between border-b border-[var(--border)] shrink-0">
+      <div className="h-9 px-4 flex items-center justify-between border-b border-[var(--border)] shrink-0">
         {!sidebarCollapsed && (
-          <span className="text-[11px] font-semibold text-[var(--muted)] uppercase tracking-wider">
+          <span className="text-xs font-medium text-[var(--muted)]">
             Resources
           </span>
         )}
         <button
           onClick={toggleSidebar}
-          className="p-1 rounded hover:bg-[var(--surface-hover)] text-[var(--muted)] hover:text-[var(--foreground)] transition-colors ml-auto"
+          className="p-1 rounded hover:bg-[var(--surface-hover)] text-[var(--muted)] hover:text-[var(--foreground)] transition-colors ml-auto cursor-pointer"
           title={sidebarCollapsed ? "Expand Sidebar" : "Collapse Sidebar"}
         >
           {sidebarCollapsed ? <PanelLeftOpen className="w-4 h-4" /> : <PanelLeftClose className="w-4 h-4" />}
@@ -147,7 +147,7 @@ export function AppSidebar() {
       </div>
 
       {/* Navigation Tree */}
-      <div className="flex-1 overflow-y-auto py-2 px-1.5 space-y-3">
+      <div className="flex-1 overflow-y-auto py-2.5 px-3 space-y-3">
         {navigationGroups.map((group) => {
           const isGroupCollapsed = collapsedGroups[group.category];
 
@@ -156,10 +156,10 @@ export function AppSidebar() {
               {!sidebarCollapsed ? (
                 <button
                   onClick={() => toggleGroup(group.category)}
-                  className="w-full flex items-center justify-between px-2 py-1 text-[11px] font-semibold text-[var(--muted)] hover:text-[var(--foreground)] rounded transition-colors"
+                  className="w-full flex items-center justify-between px-2 py-1 text-xs font-medium text-[var(--muted)] hover:text-[var(--foreground)] rounded transition-colors cursor-pointer"
                 >
-                  <span className="uppercase tracking-wider">{group.category}</span>
-                  {isGroupCollapsed ? <ChevronRight className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />}
+                  <span>{group.category}</span>
+                  {isGroupCollapsed ? <ChevronRight className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
                 </button>
               ) : (
                 <div className="h-[1px] bg-[var(--border)] my-1" />
@@ -178,12 +178,12 @@ export function AppSidebar() {
                         disabled={item.disabled}
                         onClick={() => handleItemClick(item)}
                         className={cn(
-                          "w-full flex items-center justify-between px-2.5 py-1.5 text-xs rounded-lg transition-all text-left group relative",
+                          "w-full flex items-center justify-between px-2.5 py-1.5 text-xs rounded-lg transition-colors text-left group relative",
                           item.disabled
                             ? "opacity-35 cursor-not-allowed select-none hover:bg-transparent text-[var(--muted)]"
                             : isActive
-                            ? "bg-[var(--accent)]/10 dark:bg-white/[0.08] text-[var(--accent)] font-semibold shadow-inner cursor-pointer"
-                            : "text-[var(--foreground)] hover:bg-black/[0.04] dark:hover:bg-white/[0.04] cursor-pointer"
+                            ? "bg-[var(--surface-active)] text-[var(--foreground)] font-semibold border border-[var(--border)] cursor-pointer"
+                            : "text-[var(--foreground)] hover:bg-[var(--surface-hover)] cursor-pointer"
                         )}
                         title={
                           item.disabled
@@ -194,7 +194,7 @@ export function AppSidebar() {
                         }
                       >
                         {isActive && !item.disabled && (
-                          <span className="absolute left-0 top-1/2 -translate-y-1/2 w-0.5 h-4 rounded-r-full bg-[var(--accent)] shadow-[0_0_8px_rgba(240,138,66,0.8)]" />
+                          <span className="absolute left-0 top-1/2 -translate-y-1/2 w-0.5 h-4 rounded-r-full bg-[var(--accent)]" />
                         )}
 
                         <div className="flex items-center gap-2.5 min-w-0">
@@ -205,7 +205,7 @@ export function AppSidebar() {
                         {!sidebarCollapsed && item.badge !== undefined && (
                           <span
                             className={cn(
-                              "px-1.5 py-0.2 rounded text-[9px] font-mono font-medium shrink-0 ml-1.5 border tracking-tight",
+                              "px-1.5 py-0.2 rounded text-[11px] font-mono font-medium shrink-0 ml-1.5 border tracking-tight tabular-nums",
                               item.badgeVariant === "soon"
                                 ? "bg-black/[0.03] dark:bg-white/[0.03] text-[var(--muted)] border-black/[0.06] dark:border-white/[0.06] opacity-75"
                                 : item.badgeVariant === "warning"
@@ -230,27 +230,27 @@ export function AppSidebar() {
 
       {/* Bottom Mini Cluster Card */}
       {!sidebarCollapsed ? (
-        <div className="p-2 border-t border-[var(--border)] shrink-0 bg-slate-50/50 dark:bg-black/20">
-          <div className="p-2 rounded-lg bg-white dark:bg-white/[0.04] border border-black/[0.06] dark:border-white/[0.08] flex items-center justify-between text-xs shadow-xs">
+        <div className="p-2.5 border-t border-[var(--border)] shrink-0 bg-slate-50/50 dark:bg-black/20">
+          <div className="p-2 rounded-lg bg-[var(--surface)] border border-[var(--border)] flex items-center justify-between text-xs">
             <div className="flex items-center gap-2 min-w-0">
-              <span className="w-2 h-2 rounded-full bg-emerald-400 shadow-[0_0_6px_#34d399]" />
+              <span className="w-2 h-2 rounded-full bg-emerald-500 shrink-0" />
               <div className="min-w-0">
-                <div className="font-mono text-[11px] font-semibold text-[var(--foreground)] truncate">
+                <div className="font-mono text-xs font-semibold text-[var(--foreground)] truncate">
                   Cluster Live
                 </div>
-                <div className="text-[9px] text-[var(--muted)] font-mono">
+                <div className="text-[11px] text-[var(--muted)] font-mono">
                   Supervised Engine
                 </div>
               </div>
             </div>
-            <span className="px-1.5 py-0.5 rounded text-[9px] font-mono font-medium bg-[var(--accent)]/15 text-[var(--accent)] border border-[var(--accent)]/20">
+            <span className="px-1.5 py-0.5 rounded text-[11px] font-mono font-medium bg-[var(--surface-hover)] text-[var(--muted)] border border-[var(--border)] tabular-nums">
               v1.0.0
             </span>
           </div>
         </div>
       ) : (
         <div className="p-2 border-t border-[var(--border)] flex justify-center shrink-0">
-          <span className="w-2 h-2 rounded-full bg-emerald-400 shadow-[0_0_6px_#34d399]" title="Cluster Active" />
+          <span className="w-2 h-2 rounded-full bg-emerald-500" title="Cluster Active" />
         </div>
       )}
     </aside>

@@ -36,19 +36,10 @@ export function SplashScreen() {
     setTimeout(() => {
       setSplashDismissed(true);
 
-      // On first launch when clean slate, open Kubeconfig modal
       try {
-        const hasOpened = localStorage.getItem("kubeview_splash_seen");
-        if (!hasOpened && availableContexts.length === 0) {
-          localStorage.setItem("kubeview_splash_seen", "true");
-          openKubeconfigModal("browse");
-        } else {
-          localStorage.setItem("kubeview_splash_seen", "true");
-        }
+        localStorage.setItem("kubeview_splash_seen", "true");
       } catch (e) {
-        if (availableContexts.length === 0) {
-          openKubeconfigModal("browse");
-        }
+        // Ignore localStorage errors
       }
     }, 350);
   };

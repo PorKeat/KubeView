@@ -53,17 +53,17 @@ export function ContextSwitcherDropdown() {
   const getProviderBadge = (provider: ClusterContextInfo["provider"]) => {
     switch (provider) {
       case "kind":
-        return <span className="px-1.5 py-0.5 text-[9px] font-mono font-medium rounded bg-purple-500/15 text-purple-700 dark:text-purple-300 border border-purple-500/25">Kind</span>;
+        return <span className="px-1.5 py-0.5 text-[11px] font-mono font-medium rounded bg-purple-500/15 text-purple-700 dark:text-purple-300 border border-purple-500/25">Kind</span>;
       case "eks":
-        return <span className="px-1.5 py-0.5 text-[9px] font-mono font-medium rounded bg-amber-500/15 text-amber-700 dark:text-amber-300 border border-amber-500/25">AWS EKS</span>;
+        return <span className="px-1.5 py-0.5 text-[11px] font-mono font-medium rounded bg-amber-500/15 text-amber-700 dark:text-amber-300 border border-amber-500/25">AWS EKS</span>;
       case "gke":
-        return <span className="px-1.5 py-0.5 text-[9px] font-mono font-medium rounded bg-blue-500/15 text-blue-700 dark:text-blue-300 border border-blue-500/25">GCP GKE</span>;
+        return <span className="px-1.5 py-0.5 text-[11px] font-mono font-medium rounded bg-blue-500/15 text-blue-700 dark:text-blue-300 border border-blue-500/25">GCP GKE</span>;
       case "aks":
-        return <span className="px-1.5 py-0.5 text-[9px] font-mono font-medium rounded bg-cyan-500/15 text-cyan-700 dark:text-cyan-300 border border-cyan-500/25">Azure AKS</span>;
+        return <span className="px-1.5 py-0.5 text-[11px] font-mono font-medium rounded bg-cyan-500/15 text-cyan-700 dark:text-cyan-300 border border-cyan-500/25">Azure AKS</span>;
       case "minikube":
-        return <span className="px-1.5 py-0.5 text-[9px] font-mono font-medium rounded bg-emerald-500/15 text-emerald-700 dark:text-emerald-300 border border-emerald-500/25">Minikube</span>;
+        return <span className="px-1.5 py-0.5 text-[11px] font-mono font-medium rounded bg-emerald-500/15 text-emerald-700 dark:text-emerald-300 border border-emerald-500/25">Minikube</span>;
       default:
-        return <span className="px-1.5 py-0.5 text-[9px] font-mono font-medium rounded bg-[var(--surface-active)] text-[var(--foreground)] border border-[var(--border)]">K8s</span>;
+        return <span className="px-1.5 py-0.5 text-[11px] font-mono font-medium rounded bg-[var(--surface-active)] text-[var(--foreground)] border border-[var(--border)]">K8s</span>;
     }
   };
 
@@ -92,15 +92,12 @@ export function ContextSwitcherDropdown() {
         >
           <div className="flex items-center gap-1.5">
             <span className="relative flex h-2 w-2">
-              {connectionStatus === "checking" && (
-                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75" />
-              )}
-              <span className={cn("relative inline-flex rounded-full h-2 w-2 transition-colors", getStatusColor())} />
+              <span className={cn("inline-flex rounded-full h-2 w-2 transition-colors", getStatusColor())} />
             </span>
             <span className="font-semibold max-w-[130px] truncate">{currentContext || "Select Cluster"}</span>
           </div>
           {getProviderBadge(currentInfo.provider)}
-          <span className="text-[10px] text-[var(--muted)] font-mono">({latencyMs}ms)</span>
+          <span className="text-[11px] text-[var(--muted)] font-mono tabular-nums">({latencyMs}ms)</span>
           <ChevronDown className="w-3 h-3 text-[var(--muted)] group-hover:text-[var(--foreground)] transition-transform duration-150" />
         </button>
       </DropdownMenu.Trigger>
@@ -118,7 +115,7 @@ export function ContextSwitcherDropdown() {
                 <Server className="w-3.5 h-3.5 text-[#F08A42]" />
                 <span>Cluster Contexts</span>
               </span>
-              <span className="text-[10px] text-[var(--muted)] font-mono">
+              <span className="text-[11px] text-[var(--muted)] font-mono tabular-nums">
                 {availableContexts.length} configured
               </span>
             </div>
@@ -171,12 +168,12 @@ export function ContextSwitcherDropdown() {
                       <span className="font-bold truncate">{ctx.name}</span>
                       {getProviderBadge(ctx.provider)}
                       {isInternal && (
-                        <span className="px-1.5 py-0.2 text-[8px] font-sans font-medium rounded bg-amber-500/15 text-amber-700 dark:text-amber-300 border border-amber-500/30">
+                        <span className="px-1.5 py-0.5 text-[11px] font-sans font-medium rounded bg-amber-500/15 text-amber-700 dark:text-amber-300 border border-amber-500/30">
                           Internal Host
                         </span>
                       )}
                     </div>
-                    <span className="text-[10px] text-[var(--muted)] font-mono truncate mt-0.5">
+                    <span className="text-[11px] text-[var(--muted)] font-mono truncate mt-0.5">
                       {ctx.server}
                     </span>
                   </div>
@@ -230,7 +227,7 @@ export function ContextSwitcherDropdown() {
                     >
                       <Trash2 className="w-3.5 h-3.5" aria-hidden="true" />
                     </button>
-                    <span className="text-[10px] text-[var(--muted)] font-mono">
+                    <span className="text-[11px] text-[var(--muted)] font-mono tabular-nums">
                       {ctx.latencyMs > 0 ? `${ctx.latencyMs}ms` : ""}
                     </span>
                     {isSelected && <Check className="w-4 h-4 text-[#F08A42]" aria-hidden="true" />}
@@ -256,7 +253,7 @@ export function ContextSwitcherDropdown() {
                 <Plus className="w-3.5 h-3.5 text-[#F08A42]" />
                 <span className="font-medium">Import / Add Kubeconfig...</span>
               </div>
-              <span className="text-[9px] font-mono px-1.5 py-0.5 rounded bg-[#F08A42]/10 text-[#F08A42] border border-[#F08A42]/20">
+              <span className="text-[11px] font-mono px-1.5 py-0.5 rounded bg-[#F08A42]/10 text-[#F08A42] border border-[#F08A42]/20">
                 + Add
               </span>
             </DropdownMenu.Item>
