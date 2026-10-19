@@ -4,8 +4,8 @@
   "version": "0.1.0",
   "identifier": "com.kubeview.desktop",
   "build": {
-    "beforeDevCommand": "pnpm --filter @kubeview/desktop dev",
-    "devUrl": "http://localhost:3000",
+    "beforeDevCommand": "pnpm --filter @kubeview/desktop dev --port 3005",
+    "devUrl": "http://localhost:3005",
     "beforeBuildCommand": "pnpm --filter @kubeview/desktop build",
     "frontendDist": "../apps/desktop/out"
   },

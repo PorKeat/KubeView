@@ -88,6 +88,14 @@ export interface ContainerInfo {
   stateReason?: string;
 }
 
+export interface PodConditionItem {
+  type: string;
+  status: string;
+  lastTransitionTime?: string;
+  reason?: string;
+  message?: string;
+}
+
 export interface PodSummary {
   name: string;
   namespace: string;
@@ -106,6 +114,8 @@ export interface PodSummary {
   labels?: Record<string, string>;
   annotations?: Record<string, string>;
   controlledBy?: string;
+  qosClass?: string;
+  conditions?: PodConditionItem[];
 }
 
 export interface ListPodsParams {

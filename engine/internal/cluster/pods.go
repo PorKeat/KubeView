@@ -5,11 +5,14 @@ import (
 	"context"
 	"fmt"
 	"io"
+	"strings"
 	"time"
 
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/kubernetes/scheme"
+	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/remotecommand"
 	"sigs.k8s.io/yaml"
 )
@@ -24,25 +27,36 @@ type ContainerInfo struct {
 	StateReason  string `json:"stateReason,omitempty"`
 }
 
+// PodConditionItem represents a live Kubernetes status condition
+type PodConditionItem struct {
+	Type               string `json:"type"`
+	Status             string `json:"status"`
+	LastTransitionTime string `json:"lastTransitionTime,omitempty"`
+	Reason             string `json:"reason,omitempty"`
+	Message            string `json:"message,omitempty"`
+}
+
 // PodSummary provides display-ready metadata and metrics for list/detail views
 type PodSummary struct {
-	Name              string            `json:"name"`
-	Namespace         string            `json:"namespace"`
-	Status            string            `json:"status"`
-	Ready             string            `json:"ready"`
-	Restarts          int32             `json:"restarts"`
-	Age               string            `json:"age"`
-	Cpu               string            `json:"cpu"`
-	CpuPercent        int               `json:"cpuPercent"`
-	Memory            string            `json:"memory"`
-	MemoryPercent     int               `json:"memoryPercent"`
-	NodeName          string            `json:"nodeName"`
-	IP                string            `json:"ip"`
-	Containers        []ContainerInfo   `json:"containers"`
-	CreationTimestamp string            `json:"creationTimestamp"`
-	Labels            map[string]string `json:"labels,omitempty"`
-	Annotations       map[string]string `json:"annotations,omitempty"`
-	ControlledBy      string            `json:"controlledBy,omitempty"`
+	Name              string             `json:"name"`
+	Namespace         string             `json:"namespace"`
+	Status            string             `json:"status"`
+	Ready             string             `json:"ready"`
+	Restarts          int32              `json:"restarts"`
+	Age               string             `json:"age"`
+	Cpu               string             `json:"cpu"`
+	CpuPercent        int                `json:"cpuPercent"`
+	Memory            string             `json:"memory"`
+	MemoryPercent     int                `json:"memoryPercent"`
+	NodeName          string             `json:"nodeName"`
+	IP                string             `json:"ip"`
+	Containers        []ContainerInfo    `json:"containers"`
+	CreationTimestamp string             `json:"creationTimestamp"`
+	Labels            map[string]string  `json:"labels,omitempty"`
+	Annotations       map[string]string  `json:"annotations,omitempty"`
+	ControlledBy      string             `json:"controlledBy,omitempty"`
+	QoSClass          string             `json:"qosClass,omitempty"`
+	Conditions        []PodConditionItem `json:"conditions,omitempty"`
 }
 
 type ListPodsParams struct {
@@ -257,32 +271,11 @@ func (m *Manager) RestartPod(ctx context.Context, p RestartPodParams) error {
 	return nil
 }
 
-// ExecPod runs a command inside the selected pod container and returns stdout/stderr/exitCode
-func (m *Manager) ExecPod(ctx context.Context, p ExecPodParams) (*ExecPodResult, error) {
-	client, restConfig, err := m.GetClientForContext(p.ContextName)
-	if err != nil {
-		return nil, err
-	}
-
-	pod, err := client.CoreV1().Pods(p.Namespace).Get(ctx, p.PodName, metav1.GetOptions{})
-	if err != nil {
-		return nil, fmt.Errorf("pod %s not found: %w", p.PodName, err)
-	}
-
-	containerName := p.Container
-	if containerName == "" && len(pod.Spec.Containers) > 0 {
-		containerName = pod.Spec.Containers[0].Name
-	}
-
-	cmd := p.Command
-	if len(cmd) == 0 {
-		cmd = []string{"/bin/sh", "-c", "echo 'KubeView shell session active'; uname -a; uptime"}
-	}
-
+func executeInContainer(ctx context.Context, client kubernetes.Interface, execConfig *rest.Config, namespace, podName, containerName string, cmd []string) (*ExecPodResult, error) {
 	req := client.CoreV1().RESTClient().Post().
 		Resource("pods").
-		Name(p.PodName).
-		Namespace(p.Namespace).
+		Name(podName).
+		Namespace(namespace).
 		SubResource("exec").
 		VersionedParams(&corev1.PodExecOptions{
 			Container: containerName,
@@ -292,7 +285,7 @@ func (m *Manager) ExecPod(ctx context.Context, p ExecPodParams) (*ExecPodResult,
 			TTY:       false,
 		}, scheme.ParameterCodec)
 
-	executor, err := remotecommand.NewSPDYExecutor(restConfig, "POST", req.URL())
+	executor, err := remotecommand.NewSPDYExecutor(execConfig, "POST", req.URL())
 	if err != nil {
 		return nil, fmt.Errorf("failed to create SPDY executor: %w", err)
 	}
@@ -317,6 +310,53 @@ func (m *Manager) ExecPod(ctx context.Context, p ExecPodParams) (*ExecPodResult,
 		Stderr:   stderrBuf.String(),
 		ExitCode: exitCode,
 	}, nil
+}
+
+// ExecPod runs a command inside the selected pod container and returns stdout/stderr/exitCode
+func (m *Manager) ExecPod(ctx context.Context, p ExecPodParams) (*ExecPodResult, error) {
+	client, restConfig, err := m.GetClientForContext(p.ContextName)
+	if err != nil {
+		return nil, err
+	}
+
+	pod, err := client.CoreV1().Pods(p.Namespace).Get(ctx, p.PodName, metav1.GetOptions{})
+	if err != nil {
+		return nil, fmt.Errorf("pod %s not found: %w", p.PodName, err)
+	}
+
+	containerName := p.Container
+	if containerName == "" && len(pod.Spec.Containers) > 0 {
+		containerName = pod.Spec.Containers[0].Name
+	}
+
+	cmd := p.Command
+	if len(cmd) == 0 {
+		cmd = []string{"/bin/sh", "-c", "echo 'KubeView shell session active'; uname -a; uptime"}
+	}
+
+	execConfig := rest.CopyConfig(restConfig)
+	execConfig.Timeout = 0 // Required for SPDY / streaming connections!
+
+	res, err := executeInContainer(ctx, client, execConfig, p.Namespace, p.PodName, containerName, cmd)
+	if err == nil && res.ExitCode != 0 && (strings.Contains(res.Stderr, "not found") || strings.Contains(res.Stderr, "executable file not found")) {
+		// Attempt shell fallbacks if wrapped in /bin/sh -c ...
+		if len(cmd) >= 3 && (cmd[0] == "/bin/sh" || cmd[0] == "sh") {
+			cmdPayload := cmd[2]
+			fallbacks := [][]string{
+				{"sh", "-c", cmdPayload},
+				{"/bin/bash", "-c", cmdPayload},
+				{"bash", "-c", cmdPayload},
+			}
+			for _, fb := range fallbacks {
+				fbRes, fbErr := executeInContainer(ctx, client, execConfig, p.Namespace, p.PodName, containerName, fb)
+				if fbErr == nil && !strings.Contains(fbRes.Stderr, "not found") {
+					return fbRes, nil
+				}
+			}
+		}
+	}
+
+	return res, err
 }
 
 // GetPodYaml exports the live Kubernetes resource definition as YAML
@@ -488,6 +528,24 @@ func convertPodToSummary(pod *corev1.Pod) PodSummary {
 		controlledBy = fmt.Sprintf("%s/%s", pod.OwnerReferences[0].Kind, pod.OwnerReferences[0].Name)
 	}
 
+	// Real Kubernetes Pod Conditions from pod.Status.Conditions
+	var conditionItems []PodConditionItem
+	for _, c := range pod.Status.Conditions {
+		transTime := ""
+		if !c.LastTransitionTime.IsZero() {
+			transTime = c.LastTransitionTime.Time.Format(time.RFC3339)
+		}
+		conditionItems = append(conditionItems, PodConditionItem{
+			Type:               string(c.Type),
+			Status:             string(c.Status),
+			LastTransitionTime: transTime,
+			Reason:             c.Reason,
+			Message:            c.Message,
+		})
+	}
+
+	qosClass := string(pod.Status.QOSClass)
+
 	return PodSummary{
 		Name:              pod.Name,
 		Namespace:         pod.Namespace,
@@ -506,6 +564,8 @@ func convertPodToSummary(pod *corev1.Pod) PodSummary {
 		Labels:            pod.Labels,
 		Annotations:       pod.Annotations,
 		ControlledBy:      controlledBy,
+		QoSClass:          qosClass,
+		Conditions:        conditionItems,
 	}
 }
 
