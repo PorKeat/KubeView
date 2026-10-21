@@ -3,6 +3,7 @@
   "private": true,
   "version": "0.1.0",
   "description": "Next-generation Kubernetes desktop IDE and operations platform",
+  "license": "UNLICENSED",
   "packageManager": "pnpm@11.9.0",
   "scripts": {
     "dev": "./scripts/dev.sh",

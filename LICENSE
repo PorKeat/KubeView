@@ -1,0 +1,84 @@
+KUBEVIEW PROPRIETARY SOFTWARE LICENSE
+==============================================================================
+Copyright (c) 2026 KubeView. All Rights Reserved.
+==============================================================================
+
+IMPORTANT NOTICE: PLEASE READ THIS LICENSE AGREEMENT CAREFULLY.
+DOWNLOADING, ACCESSING, VIEWING, INSTALLING, RUNNING, OR USING ANY PORTION OF
+THIS SOFTWARE (INCLUDING SOURCE CODE, BINARIES, ASSETS, DESIGN SPECIFICATIONS,
+AND DOCUMENTATION) CONSTITUTES ACCEPTANCE OF ALL TERMS AND CONDITIONS OF THIS
+PROPRIETARY LICENSE AGREEMENT.
+
+1. OWNERSHIP AND INTELLECTUAL PROPERTY
+------------------------------------------------------------------------------
+The software, source code, user interfaces, branding, APIs, contracts, Go
+engine, Rust supervisor, Next.js presentation code, documentation, and all
+associated intellectual property (collectively, the "Software") are the sole,
+exclusive, and confidential property of KubeView ("Licensor") and are protected
+by national copyright laws, international treaty provisions, trade secret laws,
+and intellectual property statutes.
+
+2. STRICT RESTRICTIONS ON COPYING, FORKING, AND DERIVATIVE WORKS
+------------------------------------------------------------------------------
+UNDER NO CIRCUMSTANCES DOES THIS LICENSE GRANT OR PERMIT ANY OF THE FOLLOWING:
+
+  (a) NO FORKING OR DERIVATIVE WORKS:
+      You may NOT fork, clone for public distribution, modify, adapt, alter,
+      translate, re-architect, or create any derivative works based upon the
+      Software or any portion thereof.
+
+  (b) NO COPYING OR REPRODUCTION:
+      You may NOT copy, mirror, duplicate, scrape, extract, or reproduce any
+      portion of the source code, design architecture, graphics, or compiled
+      binaries for any purpose other than local, private viewing on your machine.
+
+  (c) NO REDISTRIBUTION OR SYNDICATION:
+      You may NOT sell, resell, lease, sublicense, rent, assign, syndicate,
+      publish, broadcast, distribute, or otherwise transfer the Software or any
+      component thereof to any third party in source, bytecode, or binary form.
+
+  (d) NO COMPETITIVE OR HOSTED USE:
+      You may NOT use the Software, or any substantial part of its architecture,
+      logic, or presentation, to build, market, operate, or offer a competing
+      product, commercial desktop client, software-as-a-service (SaaS), cloud
+      management platform, or hosted service.
+
+  (e) NO REVERSE ENGINEERING:
+      To the maximum extent permitted by applicable law, you may not decompile,
+      disassemble, reverse engineer, decrypt, or attempt to derive the source
+      code of any compiled components of the Software.
+
+3. LIMITED VIEW-ONLY PERMISSION
+------------------------------------------------------------------------------
+If this repository is accessible on a public revision control platform
+(such as GitHub), you are granted a non-exclusive, non-transferable, revocable,
+strictly limited permission to view the source code solely for personal auditing
+and evaluation purposes. No right to use the software commercially, build on
+top of it, or redistribute it is granted or implied.
+
+4. COMMERCIAL INQUIRIES & EXPLICIT LICENSING
+------------------------------------------------------------------------------
+Any commercial deployment, white-label distribution, enterprise customization,
+or usage outside the strict scope of this Agreement requires an explicit,
+written commercial licensing agreement signed by an authorized representative
+of KubeView.
+
+For licensing inquiries: legal@kubeview.dev
+
+5. TERMINATION & LEGAL REMEDIES
+------------------------------------------------------------------------------
+Any violation of this Agreement automatically terminates any permissions
+granted herein without prior notice. The Licensor reserves all rights to seek
+injunctive relief, monetary damages, statutory damages for willful copyright
+infringement, recovery of legal fees, and all other remedies available under
+applicable law.
+
+6. DISCLAIMER OF WARRANTY
+------------------------------------------------------------------------------
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE, AND NON-INFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES, OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT, OR OTHERWISE, ARISING FROM,
+OUT OF, OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+THE SOFTWARE.

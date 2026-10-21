@@ -4,6 +4,16 @@
 
 # KubeView
 
+<p align="center">
+  <a href="LICENSE"><img src="https://img.shields.io/badge/License-Proprietary-red.svg?style=flat-square" alt="License: Proprietary" /></a>
+  <a href="SECURITY.md"><img src="https://img.shields.io/badge/Security-Policy_Active-38B879.svg?style=flat-square" alt="Security Policy" /></a>
+  <a href="CONTRIBUTING.md"><img src="https://img.shields.io/badge/PRs-Welcome-F08A42.svg?style=flat-square" alt="PRs Welcome" /></a>
+  <a href="CODE_OF_CONDUCT.md"><img src="https://img.shields.io/badge/Contributor_Covenant-v2.1-teal.svg?style=flat-square" alt="Code of Conduct" /></a>
+  <a href="https://go.dev"><img src="https://img.shields.io/badge/Go-1.23+-00ADD8.svg?style=flat-square&logo=go" alt="Go 1.23+" /></a>
+  <a href="https://tauri.app"><img src="https://img.shields.io/badge/Tauri-2.0-FFC131.svg?style=flat-square&logo=tauri" alt="Tauri 2" /></a>
+  <a href="https://nextjs.org"><img src="https://img.shields.io/badge/Next.js-15-black.svg?style=flat-square&logo=next.js" alt="Next.js 15" /></a>
+</p>
+
 > **A next-generation Kubernetes desktop IDE and operations platform.**  
 > Built to surpass legacy Kubernetes desktop tooling (Lens, Freelens, Octant) with instant startup, rock-solid cluster connectivity, high-density observability, interactive topology visualization, and guardrailed operations.
 
@@ -188,6 +198,22 @@ Explore the detailed architecture and technical specifications in [`docs/`](docs
 
 ---
 
-## 📄 License
+## 🏛️ Enterprise Governance & Security
 
-MIT © [KubeView Contributors](https://github.com/PorKeat/KubeView)
+KubeView is built for enterprise production readiness, adhering to open-source governance and security standards:
+
+- 🔒 [**Security Policy (SECURITY.md)**](SECURITY.md) — Vulnerability reporting, Coordinated Disclosure SLA, trust model, and scope.
+- 📜 [**License (LICENSE)**](LICENSE) — Proprietary & Confidential (All Rights Reserved). Strictly prohibits copying, forking, or derivative works.
+- 🤝 [**Contributing Guide (CONTRIBUTING.md)**](CONTRIBUTING.md) — Local development, conventional commits, quality gates, and PR review process.
+- 💖 [**Code of Conduct (CODE_OF_CONDUCT.md)**](CODE_OF_CONDUCT.md) — Contributor Covenant v2.1 community pledge and enforcement standards.
+- 📋 [**Changelog (CHANGELOG.md)**](CHANGELOG.md) — Keep a Changelog version history and release notes.
+
+---
+
+## 📄 License & Proprietary Terms
+
+**Proprietary & Confidential. All Rights Reserved.**
+
+Copyright © 2026 [KubeView](https://github.com/PorKeat/KubeView).
+
+**Strict Policy:** You may NOT copy, fork, modify, redistribute, sublicense, create derivative works, or build on top of this software for public or commercial distribution without prior express written authorization from the copyright holder. See the [LICENSE](LICENSE) file for complete legal terms.
