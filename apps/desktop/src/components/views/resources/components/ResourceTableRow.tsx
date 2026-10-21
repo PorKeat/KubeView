@@ -24,7 +24,6 @@ import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import type { PodSummary } from "@kubeview/contracts";
 import { StatusBeacon } from "@/components/ui";
-import { getPodIssue, getPodPendingInfo } from "../lib/podIssues";
 
 export interface ResourceTableRowProps {
   item: PodSummary;
@@ -58,11 +57,6 @@ export function ResourceTableRow({
   onFilterLabel,
 }: ResourceTableRowProps) {
   const itemKey = `${item.namespace}/${item.name}`;
-  const issueInfo = React.useMemo(() => getPodIssue(item), [item]);
-  const pendingInfo = React.useMemo(
-    () => (isPendingView ? getPodPendingInfo(item) : null),
-    [item, isPendingView]
-  );
   const [copiedName, setCopiedName] = React.useState(false);
   const [copiedIp, setCopiedIp] = React.useState(false);
   const [isExpanded, setIsExpanded] = React.useState(false);
@@ -581,146 +575,6 @@ export function ResourceTableRow({
           </div>
         </td>
       </tr>
-
-      {/* Full-width Diagnostics Card Sub-Row for Failing View */}
-      {isFailingView && issueInfo && (
-        <tr className="bg-rose-500/[0.02] dark:bg-rose-500/[0.03] border-b border-[var(--border)]">
-          <td
-            colSpan={12}
-            className="py-2.5 px-4 pl-10 pr-6"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <div className="p-3.5 rounded-xl bg-[var(--surface)] border border-rose-500/30 dark:border-rose-500/25 shadow-xs space-y-2 text-left font-sans">
-              {/* Header: Title + Container + Exit Code badge + Fast Actions */}
-              <div className="flex items-center justify-between gap-3 flex-wrap">
-                <div className="flex items-center gap-2 flex-wrap text-xs font-mono">
-                  <span className="font-semibold text-rose-600 dark:text-rose-400 flex items-center gap-1.5">
-                    <AlertTriangle className="w-3.5 h-3.5 shrink-0" />
-                    {issueInfo.title}
-                  </span>
-                  {issueInfo.containerName && (
-                    <span className="px-2 py-0.5 rounded text-[10px] bg-black/5 dark:bg-white/10 text-[var(--foreground)] border border-[var(--border)] font-mono">
-                      container:{" "}
-                      <strong className="text-[var(--accent)]">
-                        {issueInfo.containerName}
-                      </strong>
-                    </span>
-                  )}
-                  {issueInfo.exitCode !== undefined && (
-                    <span className="px-2 py-0.5 rounded text-[10px] bg-rose-500/15 text-rose-600 dark:text-rose-400 border border-rose-500/30 font-mono font-bold">
-                      Exit Code {issueInfo.exitCode}
-                    </span>
-                  )}
-                </div>
-
-                <div className="flex items-center gap-1.5 shrink-0">
-                  <button
-                    type="button"
-                    onClick={() =>
-                      onLogsClick && onLogsClick(item, issueInfo.containerName)
-                    }
-                    className="px-2.5 py-1 rounded-md text-xs font-mono font-medium bg-[var(--surface)] hover:bg-[var(--surface-hover)] border border-[var(--border)] text-[var(--foreground)] transition-colors cursor-pointer inline-flex items-center gap-1.5 shadow-2xs active:scale-[0.98]"
-                    title="Inspect logs for failing container"
-                  >
-                    <FileText className="w-3 h-3 text-[var(--accent)]" />
-                    <span>View Logs</span>
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => onRowClick && onRowClick(item)}
-                    className="px-2.5 py-1 rounded-md text-xs font-mono font-medium bg-[var(--surface)] hover:bg-[var(--surface-hover)] border border-[var(--border)] text-[var(--foreground)] transition-colors cursor-pointer inline-flex items-center gap-1.5 shadow-2xs active:scale-[0.98]"
-                    title="Inspect pod events & YAML"
-                  >
-                    <span>Inspect</span>
-                  </button>
-                </div>
-              </div>
-
-              {/* Root Cause explanation with full width */}
-              <p className="text-xs text-[var(--foreground)] leading-relaxed">
-                {issueInfo.rootCause}
-              </p>
-
-              {/* Actionable tip footer */}
-              <div className="pt-2 border-t border-[var(--border)]/60 flex items-center gap-2 text-[11px] text-[var(--muted)]">
-                <span className="px-1.5 py-0.2 rounded font-bold text-[9px] uppercase bg-rose-500/15 text-rose-600 dark:text-rose-400">
-                  Fix
-                </span>
-                <span>{issueInfo.actionableTip}</span>
-              </div>
-            </div>
-          </td>
-        </tr>
-      )}
-
-      {/* Full-width Diagnostics Card Sub-Row for Pending View */}
-      {isPendingView && pendingInfo && (
-        <tr className="bg-amber-500/[0.02] dark:bg-amber-500/[0.03] border-b border-[var(--border)]">
-          <td
-            colSpan={12}
-            className="py-2.5 px-4 pl-10 pr-6"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <div className="p-3.5 rounded-xl bg-[var(--surface)] border border-amber-500/30 dark:border-amber-500/25 shadow-xs space-y-2 text-left font-sans">
-              <div className="flex items-center justify-between gap-3 flex-wrap">
-                <div className="flex items-center gap-2 flex-wrap text-xs font-mono">
-                  <span className="font-semibold text-amber-600 dark:text-amber-400 flex items-center gap-1.5">
-                    <Clock className="w-3.5 h-3.5 shrink-0" />
-                    {pendingInfo.title}
-                  </span>
-                  {pendingInfo.containerName && (
-                    <span className="px-2 py-0.5 rounded text-[10px] bg-black/5 dark:bg-white/10 text-[var(--foreground)] border border-[var(--border)] font-mono">
-                      container:{" "}
-                      <strong className="text-[var(--accent)]">
-                        {pendingInfo.containerName}
-                      </strong>
-                    </span>
-                  )}
-                  <span className="px-2 py-0.5 rounded text-[10px] bg-amber-500/15 text-amber-600 dark:text-amber-400 border border-amber-500/30 font-mono font-medium">
-                    {item.status}
-                  </span>
-                </div>
-
-                <div className="flex items-center gap-1.5 shrink-0">
-                  {pendingInfo.canViewLogs && (
-                    <button
-                      type="button"
-                      onClick={() =>
-                        onLogsClick &&
-                        onLogsClick(item, pendingInfo.containerName)
-                      }
-                      className="px-2.5 py-1 rounded-md text-xs font-mono font-medium bg-[var(--surface)] hover:bg-[var(--surface-hover)] border border-[var(--border)] text-[var(--foreground)] transition-colors cursor-pointer inline-flex items-center gap-1.5 shadow-2xs active:scale-[0.98]"
-                      title="Inspect init container logs"
-                    >
-                      <FileText className="w-3 h-3 text-[var(--accent)]" />
-                      <span>View Logs</span>
-                    </button>
-                  )}
-                  <button
-                    type="button"
-                    onClick={() => onRowClick && onRowClick(item)}
-                    className="px-2.5 py-1 rounded-md text-xs font-mono font-medium bg-[var(--surface)] hover:bg-[var(--surface-hover)] border border-[var(--border)] text-[var(--foreground)] transition-colors cursor-pointer inline-flex items-center gap-1.5 shadow-2xs active:scale-[0.98]"
-                    title="Inspect pod events & YAML"
-                  >
-                    <span>Inspect</span>
-                  </button>
-                </div>
-              </div>
-
-              <p className="text-xs text-[var(--foreground)] leading-relaxed">
-                {pendingInfo.rootCause}
-              </p>
-
-              <div className="pt-2 border-t border-[var(--border)]/60 flex items-center gap-2 text-[11px] text-[var(--muted)]">
-                <span className="px-1.5 py-0.2 rounded font-bold text-[9px] uppercase bg-amber-500/15 text-amber-600 dark:text-amber-400">
-                  Info
-                </span>
-                <span>{pendingInfo.actionableTip}</span>
-              </div>
-            </div>
-          </td>
-        </tr>
-      )}
 
       {/* Expanded Container and Sidecars Sub-row */}
       {isExpanded && (

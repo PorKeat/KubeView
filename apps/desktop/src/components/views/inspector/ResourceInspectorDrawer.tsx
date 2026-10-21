@@ -278,6 +278,8 @@ export function ResourceInspectorDrawer() {
                 <InspectorPodOverview
                   currentResource={currentResource}
                   podData={podData}
+                  onOpenLogsModal={openLogsModal}
+                  onOpenExecModal={openExecModal}
                 />
               )}
 
