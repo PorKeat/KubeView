@@ -18,6 +18,8 @@ import {
   Minimize2,
   Radio,
   History,
+  ShieldAlert,
+  FileText,
 } from "lucide-react";
 import { useClusterStore } from "@/stores/clusterStore";
 import { toast } from "sonner";
@@ -406,9 +408,58 @@ export function PodExecModal() {
                     )}
 
                     {item.stderr && (
-                      <pre className="text-rose-400 whitespace-pre-wrap break-all leading-relaxed pl-2 font-mono text-[12px] bg-rose-950/20 p-2 rounded-lg border border-rose-900/30">
-                        {item.stderr}
-                      </pre>
+                      <div className="space-y-2">
+                        <pre className="text-rose-400 whitespace-pre-wrap break-all leading-relaxed pl-2 font-mono text-[12px] bg-rose-950/20 p-2.5 rounded-lg border border-rose-900/30">
+                          {item.stderr}
+                        </pre>
+
+                        {(item.stderr.includes("Distroless") ||
+                          item.stderr.includes("no such file or directory") ||
+                          item.stderr.includes("OCI runtime exec failed")) && (
+                          <div className="flex flex-wrap items-center gap-2 pl-2 pt-1 text-xs">
+                            {containerList
+                              .filter((c) => c !== (selectedContainer || execModalPod.container))
+                              .map((otherC) => (
+                                <button
+                                  key={otherC}
+                                  onClick={() => setSelectedContainer(otherC)}
+                                  className="px-2.5 py-1 rounded-md bg-amber-500/15 text-amber-400 hover:bg-amber-500/25 border border-amber-500/30 transition-colors font-mono text-[11px] cursor-pointer flex items-center gap-1.5"
+                                >
+                                  <Layers className="w-3 h-3" />
+                                  <span>Switch to: {otherC}</span>
+                                </button>
+                              ))}
+
+                            <button
+                              onClick={() => {
+                                const cmd = `kubectl debug -it -n ${execModalPod.namespace} ${execModalPod.name} --image=busybox --target=${selectedContainer || execModalPod.container || "main"}`;
+                                navigator.clipboard.writeText(cmd);
+                                toast.success("Debug command copied to clipboard");
+                              }}
+                              className="px-2.5 py-1 rounded-md bg-white/[0.08] hover:bg-white/[0.15] text-slate-200 border border-white/[0.1] transition-colors font-mono text-[11px] cursor-pointer flex items-center gap-1.5"
+                              title="Copy ephemeral debug command"
+                            >
+                              <Copy className="w-3 h-3" />
+                              <span>Copy kubectl debug</span>
+                            </button>
+
+                            <button
+                              onClick={() => {
+                                openLogsModal({
+                                  name: execModalPod.name,
+                                  namespace: execModalPod.namespace,
+                                  container: selectedContainer || execModalPod.container || undefined,
+                                });
+                                closeExecModal();
+                              }}
+                              className="px-2.5 py-1 rounded-md bg-[var(--accent)] hover:bg-[var(--accent-hover)] text-white transition-colors font-mono text-[11px] cursor-pointer flex items-center gap-1.5"
+                            >
+                              <FileText className="w-3 h-3" />
+                              <span>View Logs</span>
+                            </button>
+                          </div>
+                        )}
+                      </div>
                     )}
                   </div>
                 ))

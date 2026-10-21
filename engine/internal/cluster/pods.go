@@ -400,28 +400,52 @@ func (m *Manager) ExecPod(ctx context.Context, p ExecPodParams) (*ExecPodResult,
 	execConfig.Timeout = 0 // Required for SPDY / streaming connections!
 
 	res, err := executeInContainer(ctx, client, execConfig, p.Namespace, p.PodName, containerName, cmd)
-	if err == nil && res.ExitCode != 0 && (strings.Contains(res.Stderr, "not found") || strings.Contains(res.Stderr, "executable file not found")) {
-		// Attempt shell fallbacks if wrapped in /bin/sh -c ...
-		if len(cmd) >= 3 && (cmd[0] == "/bin/sh" || cmd[0] == "sh") {
-			cmdPayload := cmd[2]
-			fallbacks := [][]string{
-				{"/bin/bash", "-c", cmdPayload},
-				{"bash", "-c", cmdPayload},
-				{"/bin/ash", "-c", cmdPayload},
-				{"ash", "-c", cmdPayload},
-				{"sh", "-c", cmdPayload},
-				strings.Fields(cmdPayload), // Direct binary execution for distroless
+	isNoShellErr := (err == nil && res.ExitCode != 0 && (
+		strings.Contains(res.Stderr, "no such file or directory") ||
+		strings.Contains(res.Stderr, "not found") ||
+		strings.Contains(res.Stderr, "executable file not found") ||
+		strings.Contains(res.Stderr, "OCI runtime exec failed")))
+
+	if isNoShellErr && len(cmd) >= 3 && (cmd[0] == "/bin/sh" || cmd[0] == "sh") {
+		cmdPayload := cmd[2]
+		fallbacks := [][]string{
+			{"/bin/bash", "-c", cmdPayload},
+			{"bash", "-c", cmdPayload},
+			{"/bin/ash", "-c", cmdPayload},
+			{"ash", "-c", cmdPayload},
+			{"sh", "-c", cmdPayload},
+			strings.Fields(cmdPayload), // Direct binary execution for distroless (e.g. "woodpecker-server version")
+		}
+		for _, fb := range fallbacks {
+			if len(fb) == 0 {
+				continue
 			}
-			for _, fb := range fallbacks {
-				if len(fb) == 0 {
-					continue
-				}
-				fbRes, fbErr := executeInContainer(ctx, client, execConfig, p.Namespace, p.PodName, containerName, fb)
-				if fbErr == nil && !strings.Contains(fbRes.Stderr, "not found") {
-					return fbRes, nil
-				}
+			fbRes, fbErr := executeInContainer(ctx, client, execConfig, p.Namespace, p.PodName, containerName, fb)
+			if fbErr == nil && !strings.Contains(fbRes.Stderr, "no such file or directory") && !strings.Contains(fbRes.Stderr, "not found") && !strings.Contains(fbRes.Stderr, "OCI runtime exec failed") {
+				return fbRes, nil
 			}
 		}
+
+		// If all fallbacks failed, provide clear and actionable distroless container guidance
+		otherContainers := []string{}
+		for _, c := range pod.Spec.Containers {
+			if c.Name != containerName {
+				otherContainers = append(otherContainers, c.Name)
+			}
+		}
+		otherHint := ""
+		if len(otherContainers) > 0 {
+			otherHint = fmt.Sprintf("• Alternative container(s) in this pod: %s (try selecting from container dropdown above)\n", strings.Join(otherContainers, ", "))
+		}
+
+		res.Stderr = fmt.Sprintf(
+			"Distroless or minimal container: No shell environment (/bin/sh, /bin/bash, /bin/ash) found in container '%s'.\n\n"+
+				"• Container '%s' only includes compiled application binaries without standard shell tools (ls, ps).\n"+
+				"%s"+
+				"• To run full diagnostic tools, attach an ephemeral debug container:\n"+
+				"  kubectl debug -it -n %s %s --image=busybox --target=%s\n",
+			containerName, containerName, otherHint, p.Namespace, p.PodName, containerName,
+		)
 	}
 
 	return res, err
