@@ -13,8 +13,9 @@ import (
 )
 
 type PodChangeEvent struct {
-	Type string     `json:"type"` // "ADDED", "MODIFIED", "DELETED"
-	Pod  PodSummary `json:"pod"`
+	Type    string     `json:"type"` // "ADDED", "MODIFIED", "DELETED"
+	Context string     `json:"context,omitempty"`
+	Pod     PodSummary `json:"pod"`
 }
 
 // ResourceWatcher continuously streams live changes from Kubernetes without polling
@@ -59,6 +60,8 @@ func (rw *ResourceWatcher) SwitchContext(ctx context.Context, contextName string
 		return
 	}
 
+	rw.mgr.InvalidateOverviewCache(contextName)
+
 	watchCtx, cancel := context.WithCancel(context.Background())
 	rw.cancelFn = cancel
 
@@ -89,6 +92,7 @@ func (rw *ResourceWatcher) runPodWatch(ctx context.Context, contextName string) 
 			overviewTimer.Stop()
 		}
 		overviewTimer = time.AfterFunc(400*time.Millisecond, func() {
+			rw.mgr.InvalidateOverviewCache(contextName)
 			if rw.onOverview != nil {
 				rw.onOverview(contextName)
 			}
@@ -145,8 +149,9 @@ func (rw *ResourceWatcher) runPodWatch(ctx context.Context, contextName string) 
 			summary := convertPodToSummary(pod)
 			if rw.onPod != nil {
 				rw.onPod(PodChangeEvent{
-					Type: string(event.Type),
-					Pod:  summary,
+					Type:    string(event.Type),
+					Context: contextName,
+					Pod:     summary,
 				})
 			}
 

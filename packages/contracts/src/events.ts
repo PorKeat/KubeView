@@ -2,6 +2,8 @@
  * Streaming Events, Watch Deltas, and PTY Types
  */
 
+import type { PodSummary } from "./resources.js";
+
 export interface StreamStartResult {
   streamId: string;
 }
@@ -24,6 +26,12 @@ export type WatchDeltaType = "ADDED" | "MODIFIED" | "DELETED";
 export interface WatchDelta<T = unknown> {
   type: WatchDeltaType;
   object: T;
+}
+
+export interface PodChangeEvent {
+  type: WatchDeltaType;
+  context?: string;
+  pod: PodSummary;
 }
 
 export interface LogChunk {

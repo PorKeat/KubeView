@@ -87,7 +87,9 @@ type ClusterOverviewResult struct {
 }
 
 
-// GetClusterOverview aggregates node capacity, pod allocations, and cluster events
+// GetClusterOverview aggregates node capacity, pod allocations, and cluster events.
+// It leverages in-memory caching (2.5s TTL) and in-flight request coalescing (singleflight)
+// to prevent hammering the Kubernetes API Server during rapid UI interactions or event bursts.
 func (m *Manager) GetClusterOverview(ctx context.Context, contextName string, namespace ...string) (*ClusterOverviewResult, error) {
 	targetNs := ""
 	if len(namespace) > 0 && namespace[0] != "all" {
@@ -99,14 +101,53 @@ func (m *Manager) GetClusterOverview(ctx context.Context, contextName string, na
 		cacheKey = contextName + "::" + targetNs
 	}
 
+	// 1. Fast path: return fresh cache if within TTL (2.5 seconds)
+	m.overviewMu.RLock()
+	cached, hasCache := m.overviewCache[cacheKey]
+	m.overviewMu.RUnlock()
+	if hasCache && cached.result != nil && time.Since(cached.cachedAt) < 2500*time.Millisecond {
+		return cached.result, nil
+	}
+
+	// 2. In-flight request coalescing (singleflight deduplication)
+	m.overviewCallMu.Lock()
+	if m.overviewCalls == nil {
+		m.overviewCalls = make(map[string]*overviewCall)
+	}
+	if call, inFlight := m.overviewCalls[cacheKey]; inFlight {
+		m.overviewCallMu.Unlock()
+		call.wg.Wait()
+		return call.val, call.err
+	}
+
+	call := &overviewCall{}
+	call.wg.Add(1)
+	m.overviewCalls[cacheKey] = call
+	m.overviewCallMu.Unlock()
+
+	defer func() {
+		m.overviewCallMu.Lock()
+		delete(m.overviewCalls, cacheKey)
+		m.overviewCallMu.Unlock()
+	}()
+
+	res, err := m.fetchClusterOverviewRaw(ctx, contextName, targetNs, cacheKey)
+	call.val = res
+	call.err = err
+	call.wg.Done()
+
+	return res, err
+}
+
+func (m *Manager) fetchClusterOverviewRaw(ctx context.Context, contextName, targetNs, cacheKey string) (*ClusterOverviewResult, error) {
 	client, _, err := m.GetClientForContext(contextName)
 	if err != nil {
 		m.overviewMu.RLock()
 		cached, ok := m.overviewCache[cacheKey]
 		m.overviewMu.RUnlock()
-		if ok && cached != nil {
+		if ok && cached.result != nil {
 			log.Printf("[overview] Using cached overview for '%s' due to client error: %v", cacheKey, err)
-			return cached, nil
+			return cached.result, nil
 		}
 		return nil, err
 	}
@@ -188,9 +229,9 @@ func (m *Manager) GetClusterOverview(ctx context.Context, contextName string, na
 		m.overviewMu.RLock()
 		cached, ok := m.overviewCache[cacheKey]
 		m.overviewMu.RUnlock()
-		if ok && cached != nil {
+		if ok && cached.result != nil {
 			log.Printf("[overview] Node list failed, returning cached overview for '%s': %v", cacheKey, nodeErr)
-			return cached, nil
+			return cached.result, nil
 		}
 		return nil, fmt.Errorf("failed to list nodes: %w", nodeErr)
 	}
@@ -200,9 +241,9 @@ func (m *Manager) GetClusterOverview(ctx context.Context, contextName string, na
 		m.overviewMu.RLock()
 		cached, ok := m.overviewCache[cacheKey]
 		m.overviewMu.RUnlock()
-		if ok && cached != nil {
+		if ok && cached.result != nil {
 			log.Printf("[overview] Pod list failed, returning cached overview for '%s': %v", cacheKey, podErr)
-			return cached, nil
+			return cached.result, nil
 		}
 		return nil, fmt.Errorf("failed to list cluster pods: %w", podErr)
 	}
@@ -591,9 +632,12 @@ func (m *Manager) GetClusterOverview(ctx context.Context, contextName string, na
 
 	m.overviewMu.Lock()
 	if m.overviewCache == nil {
-		m.overviewCache = make(map[string]*ClusterOverviewResult)
+		m.overviewCache = make(map[string]cachedOverview)
 	}
-	m.overviewCache[cacheKey] = result
+	m.overviewCache[cacheKey] = cachedOverview{
+		result:   result,
+		cachedAt: time.Now(),
+	}
 	m.overviewMu.Unlock()
 
 	return result, nil

@@ -17,6 +17,17 @@ import (
 	clientcmdapi "k8s.io/client-go/tools/clientcmd/api"
 )
 
+type cachedOverview struct {
+	result   *ClusterOverviewResult
+	cachedAt time.Time
+}
+
+type overviewCall struct {
+	wg  sync.WaitGroup
+	val *ClusterOverviewResult
+	err error
+}
+
 // Manager handles kubeconfig loading, context switching, and client-go instances
 type Manager struct {
 	mu             sync.RWMutex
@@ -25,8 +36,25 @@ type Manager struct {
 	currentContext string
 	clientsets     map[string]kubernetes.Interface
 	restConfigs    map[string]*rest.Config
-	overviewCache  map[string]*ClusterOverviewResult
+	overviewCache  map[string]cachedOverview
 	overviewMu     sync.RWMutex
+	overviewCalls  map[string]*overviewCall
+	overviewCallMu sync.Mutex
+}
+
+// InvalidateOverviewCache purges cached overview data for a specific context, or all contexts if contextName is empty.
+func (m *Manager) InvalidateOverviewCache(contextName string) {
+	m.overviewMu.Lock()
+	defer m.overviewMu.Unlock()
+	if contextName == "" {
+		m.overviewCache = make(map[string]cachedOverview)
+		return
+	}
+	for k := range m.overviewCache {
+		if k == contextName || strings.HasPrefix(k, contextName+"::") {
+			delete(m.overviewCache, k)
+		}
+	}
 }
 
 // NewManager creates a new cluster Manager
@@ -35,7 +63,8 @@ func NewManager(customConfigPath string) (*Manager, error) {
 		configPath:    customConfigPath,
 		clientsets:    make(map[string]kubernetes.Interface),
 		restConfigs:   make(map[string]*rest.Config),
-		overviewCache: make(map[string]*ClusterOverviewResult),
+		overviewCache: make(map[string]cachedOverview),
+		overviewCalls: make(map[string]*overviewCall),
 	}
 
 	if err := mgr.ReloadConfig(); err != nil {

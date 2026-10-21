@@ -271,6 +271,7 @@ func (m *Manager) DeletePod(ctx context.Context, p DeletePodParams) error {
 		return fmt.Errorf("failed to delete pod %s: %w", p.PodName, err)
 	}
 
+	m.InvalidateOverviewCache(p.ContextName)
 	return nil
 }
 
@@ -309,6 +310,7 @@ func (m *Manager) RestartPod(ctx context.Context, p RestartPodParams) error {
 		_, _ = client.CoreV1().Pods(p.Namespace).Create(ctx, newPod, metav1.CreateOptions{})
 	}
 
+	m.InvalidateOverviewCache(p.ContextName)
 	return nil
 }
 
