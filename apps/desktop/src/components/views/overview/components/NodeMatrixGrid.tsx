@@ -41,7 +41,16 @@ export function NodeMatrixGrid({
   };
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+    <div
+      className={cn(
+        "grid gap-4 w-full",
+        nodes.length === 1
+          ? "grid-cols-1"
+          : nodes.length === 2
+          ? "grid-cols-1 lg:grid-cols-2"
+          : "grid-cols-1 md:grid-cols-2 xl:grid-cols-3",
+      )}
+    >
       {nodes.map((n) => {
         const isSelected = selectedNode === n.name;
         const isNodeReady = n.status === "Ready";

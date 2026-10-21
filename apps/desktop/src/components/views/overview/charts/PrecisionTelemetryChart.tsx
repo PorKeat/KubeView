@@ -75,31 +75,9 @@ export function generateNodeTelemetrySeries(
     }
   }
 
-  let maxCpu = 0;
-  let maxRam = 0;
-  for (const p of rawPoints) {
-    if (p.cpu > maxCpu) maxCpu = p.cpu;
-    if (p.ram > maxRam) maxRam = p.ram;
-  }
-
-  const overallMax = Math.max(maxCpu, maxRam, cpuLive, ramLive);
-
-  // Dynamic Y-axis scale based on peak
-  let yMax = 100;
-  let ticks = [100, 50, 0];
-  if (overallMax <= 15) {
-    yMax = 15;
-    ticks = [15, 10, 5, 0];
-  } else if (overallMax <= 30) {
-    yMax = 30;
-    ticks = [30, 20, 10, 0];
-  } else if (overallMax <= 50) {
-    yMax = 50;
-    ticks = [50, 25, 0];
-  } else {
-    yMax = 100;
-    ticks = [100, 50, 0];
-  }
+  // Fixed 0-100% scale for percentage metrics (no dynamic max scaling)
+  const yMax = 100;
+  const ticks = [100, 50, 0];
 
   const plotWidth = plotRight - plotLeft;
   const plotHeight = plotBottom - plotTop;
@@ -122,7 +100,7 @@ export function generateNodeTelemetrySeries(
     };
   });
 
-  return { points, ticks, yMax, maxCpu: Math.round(maxCpu * 10) / 10, maxRam: Math.round(maxRam * 10) / 10 };
+  return { points, ticks, yMax };
 }
 
 export interface PrecisionTelemetryChartProps {
@@ -140,10 +118,34 @@ export function PrecisionTelemetryChart({
   memoryPercent,
   memoryDisplay,
 }: PrecisionTelemetryChartProps) {
-  const width = 330;
+  const containerRef = React.useRef<HTMLDivElement>(null);
+  const [containerWidth, setContainerWidth] = React.useState<number>(0);
+
+  React.useEffect(() => {
+    if (!containerRef.current) return;
+    const el = containerRef.current;
+
+    const updateWidth = () => {
+      const w = el.clientWidth;
+      if (w > 0) setContainerWidth(w);
+    };
+    updateWidth();
+
+    const ro = new ResizeObserver((entries) => {
+      for (const entry of entries) {
+        const w = entry.contentRect.width;
+        if (w > 0) setContainerWidth(Math.round(w));
+      }
+    });
+
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, []);
+
+  const width = containerWidth > 0 ? containerWidth : 600;
   const height = 84;
   const plotLeft = 24;
-  const plotRight = 326;
+  const plotRight = Math.max(plotLeft + 50, width - 10);
   const plotTop = 6;
   const plotBottom = 72;
   const plotHeight = plotBottom - plotTop;
@@ -190,7 +192,7 @@ export function PrecisionTelemetryChart({
   };
 
   return (
-    <div className="w-full space-y-2 pt-1 select-none">
+    <div ref={containerRef} className="w-full space-y-2 pt-1 select-none">
       {/* Chart Canvas with Image 1-style Interactive Crosshair & Tooltip */}
       <div className="relative w-full h-[84px]">
         <svg
