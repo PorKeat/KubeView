@@ -417,6 +417,7 @@ export function ResourceInspectorDrawer() {
                   onDownload={downloadYaml}
                   onRetry={handleReloadYaml}
                   copiedYaml={copiedYaml}
+                  resourceName={currentResource?.name}
                 />
               )}
             </>

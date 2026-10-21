@@ -64,6 +64,13 @@ test.describe("KubeView UI - Pods Management View", () => {
     await expect(conditionsTab).toBeVisible({ timeout: 5000 });
     await conditionsTab.click();
 
+    // Verify YAML Tab renders VS Code themed editor
+    const yamlTab = page.locator('[data-testid="inspector-tab-yaml"]');
+    await expect(yamlTab).toBeVisible({ timeout: 5000 });
+    await yamlTab.click();
+    await expect(page.locator("text=Kubernetes YAML")).toBeVisible({ timeout: 5000 });
+    await expect(page.locator("text=metadata:").or(page.locator("text=apiVersion:")).first()).toBeVisible({ timeout: 5000 });
+
     // Switch back to Overview
     const overviewTab = page.locator('[data-testid="inspector-tab-overview"]');
     await expect(overviewTab).toBeVisible({ timeout: 5000 });
