@@ -365,8 +365,16 @@ func (s *StreamServer) handleExecWS(w http.ResponseWriter, r *http.Request) {
 	execConfig.Timeout = 0 // Required for persistent streaming!
 
 	candidates := []string{shell}
-	if shell == "auto" || shell == "/bin/sh" {
+	if shell == "auto" {
 		candidates = []string{"/bin/sh", "/bin/bash", "/bin/ash", "sh", "bash"}
+	} else {
+		seen := map[string]bool{shell: true}
+		for _, s := range []string{"/bin/sh", "/bin/bash", "/bin/ash", "sh", "bash"} {
+			if !seen[s] {
+				candidates = append(candidates, s)
+				seen[s] = true
+			}
+		}
 	}
 
 	inputChan := make(chan []byte, 64)

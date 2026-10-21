@@ -381,14 +381,17 @@ func (m *Manager) ExecPod(ctx context.Context, p ExecPodParams) (*ExecPodResult,
 		return nil, err
 	}
 
-	pod, err := client.CoreV1().Pods(p.Namespace).Get(ctx, p.PodName, metav1.GetOptions{})
-	if err != nil {
-		return nil, fmt.Errorf("pod %s not found: %w", p.PodName, err)
-	}
-
 	containerName := p.Container
-	if containerName == "" && len(pod.Spec.Containers) > 0 {
-		containerName = pod.Spec.Containers[0].Name
+	var pod *corev1.Pod
+	if containerName == "" {
+		var getErr error
+		pod, getErr = client.CoreV1().Pods(p.Namespace).Get(ctx, p.PodName, metav1.GetOptions{})
+		if getErr != nil {
+			return nil, fmt.Errorf("pod %s not found: %w", p.PodName, getErr)
+		}
+		if len(pod.Spec.Containers) > 0 {
+			containerName = pod.Spec.Containers[0].Name
+		}
 	}
 
 	cmd := p.Command
@@ -406,9 +409,16 @@ func (m *Manager) ExecPod(ctx context.Context, p ExecPodParams) (*ExecPodResult,
 		strings.Contains(res.Stderr, "executable file not found") ||
 		strings.Contains(res.Stderr, "OCI runtime exec failed")))
 
-	if isNoShellErr && len(cmd) >= 3 && (cmd[0] == "/bin/sh" || cmd[0] == "sh") {
+	isShellCmd := len(cmd) >= 3 && (
+		cmd[0] == "/bin/sh" || cmd[0] == "sh" ||
+		cmd[0] == "/bin/bash" || cmd[0] == "bash" ||
+		cmd[0] == "/bin/ash" || cmd[0] == "ash" ||
+		cmd[0] == "/bin/zsh" || cmd[0] == "zsh")
+
+	if isNoShellErr && isShellCmd {
 		cmdPayload := cmd[2]
 		fallbacks := [][]string{
+			{"/bin/sh", "-c", cmdPayload},
 			{"/bin/bash", "-c", cmdPayload},
 			{"bash", "-c", cmdPayload},
 			{"/bin/ash", "-c", cmdPayload},
@@ -417,7 +427,7 @@ func (m *Manager) ExecPod(ctx context.Context, p ExecPodParams) (*ExecPodResult,
 			strings.Fields(cmdPayload), // Direct binary execution for distroless (e.g. "woodpecker-server version")
 		}
 		for _, fb := range fallbacks {
-			if len(fb) == 0 {
+			if len(fb) == 0 || fb[0] == cmd[0] {
 				continue
 			}
 			fbRes, fbErr := executeInContainer(ctx, client, execConfig, p.Namespace, p.PodName, containerName, fb)
@@ -427,10 +437,15 @@ func (m *Manager) ExecPod(ctx context.Context, p ExecPodParams) (*ExecPodResult,
 		}
 
 		// If all fallbacks failed, provide clear and actionable distroless container guidance
+		if pod == nil {
+			pod, _ = client.CoreV1().Pods(p.Namespace).Get(ctx, p.PodName, metav1.GetOptions{})
+		}
 		otherContainers := []string{}
-		for _, c := range pod.Spec.Containers {
-			if c.Name != containerName {
-				otherContainers = append(otherContainers, c.Name)
+		if pod != nil {
+			for _, c := range pod.Spec.Containers {
+				if c.Name != containerName {
+					otherContainers = append(otherContainers, c.Name)
+				}
 			}
 		}
 		otherHint := ""

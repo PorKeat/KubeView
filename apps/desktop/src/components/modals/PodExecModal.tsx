@@ -29,11 +29,89 @@ import { InteractiveTerminal } from "./InteractiveTerminal";
 
 interface CommandHistoryItem {
   command: string;
+  cwd?: string;
   timestamp: string;
   stdout: string;
   stderr: string;
   exitCode: number;
   durationMs: number;
+}
+
+function formatAnsiOutput(raw: string): React.ReactNode {
+  if (!raw) return null;
+
+  // 1. Strip screen-clear, cursor positions, private modes, and stray control brackets (\x1b[H\x1b[J, [H, [J, \x1b[2J, \x1b[K, etc.)
+  const cleaned = raw
+    .replace(/\x1b\[[0-9;]*[A-HJKSTf]/g, "")
+    .replace(/\[[HJKSTf]/g, "")
+    .replace(/\x1b\[\?[0-9;]*[a-zA-Z]/g, "")
+    .replace(/\x1b\][^\x07\x1b]*(\x07|\x1b\\)/g, "")
+    .replace(/\r\n/g, "\n")
+    .replace(/\r/g, "\n");
+
+  const parts = cleaned.split(/(\x1b\[[0-9;]*m)/g);
+  if (parts.length <= 1) {
+    return cleaned;
+  }
+
+  const elements: React.ReactNode[] = [];
+  let activeStyles: string[] = [];
+
+  for (let i = 0; i < parts.length; i++) {
+    const part = parts[i];
+    if (!part) continue;
+
+    const match = part.match(/^\x1b\[([0-9;]*)m$/);
+    if (match) {
+      const codeStr = match[1] || "0";
+      const codes = codeStr.split(";").map(Number);
+      for (const code of codes) {
+        if (code === 0) {
+          activeStyles = [];
+        } else if (code === 1) {
+          activeStyles.push("font-bold text-white");
+        } else if (code === 2) {
+          activeStyles.push("opacity-70");
+        } else if (code === 3) {
+          activeStyles.push("italic");
+        } else if (code === 4) {
+          activeStyles.push("underline");
+        } else if (code === 30) {
+          activeStyles = activeStyles.filter((s) => !s.startsWith("text-"));
+          activeStyles.push("text-slate-900 dark:text-slate-400");
+        } else if (code === 31 || code === 91) {
+          activeStyles = activeStyles.filter((s) => !s.startsWith("text-"));
+          activeStyles.push("text-rose-400");
+        } else if (code === 32 || code === 92) {
+          activeStyles = activeStyles.filter((s) => !s.startsWith("text-"));
+          activeStyles.push("text-emerald-400");
+        } else if (code === 33 || code === 93) {
+          activeStyles = activeStyles.filter((s) => !s.startsWith("text-"));
+          activeStyles.push("text-amber-300");
+        } else if (code === 34 || code === 94) {
+          activeStyles = activeStyles.filter((s) => !s.startsWith("text-"));
+          activeStyles.push("text-sky-400");
+        } else if (code === 35 || code === 95) {
+          activeStyles = activeStyles.filter((s) => !s.startsWith("text-"));
+          activeStyles.push("text-purple-400");
+        } else if (code === 36 || code === 96) {
+          activeStyles = activeStyles.filter((s) => !s.startsWith("text-"));
+          activeStyles.push("text-cyan-400");
+        } else if (code === 37 || code === 97) {
+          activeStyles = activeStyles.filter((s) => !s.startsWith("text-"));
+          activeStyles.push("text-slate-200");
+        }
+      }
+    } else {
+      elements.push(
+        <span key={i} className={activeStyles.length > 0 ? activeStyles.join(" ") : undefined}>
+          {part}
+        </span>
+      );
+    }
+  }
+
+  return elements;
 }
 
 const QUICK_COMMANDS = [
@@ -50,6 +128,7 @@ const QUICK_COMMANDS = [
 export function PodExecModal() {
   const { execModalPod, closeExecModal, execPod, pods, currentContext, openLogsModal } = useClusterStore();
   const [selectedContainer, setSelectedContainer] = React.useState<string>("");
+  const [cwd, setCwd] = React.useState<string>("");
   const [shell, setShell] = React.useState<string>("auto");
   const [execMode, setExecMode] = React.useState<"interactive" | "history">("interactive");
   const [quickCmdToInsert, setQuickCmdToInsert] = React.useState<string>("");
@@ -97,9 +176,9 @@ export function PodExecModal() {
 
   React.useEffect(() => {
     if (execMode === "history") {
-      outputEndRef.current?.scrollIntoView({ behavior: "smooth" });
+      outputEndRef.current?.scrollIntoView({ behavior: "auto" });
     }
-  }, [history, isExecuting, execMode]);
+  }, [history.length, execMode]);
 
   if (!execModalPod) return null;
 
@@ -115,6 +194,89 @@ export function PodExecModal() {
       return;
     }
 
+    // Built-in instant clear screen (zero network round-trip, zero lag)
+    if (cmd.toLowerCase() === "clear" || cmd.toLowerCase() === "cls") {
+      setHistory([]);
+      if (cmdToRun === undefined) {
+        setInputCommand("");
+      }
+      return;
+    }
+
+    // Built-in exit / quit
+    if (cmd.toLowerCase() === "exit" || cmd.toLowerCase() === "quit") {
+      closeExecModal();
+      return;
+    }
+
+    // Built-in cd directory tracking (allows cd to persist across commands)
+    const cdMatch = cmd.match(/^cd(?:\s+(.*))?$/);
+    if (cdMatch) {
+      const rawTarget = cdMatch[1]?.trim() || "~";
+      setIsExecuting(true);
+      setHistoryIndex(-1);
+      const startTime = performance.now();
+      const currentCwd = cwd;
+
+      try {
+        const cdScript = currentCwd
+          ? `cd "${currentCwd}" && cd ${rawTarget} && pwd`
+          : `cd ${rawTarget} && pwd`;
+
+        const shellBin = shell === "auto" ? "/bin/sh" : shell;
+        const res = await execPod({
+          namespace: execModalPod.namespace,
+          podName: execModalPod.name,
+          container: selectedContainer || undefined,
+          command: [shellBin, "-c", cdScript],
+        });
+
+        const durationMs = Math.round(performance.now() - startTime);
+
+        if (res?.exitCode === 0) {
+          const newResolvedDir = res.stdout.trim().split("\n").pop()?.trim() || "";
+          setCwd(newResolvedDir);
+          setHistory((prev) => [
+            ...prev,
+            {
+              command: cmd,
+              cwd: newResolvedDir || "~",
+              timestamp: new Date().toLocaleTimeString(),
+              stdout: "",
+              stderr: "",
+              exitCode: 0,
+              durationMs,
+            },
+          ]);
+        } else {
+          setHistory((prev) => [
+            ...prev,
+            {
+              command: cmd,
+              cwd: currentCwd || "~",
+              timestamp: new Date().toLocaleTimeString(),
+              stdout: "",
+              stderr: res?.stderr || `cd: ${rawTarget}: No such file or directory`,
+              exitCode: res?.exitCode ?? 1,
+              durationMs,
+            },
+          ]);
+        }
+      } catch (err: unknown) {
+        const msg = err instanceof Error ? err.message : String(err);
+        toast.error(`cd error: ${msg}`);
+      } finally {
+        setIsExecuting(false);
+        if (cmdToRun === undefined) setInputCommand("");
+        setTimeout(() => inputRef.current?.focus(), 50);
+      }
+      return;
+    }
+
+    // Standard command execution inside current cwd
+    const actualCmd = cwd ? `cd "${cwd}" && (${cmd})` : cmd;
+    const shellBin = shell === "auto" ? "/bin/sh" : shell;
+
     setIsExecuting(true);
     setHistoryIndex(-1);
     const startTime = performance.now();
@@ -124,7 +286,7 @@ export function PodExecModal() {
         namespace: execModalPod.namespace,
         podName: execModalPod.name,
         container: selectedContainer || undefined,
-        command: ["/bin/sh", "-c", cmd],
+        command: [shellBin, "-c", actualCmd],
       });
 
       const durationMs = Math.round(performance.now() - startTime);
@@ -133,6 +295,7 @@ export function PodExecModal() {
         ...prev,
         {
           command: cmd,
+          cwd: cwd || "~",
           timestamp: new Date().toLocaleTimeString(),
           stdout: res?.stdout || "",
           stderr: res?.stderr || "",
@@ -151,6 +314,7 @@ export function PodExecModal() {
         ...prev,
         {
           command: cmd,
+          cwd: cwd || "~",
           timestamp: new Date().toLocaleTimeString(),
           stdout: "",
           stderr: `Execution failed: ${msg}`,
@@ -384,7 +548,9 @@ export function PodExecModal() {
                   <div key={idx} className="space-y-1.5">
                     <div className="flex items-center justify-between text-[11px] text-slate-500 border-b border-slate-800/80 pb-1">
                       <div className="flex items-center gap-2">
-                        <span className="text-emerald-400 font-semibold font-mono">root@{execModalPod.name.slice(0, 16)}:~#</span>
+                        <span className="text-emerald-400 font-semibold font-mono">
+                          root@{(selectedContainer || execModalPod.name).slice(0, 16)}:{item.cwd || "~"}#
+                        </span>
                         <span className="text-white font-semibold">{item.command}</span>
                       </div>
                       <div className="flex items-center gap-2">
@@ -403,14 +569,14 @@ export function PodExecModal() {
 
                     {item.stdout && (
                       <pre className="text-slate-300 whitespace-pre-wrap break-all leading-relaxed pl-2 font-mono text-[12px]">
-                        {item.stdout}
+                        {formatAnsiOutput(item.stdout)}
                       </pre>
                     )}
 
                     {item.stderr && (
                       <div className="space-y-2">
                         <pre className="text-rose-400 whitespace-pre-wrap break-all leading-relaxed pl-2 font-mono text-[12px] bg-rose-950/20 p-2.5 rounded-lg border border-rose-900/30">
-                          {item.stderr}
+                          {formatAnsiOutput(item.stderr)}
                         </pre>
 
                         {(item.stderr.includes("Distroless") ||
@@ -478,7 +644,7 @@ export function PodExecModal() {
             {/* Input Bar */}
             <div className="h-12 border-t border-[var(--border)] px-4 flex items-center gap-2.5 bg-[var(--surface)] shrink-0">
               <span className="text-emerald-500 font-mono font-bold text-xs shrink-0 select-none">
-                root@{selectedContainer || "app"}:~#
+                root@{(selectedContainer || execModalPod.container || "app").slice(0, 16)}:{cwd || "~"}#
               </span>
               <input
                 ref={inputRef}

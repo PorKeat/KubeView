@@ -121,6 +121,19 @@ test.describe("KubeView UI - Deep Conditions & Edge Case Verification", () => {
     const cmdInput = page.getByPlaceholder(/Type command/i);
     await expect(cmdInput).toBeVisible({ timeout: 5000 });
 
+    // Test running a command in Command Runner
+    await cmdInput.fill("echo 'kubeview-runner-ok'");
+    await page.keyboard.press("Enter");
+
+    // Verify command output appears
+    await expect(page.locator("body")).toContainText("kubeview-runner-ok", { timeout: 10000 });
+
+    // Test clear command resets output instantly without raw '[H [J' artifacts
+    await cmdInput.fill("clear");
+    await page.keyboard.press("Enter");
+    await expect(page.locator("body")).not.toContainText("kubeview-runner-ok");
+    await expect(page.locator("body")).not.toContainText("[H [J");
+
     // Switch back to Interactive Shell
     const interactiveTab = page.getByRole("button", { name: /Interactive Shell/i });
     await interactiveTab.click();

@@ -158,10 +158,15 @@ export function InteractiveTerminal({
     description: "Custom shell binary path",
   };
 
+  const pendingQuickCmdRef = React.useRef<string | null>(null);
+
   // Handle quick command insertion
   React.useEffect(() => {
-    if (quickCommand && wsRef.current && wsRef.current.readyState === WebSocket.OPEN) {
+    if (!quickCommand) return;
+    if (wsRef.current && wsRef.current.readyState === WebSocket.OPEN) {
       wsRef.current.send(quickCommand + "\n");
+    } else {
+      pendingQuickCmdRef.current = quickCommand;
     }
   }, [quickCommand]);
 
@@ -257,6 +262,11 @@ export function InteractiveTerminal({
             const cols = term.cols || 80;
             const rows = term.rows || 24;
             ws?.send(JSON.stringify({ type: "resize", cols, rows }));
+          }
+
+          if (pendingQuickCmdRef.current) {
+            ws?.send(pendingQuickCmdRef.current + "\n");
+            pendingQuickCmdRef.current = null;
           }
 
           term?.focus();
