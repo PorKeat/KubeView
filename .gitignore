@@ -55,7 +55,7 @@ blob-report/
 playwright/.cache/
 
 # Design taste artifacts
-.taste-skill/inspect/
+.taste-skill/
 
 # Graphify knowledge graph & caches
 graphify-out/

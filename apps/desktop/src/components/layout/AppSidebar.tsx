@@ -45,7 +45,14 @@ interface NavGroup {
 export function AppSidebar() {
   const { sidebarCollapsed, toggleSidebar } = useLayoutStore();
   const { activeTabId, openTab } = useTabStore();
-  const { clusterOverview, totalPodsCount, pods, setCurrentNamespace, setPodNodeFilter } = useClusterStore();
+  const {
+    clusterOverview,
+    totalPodsCount,
+    pods,
+    loadPods,
+    setCurrentNamespace,
+    setPodNodeFilter,
+  } = useClusterStore();
   const [collapsedGroups, setCollapsedGroups] = React.useState<Record<string, boolean>>({});
 
   const realPodsCount = clusterOverview?.totalPods ?? (totalPodsCount > 0 ? totalPodsCount : pods.length);
@@ -114,6 +121,7 @@ export function AppSidebar() {
     if (item.id === "pods") {
       setCurrentNamespace("all");
       setPodNodeFilter(null);
+      loadPods("all");
     }
 
     openTab({

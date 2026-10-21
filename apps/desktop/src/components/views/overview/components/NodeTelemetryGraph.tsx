@@ -25,7 +25,6 @@ export function NodeTelemetryGraph({
   memoryDisplay,
   activePods,
   podCapacity,
-  onInspectPods,
   scopedNamespace,
   scopedPodsCount,
 }: NodeTelemetryGraphProps) {

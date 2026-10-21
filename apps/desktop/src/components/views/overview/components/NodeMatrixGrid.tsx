@@ -152,7 +152,6 @@ export function NodeMatrixGrid({
               }
               activePods={n.activePods}
               podCapacity={podCap}
-              onInspectPods={() => onFilterPodsForNode(n.name)}
               scopedNamespace={currentNamespace}
               scopedPodsCount={scopedNodePods}
             />

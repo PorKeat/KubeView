@@ -49,8 +49,11 @@ export function ClusterOverviewView() {
   React.useEffect(() => {
     if (connectionStatus === "connected" || connectionStatus === "degraded") {
       loadClusterOverview(currentContext, currentNamespace);
+      if (pods.length === 0) {
+        loadPods();
+      }
     }
-  }, [connectionStatus, currentContext, currentNamespace, loadClusterOverview]);
+  }, [connectionStatus, currentContext, currentNamespace, loadClusterOverview, pods.length, loadPods]);
 
   // Periodic Auto-refresh timer for live telemetry sync
   React.useEffect(() => {
@@ -71,14 +74,16 @@ export function ClusterOverviewView() {
   // Instantaneous 0ms cached metrics from in-memory pods
   const scopedPods = React.useMemo(() => {
     if (!isNamespaceScoped) return pods;
-    return pods.filter((p) => p.namespace === currentNamespace);
+    return pods.filter(
+      (p) => p.namespace.toLowerCase() === currentNamespace.toLowerCase(),
+    );
   }, [pods, currentNamespace, isNamespaceScoped]);
 
   // Nodes hosting pods for this namespace
   const nodesHostingNamespace = React.useMemo(() => {
     const set = new Set<string>();
     for (const p of scopedPods) {
-      if (p.nodeName) set.add(p.nodeName);
+      if (p.nodeName) set.add(p.nodeName.trim());
     }
     return set;
   }, [scopedPods]);
@@ -88,7 +93,8 @@ export function ClusterOverviewView() {
     const map: Record<string, number> = {};
     for (const p of scopedPods) {
       if (p.nodeName) {
-        map[p.nodeName] = (map[p.nodeName] || 0) + 1;
+        const k = p.nodeName.trim();
+        map[k] = (map[k] || 0) + 1;
       }
     }
     return map;
