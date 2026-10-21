@@ -6,14 +6,18 @@ import {
   X,
   Server,
   RefreshCw,
-  Rows2,
-  Rows3,
   AlertTriangle,
+  Clock,
   Tag,
 } from "lucide-react";
 import { motion } from "motion/react";
 import { cn } from "@/lib/utils";
 import type { PodSummary } from "@kubeview/contracts";
+import {
+  isPodFailing,
+  isPodRunning,
+  isPodPending,
+} from "../lib/podIssues";
 
 export interface ResourceTableToolbarProps {
   search: string;
@@ -28,8 +32,8 @@ export interface ResourceTableToolbarProps {
   pods: PodSummary[];
   currentNamespace: string;
   sortedItemsCount: number;
-  autoRefreshInterval: number;
-  setAutoRefreshInterval: (interval: number) => void;
+  autoRefreshInterval?: number;
+  setAutoRefreshInterval?: (interval: number) => void;
   handleRefresh: () => void;
   isPodsLoading: boolean;
   density: "comfortable" | "compact";
@@ -100,41 +104,28 @@ export function ResourceTableToolbar({
   }, [podNodeFilter, labelFilter, pods, currentNamespace]);
 
   const filterPills = React.useMemo(() => {
-    const issuesCount = basePods.filter(
-      (p) =>
-        p.restarts > 0 ||
-        !["Running", "Completed", "Succeeded"].includes(p.status),
-    ).length;
+    const failingCount = basePods.filter((p) => isPodFailing(p)).length;
+    const runningCount = basePods.filter((p) => isPodRunning(p)).length;
+    const pendingCount = basePods.filter((p) => isPodPending(p)).length;
 
     return [
       { id: "all", label: "All", count: basePods.length },
       {
         id: "running",
         label: "Running",
-        count: basePods.filter((p) => p.status === "Running").length,
+        count: runningCount,
       },
       {
         id: "pending",
         label: "Pending",
-        count: basePods.filter(
-          (p) => p.status === "Pending" || p.status === "ContainerCreating",
-        ).length,
+        count: pendingCount,
+        hasPending: pendingCount > 0,
       },
       {
         id: "failing",
         label: "Failing",
-        count: basePods.filter(
-          (p) =>
-            !["Running", "Completed", "Pending", "Succeeded"].includes(
-              p.status,
-            ),
-        ).length,
-      },
-      {
-        id: "issues",
-        label: "Issues",
-        count: issuesCount,
-        hasWarning: issuesCount > 0,
+        count: failingCount,
+        hasWarning: failingCount > 0,
       },
     ];
   }, [basePods]);
@@ -232,15 +223,18 @@ export function ResourceTableToolbar({
                 />
               )}
               {pill.hasWarning && (
-                <AlertTriangle className="w-3 h-3 text-amber-500" />
+                <AlertTriangle className="w-3 h-3 text-rose-500 shrink-0" />
+              )}
+              {pill.hasPending && (
+                <Clock className="w-3 h-3 text-amber-500 shrink-0" />
               )}
               <span>{pill.label}</span>
               <span
                 className={cn(
                   "text-[10px] font-mono tabular-nums",
-                  pill.hasWarning && pill.count > 0
-                    ? "text-amber-500 font-semibold"
-                    : "text-[var(--muted)]",
+                  pill.hasWarning && pill.count > 0 && "text-rose-500 font-semibold",
+                  pill.hasPending && pill.count > 0 && "text-amber-500 font-medium",
+                  !pill.hasWarning && !pill.hasPending && "text-[var(--muted)]",
                 )}
               >
                 {pill.count}
@@ -252,84 +246,6 @@ export function ResourceTableToolbar({
 
       {/* Right: Actions */}
       <div className="flex items-center gap-2 text-xs text-[var(--muted)] shrink-0">
-        {/* Density Mode Switcher */}
-        <button
-          type="button"
-          onClick={onToggleDensity}
-          className="p-1.5 rounded-lg border border-[var(--border)] bg-slate-100/70 dark:bg-black/20 hover:bg-[var(--surface-hover)] text-[var(--muted)] hover:text-[var(--foreground)] transition-colors cursor-pointer"
-          title={`Switch to ${density === "comfortable" ? "Compact Density" : "Comfortable Density"}`}
-        >
-          {density === "comfortable" ? (
-            <Rows3 className="w-3.5 h-3.5" />
-          ) : (
-            <Rows2 className="w-3.5 h-3.5 text-[var(--accent)]" />
-          )}
-        </button>
-
-        {/* Live Watch Stream Indicator */}
-        <div
-          className="hidden sm:flex items-center gap-1.5 px-2 py-0.5 rounded-lg border border-emerald-500/20 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 text-[11px] font-mono font-medium"
-          title="Real-time Kubernetes Watcher active (Zero polling load)"
-        >
-          <span className="relative flex h-1.5 w-1.5">
-            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75 motion-reduce:hidden"></span>
-            <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-emerald-500"></span>
-          </span>
-          <span>Live Stream</span>
-        </div>
-
-        {/* Auto Refresh Interval Dropdown */}
-        <div className="flex items-center gap-1.5 px-2 py-0.5 rounded-lg border border-[var(--border)] bg-slate-100/70 dark:bg-black/20 text-[11px]">
-          <span className="text-[var(--muted)] flex items-center gap-1 text-[10px]">
-            <span
-              className={cn(
-                "w-1.5 h-1.5 rounded-full transition-all",
-                autoRefreshInterval > 0
-                  ? "bg-emerald-500"
-                  : "bg-[var(--muted)]/50",
-              )}
-            />
-            <span>Auto:</span>
-          </span>
-          <select
-            value={autoRefreshInterval}
-            onChange={(e) => setAutoRefreshInterval(Number(e.target.value))}
-            className="bg-transparent text-[var(--foreground)] font-mono text-[10px] outline-hidden cursor-pointer"
-            title="Set automatic poll/refresh interval"
-          >
-            <option
-              value={0}
-              className="bg-[var(--surface)] text-[var(--foreground)]"
-            >
-              Off
-            </option>
-            <option
-              value={3000}
-              className="bg-[var(--surface)] text-[var(--foreground)]"
-            >
-              3s
-            </option>
-            <option
-              value={5000}
-              className="bg-[var(--surface)] text-[var(--foreground)]"
-            >
-              5s
-            </option>
-            <option
-              value={10000}
-              className="bg-[var(--surface)] text-[var(--foreground)]"
-            >
-              10s
-            </option>
-            <option
-              value={30000}
-              className="bg-[var(--surface)] text-[var(--foreground)]"
-            >
-              30s
-            </option>
-          </select>
-        </div>
-
         <span className="font-mono text-[11px]">{sortedItemsCount} items</span>
         <div className="h-3 w-[1px] bg-[var(--border)]" />
         <button

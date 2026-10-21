@@ -302,7 +302,7 @@ export const useClusterStore = create<ClusterState>((set, get) => ({
     }
 
     const promise = (async () => {
-      if (get().currentContext === target) {
+      if (!get().clusterOverview && get().currentContext === target) {
         set({ isOverviewLoading: true });
       }
 
@@ -318,12 +318,15 @@ export const useClusterStore = create<ClusterState>((set, get) => ({
             get().currentContext === target &&
             (namespace === undefined || get().currentNamespace === targetNs)
           ) {
-            set({ clusterOverview: res, isOverviewLoading: false });
+            set({
+              clusterOverview: res,
+              ...(get().isOverviewLoading ? { isOverviewLoading: false } : {}),
+            });
           }
           return res;
         }
 
-        if (get().currentContext === target) {
+        if (get().currentContext === target && get().isOverviewLoading) {
           set({ isOverviewLoading: false });
         }
         return null;
@@ -333,7 +336,7 @@ export const useClusterStore = create<ClusterState>((set, get) => ({
           err
         );
         // Stale-while-revalidate: Preserve existing clusterOverview so dashboard does not flicker to empty state
-        if (get().currentContext === target) {
+        if (get().currentContext === target && get().isOverviewLoading) {
           set({ isOverviewLoading: false });
         }
         return null;

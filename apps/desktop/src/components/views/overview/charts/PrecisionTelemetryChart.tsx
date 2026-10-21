@@ -280,28 +280,6 @@ export function PrecisionTelemetryChart({
             vectorEffect="non-scaling-stroke"
           />
 
-          {/* 5. Static Endpoint Hollow Rings at Live when not hovered */}
-          {hoveredIdx === null && lastPoint && (
-            <>
-              <circle
-                cx={lastPoint.x - 1}
-                cy={lastPoint.ramY}
-                r="3.5"
-                className="fill-[var(--surface)]"
-                stroke="#38bdf8"
-                strokeWidth="2"
-              />
-              <circle
-                cx={lastPoint.x - 1}
-                cy={lastPoint.cpuY}
-                r="3.5"
-                className="fill-[var(--surface)]"
-                stroke="#34d399"
-                strokeWidth="2"
-              />
-            </>
-          )}
-
           {/* 6. Active Interactive Hover Elements: Dashed Crosshair & Halo Dots */}
           {hoveredPoint && (
             <>
@@ -366,17 +344,13 @@ export function PrecisionTelemetryChart({
               <span className="text-emerald-400 font-bold">{hoveredPoint.cpuPercent}%</span>
             </div>
             <div className="flex items-center justify-between gap-3 text-[11px]">
-              <span className="text-[var(--muted)] flex items-center gap-1.5">
-                <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 shrink-0" /> CPU
-              </span>
+              <span className="text-[var(--muted)]">CPU</span>
               <span className="font-bold text-[var(--foreground)] tabular-nums">
                 {hoveredPoint.cpuPercent}% ({hoveredPoint.cpuRaw})
               </span>
             </div>
             <div className="flex items-center justify-between gap-3 text-[11px]">
-              <span className="text-[var(--muted)] flex items-center gap-1.5">
-                <span className="w-1.5 h-1.5 rounded-full bg-sky-400 shrink-0" /> RAM
-              </span>
+              <span className="text-[var(--muted)]">RAM</span>
               <span className="font-bold text-[var(--foreground)] tabular-nums">
                 {hoveredPoint.ramPercent}% ({hoveredPoint.ramRaw})
               </span>
@@ -400,8 +374,7 @@ export function PrecisionTelemetryChart({
 
         <div className="flex items-center gap-2">
           <span>15m window</span>
-          <span className="inline-flex items-center gap-1 text-emerald-500 dark:text-emerald-400 font-medium">
-            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+          <span className="text-emerald-500 dark:text-emerald-400 font-medium">
             Live
           </span>
         </div>

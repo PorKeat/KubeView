@@ -248,6 +248,15 @@ func (s *StreamServer) handleLogsStream(w http.ResponseWriter, r *http.Request) 
 	req := client.CoreV1().Pods(namespace).GetLogs(podName, logOpts)
 	stream, err := req.Stream(r.Context())
 	if err != nil {
+		if previous && (strings.Contains(strings.ToLower(err.Error()), "previous terminated container") || strings.Contains(strings.ToLower(err.Error()), "not found")) {
+			w.Header().Set("Content-Type", "text/event-stream; charset=utf-8")
+			w.Header().Set("Cache-Control", "no-cache, no-transform")
+			w.Header().Set("Connection", "keep-alive")
+			fmt.Fprintf(w, "event: init\ndata: {\"pod\":\"%s\",\"container\":\"%s\"}\n\n", podName, containerName)
+			fmt.Fprintf(w, "event: end\ndata: {}\n\n")
+			flusher.Flush()
+			return
+		}
 		http.Error(w, fmt.Sprintf("Failed to open K8s log stream: %v", err), http.StatusBadGateway)
 		return
 	}
@@ -266,10 +275,27 @@ func (s *StreamServer) handleLogsStream(w http.ResponseWriter, r *http.Request) 
 	const maxLineSize = 1024 * 1024 // 1MB per log line
 	scanner.Buffer(make([]byte, 64*1024), maxLineSize)
 
+	// Micro-batch flush for maximum throughput and minimal client thread thrashing
+	batch := make([]string, 0, 32)
+	lastFlush := time.Now()
+
 	for scanner.Scan() {
-		line := scanner.Text()
-		lineJson, _ := json.Marshal(line)
-		fmt.Fprintf(w, "data: %s\n\n", string(lineJson))
+		batch = append(batch, scanner.Text())
+		if len(batch) >= 32 || time.Since(lastFlush) > 25*time.Millisecond {
+			for _, line := range batch {
+				lineJson, _ := json.Marshal(line)
+				fmt.Fprintf(w, "data: %s\n\n", string(lineJson))
+			}
+			flusher.Flush()
+			batch = batch[:0]
+			lastFlush = time.Now()
+		}
+	}
+	if len(batch) > 0 {
+		for _, line := range batch {
+			lineJson, _ := json.Marshal(line)
+			fmt.Fprintf(w, "data: %s\n\n", string(lineJson))
+		}
 		flusher.Flush()
 	}
 

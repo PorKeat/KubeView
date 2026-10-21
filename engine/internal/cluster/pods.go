@@ -47,16 +47,21 @@ type ContainerResourcesInfo struct {
 
 // ContainerInfo provides runtime status of an individual container
 type ContainerInfo struct {
-	Name         string                  `json:"name"`
-	Image        string                  `json:"image"`
-	Ready        bool                    `json:"ready"`
-	RestartCount int32                   `json:"restartCount"`
-	State        string                  `json:"state"`
-	StateReason  string                  `json:"stateReason,omitempty"`
-	Env          []ContainerEnvVar       `json:"env,omitempty"`
-	Ports        []ContainerPortInfo     `json:"ports,omitempty"`
-	VolumeMounts []ContainerVolumeMountInfo `json:"volumeMounts,omitempty"`
-	Resources    *ContainerResourcesInfo `json:"resources,omitempty"`
+	Name                  string                     `json:"name"`
+	Image                 string                     `json:"image"`
+	Ready                 bool                       `json:"ready"`
+	RestartCount          int32                      `json:"restartCount"`
+	State                 string                     `json:"state"`
+	StateReason           string                     `json:"stateReason,omitempty"`
+	ExitCode              *int32                     `json:"exitCode,omitempty"`
+	LastTerminatedReason  string                     `json:"lastTerminatedReason,omitempty"`
+	LastTerminatedMessage string                     `json:"lastTerminatedMessage,omitempty"`
+	WaitingReason         string                     `json:"waitingReason,omitempty"`
+	WaitingMessage        string                     `json:"waitingMessage,omitempty"`
+	Env                   []ContainerEnvVar          `json:"env,omitempty"`
+	Ports                 []ContainerPortInfo        `json:"ports,omitempty"`
+	VolumeMounts          []ContainerVolumeMountInfo `json:"volumeMounts,omitempty"`
+	Resources             *ContainerResourcesInfo    `json:"resources,omitempty"`
 }
 
 // PodConditionItem represents a live Kubernetes status condition
@@ -200,24 +205,27 @@ func (m *Manager) GetPodLogs(ctx context.Context, p PodLogsParams) (*PodLogsResu
 		return nil, err
 	}
 
-	pod, err := client.CoreV1().Pods(p.Namespace).Get(ctx, p.PodName, metav1.GetOptions{})
-	if err != nil {
-		return nil, fmt.Errorf("failed to get pod %s: %w", p.PodName, err)
-	}
-
-	var containerNames []string
-	for _, c := range pod.Spec.Containers {
-		containerNames = append(containerNames, c.Name)
-	}
-	for _, c := range pod.Spec.InitContainers {
-		containerNames = append(containerNames, c.Name)
-	}
-
 	selectedContainer := p.Container
+	var containerNames []string
+
+	// Fast path: if container is already specified, avoid the extra network round-trip of Pod.Get
 	if selectedContainer == "" {
+		pod, err := client.CoreV1().Pods(p.Namespace).Get(ctx, p.PodName, metav1.GetOptions{})
+		if err != nil {
+			return nil, fmt.Errorf("failed to get pod %s: %w", p.PodName, err)
+		}
+
+		for _, c := range pod.Spec.Containers {
+			containerNames = append(containerNames, c.Name)
+		}
+		for _, c := range pod.Spec.InitContainers {
+			containerNames = append(containerNames, c.Name)
+		}
 		if len(containerNames) > 0 {
 			selectedContainer = containerNames[0]
 		}
+	} else {
+		containerNames = []string{selectedContainer}
 	}
 
 	opts := &corev1.PodLogOptions{
@@ -238,6 +246,14 @@ func (m *Manager) GetPodLogs(ctx context.Context, p PodLogsParams) (*PodLogsResu
 	req := client.CoreV1().Pods(p.Namespace).GetLogs(p.PodName, opts)
 	stream, err := req.Stream(ctx)
 	if err != nil {
+		// When previous logs are requested and no previous container exists, return empty logs gracefully without failing RPC
+		if p.Previous && (strings.Contains(strings.ToLower(err.Error()), "previous terminated container") || strings.Contains(strings.ToLower(err.Error()), "not found")) {
+			return &PodLogsResult{
+				Logs:       "",
+				Container:  selectedContainer,
+				Containers: containerNames,
+			}, nil
+		}
 		return nil, fmt.Errorf("failed to open log stream: %w", err)
 	}
 	defer stream.Close()
@@ -491,14 +507,28 @@ func convertPodToSummary(pod *corev1.Pod) PodSummary {
 
 		stateStr := "Unknown"
 		reasonStr := ""
+		var waitingReason string
+		var waitingMsg string
 		if cs.State.Running != nil {
 			stateStr = "Running"
 		} else if cs.State.Waiting != nil {
 			stateStr = "Waiting"
 			reasonStr = cs.State.Waiting.Reason
+			waitingReason = cs.State.Waiting.Reason
+			waitingMsg = cs.State.Waiting.Message
 		} else if cs.State.Terminated != nil {
 			stateStr = "Terminated"
 			reasonStr = cs.State.Terminated.Reason
+		}
+
+		var exitCode *int32
+		var lastTermReason string
+		var lastTermMsg string
+		if cs.LastTerminationState.Terminated != nil {
+			ec := cs.LastTerminationState.Terminated.ExitCode
+			exitCode = &ec
+			lastTermReason = cs.LastTerminationState.Terminated.Reason
+			lastTermMsg = cs.LastTerminationState.Terminated.Message
 		}
 
 		var envList []ContainerEnvVar
@@ -571,16 +601,21 @@ func convertPodToSummary(pod *corev1.Pod) PodSummary {
 		}
 
 		containerInfos = append(containerInfos, ContainerInfo{
-			Name:         cs.Name,
-			Image:        cs.Image,
-			Ready:        cs.Ready,
-			RestartCount: cs.RestartCount,
-			State:        stateStr,
-			StateReason:  reasonStr,
-			Env:          envList,
-			Ports:        portsList,
-			VolumeMounts: volumeMountsList,
-			Resources:    resourcesInfo,
+			Name:                  cs.Name,
+			Image:                 cs.Image,
+			Ready:                 cs.Ready,
+			RestartCount:          cs.RestartCount,
+			State:                 stateStr,
+			StateReason:           reasonStr,
+			ExitCode:              exitCode,
+			LastTerminatedReason:  lastTermReason,
+			LastTerminatedMessage: lastTermMsg,
+			WaitingReason:         waitingReason,
+			WaitingMessage:        waitingMsg,
+			Env:                   envList,
+			Ports:                 portsList,
+			VolumeMounts:          volumeMountsList,
+			Resources:             resourcesInfo,
 		})
 	}
 

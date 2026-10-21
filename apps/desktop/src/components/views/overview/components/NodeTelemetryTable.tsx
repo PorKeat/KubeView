@@ -68,21 +68,12 @@ export function NodeTelemetryTable({
                   )}
                 >
                   <td className="py-3 px-3.5">
-                    <div className="flex items-center gap-2">
-                      <span
-                        className={cn(
-                          "w-2 h-2 rounded-full shrink-0",
-                          isNodeReady ? "bg-emerald-500" : "bg-rose-500"
-                        )}
-                        aria-hidden="true"
-                      />
-                      <span className="font-bold text-[var(--foreground)]">{n.name}</span>
-                    </div>
+                    <span className="font-bold text-[var(--foreground)]">{n.name}</span>
                   </td>
                   <td className="py-3 px-3">
                     <span
                       className={cn(
-                        "px-2 py-0.5 rounded-full text-[11px] font-medium font-mono",
+                        "px-2 py-0.5 rounded-md text-[11px] font-medium font-mono",
                         isNodeReady
                           ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20"
                           : "bg-rose-500/10 text-rose-600 dark:text-rose-400 border border-rose-500/20"
@@ -127,7 +118,7 @@ export function NodeTelemetryTable({
                     >
                       {isNamespaceScoped ? (
                         <span>
-                          <strong className={cn(scopedNodePods > 0 ? "text-[#f08a42] font-bold" : "text-[var(--muted)]")}>
+                          <strong className={cn(scopedNodePods > 0 ? "text-[var(--accent)] font-bold" : "text-[var(--muted)]")}>
                             {scopedNodePods}
                           </strong>
                           <span className="text-[var(--muted)] font-normal"> / {n.activePods}</span>

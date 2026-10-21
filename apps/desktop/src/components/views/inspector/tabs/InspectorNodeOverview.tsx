@@ -53,13 +53,12 @@ export function InspectorNodeOverview({
     return (
       <span
         className={cn(
-          "inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-mono font-medium border",
+          "inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-mono font-medium border",
           isOk
             ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20"
             : "bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/20"
         )}
       >
-        <span className={cn("w-1.5 h-1.5 rounded-full", isOk ? "bg-emerald-500" : "bg-amber-500")} />
         {status}
       </span>
     );
@@ -129,8 +128,7 @@ export function InspectorNodeOverview({
               <span className="text-[10px] font-semibold text-[var(--muted)] uppercase tracking-wider block font-mono">
                 Live Node Telemetry
               </span>
-              <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[10px] font-mono font-medium bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20">
-                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse motion-reduce:animate-none" />
+              <span className="inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-mono font-medium bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20">
                 kubectl top node
               </span>
             </div>

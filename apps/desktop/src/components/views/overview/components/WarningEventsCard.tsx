@@ -5,6 +5,7 @@ import {
   AlertTriangle,
   CheckCircle2,
   ChevronRight,
+  Clock,
 } from "lucide-react";
 import { SpotlightCard } from "@/components/ui";
 import { cn } from "@/lib/utils";
@@ -17,6 +18,61 @@ export interface WarningEventsCardProps {
   availableNamespacesCount: number;
   onOpenPodsView: () => void;
   onTriageEvent?: (event: PodEventItem, targetPod?: string) => void;
+}
+
+export function getEventTimestampMs(ev: PodEventItem): number {
+  if (ev?.lastTimestamp) {
+    const t = new Date(ev.lastTimestamp).getTime();
+    if (!isNaN(t)) return t;
+  }
+  return 0;
+}
+
+export function formatEventTime(timestamp: string): {
+  relative: string;
+  full: string;
+  isRecent: boolean;
+} {
+  if (!timestamp) return { relative: "-", full: "-", isRecent: false };
+  try {
+    const date = new Date(timestamp);
+    if (isNaN(date.getTime())) {
+      return { relative: timestamp, full: timestamp, isRecent: false };
+    }
+
+    const now = Date.now();
+    const diffMs = now - date.getTime();
+    const diffSec = Math.floor(diffMs / 1000);
+    const diffMin = Math.floor(diffSec / 60);
+    const diffHour = Math.floor(diffMin / 60);
+    const diffDay = Math.floor(diffHour / 24);
+
+    const full = date.toLocaleString([], {
+      month: "short",
+      day: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
+      second: "2-digit",
+    });
+
+    const isRecent = diffMin < 10 && diffMin >= 0;
+
+    if (diffSec < 60 && diffSec >= 0) {
+      return { relative: "Just now", full, isRecent: true };
+    }
+    if (diffMin < 60 && diffMin >= 0) {
+      return { relative: `${diffMin}m ago`, full, isRecent };
+    }
+    if (diffHour < 24 && diffHour >= 0) {
+      return { relative: `${diffHour}h ago`, full, isRecent: false };
+    }
+    if (diffDay === 1) {
+      return { relative: "Yesterday", full, isRecent: false };
+    }
+    return { relative: `${diffDay}d ago`, full, isRecent: false };
+  } catch {
+    return { relative: timestamp, full: timestamp, isRecent: false };
+  }
 }
 
 export function extractPodName(ev: PodEventItem): string | null {
@@ -65,41 +121,138 @@ export function WarningEventsCard({
   onOpenPodsView,
   onTriageEvent,
 }: WarningEventsCardProps) {
-  const events = warningEvents || [];
+  const [timeRange, setTimeRange] = React.useState<"1h" | "24h" | "all">("24h");
+
+  // Filter by time window (default 24h) and order by newest first
+  const filteredAndSortedEvents = React.useMemo(() => {
+    const rawEvents = warningEvents || [];
+    const now = Date.now();
+
+    const windowMs =
+      timeRange === "1h"
+        ? 60 * 60 * 1000
+        : timeRange === "24h"
+          ? 24 * 60 * 60 * 1000
+          : Infinity;
+
+    // 1. Time window filter
+    const filtered = rawEvents.filter((ev) => {
+      if (windowMs === Infinity) return true;
+      const t = getEventTimestampMs(ev);
+      if (t === 0) return true; // keep if timestamp missing
+      return now - t <= windowMs;
+    });
+
+    // 2. Order by newest first (descending timestamp)
+    return [...filtered].sort((a, b) => {
+      const timeA = getEventTimestampMs(a);
+      const timeB = getEventTimestampMs(b);
+      return timeB - timeA;
+    });
+  }, [warningEvents, timeRange]);
+
+  const rawCount = warningEvents?.length || 0;
 
   return (
     <SpotlightCard className="p-5 flex flex-col justify-between h-full space-y-4">
       <div className="flex flex-col">
-        <div className="flex items-center justify-between pb-3.5 border-b border-[var(--border)]/70">
-          <div className="flex items-center gap-2.5">
-            <AlertTriangle className="w-4 h-4 text-amber-500" />
+        {/* Card Header with Title, Time Window Toggle, and Active Count */}
+        <div className="flex items-center justify-between pb-3.5 border-b border-[var(--border)]/70 gap-2 flex-wrap">
+          <div className="flex items-center gap-2">
+            <AlertTriangle className="w-4 h-4 text-amber-500 shrink-0" />
             <h3 className="text-sm font-semibold text-[var(--foreground)] tracking-tight">
               Warning Events & Incidents
             </h3>
           </div>
-          <span className="px-2.5 py-0.5 rounded-full text-xs font-mono font-semibold bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20 tabular-nums">
-            {events.length} Active
-            {isNamespaceScoped ? ` in ${currentNamespace}` : ""}
-          </span>
+
+          <div className="flex items-center gap-2">
+            {/* Time Window Selector (1h, 24h default, All) */}
+            <div className="flex items-center bg-black/5 dark:bg-white/5 p-0.5 rounded-lg border border-[var(--border)] text-[10px] font-mono select-none">
+              <button
+                type="button"
+                onClick={() => setTimeRange("1h")}
+                className={cn(
+                  "px-2 py-0.5 rounded-md transition-colors cursor-pointer",
+                  timeRange === "1h"
+                    ? "bg-[var(--surface)] text-[var(--foreground)] font-semibold shadow-xs"
+                    : "text-[var(--muted)] hover:text-[var(--foreground)]"
+                )}
+                title="Show events from past 1 hour"
+              >
+                1h
+              </button>
+              <button
+                type="button"
+                onClick={() => setTimeRange("24h")}
+                className={cn(
+                  "px-2 py-0.5 rounded-md transition-colors cursor-pointer",
+                  timeRange === "24h"
+                    ? "bg-[var(--surface)] text-[var(--foreground)] font-semibold shadow-xs"
+                    : "text-[var(--muted)] hover:text-[var(--foreground)]"
+                )}
+                title="Show events from past 24 hours (Default)"
+              >
+                24h
+              </button>
+              <button
+                type="button"
+                onClick={() => setTimeRange("all")}
+                className={cn(
+                  "px-2 py-0.5 rounded-md transition-colors cursor-pointer",
+                  timeRange === "all"
+                    ? "bg-[var(--surface)] text-[var(--foreground)] font-semibold shadow-xs"
+                    : "text-[var(--muted)] hover:text-[var(--foreground)]"
+                )}
+                title="Show all recorded cluster events"
+              >
+                All
+              </button>
+            </div>
+
+            <span
+              className={cn(
+                "px-2.5 py-0.5 rounded-full text-xs font-mono font-semibold tabular-nums border",
+                filteredAndSortedEvents.length > 0
+                  ? "bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/20"
+                  : "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20"
+              )}
+            >
+              {filteredAndSortedEvents.length} Active
+            </span>
+          </div>
         </div>
 
+        {/* Scrollable Events List (Ordered Newest First) */}
         <div className="divide-y divide-[var(--border)]/50 overflow-y-auto min-h-[175px] max-h-[230px] pr-1 scrollbar-thin">
-          {events.length === 0 ? (
+          {filteredAndSortedEvents.length === 0 ? (
             <div className="h-full min-h-[175px] flex flex-col items-center justify-center text-center text-xs text-[var(--muted)] gap-2 py-4">
               <CheckCircle2 className="w-5 h-5 text-emerald-500" />
-              <span className="font-medium text-xs text-[var(--foreground)]">
-                {isNamespaceScoped
-                  ? `No Warnings in ${currentNamespace}`
-                  : "Cluster Operating Normally"}
+              <span className="font-semibold text-xs text-[var(--foreground)]">
+                {timeRange === "24h"
+                  ? "0 Warning Events in Past 24 Hours"
+                  : timeRange === "1h"
+                    ? "0 Warning Events in Past Hour"
+                    : isNamespaceScoped
+                      ? `0 Warning Events in ${currentNamespace}`
+                      : "0 Warning Events Recorded"}
               </span>
-              <p className="text-xs text-[var(--muted)] max-w-xs">
+              <p className="text-xs text-[var(--muted)] font-mono max-w-xs">
                 {isNamespaceScoped
-                  ? `No active warning events found for namespace '${currentNamespace}'.`
-                  : "No active warning events found across namespaces."}
+                  ? `All workloads in namespace '${currentNamespace}' report healthy condition.`
+                  : "All cluster workloads report healthy condition in this time window."}
               </p>
+              {timeRange !== "all" && rawCount > 0 && (
+                <button
+                  type="button"
+                  onClick={() => setTimeRange("all")}
+                  className="mt-1 text-[11px] text-[var(--accent)] hover:underline cursor-pointer font-mono"
+                >
+                  View {rawCount} older historical events
+                </button>
+              )}
             </div>
           ) : (
-            events.map((ev, idx) => {
+            filteredAndSortedEvents.map((ev, idx) => {
               const isSevere =
                 ev.reason?.toLowerCase().includes("fail") ||
                 ev.message?.toLowerCase().includes("fail") ||
@@ -107,26 +260,11 @@ export function WarningEventsCard({
                 ev.reason?.toLowerCase().includes("crash");
 
               const detectedPod = extractPodName(ev);
-
-              let formattedTime = ev.lastTimestamp || "";
-              if (ev.lastTimestamp) {
-                try {
-                  const d = new Date(ev.lastTimestamp);
-                  if (!isNaN(d.getTime())) {
-                    formattedTime = d.toLocaleTimeString([], {
-                      hour: "2-digit",
-                      minute: "2-digit",
-                      second: "2-digit",
-                    });
-                  }
-                } catch {
-                  // Fallback to raw timestamp
-                }
-              }
+              const timeInfo = formatEventTime(ev.lastTimestamp);
 
               return (
                 <div
-                  key={idx}
+                  key={`${ev.reason}-${ev.lastTimestamp}-${idx}`}
                   role="button"
                   tabIndex={0}
                   onClick={() => {
@@ -149,13 +287,7 @@ export function WarningEventsCard({
                   className="py-2.5 px-2 rounded-lg hover:bg-black/[0.03] dark:hover:bg-white/[0.04] transition-colors duration-150 cursor-pointer select-none space-y-1.5 group/ev focus-visible:outline-hidden focus-visible:ring-1 focus-visible:ring-[var(--accent)]"
                 >
                   <div className="flex items-center justify-between text-xs gap-2">
-                    <div className="flex items-center gap-2 min-w-0">
-                      <span
-                        className={cn(
-                          "w-1.5 h-1.5 rounded-full shrink-0",
-                          isSevere ? "bg-rose-500" : "bg-amber-400"
-                        )}
-                      />
+                    <div className="flex items-center gap-1.5 min-w-0 flex-wrap">
                       <span
                         className={cn(
                           "font-mono font-semibold text-xs tracking-tight shrink-0",
@@ -174,11 +306,27 @@ export function WarningEventsCard({
                           pod/{detectedPod}
                         </span>
                       )}
+                      {!isNamespaceScoped && ev.involvedObjectNamespace && (
+                        <span
+                          title={`Namespace: ${ev.involvedObjectNamespace}`}
+                          className="px-1.5 py-0.5 rounded text-[9px] font-mono text-[var(--muted)] bg-black/5 dark:bg-white/5 border border-[var(--border)] truncate max-w-[100px]"
+                        >
+                          {ev.involvedObjectNamespace}
+                        </span>
+                      )}
+                      {timeInfo.isRecent && (
+                        <span className="px-1.5 py-0.2 rounded text-[9px] font-mono font-bold bg-rose-500/15 text-rose-600 dark:text-rose-400 border border-rose-500/30">
+                          JUST NOW
+                        </span>
+                      )}
                     </div>
 
-                    <div className="flex items-center shrink-0 font-mono text-xs select-none">
+                    <div
+                      className="flex items-center shrink-0 font-mono text-xs select-none"
+                      title={`Exact time: ${timeInfo.full}`}
+                    >
                       <span className="text-xs font-mono tabular-nums text-zinc-400 dark:text-zinc-500 group-hover/ev:text-zinc-500 dark:group-hover/ev:text-zinc-400 transition-colors">
-                        {formattedTime}
+                        {timeInfo.relative}
                       </span>
                       <div className="grid grid-cols-[0fr] group-hover/ev:grid-cols-[1fr] transition-all duration-200 ease-out motion-reduce:transition-none">
                         <div className="overflow-hidden">
@@ -225,11 +373,13 @@ export function WarningEventsCard({
         </div>
       </div>
 
+      {/* Card Footer */}
       <div className="pt-2.5 border-t border-[var(--border)]/60 text-xs text-[var(--muted)] flex items-center justify-between">
         <span className="tabular-nums font-mono text-xs">
           {isNamespaceScoped
             ? `Filtered to namespace: ${currentNamespace}`
             : `Aggregated across ${availableNamespacesCount} namespaces`}
+          {timeRange !== "all" && ` • Past ${timeRange}`}
         </span>
         <button
           onClick={onOpenPodsView}

@@ -456,7 +456,7 @@ export function InspectorPodOverview({
                   navigator.clipboard.writeText(c.cmd);
                   toast.success(`Copied: ${c.cmd}`);
                 }}
-                className="p-1 text-[var(--muted)] hover:text-[#F08A42] transition-colors cursor-pointer shrink-0"
+                className="p-1 text-[var(--muted)] hover:text-[var(--foreground)] transition-colors cursor-pointer shrink-0"
                 title={`Copy ${c.label} command`}
               >
                 <Copy className="w-3.5 h-3.5" />

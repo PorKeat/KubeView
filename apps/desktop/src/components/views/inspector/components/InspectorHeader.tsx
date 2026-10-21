@@ -55,8 +55,7 @@ export function InspectorHeader({
       case "Active":
       case "Ready":
         return (
-          <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-semibold bg-emerald-500/15 text-emerald-700 dark:text-emerald-400 border border-emerald-500/25 shrink-0">
-            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+          <span className="inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-medium font-mono bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20 shrink-0">
             {status}
           </span>
         );
@@ -64,23 +63,20 @@ export function InspectorHeader({
       case "ContainerCreating":
       case "Terminating":
         return (
-          <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-semibold bg-amber-500/15 text-amber-700 dark:text-amber-400 border border-amber-500/25 shrink-0">
-            <span className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-ping motion-reduce:animate-none" />
+          <span className="inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-medium font-mono bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/25 shrink-0">
             {status}
           </span>
         );
       case "Completed":
       case "Succeeded":
         return (
-          <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-semibold bg-black/[0.04] dark:bg-white/[0.06] text-[var(--muted)] border border-[var(--border)] shrink-0">
-            <span className="w-1.5 h-1.5 rounded-full bg-[var(--muted)]" />
+          <span className="inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-medium font-mono bg-black/[0.04] dark:bg-white/[0.06] text-[var(--muted)] border border-[var(--border)] shrink-0">
             {status}
           </span>
         );
       default:
         return (
-          <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-semibold bg-rose-500/15 text-rose-700 dark:text-rose-400 border border-rose-500/25 shrink-0">
-            <span className="w-1.5 h-1.5 rounded-full bg-rose-500 animate-pulse motion-reduce:animate-none" />
+          <span className="inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-medium font-mono bg-rose-500/10 text-rose-600 dark:text-rose-400 border border-rose-500/25 shrink-0">
             {status}
           </span>
         );

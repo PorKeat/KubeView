@@ -114,6 +114,11 @@ export interface ContainerInfo {
   restartCount: number;
   state: string;
   stateReason?: string;
+  exitCode?: number;
+  lastTerminatedReason?: string;
+  lastTerminatedMessage?: string;
+  waitingReason?: string;
+  waitingMessage?: string;
   env?: ContainerEnvVar[];
   ports?: ContainerPortInfo[];
   volumeMounts?: ContainerVolumeMountInfo[];

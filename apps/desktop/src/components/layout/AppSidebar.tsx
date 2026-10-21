@@ -235,32 +235,6 @@ export function AppSidebar() {
           );
         })}
       </div>
-
-      {/* Bottom Mini Cluster Card */}
-      {!sidebarCollapsed ? (
-        <div className="p-2.5 border-t border-[var(--border)] shrink-0 bg-slate-50/50 dark:bg-black/20">
-          <div className="p-2 rounded-lg bg-[var(--surface)] border border-[var(--border)] flex items-center justify-between text-xs">
-            <div className="flex items-center gap-2 min-w-0">
-              <span className="w-2 h-2 rounded-full bg-emerald-500 shrink-0" />
-              <div className="min-w-0">
-                <div className="font-mono text-xs font-semibold text-[var(--foreground)] truncate">
-                  Cluster Live
-                </div>
-                <div className="text-[11px] text-[var(--muted)] font-mono">
-                  Supervised Engine
-                </div>
-              </div>
-            </div>
-            <span className="px-1.5 py-0.5 rounded text-[11px] font-mono font-medium bg-[var(--surface-hover)] text-[var(--muted)] border border-[var(--border)] tabular-nums">
-              v1.0.0
-            </span>
-          </div>
-        </div>
-      ) : (
-        <div className="p-2 border-t border-[var(--border)] flex justify-center shrink-0">
-          <span className="w-2 h-2 rounded-full bg-emerald-500" title="Cluster Active" />
-        </div>
-      )}
     </aside>
   );
 }

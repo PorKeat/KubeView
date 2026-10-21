@@ -1,6 +1,7 @@
 "use client";
 
 import * as React from "react";
+import { motion } from "motion/react";
 import {
   ArrowUpDown,
   ArrowUp,
@@ -26,6 +27,12 @@ import { ResourceTableToolbar } from "./components/ResourceTableToolbar";
 import { ResourceBatchToolbar } from "./components/ResourceBatchToolbar";
 import { ResourceNamespaceBanner } from "./components/ResourceNamespaceBanner";
 import { ResourceTableRow } from "./components/ResourceTableRow";
+import {
+  getPodIssue,
+  isPodFailing,
+  isPodRunning,
+  isPodPending,
+} from "./lib/podIssues";
 
 export interface ResourceListViewProps {
   resourceType: string;
@@ -88,12 +95,12 @@ export function ResourceListView({ resourceType }: ResourceListViewProps) {
     pageSize,
   ]);
 
-  // Initial fetch when mounted, when context changes, or if pods are empty
+  // Initial fetch when mounted, when context changes, or if pods have not loaded yet
   React.useEffect(() => {
-    if (currentContext && (pods.length === 0 || !hasLoadedPodsOnce)) {
+    if (currentContext && (!hasLoadedPodsOnce || useClusterStore.getState().pods.length === 0)) {
       loadPods();
     }
-  }, [currentContext, pods.length, hasLoadedPodsOnce, loadPods]);
+  }, [currentContext, hasLoadedPodsOnce, loadPods]);
 
   // Periodic Auto-refresh timer
   React.useEffect(() => {
@@ -206,24 +213,11 @@ export function ResourceListView({ resourceType }: ResourceListViewProps) {
 
       // 3. Status filter
       if (statusFilter !== "all") {
-        if (statusFilter === "running" && pod.status !== "Running")
+        if (statusFilter === "running" && !isPodRunning(pod))
           return false;
-        if (
-          statusFilter === "pending" &&
-          pod.status !== "Pending" &&
-          pod.status !== "ContainerCreating"
-        )
+        if (statusFilter === "pending" && !isPodPending(pod))
           return false;
-        if (
-          statusFilter === "failing" &&
-          ["Running", "Completed", "Pending", "Succeeded"].includes(pod.status)
-        )
-          return false;
-        if (
-          statusFilter === "issues" &&
-          pod.restarts === 0 &&
-          ["Running", "Completed", "Succeeded"].includes(pod.status)
-        )
+        if (statusFilter === "failing" && !isPodFailing(pod))
           return false;
       }
 
@@ -251,6 +245,17 @@ export function ResourceListView({ resourceType }: ResourceListViewProps) {
   // Sort items
   const sortedItems = React.useMemo(() => {
     return [...filteredItems].sort((a, b) => {
+      // In failing view, prioritize critical severity failures first
+      if (statusFilter === "failing" && sortField === "name") {
+        const issueA = getPodIssue(a);
+        const issueB = getPodIssue(b);
+        const weightA = issueA?.severity === "critical" ? 2 : 1;
+        const weightB = issueB?.severity === "critical" ? 2 : 1;
+        if (weightA !== weightB) {
+          return weightB - weightA;
+        }
+      }
+
       let comparison = 0;
       switch (sortField) {
         case "name":
@@ -339,8 +344,6 @@ export function ResourceListView({ resourceType }: ResourceListViewProps) {
         pods={pods}
         currentNamespace={currentNamespace}
         sortedItemsCount={sortedItems.length}
-        autoRefreshInterval={autoRefreshInterval}
-        setAutoRefreshInterval={setAutoRefreshInterval}
         handleRefresh={handleRefresh}
         isPodsLoading={isPodsLoading}
         density={density}
@@ -383,6 +386,167 @@ export function ResourceListView({ resourceType }: ResourceListViewProps) {
       {/* Table View Area */}
       {!hasLoadedPodsOnce || (isPodsLoading && filteredItems.length === 0) ? (
         <TableSkeleton rows={10} columns={9} />
+      ) : sortedItems.length === 0 ? (
+        <div className="flex-1 overflow-y-auto min-h-0 flex flex-col justify-center">
+          <EmptyState
+            variant={
+              (statusFilter === "failing" || statusFilter === "pending") && !search
+                ? "healthy"
+                : podNodeFilter
+                  ? "empty"
+                  : search || statusFilter !== "all"
+                    ? "search"
+                    : "empty"
+            }
+            title={
+              statusFilter === "failing" && !search
+                ? "All Workloads Healthy"
+                : statusFilter === "pending" && !search
+                  ? "All Workloads Scheduled"
+                  : podNodeFilter
+                    ? `No pods running on node "${podNodeFilter}"`
+                    : search || statusFilter !== "all"
+                      ? `No ${resourceType.toLowerCase()} match filter "${search || statusFilter}"`
+                      : `No ${resourceType.toLowerCase()} scheduled in "${currentNamespace}"`
+            }
+            description={
+              statusFilter === "failing" && !search
+                ? `All ${
+                    currentNamespace === "all"
+                      ? pods.length
+                      : namespaceCounts[currentNamespace] || 0
+                  } workloads in ${
+                    currentNamespace === "all"
+                      ? "all cluster namespaces"
+                      : `namespace "${currentNamespace}"`
+                  } are healthy with ready containers and zero active failures.`
+                : statusFilter === "pending" && !search
+                  ? `Zero pending workloads. All ${
+                      currentNamespace === "all"
+                        ? pods.length
+                        : namespaceCounts[currentNamespace] || 0
+                    } pods in ${
+                      currentNamespace === "all"
+                        ? "all cluster namespaces"
+                        : `namespace "${currentNamespace}"`
+                    } have completed scheduling and initialization.`
+                : podNodeFilter
+                  ? `Host "${podNodeFilter}" currently has zero running workloads matching your active criteria.`
+                  : search || statusFilter !== "all"
+                    ? `0 of ${
+                        currentNamespace === "all"
+                          ? pods.length
+                          : namespaceCounts[currentNamespace] || 0
+                      } ${resourceType.toLowerCase()} in ${
+                        currentNamespace === "all"
+                          ? "all namespaces"
+                          : `namespace "${currentNamespace}"`
+                      } match your active search or status criteria.`
+                    : `Namespace "${currentNamespace}" currently holds zero active workloads. ${pods.length} pods are active in other namespaces.`
+            }
+            scopeBadge={
+              podNodeFilter
+                ? `Node: ${podNodeFilter}`
+                : search || statusFilter !== "all"
+                  ? search
+                    ? `Query: "${search}"`
+                    : `Status: ${statusFilter}`
+                  : `Namespace: ${currentNamespace}`
+            }
+            codeSnippet={
+              !search && statusFilter === "all" && !podNodeFilter
+                ? `kubectl run demo-app --image=nginx --namespace=${
+                    currentNamespace === "all" ? "default" : currentNamespace
+                  }`
+                : undefined
+            }
+            suggestions={
+              !search &&
+              statusFilter === "all" &&
+              !podNodeFilter &&
+              currentNamespace !== "all"
+                ? Object.entries(namespaceCounts)
+                    .filter(([ns]) => ns !== currentNamespace && ns !== "all")
+                    .sort((a, b) => b[1] - a[1])
+                    .slice(0, 4)
+                    .map(([ns, count]) => ({
+                      label: `${ns} (${count})`,
+                      onClick: () => {
+                        setCurrentNamespace(ns);
+                      },
+                    }))
+                : undefined
+            }
+            action={
+              podNodeFilter
+                ? {
+                    label: "Clear Node Filter",
+                    icon: <RefreshCw className="w-3.5 h-3.5" />,
+                    onClick: () => setPodNodeFilter(null),
+                  }
+                : (statusFilter === "failing" || statusFilter === "pending") && !search
+                  ? {
+                      label: "View All Workloads",
+                      icon: <RefreshCw className="w-3.5 h-3.5" />,
+                      onClick: () => setStatusFilter("all"),
+                    }
+                  : search || statusFilter !== "all"
+                    ? {
+                        label: "Clear Filters",
+                        icon: <RefreshCw className="w-3.5 h-3.5" />,
+                        onClick: () => {
+                          setSearch("");
+                          setStatusFilter("all");
+                        },
+                      }
+                    : {
+                        label: `View All Namespaces (${pods.length})`,
+                        icon: <Globe className="w-3.5 h-3.5" />,
+                        onClick: () => {
+                          setCurrentNamespace("all");
+                        },
+                      }
+            }
+            secondaryAction={
+              podNodeFilter
+                ? currentNamespace !== "all"
+                  ? {
+                      label: `Search All Namespaces (${pods.length || totalPodsCount})`,
+                      icon: <Globe className="w-3.5 h-3.5" />,
+                      onClick: () => {
+                        setCurrentNamespace("all");
+                      },
+                    }
+                  : {
+                      label: "Reload Pods",
+                      icon: <RefreshCw className="w-3.5 h-3.5" />,
+                      onClick: () => {
+                        loadPods();
+                      },
+                    }
+                : !search &&
+                    statusFilter === "all" &&
+                    currentNamespace !== "all"
+                  ? {
+                      label: "Search All Namespaces",
+                      icon: <Globe className="w-3.5 h-3.5" />,
+                      onClick: () => {
+                        setCurrentNamespace("all");
+                      },
+                    }
+                  : currentNamespace !== "all" &&
+                      (search || statusFilter !== "all")
+                    ? {
+                        label: "Search All Namespaces",
+                        icon: <Globe className="w-3.5 h-3.5" />,
+                        onClick: () => {
+                          setCurrentNamespace("all");
+                        },
+                      }
+                    : undefined
+            }
+          />
+        </div>
       ) : (
         <div className="flex-1 overflow-y-auto overflow-x-auto min-h-0">
           <table className="w-full text-left text-xs border-collapse">
@@ -521,6 +685,8 @@ export function ResourceListView({ resourceType }: ResourceListViewProps) {
                     `${item.namespace}/${item.name}`,
                   )}
                   density={density}
+                  isFailingView={statusFilter === "failing"}
+                  isPendingView={statusFilter === "pending"}
                   onToggleSelect={toggleSelectItem}
                   onFilterNode={(node) => setPodNodeFilter(node)}
                   onFilterLabel={(label) => setLabelFilter(label)}
@@ -563,140 +729,11 @@ export function ResourceListView({ resourceType }: ResourceListViewProps) {
               ))}
             </tbody>
           </table>
-
-          {sortedItems.length === 0 && (
-            <EmptyState
-              variant={
-                podNodeFilter
-                  ? "empty"
-                  : search || statusFilter !== "all"
-                    ? "search"
-                    : "empty"
-              }
-              title={
-                podNodeFilter
-                  ? `No pods running on node "${podNodeFilter}"`
-                  : search || statusFilter !== "all"
-                    ? `No ${resourceType.toLowerCase()} match filter "${search || statusFilter}"`
-                    : `No ${resourceType.toLowerCase()} scheduled in "${currentNamespace}"`
-              }
-              description={
-                podNodeFilter
-                  ? `Host "${podNodeFilter}" currently has zero running workloads matching your active criteria.`
-                  : search || statusFilter !== "all"
-                    ? `0 of ${
-                        currentNamespace === "all"
-                          ? pods.length
-                          : namespaceCounts[currentNamespace] || 0
-                      } ${resourceType.toLowerCase()} in ${
-                        currentNamespace === "all"
-                          ? "all namespaces"
-                          : `namespace "${currentNamespace}"`
-                      } match your active search or status criteria.`
-                    : `Namespace "${currentNamespace}" currently holds zero active workloads. ${pods.length} pods are active in other namespaces.`
-              }
-              scopeBadge={
-                podNodeFilter
-                  ? `Node: ${podNodeFilter}`
-                  : search || statusFilter !== "all"
-                    ? search
-                      ? `Query: "${search}"`
-                      : `Status: ${statusFilter}`
-                    : `Namespace: ${currentNamespace}`
-              }
-              codeSnippet={
-                !search && statusFilter === "all" && !podNodeFilter
-                  ? `kubectl run demo-app --image=nginx --namespace=${
-                      currentNamespace === "all" ? "default" : currentNamespace
-                    }`
-                  : undefined
-              }
-              suggestions={
-                !search &&
-                statusFilter === "all" &&
-                !podNodeFilter &&
-                currentNamespace !== "all"
-                  ? Object.entries(namespaceCounts)
-                      .filter(([ns]) => ns !== currentNamespace && ns !== "all")
-                      .sort((a, b) => b[1] - a[1])
-                      .slice(0, 4)
-                      .map(([ns, count]) => ({
-                        label: `${ns} (${count})`,
-                        onClick: () => {
-                          setCurrentNamespace(ns);
-                        },
-                      }))
-                  : undefined
-              }
-              action={
-                podNodeFilter
-                  ? {
-                      label: "Clear Node Filter",
-                      icon: <RefreshCw className="w-3.5 h-3.5" />,
-                      onClick: () => setPodNodeFilter(null),
-                    }
-                  : search || statusFilter !== "all"
-                    ? {
-                        label: "Clear Filters",
-                        icon: <RefreshCw className="w-3.5 h-3.5" />,
-                        onClick: () => {
-                          setSearch("");
-                          setStatusFilter("all");
-                        },
-                      }
-                    : {
-                        label: `View All Namespaces (${pods.length})`,
-                        icon: <Globe className="w-3.5 h-3.5" />,
-                        onClick: () => {
-                          setCurrentNamespace("all");
-                        },
-                      }
-              }
-              secondaryAction={
-                podNodeFilter
-                  ? currentNamespace !== "all"
-                    ? {
-                        label: `Search All Namespaces (${pods.length || totalPodsCount})`,
-                        icon: <Globe className="w-3.5 h-3.5" />,
-                        onClick: () => {
-                          setCurrentNamespace("all");
-                        },
-                      }
-                    : {
-                        label: "Reload Pods",
-                        icon: <RefreshCw className="w-3.5 h-3.5" />,
-                        onClick: () => {
-                          loadPods();
-                        },
-                      }
-                  : !search &&
-                      statusFilter === "all" &&
-                      currentNamespace !== "all"
-                    ? {
-                        label: "Search All Namespaces",
-                        icon: <Globe className="w-3.5 h-3.5" />,
-                        onClick: () => {
-                          setCurrentNamespace("all");
-                        },
-                      }
-                    : currentNamespace !== "all" &&
-                        (search || statusFilter !== "all")
-                      ? {
-                          label: "Search All Namespaces",
-                          icon: <Globe className="w-3.5 h-3.5" />,
-                          onClick: () => {
-                            setCurrentNamespace("all");
-                          },
-                        }
-                      : undefined
-              }
-            />
-          )}
         </div>
       )}
 
       {/* Footer Status Bar with Enterprise Pagination Controls */}
-      <div className="h-9 border-t border-[var(--border)] px-4 flex items-center justify-between text-[11px] text-[var(--muted)] bg-[var(--surface)] shrink-0 gap-4">
+      <div className="h-10 border-t border-[var(--border)] px-4 flex items-center justify-between text-[11px] text-[var(--muted)] bg-[var(--surface)]/90 backdrop-blur-xs shrink-0 gap-4">
         <div className="flex items-center gap-2 truncate">
           <span>
             Showing{" "}
@@ -714,32 +751,28 @@ export function ResourceListView({ resourceType }: ResourceListViewProps) {
             <span className="text-[var(--foreground)] font-mono font-medium">
               {sortedItems.length}
             </span>{" "}
-            {podNodeFilter ? (
-              <>
-                pods on node{" "}
-                <strong className="text-[var(--foreground)] font-mono font-medium">
-                  {podNodeFilter}
-                </strong>
-                {currentNamespace !== "all" && (
-                  <>
-                    {" "}
-                    in namespace{" "}
-                    <strong className="text-[var(--foreground)] font-mono font-medium">
-                      {currentNamespace}
-                    </strong>
-                  </>
-                )}
-              </>
-            ) : (
-              <>
-                items in namespace{" "}
-                <strong className="text-[var(--foreground)] font-mono font-medium">
-                  {currentNamespace}
-                </strong>
-              </>
-            )}
+            items
           </span>
-          {sortedItems.length !== (podNodeFilter ? basePods.length : pods.length) && (
+          <span className="text-[var(--muted)]/40">·</span>
+          <div className="inline-flex items-center gap-1">
+            <span className="text-[var(--muted)]">namespace:</span>
+            <span className="font-mono font-medium text-[var(--foreground)] px-1.5 py-0.5 rounded bg-black/5 dark:bg-white/5 border border-[var(--border)] text-[10px]">
+              {currentNamespace}
+            </span>
+          </div>
+          {podNodeFilter && (
+            <>
+              <span className="text-[var(--muted)]/40">·</span>
+              <div className="inline-flex items-center gap-1">
+                <span className="text-[var(--muted)]">node:</span>
+                <span className="font-mono font-medium text-[var(--foreground)] px-1.5 py-0.5 rounded bg-black/5 dark:bg-white/5 border border-[var(--border)] text-[10px]">
+                  {podNodeFilter}
+                </span>
+              </div>
+            </>
+          )}
+          {sortedItems.length !==
+            (podNodeFilter ? basePods.length : pods.length) && (
             <span className="text-[10px] text-[var(--muted)] opacity-70">
               (filtered from {podNodeFilter ? basePods.length : pods.length} total)
             </span>
@@ -747,72 +780,109 @@ export function ResourceListView({ resourceType }: ResourceListViewProps) {
         </div>
 
         <div className="flex items-center gap-4 shrink-0">
-          {/* Page size selector */}
+          {/* Page size selector with sliding spring indicator */}
           <div className="flex items-center gap-1.5">
             <span className="text-[10px] uppercase tracking-wider text-[var(--muted)] font-medium">
               Rows:
             </span>
-            <div className="inline-flex rounded-md border border-[var(--border)] bg-[var(--background)] p-0.5">
-              {[50, 100, 250, 0].map((size) => (
-                <button
-                  key={size}
-                  onClick={() => {
-                    setPageSize(size);
-                    setCurrentPage(1);
-                  }}
-                  className={cn(
-                    "px-1.5 py-0.5 rounded text-[10px] font-mono transition-colors cursor-pointer",
-                    pageSize === size
-                      ? "bg-[var(--accent)] text-white font-semibold"
-                      : "text-[var(--muted)] hover:text-[var(--foreground)]"
-                  )}
-                >
-                  {size === 0 ? "All" : size}
-                </button>
-              ))}
+            <div className="inline-flex items-center rounded-lg border border-[var(--border)] bg-black/5 dark:bg-white/[0.04] p-0.5 relative">
+              {[50, 100, 250, 0].map((size) => {
+                const isSelected = pageSize === size;
+                return (
+                  <button
+                    key={size}
+                    type="button"
+                    onClick={() => {
+                      setPageSize(size);
+                      setCurrentPage(1);
+                    }}
+                    className={cn(
+                      "relative px-2 py-0.5 rounded-md text-[10px] font-mono transition-colors cursor-pointer select-none",
+                      isSelected
+                        ? "text-[var(--foreground)] font-semibold"
+                        : "text-[var(--muted)] hover:text-[var(--foreground)]",
+                    )}
+                  >
+                    {isSelected && (
+                      <motion.span
+                        layoutId="pageSizeIndicator"
+                        className="absolute inset-0 rounded-md bg-[var(--surface-active)] dark:bg-white/10 shadow-xs border border-[var(--border)]/60"
+                        transition={{
+                          type: "spring",
+                          stiffness: 450,
+                          damping: 32,
+                          mass: 0.8,
+                        }}
+                      />
+                    )}
+                    <span className="relative z-10">{size === 0 ? "All" : size}</span>
+                  </button>
+                );
+              })}
             </div>
           </div>
 
-          {/* Page navigation */}
+          {/* Page navigation with tactile animated buttons */}
           {pageSize > 0 && totalPages > 1 && (
-            <div className="flex items-center gap-1.5">
-              <span className="font-mono text-[11px]">
-                Page <strong className="text-[var(--foreground)]">{safeCurrentPage}</strong> of{" "}
-                <strong className="text-[var(--foreground)]">{totalPages}</strong>
+            <div className="flex items-center gap-2">
+              <span className="font-mono text-[11px] text-[var(--muted)]">
+                Page{" "}
+                <motion.strong
+                  key={safeCurrentPage}
+                  initial={{ opacity: 0.4, y: -2 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.15 }}
+                  className="text-[var(--foreground)] font-semibold inline-block min-w-[12px] text-center"
+                >
+                  {safeCurrentPage}
+                </motion.strong>{" "}
+                of{" "}
+                <strong className="text-[var(--foreground)] font-semibold">
+                  {totalPages}
+                </strong>
               </span>
-              <div className="flex items-center gap-0.5">
-                <button
+
+              <div className="flex items-center gap-1">
+                <motion.button
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.92 }}
                   disabled={safeCurrentPage <= 1}
                   onClick={() => setCurrentPage(1)}
-                  className="p-1 rounded text-[var(--muted)] hover:text-[var(--foreground)] hover:bg-[var(--surface-hover)] disabled:opacity-30 disabled:pointer-events-none transition-colors cursor-pointer"
+                  className="w-6.5 h-6.5 inline-flex items-center justify-center rounded-md border border-[var(--border)]/80 bg-[var(--surface)] hover:bg-[var(--surface-hover)] text-[var(--muted)] hover:text-[var(--foreground)] disabled:opacity-25 disabled:pointer-events-none transition-colors cursor-pointer"
                   title="First page"
                 >
                   <ChevronsLeft className="w-3.5 h-3.5" />
-                </button>
-                <button
+                </motion.button>
+                <motion.button
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.92 }}
                   disabled={safeCurrentPage <= 1}
                   onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
-                  className="p-1 rounded text-[var(--muted)] hover:text-[var(--foreground)] hover:bg-[var(--surface-hover)] disabled:opacity-30 disabled:pointer-events-none transition-colors cursor-pointer"
+                  className="w-6.5 h-6.5 inline-flex items-center justify-center rounded-md border border-[var(--border)]/80 bg-[var(--surface)] hover:bg-[var(--surface-hover)] text-[var(--muted)] hover:text-[var(--foreground)] disabled:opacity-25 disabled:pointer-events-none transition-colors cursor-pointer"
                   title="Previous page"
                 >
                   <ChevronLeft className="w-3.5 h-3.5" />
-                </button>
-                <button
+                </motion.button>
+                <motion.button
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.92 }}
                   disabled={safeCurrentPage >= totalPages}
                   onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
-                  className="p-1 rounded text-[var(--muted)] hover:text-[var(--foreground)] hover:bg-[var(--surface-hover)] disabled:opacity-30 disabled:pointer-events-none transition-colors cursor-pointer"
+                  className="w-6.5 h-6.5 inline-flex items-center justify-center rounded-md border border-[var(--border)]/80 bg-[var(--surface)] hover:bg-[var(--surface-hover)] text-[var(--muted)] hover:text-[var(--foreground)] disabled:opacity-25 disabled:pointer-events-none transition-colors cursor-pointer"
                   title="Next page"
                 >
                   <ChevronRight className="w-3.5 h-3.5" />
-                </button>
-                <button
+                </motion.button>
+                <motion.button
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.92 }}
                   disabled={safeCurrentPage >= totalPages}
                   onClick={() => setCurrentPage(totalPages)}
-                  className="p-1 rounded text-[var(--muted)] hover:text-[var(--foreground)] hover:bg-[var(--surface-hover)] disabled:opacity-30 disabled:pointer-events-none transition-colors cursor-pointer"
+                  className="w-6.5 h-6.5 inline-flex items-center justify-center rounded-md border border-[var(--border)]/80 bg-[var(--surface)] hover:bg-[var(--surface-hover)] text-[var(--muted)] hover:text-[var(--foreground)] disabled:opacity-25 disabled:pointer-events-none transition-colors cursor-pointer"
                   title="Last page"
                 >
                   <ChevronsRight className="w-3.5 h-3.5" />
-                </button>
+                </motion.button>
               </div>
             </div>
           )}

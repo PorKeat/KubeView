@@ -263,8 +263,7 @@ export function InteractiveTerminal({
           {/* Connection Status Indicator */}
           <div className="flex items-center gap-1.5 ml-2">
             {connectionStatus === "connected" && (
-              <span className="inline-flex items-center gap-1 text-[10px] font-mono text-emerald-400">
-                <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+              <span className="inline-flex items-center text-[10px] font-mono text-emerald-400">
                 Live PTY (WebSocket)
               </span>
             )}
@@ -275,8 +274,7 @@ export function InteractiveTerminal({
               </span>
             )}
             {connectionStatus === "disconnected" && (
-              <span className="inline-flex items-center gap-1 text-[10px] font-mono text-slate-400">
-                <span className="w-1.5 h-1.5 rounded-full bg-slate-500" />
+              <span className="inline-flex items-center text-[10px] font-mono text-slate-400">
                 Disconnected
               </span>
             )}

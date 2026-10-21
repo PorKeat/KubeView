@@ -1,6 +1,7 @@
 "use client";
 
 import * as React from "react";
+import { motion, AnimatePresence } from "motion/react";
 import {
   CheckSquare,
   Square,
@@ -15,16 +16,22 @@ import {
   Layers,
   Tag,
   Code2,
+  MoreHorizontal,
+  AlertTriangle,
+  Clock,
 } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import type { PodSummary } from "@kubeview/contracts";
 import { StatusBeacon } from "@/components/ui";
+import { getPodIssue, getPodPendingInfo } from "../lib/podIssues";
 
 export interface ResourceTableRowProps {
   item: PodSummary;
   isSelected: boolean;
   density?: "comfortable" | "compact";
+  isFailingView?: boolean;
+  isPendingView?: boolean;
   onToggleSelect: (key: string) => void;
   onRowClick: (item: PodSummary) => void;
   onLogsClick: (item: PodSummary, containerName?: string) => void;
@@ -39,6 +46,8 @@ export function ResourceTableRow({
   item,
   isSelected,
   density = "comfortable",
+  isFailingView = false,
+  isPendingView = false,
   onToggleSelect,
   onRowClick,
   onLogsClick,
@@ -49,27 +58,47 @@ export function ResourceTableRow({
   onFilterLabel,
 }: ResourceTableRowProps) {
   const itemKey = `${item.namespace}/${item.name}`;
+  const issueInfo = React.useMemo(() => getPodIssue(item), [item]);
+  const pendingInfo = React.useMemo(
+    () => (isPendingView ? getPodPendingInfo(item) : null),
+    [item, isPendingView]
+  );
   const [copiedName, setCopiedName] = React.useState(false);
   const [copiedIp, setCopiedIp] = React.useState(false);
   const [isExpanded, setIsExpanded] = React.useState(false);
-  const [showKubectlMenu, setShowKubectlMenu] = React.useState(false);
+  const [showActionMenu, setShowActionMenu] = React.useState(false);
+  const [showKubectlSubmenu, setShowKubectlSubmenu] = React.useState(false);
+  const [openUpwards, setOpenUpwards] = React.useState(false);
   const [copiedCommand, setCopiedCommand] = React.useState<string | null>(null);
-  const kubectlMenuRef = React.useRef<HTMLDivElement>(null);
+  const actionMenuRef = React.useRef<HTMLDivElement>(null);
+  const actionButtonRef = React.useRef<HTMLButtonElement>(null);
 
-  // Close kubectl menu on outside click
+  // Close action menu on outside click
   React.useEffect(() => {
-    if (!showKubectlMenu) return;
+    if (!showActionMenu) return;
     const handleClickOutside = (e: MouseEvent) => {
       if (
-        kubectlMenuRef.current &&
-        !kubectlMenuRef.current.contains(e.target as Node)
+        actionMenuRef.current &&
+        !actionMenuRef.current.contains(e.target as Node)
       ) {
-        setShowKubectlMenu(false);
+        setShowActionMenu(false);
+        setShowKubectlSubmenu(false);
       }
     };
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, [showKubectlMenu]);
+  }, [showActionMenu]);
+
+  const handleToggleActionMenu = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (!showActionMenu && actionButtonRef.current) {
+      const rect = actionButtonRef.current.getBoundingClientRect();
+      const spaceBelow = window.innerHeight - rect.bottom;
+      setOpenUpwards(spaceBelow < 280);
+    }
+    setShowActionMenu((prev) => !prev);
+    setShowKubectlSubmenu(false);
+  };
 
   const handleCopyName = (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -118,27 +147,55 @@ export function ResourceTableRow({
     toast.success(`Copied: ${cmd}`);
     setTimeout(() => {
       setCopiedCommand(null);
-      setShowKubectlMenu(false);
-    }, 1000);
+    }, 1200);
   };
 
-  const renderStatus = (status: string) => {
-    switch (status) {
+  const renderStatus = (pod: PodSummary) => {
+    const [readyCount, totalCount] = pod.ready
+      ? pod.ready.split("/").map(Number)
+      : [1, 1];
+
+    // If Running but 0 of 1 (or 0 of N) containers ready, pod is completely unready / failing
+    if (pod.status === "Running" && totalCount > 0 && readyCount === 0) {
+      return (
+        <StatusBeacon
+          variant="critical"
+          label={`Unready (${pod.ready})`}
+          size="xs"
+          pulse={true}
+        />
+      );
+    }
+
+    // If Running but partially ready (e.g. 1/2)
+    if (pod.status === "Running" && totalCount > 0 && readyCount < totalCount) {
+      return (
+        <StatusBeacon
+          variant="warning"
+          label={`Degraded (${pod.ready})`}
+          size="xs"
+          pulse={false}
+        />
+      );
+    }
+
+    switch (pod.status) {
       case "Running":
         return (
           <StatusBeacon
             variant="healthy"
-            label={status}
+            label={pod.status}
             size="xs"
             pulse={false}
           />
         );
       case "Pending":
       case "ContainerCreating":
+      case "PodInitializing":
         return (
           <StatusBeacon
             variant="pending"
-            label={status}
+            label={pod.status}
             size="xs"
             pulse={true}
           />
@@ -148,16 +205,25 @@ export function ResourceTableRow({
         return (
           <StatusBeacon
             variant="muted"
-            label={status}
+            label={pod.status}
             size="xs"
             pulse={false}
+          />
+        );
+      case "Terminating":
+        return (
+          <StatusBeacon
+            variant="warning"
+            label={pod.status}
+            size="xs"
+            pulse={true}
           />
         );
       default:
         return (
           <StatusBeacon
             variant="critical"
-            label={status}
+            label={pod.status}
             size="xs"
             pulse={true}
           />
@@ -192,7 +258,7 @@ export function ResourceTableRow({
         </td>
 
         {/* Name with Expand Chevron & Quick Copy */}
-        <td className="py-1 px-3 font-medium font-mono text-[var(--foreground)] truncate max-w-[280px]">
+        <td className="py-1 px-3 font-medium font-mono text-[var(--foreground)] truncate max-w-[340px]">
           <div className="flex items-center gap-1.5 min-w-0">
             <button
               type="button"
@@ -218,14 +284,6 @@ export function ResourceTableRow({
             <span className="truncate" title={item.name}>
               {item.name}
             </span>
-            {item.containers && item.containers.length > 1 && (
-              <span
-                className="px-1.5 py-0.2 rounded text-[10px] font-mono bg-blue-500/10 text-blue-500 dark:text-blue-400 border border-blue-500/20 shrink-0 select-none"
-                title={`${item.containers.length} containers in this pod`}
-              >
-                {item.containers.length}c
-              </span>
-            )}
             <button
               type="button"
               onClick={handleCopyName}
@@ -247,7 +305,7 @@ export function ResourceTableRow({
         </td>
 
         {/* Status */}
-        <td className="py-1 px-3">{renderStatus(item.status)}</td>
+        <td className="py-1 px-3">{renderStatus(item)}</td>
 
         {/* Ready */}
         <td className="py-1 px-3 font-mono text-[var(--foreground)]">
@@ -257,7 +315,17 @@ export function ResourceTableRow({
         {/* Restarts */}
         <td className="py-1 px-3 font-mono text-[var(--muted)]">
           <span
-            className={cn(item.restarts > 0 && "text-amber-500 font-semibold")}
+            className={cn(
+              "tabular-nums text-xs",
+              item.restarts === 0 && "opacity-40",
+              item.restarts > 0 && item.restarts < 10 && "text-amber-500 font-medium",
+              item.restarts >= 10 && "text-rose-500 font-semibold",
+            )}
+            title={
+              item.restarts > 0
+                ? `${item.restarts} container restart${item.restarts > 1 ? "s" : ""}`
+                : "0 restarts"
+            }
           >
             {item.restarts}
           </span>
@@ -348,132 +416,329 @@ export function ResourceTableRow({
         {/* Age */}
         <td className="py-1 px-3 font-mono text-[var(--muted)]">{item.age}</td>
 
-        {/* Action Buttons */}
+        {/* Action Buttons: Clean '...' Dropdown */}
         <td
           className="py-1 px-3 text-right"
           onClick={(e) => e.stopPropagation()}
         >
-          <div className="flex items-center justify-end gap-1 opacity-40 group-hover:opacity-100 transition-opacity">
-            {/* 1. View Logs */}
+          <div className="relative inline-flex items-center justify-end" ref={actionMenuRef}>
             <button
-              onClick={() => onLogsClick(item)}
-              className="p-1 rounded hover:bg-[var(--surface-active)] text-[var(--muted)] hover:text-[var(--foreground)] transition-colors cursor-pointer"
-              title="View Logs"
-              aria-label={`View logs for ${item.name}`}
+              ref={actionButtonRef}
+              type="button"
+              onClick={handleToggleActionMenu}
+              className={cn(
+                "p-1 rounded-md transition-colors cursor-pointer text-[var(--muted)] hover:text-[var(--foreground)]",
+                showActionMenu
+                  ? "bg-[var(--surface-active)] text-[var(--foreground)] opacity-100"
+                  : "hover:bg-black/10 dark:hover:bg-white/10 opacity-60 group-hover:opacity-100",
+              )}
+              title="Actions"
+              aria-label={`Actions for ${item.name}`}
             >
-              <FileText className="w-3.5 h-3.5" />
+              <MoreHorizontal className="w-4 h-4" />
             </button>
 
-            {/* 2. Exec Shell */}
-            <button
-              onClick={() => onExecClick(item)}
-              className="p-1 rounded hover:bg-[var(--surface-active)] text-[var(--muted)] hover:text-[var(--foreground)] transition-colors cursor-pointer"
-              title="Exec Shell"
-              aria-label={`Exec shell in ${item.name}`}
-            >
-              <Terminal className="w-3.5 h-3.5" />
-            </button>
-
-            {/* 3. Quick kubectl CLI Menu */}
-            <div className="relative" ref={kubectlMenuRef}>
-              <button
-                type="button"
-                onClick={() => setShowKubectlMenu((v) => !v)}
-                className={cn(
-                  "p-1 rounded transition-colors cursor-pointer",
-                  showKubectlMenu
-                    ? "bg-[var(--accent)] text-white"
-                    : "hover:bg-[var(--surface-active)] text-[var(--muted)] hover:text-[var(--foreground)]",
-                )}
-                title="Copy kubectl CLI Commands"
-                aria-label="Copy kubectl CLI Commands"
-              >
-                <Code2 className="w-3.5 h-3.5" />
-              </button>
-
-              {showKubectlMenu && (
-                <div
+            <AnimatePresence>
+              {showActionMenu && (
+                <motion.div
+                  initial={{ opacity: 0, scale: 0.95, y: openUpwards ? 4 : -4 }}
+                  animate={{ opacity: 1, scale: 1, y: 0 }}
+                  exit={{ opacity: 0, scale: 0.95, y: openUpwards ? 4 : -4 }}
+                  transition={{
+                    type: "spring",
+                    stiffness: 450,
+                    damping: 30,
+                    mass: 0.8,
+                  }}
                   onClick={(e) => e.stopPropagation()}
-                  className="absolute right-0 top-8 z-50 w-72 p-2 rounded-xl bg-[var(--surface)] border border-[var(--border)] shadow-2xl animate-in fade-in zoom-in-95 duration-150 backdrop-blur-md"
+                  className={cn(
+                    "absolute z-50 w-64 p-1.5 rounded-xl bg-[var(--surface)] border border-[var(--border)] shadow-2xl backdrop-blur-md text-left",
+                    openUpwards
+                      ? "bottom-full mb-1.5 right-0 origin-bottom-right"
+                      : "top-full mt-1.5 right-0 origin-top-right",
+                  )}
                 >
-                  <div className="flex items-center justify-between px-2 py-1 border-b border-[var(--border)]/60 mb-1">
-                    <span className="text-[11px] font-semibold text-[var(--foreground)] flex items-center gap-1.5">
-                      <Terminal className="w-3.5 h-3.5 text-[var(--accent)]" />
-                      Quick kubectl CLI
+                  {/* Header: Pod Name & Namespace */}
+                  <div className="flex items-center justify-between px-2.5 py-1.5 border-b border-[var(--border)]/60 mb-1">
+                    <span className="text-[11px] font-semibold text-[var(--foreground)] truncate max-w-[150px]">
+                      {item.name}
                     </span>
-                    <span className="text-[10px] text-[var(--muted)] font-mono">
+                    <span className="text-[10px] text-[var(--muted)] font-mono truncate max-w-[90px]">
                       {item.namespace}
                     </span>
                   </div>
 
-                  <div className="space-y-1">
-                    {kubectlCommands.map((kc) => {
-                      const isCopied = copiedCommand === kc.label;
-                      return (
-                        <button
-                          key={kc.label}
-                          type="button"
-                          onClick={() => handleCopyKubectl(kc.command, kc.label)}
-                          className="w-full text-left p-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-white/[0.06] transition-colors cursor-pointer group/kcmd flex items-start justify-between gap-2"
-                        >
-                          <div className="min-w-0">
-                            <div className="text-[11px] font-medium text-[var(--foreground)]">
-                              {kc.label}
-                            </div>
-                            <div className="text-[10px] font-mono text-[var(--muted)] truncate max-w-[210px]">
-                              {kc.command}
-                            </div>
-                          </div>
-                          <div className="p-1 shrink-0 text-[var(--muted)] group-hover/kcmd:text-[var(--foreground)]">
-                            {isCopied ? (
-                              <Check className="w-3 h-3 text-emerald-500" />
-                            ) : (
-                              <Copy className="w-3 h-3 opacity-60 group-hover/kcmd:opacity-100" />
-                            )}
-                          </div>
-                        </button>
-                      );
-                    })}
+                  {/* Primary Workload Actions */}
+                  <div className="space-y-0.5">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setShowActionMenu(false);
+                        onLogsClick(item);
+                      }}
+                      className="w-full flex items-center gap-2.5 px-2.5 py-1.5 rounded-lg text-xs font-medium text-[var(--foreground)] hover:bg-black/5 dark:hover:bg-white/[0.06] transition-colors cursor-pointer group/act"
+                    >
+                      <FileText className="w-3.5 h-3.5 text-[var(--muted)] group-hover/act:text-[var(--foreground)]" />
+                      <span>View Logs</span>
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setShowActionMenu(false);
+                        onExecClick(item);
+                      }}
+                      className="w-full flex items-center gap-2.5 px-2.5 py-1.5 rounded-lg text-xs font-medium text-[var(--foreground)] hover:bg-black/5 dark:hover:bg-white/[0.06] transition-colors cursor-pointer group/act"
+                    >
+                      <Terminal className="w-3.5 h-3.5 text-[var(--muted)] group-hover/act:text-[var(--foreground)]" />
+                      <span>Exec Shell</span>
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setShowActionMenu(false);
+                        onRestartClick(item);
+                      }}
+                      className="w-full flex items-center gap-2.5 px-2.5 py-1.5 rounded-lg text-xs font-medium text-[var(--foreground)] hover:bg-black/5 dark:hover:bg-white/[0.06] transition-colors cursor-pointer group/act"
+                    >
+                      <RotateCw className="w-3.5 h-3.5 text-[var(--muted)] group-hover/act:text-[var(--foreground)]" />
+                      <span>Restart Pod</span>
+                    </button>
                   </div>
-                </div>
+
+                  <div className="my-1 border-t border-[var(--border)]/60" />
+
+                  {/* Quick kubectl CLI Commands */}
+                  <div className="space-y-0.5">
+                    <button
+                      type="button"
+                      onClick={() => setShowKubectlSubmenu((v) => !v)}
+                      className="w-full flex items-center justify-between px-2.5 py-1.5 rounded-lg text-xs font-medium text-[var(--foreground)] hover:bg-black/5 dark:hover:bg-white/[0.06] transition-colors cursor-pointer group/act"
+                    >
+                      <div className="flex items-center gap-2.5">
+                        <Code2 className="w-3.5 h-3.5 text-[var(--muted)] group-hover/act:text-[var(--foreground)]" />
+                        <span>Quick kubectl CLI</span>
+                      </div>
+                      <ChevronRight
+                        className={cn(
+                          "w-3.5 h-3.5 text-[var(--muted)] transition-transform duration-150",
+                          showKubectlSubmenu && "rotate-90 text-[var(--accent)]",
+                        )}
+                      />
+                    </button>
+
+                    {showKubectlSubmenu && (
+                      <div className="pl-2 pr-1 py-1 space-y-1 bg-black/[0.02] dark:bg-white/[0.02] rounded-lg">
+                        {kubectlCommands.map((kc) => {
+                          const isCopied = copiedCommand === kc.label;
+                          return (
+                            <button
+                              key={kc.label}
+                              type="button"
+                              onClick={() => handleCopyKubectl(kc.command, kc.label)}
+                              className="w-full text-left p-1.5 rounded-md hover:bg-black/5 dark:hover:bg-white/[0.06] transition-colors cursor-pointer group/kcmd flex items-center justify-between gap-2"
+                            >
+                              <div className="min-w-0">
+                                <div className="text-[11px] font-medium text-[var(--foreground)]">
+                                  {kc.label}
+                                </div>
+                                <div className="text-[10px] font-mono text-[var(--muted)] truncate max-w-[190px]">
+                                  {kc.command}
+                                </div>
+                              </div>
+                              <div className="p-1 shrink-0 text-[var(--muted)] group-hover/kcmd:text-[var(--foreground)]">
+                                {isCopied ? (
+                                  <Check className="w-3 h-3 text-emerald-500" />
+                                ) : (
+                                  <Copy className="w-3 h-3 opacity-60 group-hover/kcmd:opacity-100" />
+                                )}
+                              </div>
+                            </button>
+                          );
+                        })}
+                      </div>
+                    )}
+                  </div>
+
+                  <div className="my-1 border-t border-[var(--border)]/60" />
+
+                  {/* Destructive Action */}
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setShowActionMenu(false);
+                      onDeleteClick(item);
+                    }}
+                    className="w-full flex items-center gap-2.5 px-2.5 py-1.5 rounded-lg text-xs font-medium text-rose-500 hover:bg-rose-500/10 hover:text-rose-600 dark:hover:text-rose-400 transition-colors cursor-pointer group/act"
+                  >
+                    <Trash2 className="w-3.5 h-3.5 text-rose-500/80 group-hover/act:text-rose-500" />
+                    <span>Delete Pod</span>
+                  </button>
+                </motion.div>
               )}
-            </div>
-
-            {/* 4. Restart */}
-            <button
-              onClick={() => onRestartClick(item)}
-              className="p-1 rounded hover:bg-[var(--surface-active)] text-[var(--muted)] hover:text-[var(--foreground)] transition-colors cursor-pointer"
-              title="Restart Pod"
-              aria-label={`Restart ${item.name}`}
-            >
-              <RotateCw className="w-3.5 h-3.5" />
-            </button>
-
-            {/* 5. Delete Pod */}
-            <button
-              onClick={() => onDeleteClick(item)}
-              className="p-1 rounded hover:bg-rose-500/15 text-[var(--muted)] hover:text-rose-500 transition-colors cursor-pointer"
-              title="Delete Pod"
-              aria-label={`Delete ${item.name}`}
-            >
-              <Trash2 className="w-3.5 h-3.5" />
-            </button>
+            </AnimatePresence>
           </div>
         </td>
       </tr>
 
-      {/* Expanded Container and Sidecars Sub-row */}
-      {isExpanded && (
-        <tr className="bg-slate-50/70 dark:bg-white/[0.015] border-b border-[var(--border)]">
+      {/* Full-width Diagnostics Card Sub-Row for Failing View */}
+      {isFailingView && issueInfo && (
+        <tr className="bg-rose-500/[0.02] dark:bg-rose-500/[0.03] border-b border-[var(--border)]">
           <td
             colSpan={12}
-            className="px-4 py-3"
+            className="py-2.5 px-4 pl-10 pr-6"
             onClick={(e) => e.stopPropagation()}
           >
-            <div className="bg-slate-100/70 dark:bg-black/40 rounded-xl border border-[var(--border)]/80 p-3 shadow-xs space-y-3">
+            <div className="p-3.5 rounded-xl bg-[var(--surface)] border border-rose-500/30 dark:border-rose-500/25 shadow-xs space-y-2 text-left font-sans">
+              {/* Header: Title + Container + Exit Code badge + Fast Actions */}
+              <div className="flex items-center justify-between gap-3 flex-wrap">
+                <div className="flex items-center gap-2 flex-wrap text-xs font-mono">
+                  <span className="font-semibold text-rose-600 dark:text-rose-400 flex items-center gap-1.5">
+                    <AlertTriangle className="w-3.5 h-3.5 shrink-0" />
+                    {issueInfo.title}
+                  </span>
+                  {issueInfo.containerName && (
+                    <span className="px-2 py-0.5 rounded text-[10px] bg-black/5 dark:bg-white/10 text-[var(--foreground)] border border-[var(--border)] font-mono">
+                      container:{" "}
+                      <strong className="text-[var(--accent)]">
+                        {issueInfo.containerName}
+                      </strong>
+                    </span>
+                  )}
+                  {issueInfo.exitCode !== undefined && (
+                    <span className="px-2 py-0.5 rounded text-[10px] bg-rose-500/15 text-rose-600 dark:text-rose-400 border border-rose-500/30 font-mono font-bold">
+                      Exit Code {issueInfo.exitCode}
+                    </span>
+                  )}
+                </div>
+
+                <div className="flex items-center gap-1.5 shrink-0">
+                  <button
+                    type="button"
+                    onClick={() =>
+                      onLogsClick && onLogsClick(item, issueInfo.containerName)
+                    }
+                    className="px-2.5 py-1 rounded-md text-xs font-mono font-medium bg-[var(--surface)] hover:bg-[var(--surface-hover)] border border-[var(--border)] text-[var(--foreground)] transition-colors cursor-pointer inline-flex items-center gap-1.5 shadow-2xs active:scale-[0.98]"
+                    title="Inspect logs for failing container"
+                  >
+                    <FileText className="w-3 h-3 text-[var(--accent)]" />
+                    <span>View Logs</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => onRowClick && onRowClick(item)}
+                    className="px-2.5 py-1 rounded-md text-xs font-mono font-medium bg-[var(--surface)] hover:bg-[var(--surface-hover)] border border-[var(--border)] text-[var(--foreground)] transition-colors cursor-pointer inline-flex items-center gap-1.5 shadow-2xs active:scale-[0.98]"
+                    title="Inspect pod events & YAML"
+                  >
+                    <span>Inspect</span>
+                  </button>
+                </div>
+              </div>
+
+              {/* Root Cause explanation with full width */}
+              <p className="text-xs text-[var(--foreground)] leading-relaxed">
+                {issueInfo.rootCause}
+              </p>
+
+              {/* Actionable tip footer */}
+              <div className="pt-2 border-t border-[var(--border)]/60 flex items-center gap-2 text-[11px] text-[var(--muted)]">
+                <span className="px-1.5 py-0.2 rounded font-bold text-[9px] uppercase bg-rose-500/15 text-rose-600 dark:text-rose-400">
+                  Fix
+                </span>
+                <span>{issueInfo.actionableTip}</span>
+              </div>
+            </div>
+          </td>
+        </tr>
+      )}
+
+      {/* Full-width Diagnostics Card Sub-Row for Pending View */}
+      {isPendingView && pendingInfo && (
+        <tr className="bg-amber-500/[0.02] dark:bg-amber-500/[0.03] border-b border-[var(--border)]">
+          <td
+            colSpan={12}
+            className="py-2.5 px-4 pl-10 pr-6"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="p-3.5 rounded-xl bg-[var(--surface)] border border-amber-500/30 dark:border-amber-500/25 shadow-xs space-y-2 text-left font-sans">
+              <div className="flex items-center justify-between gap-3 flex-wrap">
+                <div className="flex items-center gap-2 flex-wrap text-xs font-mono">
+                  <span className="font-semibold text-amber-600 dark:text-amber-400 flex items-center gap-1.5">
+                    <Clock className="w-3.5 h-3.5 shrink-0" />
+                    {pendingInfo.title}
+                  </span>
+                  {pendingInfo.containerName && (
+                    <span className="px-2 py-0.5 rounded text-[10px] bg-black/5 dark:bg-white/10 text-[var(--foreground)] border border-[var(--border)] font-mono">
+                      container:{" "}
+                      <strong className="text-[var(--accent)]">
+                        {pendingInfo.containerName}
+                      </strong>
+                    </span>
+                  )}
+                  <span className="px-2 py-0.5 rounded text-[10px] bg-amber-500/15 text-amber-600 dark:text-amber-400 border border-amber-500/30 font-mono font-medium">
+                    {item.status}
+                  </span>
+                </div>
+
+                <div className="flex items-center gap-1.5 shrink-0">
+                  {pendingInfo.canViewLogs && (
+                    <button
+                      type="button"
+                      onClick={() =>
+                        onLogsClick &&
+                        onLogsClick(item, pendingInfo.containerName)
+                      }
+                      className="px-2.5 py-1 rounded-md text-xs font-mono font-medium bg-[var(--surface)] hover:bg-[var(--surface-hover)] border border-[var(--border)] text-[var(--foreground)] transition-colors cursor-pointer inline-flex items-center gap-1.5 shadow-2xs active:scale-[0.98]"
+                      title="Inspect init container logs"
+                    >
+                      <FileText className="w-3 h-3 text-[var(--accent)]" />
+                      <span>View Logs</span>
+                    </button>
+                  )}
+                  <button
+                    type="button"
+                    onClick={() => onRowClick && onRowClick(item)}
+                    className="px-2.5 py-1 rounded-md text-xs font-mono font-medium bg-[var(--surface)] hover:bg-[var(--surface-hover)] border border-[var(--border)] text-[var(--foreground)] transition-colors cursor-pointer inline-flex items-center gap-1.5 shadow-2xs active:scale-[0.98]"
+                    title="Inspect pod events & YAML"
+                  >
+                    <span>Inspect</span>
+                  </button>
+                </div>
+              </div>
+
+              <p className="text-xs text-[var(--foreground)] leading-relaxed">
+                {pendingInfo.rootCause}
+              </p>
+
+              <div className="pt-2 border-t border-[var(--border)]/60 flex items-center gap-2 text-[11px] text-[var(--muted)]">
+                <span className="px-1.5 py-0.2 rounded font-bold text-[9px] uppercase bg-amber-500/15 text-amber-600 dark:text-amber-400">
+                  Info
+                </span>
+                <span>{pendingInfo.actionableTip}</span>
+              </div>
+            </div>
+          </td>
+        </tr>
+      )}
+
+      {/* Expanded Container and Sidecars Sub-row */}
+      {isExpanded && (
+        <tr className="bg-[var(--surface-active)]/15 dark:bg-white/[0.012] border-b border-[var(--border)]">
+          <td
+            colSpan={12}
+            className="py-3 px-4 pl-10 pr-6"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <motion.div
+              initial={{ opacity: 0, y: -4 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.15 }}
+              className="space-y-2.5"
+            >
               {/* Top Header: Meta and Labels */}
-              <div className="flex flex-wrap items-center justify-between gap-2 pb-2 border-b border-[var(--border)]/60 text-xs">
-                <div className="flex items-center gap-2">
+              <div className="flex flex-wrap items-center justify-between gap-3 pb-2 border-b border-[var(--border)]/60 text-xs">
+                <div className="flex items-center gap-2.5">
                   <Layers className="w-3.5 h-3.5 text-[var(--accent)]" />
                   <span className="font-semibold text-[var(--foreground)]">
                     Containers &amp; Sidecars ({item.containers?.length || 0})
@@ -481,23 +746,23 @@ export function ResourceTableRow({
                   {item.controlledBy && (
                     <span className="text-[11px] text-[var(--muted)] font-mono">
                       Controlled by:{" "}
-                      <strong className="text-[var(--foreground)]">
+                      <strong className="text-[var(--foreground)] font-medium">
                         {item.controlledBy}
                       </strong>
                     </span>
                   )}
                   {item.qosClass && (
-                    <span className="px-1.5 py-0.5 rounded text-[10px] font-mono bg-black/5 dark:bg-white/5 border border-[var(--border)] text-[var(--muted)]">
+                    <span className="px-1.5 py-0.5 rounded text-[10px] font-mono uppercase bg-black/5 dark:bg-white/5 border border-[var(--border)] text-[var(--muted)]">
                       QoS: {item.qosClass}
                     </span>
                   )}
                 </div>
 
-                {/* Labels (Feature 3: Clickable chips to filter) */}
+                {/* Labels: Sleek neutral pills */}
                 {item.labels && Object.keys(item.labels).length > 0 && (
                   <div className="flex flex-wrap items-center gap-1.5 max-w-xl">
                     <span className="text-[10px] font-medium text-[var(--muted)] flex items-center gap-1">
-                      <Tag className="w-3 h-3" /> Labels:
+                      <Tag className="w-3 h-3 opacity-60" /> Labels:
                     </span>
                     {Object.entries(item.labels)
                       .slice(0, 8)
@@ -508,12 +773,12 @@ export function ResourceTableRow({
                           onClick={() =>
                             onFilterLabel && onFilterLabel(`${k}=${v}`)
                           }
-                          className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-mono bg-indigo-500/10 text-indigo-500 dark:text-indigo-400 hover:bg-indigo-500/20 border border-indigo-500/20 transition-colors cursor-pointer"
+                          className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-mono bg-black/5 dark:bg-white/5 hover:bg-black/10 dark:hover:bg-white/10 text-[var(--muted)] hover:text-[var(--foreground)] border border-[var(--border)] transition-colors cursor-pointer"
                           title={`Filter pods by label ${k}=${v}`}
                         >
-                          <span className="font-medium">{k}</span>
-                          <span className="opacity-60">=</span>
-                          <span className="text-[var(--foreground)] dark:text-white truncate max-w-[120px]">
+                          <span className="text-[var(--muted)]">{k}</span>
+                          <span className="opacity-40">=</span>
+                          <span className="text-[var(--foreground)] font-medium truncate max-w-[140px]">
                             {v}
                           </span>
                         </button>
@@ -527,8 +792,8 @@ export function ResourceTableRow({
                 )}
               </div>
 
-              {/* Container Cards / Items */}
-              <div className="grid grid-cols-1 gap-2">
+              {/* Containers Flat List (No nested card boxes, no dots) */}
+              <div className="divide-y divide-[var(--border)]/50">
                 {!item.containers || item.containers.length === 0 ? (
                   <div className="text-xs text-[var(--muted)] italic py-2">
                     No container telemetry available for this pod.
@@ -541,18 +806,10 @@ export function ResourceTableRow({
                     return (
                       <div
                         key={c.name}
-                        className="flex flex-wrap items-center justify-between gap-3 p-2.5 rounded-lg bg-white/80 dark:bg-white/[0.04] border border-[var(--border)] text-xs transition-colors hover:border-[var(--accent)]/40"
+                        className="flex flex-wrap items-center justify-between gap-3 py-2 px-1 rounded hover:bg-black/[0.02] dark:hover:bg-white/[0.02] text-xs transition-colors group/c"
                       >
-                        {/* Left: Container Identity & Status */}
+                        {/* Left: Container Identity & Status (No status dot) */}
                         <div className="flex items-center gap-2.5 min-w-0 flex-1">
-                          <span
-                            className={cn(
-                              "w-2 h-2 rounded-full shrink-0",
-                              isReady
-                                ? "bg-emerald-500 shadow-xs shadow-emerald-500/50"
-                                : "bg-rose-500 shadow-xs shadow-rose-500/50",
-                            )}
-                          />
                           <div className="min-w-0">
                             <div className="flex items-center gap-2">
                               <span className="font-mono font-semibold text-[var(--foreground)] truncate">
@@ -560,10 +817,10 @@ export function ResourceTableRow({
                               </span>
                               <span
                                 className={cn(
-                                  "px-1.5 py-0.2 rounded text-[10px] font-mono uppercase font-semibold",
+                                  "px-1.5 py-0.5 rounded text-[10px] font-mono uppercase font-semibold",
                                   isReady
-                                    ? "bg-emerald-500/10 text-emerald-500 border border-emerald-500/20"
-                                    : "bg-amber-500/10 text-amber-500 border border-amber-500/20",
+                                    ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20"
+                                    : "bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20",
                                 )}
                               >
                                 {c.stateReason || stateStr}
@@ -575,7 +832,7 @@ export function ResourceTableRow({
                                 </span>
                               )}
                             </div>
-                            <div className="flex items-center gap-1.5 mt-0.5 text-[11px] text-[var(--muted)] font-mono truncate max-w-lg">
+                            <div className="flex items-center gap-1.5 mt-0.5 text-[11px] text-[var(--muted)] font-mono truncate max-w-xl">
                               <span className="truncate" title={c.image}>
                                 {c.image}
                               </span>
@@ -605,11 +862,11 @@ export function ResourceTableRow({
                         </div>
 
                         {/* Right: Container-specific Actions */}
-                        <div className="flex items-center gap-1 shrink-0">
+                        <div className="flex items-center gap-1.5 shrink-0">
                           <button
                             type="button"
                             onClick={() => onLogsClick(item, c.name)}
-                            className="inline-flex items-center gap-1 px-2 py-1 rounded text-xs font-medium bg-[var(--surface)] hover:bg-[var(--surface-hover)] border border-[var(--border)] text-[var(--foreground)] transition-colors cursor-pointer"
+                            className="inline-flex items-center gap-1 px-2.5 py-1 rounded text-xs font-medium bg-[var(--surface)] hover:bg-[var(--surface-hover)] border border-[var(--border)] text-[var(--foreground)] transition-colors cursor-pointer"
                             title={`View logs for container '${c.name}'`}
                           >
                             <FileText className="w-3 h-3 text-[var(--muted)]" />
@@ -618,7 +875,7 @@ export function ResourceTableRow({
                           <button
                             type="button"
                             onClick={() => onExecClick(item, c.name)}
-                            className="inline-flex items-center gap-1 px-2 py-1 rounded text-xs font-medium bg-[var(--surface)] hover:bg-[var(--surface-hover)] border border-[var(--border)] text-[var(--foreground)] transition-colors cursor-pointer"
+                            className="inline-flex items-center gap-1 px-2.5 py-1 rounded text-xs font-medium bg-[var(--surface)] hover:bg-[var(--surface-hover)] border border-[var(--border)] text-[var(--foreground)] transition-colors cursor-pointer"
                             title={`Exec shell in container '${c.name}'`}
                           >
                             <Terminal className="w-3 h-3 text-[var(--muted)]" />
@@ -634,7 +891,7 @@ export function ResourceTableRow({
                             className="p-1 rounded text-[var(--muted)] hover:text-[var(--foreground)] hover:bg-black/10 dark:hover:bg-white/10 transition-colors cursor-pointer"
                             title="Copy kubectl logs CLI command for this container"
                           >
-                            <Copy className="w-3 h-3" />
+                            <Copy className="w-3.5 h-3.5" />
                           </button>
                         </div>
                       </div>
@@ -642,7 +899,7 @@ export function ResourceTableRow({
                   })
                 )}
               </div>
-            </div>
+            </motion.div>
           </td>
         </tr>
       )}

@@ -31,9 +31,8 @@ export function KubeconfigModalFooter({
 }: KubeconfigModalFooterProps) {
   return (
     <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 px-6 md:px-8 py-4.5 border-t border-[var(--border)] bg-black/[0.02] dark:bg-white/[0.02] select-none">
-      <span className="text-xs text-[var(--muted)] font-mono flex items-center gap-2">
-        <span className="w-2 h-2 rounded-full bg-[#F08A42] animate-pulse" />
-        <span>~/.kube multi-config engine • Isolated in ~/.kubeview/clusters</span>
+      <span className="text-xs text-[var(--muted)] font-mono">
+        ~/.kube multi-config engine • Isolated in ~/.kubeview/clusters
       </span>
 
       <div className="flex items-center gap-3 self-end sm:self-auto">

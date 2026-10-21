@@ -118,7 +118,7 @@ export function EndpointEditModal() {
           {/* Header */}
           <div className="flex items-start justify-between pb-4 border-b border-[var(--border)]">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-xl bg-[#F08A42]/10 border border-[#F08A42]/20 flex items-center justify-center text-[#F08A42]">
+              <div className="w-10 h-10 rounded-xl bg-[var(--accent)]/10 border border-[var(--accent)]/20 flex items-center justify-center text-[var(--accent)]">
                 <Server className="w-5 h-5" />
               </div>
               <div>
@@ -162,7 +162,7 @@ export function EndpointEditModal() {
               </div>
             ) : (
               <div className="p-3 rounded-xl bg-black/[0.02] dark:bg-white/[0.02] border border-[var(--border)] text-xs text-[var(--muted)] flex items-center gap-2">
-                <Info className="w-4 h-4 text-[#F08A42] shrink-0" />
+                <Info className="w-4 h-4 text-[var(--accent)] shrink-0" />
                 <span>Update the API server address or proxy port for this cluster.</span>
               </div>
             )}
@@ -171,7 +171,7 @@ export function EndpointEditModal() {
             {suggestedIps.length > 0 && (
               <div className="space-y-1.5">
                 <span className="text-[11px] font-medium text-[var(--muted)] flex items-center gap-1.5">
-                  <Sparkles className="w-3.5 h-3.5 text-[#F08A42]" />
+                  <Sparkles className="w-3.5 h-3.5 text-[var(--accent)]" />
                   Detected reachable IP from your other cluster:
                 </span>
                 <div className="flex flex-wrap gap-2">
@@ -180,7 +180,7 @@ export function EndpointEditModal() {
                       key={sug.ip}
                       type="button"
                       onClick={() => setInputVal(sug.ip)}
-                      className="px-2.5 py-1 rounded-lg bg-[#F08A42]/10 hover:bg-[#F08A42]/20 border border-[#F08A42]/30 text-xs font-mono text-[#F08A42] flex items-center gap-1.5 transition-all cursor-pointer"
+                      className="px-2.5 py-1 rounded-lg bg-[var(--accent)]/10 hover:bg-[var(--accent)]/20 border border-[var(--accent)]/30 text-xs font-mono text-[var(--accent)] flex items-center gap-1.5 transition-all cursor-pointer"
                       title={`From: ${sug.source}`}
                     >
                       <span>Use {sug.ip}</span>
@@ -203,7 +203,7 @@ export function EndpointEditModal() {
                   value={inputVal}
                   onChange={(e) => setInputVal(e.target.value)}
                   placeholder="e.g. 10.1.16.11 or https://10.1.16.11:6443"
-                  className="w-full px-3.5 py-2 text-xs font-mono bg-[var(--background)] border border-[var(--border)] rounded-xl text-[var(--foreground)] placeholder:text-[var(--muted)]/50 outline-hidden focus:border-[#F08A42] transition-colors"
+                  className="w-full px-3.5 py-2 text-xs font-mono bg-[var(--background)] border border-[var(--border)] rounded-xl text-[var(--foreground)] placeholder:text-[var(--muted)]/50 outline-hidden focus:border-[var(--accent)] transition-colors"
                   autoFocus
                 />
               </div>
@@ -211,7 +211,7 @@ export function EndpointEditModal() {
               {/* Resolved Target Display */}
               <div className="flex items-center justify-between text-[11px] pt-1">
                 <span className="text-[var(--muted)]">Resulting Target:</span>
-                <span className="font-mono text-[#F08A42] font-semibold">{resolvedServer}</span>
+                <span className="font-mono text-[var(--accent)] font-semibold">{resolvedServer}</span>
               </div>
 
               {/* Skip TLS Verify Toggle */}
@@ -221,10 +221,10 @@ export function EndpointEditModal() {
                   data-testid="endpoint-modal-skip-tls"
                   checked={skipTLS}
                   onChange={(e) => setSkipTLS(e.target.checked)}
-                  className="rounded border-[var(--border)] text-[#F08A42] focus:ring-0 focus:ring-offset-0 cursor-pointer accent-[#F08A42]"
+                  className="rounded border-[var(--border)] text-[var(--accent)] focus:ring-0 focus:ring-offset-0 cursor-pointer accent-[var(--accent)]"
                 />
                 <span className="text-[11px] text-[var(--muted)]">
-                  Skip TLS certificate verification (<code className="font-mono text-[10px] text-[#F08A42]">insecure-skip-tls-verify</code>)
+                  Skip TLS certificate verification (<code className="font-mono text-[10px] text-[var(--accent)]">insecure-skip-tls-verify</code>)
                 </span>
               </label>
             </div>
@@ -240,7 +240,7 @@ export function EndpointEditModal() {
                   <button
                     type="button"
                     onClick={handleCopyHosts}
-                    className="flex items-center gap-1 text-[10px] text-[#F08A42] hover:underline cursor-pointer"
+                    className="flex items-center gap-1 text-[10px] text-[var(--accent)] hover:underline cursor-pointer"
                   >
                     {copiedHosts ? <Check className="w-3 h-3 text-emerald-400" /> : <Copy className="w-3 h-3" />}
                     <span>{copiedHosts ? "Copied" : "Copy command"}</span>
@@ -285,7 +285,7 @@ export function EndpointEditModal() {
                 data-testid="endpoint-modal-save"
                 onClick={() => handleSave(true)}
                 disabled={isSaving || resolvedServer === endpointModalCurrentServer}
-                className="px-4 py-2 rounded-xl text-xs font-semibold bg-[#F08A42] hover:bg-[#E07931] disabled:opacity-50 text-white shadow-md transition-all cursor-pointer flex items-center gap-1.5"
+                className="px-4 py-2 rounded-xl text-xs font-semibold bg-[var(--accent)] hover:bg-[var(--accent-hover)] disabled:opacity-50 text-white shadow-md transition-all cursor-pointer flex items-center gap-1.5"
               >
                 {isSaving ? <RotateCw className="w-3.5 h-3.5 animate-spin" /> : <Check className="w-3.5 h-3.5" />}
                 <span>Save & Connect</span>

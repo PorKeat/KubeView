@@ -230,8 +230,7 @@ export function PodExecModal() {
                 <span className="px-2 py-0.5 rounded-full text-[10px] font-mono bg-black/[0.05] dark:bg-white/[0.08] text-[var(--muted)] border border-[var(--border)]">
                   ns: {execModalPod.namespace}
                 </span>
-                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[9px] font-semibold font-mono bg-emerald-500/15 text-emerald-500 border border-emerald-500/30">
-                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                <span className="inline-flex items-center px-2 py-0.5 rounded-md text-[9px] font-semibold font-mono bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border border-emerald-500/30">
                   {execMode === "interactive" ? "WebSocket PTY" : "SPDY Exec"}
                 </span>
               </div>
@@ -333,7 +332,7 @@ export function PodExecModal() {
               key={qc.cmd}
               onClick={() => handleRunCommand(qc.cmd)}
               disabled={isExecuting}
-              className="px-2.5 py-1 rounded-md bg-[var(--surface)] hover:bg-[var(--surface-hover)] border border-[var(--border)] text-[11px] font-mono text-[var(--foreground)] hover:border-[var(--accent)] transition-all cursor-pointer shrink-0 disabled:opacity-50"
+              className="px-2.5 py-1 rounded-md bg-[var(--surface)] hover:bg-[var(--surface-hover)] border border-[var(--border)] text-[11px] font-mono text-[var(--foreground)] hover:border-black/20 dark:hover:border-white/20 transition-all cursor-pointer shrink-0 disabled:opacity-50"
               title={qc.cmd}
             >
               {qc.label}
@@ -360,8 +359,7 @@ export function PodExecModal() {
             <div className="flex-1 overflow-y-auto bg-slate-950 p-4 font-mono text-[12px] text-slate-200 select-text space-y-4">
               {history.length === 0 ? (
                 <div className="text-slate-500 text-xs space-y-1.5 border border-slate-900 rounded-xl p-4 bg-slate-900/30">
-                  <p className="text-emerald-400 font-semibold flex items-center gap-2">
-                    <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+                  <p className="text-emerald-400 font-semibold">
                     Command Runner ready for {execModalPod.name} [{selectedContainer || "primary"}]
                   </p>
                   <p className="text-slate-400">

@@ -88,14 +88,6 @@ export function NodeMatrixGrid({
             <div className="flex items-start justify-between gap-3">
               <div className="space-y-0.5 min-w-0">
                 <div className="flex items-center gap-2.5 flex-wrap">
-                  <span
-                    className={cn(
-                      "w-2.5 h-2.5 rounded-full shrink-0",
-                      isNodeReady
-                        ? "bg-emerald-400 shadow-[0_0_8px_rgba(52,211,153,0.7)]"
-                        : "bg-rose-400 shadow-[0_0_8px_rgba(251,113,133,0.7)]",
-                    )}
-                  />
                   <span className="font-mono font-bold text-lg text-[var(--foreground)] truncate tracking-tight">
                     {n.name}
                   </span>
@@ -105,7 +97,7 @@ export function NodeMatrixGrid({
                 </div>
 
                 {/* Internal IP with Quick Copy */}
-                <div className="flex items-center gap-1.5 text-xs font-mono text-[var(--muted)] pl-5">
+                <div className="flex items-center gap-1.5 text-xs font-mono text-[var(--muted)]">
                   <span>{n.internalIP}</span>
                   {n.internalIP && (
                     <button
@@ -176,13 +168,13 @@ export function NodeMatrixGrid({
                 title={`Filter Pods list to ${n.name}${isNamespaceScoped ? ` (${currentNamespace})` : ""}`}
                 className="text-[var(--muted)] hover:text-[var(--accent)] hover:underline inline-flex items-center gap-1.5 transition-colors cursor-pointer group/avail"
               >
-                <Box className="w-3 h-3 text-[#f08a42]" />
+                <Box className="w-3 h-3 text-[var(--accent)]" />
                 {isNamespaceScoped ? (
                   <span
                     className={cn(
                       "tabular-nums font-mono text-xs",
                       scopedNodePods > 0
-                        ? "text-[#f08a42] font-semibold"
+                        ? "text-[var(--accent)] font-semibold"
                         : "text-[var(--muted)]",
                     )}
                   >
@@ -199,7 +191,7 @@ export function NodeMatrixGrid({
                 )}
               </button>
 
-              <span className="text-[#f97316] font-semibold flex items-center gap-1 group-hover/spotlight:translate-x-0.5 transition-transform">
+              <span className="text-[var(--accent)] font-semibold flex items-center gap-1 group-hover/spotlight:translate-x-0.5 transition-transform">
                 <span>Inspect</span>
                 <ArrowRight className="w-3 h-3" aria-hidden="true" />
               </span>

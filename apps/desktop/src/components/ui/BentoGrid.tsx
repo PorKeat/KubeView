@@ -39,7 +39,7 @@ export const BentoCard = React.forwardRef<HTMLDivElement, BentoCardProps>(
       className,
       containerClassName,
       spotlight = true,
-      spotlightColor = "rgba(240, 138, 66, 0.12)",
+      spotlightColor = "rgba(255, 255, 255, 0.04)",
       isSelected = false,
       interactive = false,
       onMouseMove,
@@ -86,8 +86,8 @@ export const BentoCard = React.forwardRef<HTMLDivElement, BentoCardProps>(
           "transition-all duration-200 ease-out",
           "motion-reduce:transition-none motion-reduce:transform-none",
           isSelected
-            ? "border-[var(--accent)] ring-1 ring-[var(--accent)]/50 bg-[var(--surface-hover)] shadow-[0_0_24px_-4px_rgba(240,138,66,0.25)]"
-            : "border-[var(--border)] hover:border-[var(--accent)]/60 hover:shadow-[0_4px_24px_-4px_rgba(240,138,66,0.14)]",
+            ? "border-[var(--accent)] ring-1 ring-[var(--accent)]/40 bg-[var(--surface-hover)]"
+            : "border-[var(--border)] hover:border-black/20 dark:hover:border-white/20 hover:bg-[var(--surface-hover)] hover:shadow-xs",
           interactive &&
             "cursor-pointer hover:-translate-y-0.5 active:scale-[0.99] active:translate-y-0 motion-reduce:hover:translate-y-0 motion-reduce:active:scale-100 focus-visible:ring-2 focus-visible:ring-[var(--accent)] focus-visible:outline-hidden",
           containerClassName

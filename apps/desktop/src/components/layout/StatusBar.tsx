@@ -64,9 +64,6 @@ export function StatusBar() {
       {/* Left: Connection Status */}
       <div className="flex items-center gap-2.5">
         <div className={`flex items-center gap-1.5 ${status.color}`}>
-          <span className="relative flex h-1.5 w-1.5">
-            <span className={`inline-flex rounded-full h-1.5 w-1.5 ${status.beacon}`} />
-          </span>
           <span className="font-semibold text-[var(--foreground)]">{status.label}</span>
           <span className="text-[11px] text-[var(--muted)] tabular-nums">({latencyMs}ms)</span>
         </div>

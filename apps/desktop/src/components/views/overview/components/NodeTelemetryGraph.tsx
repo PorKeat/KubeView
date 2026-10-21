@@ -40,8 +40,7 @@ export function NodeTelemetryGraph({
       <div className="grid grid-cols-3 gap-3 pt-1">
         {/* CPU */}
         <div className="space-y-1">
-          <div className="flex items-center gap-1.5">
-            <span className="w-2 h-2 rounded-full bg-emerald-400 shrink-0" />
+          <div className="flex items-center">
             <span className="text-xs font-mono font-medium text-[var(--muted)] tracking-wider">
               CPU
             </span>
@@ -59,8 +58,7 @@ export function NodeTelemetryGraph({
 
         {/* RAM */}
         <div className="space-y-1">
-          <div className="flex items-center gap-1.5">
-            <span className="w-2 h-2 rounded-full bg-sky-400 shrink-0" />
+          <div className="flex items-center">
             <span className="text-xs font-mono font-medium text-[var(--muted)] tracking-wider">
               RAM
             </span>
@@ -78,18 +76,12 @@ export function NodeTelemetryGraph({
 
         {/* Pods */}
         <div className="space-y-1">
-          <div className="flex items-center gap-1.5">
-            <span
-              className={cn(
-                "w-2 h-2 rounded-full shrink-0",
-                isNamespaceScoped ? "bg-[#f08a42]" : "bg-amber-400"
-              )}
-            />
+          <div className="flex items-center">
             <span
               className={cn(
                 "text-xs font-mono tracking-wider truncate",
                 isNamespaceScoped
-                  ? "text-[#f08a42] font-semibold"
+                  ? "text-[var(--accent)] font-semibold"
                   : "font-medium text-[var(--muted)]"
               )}
             >
@@ -101,7 +93,7 @@ export function NodeTelemetryGraph({
               className={cn(
                 "text-2xl sm:text-3xl font-bold font-mono tracking-tight tabular-nums",
                 isNamespaceScoped && (scopedPodsCount ?? 0) > 0
-                  ? "text-[#f08a42]"
+                  ? "text-[var(--accent)]"
                   : "text-[var(--foreground)]"
               )}
             >

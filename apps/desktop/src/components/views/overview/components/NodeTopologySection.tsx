@@ -47,24 +47,19 @@ export function NodeTopologySection({
         <div className="flex items-center gap-2.5 flex-wrap">
           <Server className="w-4 h-4 text-[var(--accent)]" aria-hidden="true" />
           <h2 className="text-sm font-semibold text-[var(--foreground)] tracking-tight">
-            Cluster Nodes & Infrastructure
+            Cluster Nodes
           </h2>
           <span className="text-xs font-mono px-2 py-0.5 rounded-md bg-[var(--surface)] border border-[var(--border)] text-[var(--foreground)] font-medium">
             {nodes.length} {nodes.length === 1 ? "Node" : "Nodes"}
           </span>
           <span className="text-xs text-[var(--muted)] font-mono hidden md:inline">
-            &bull; {readyNodesCount} Ready &bull;{" "}
-            {isNamespaceScoped
-              ? `${nodesHostingCount} hosting ${currentNamespace}`
-              : `${totalCpuCores} Cores Total • ${totalMemoryGiB} GiB Total`}
+            {readyNodesCount} of {nodes.length} Ready
+            {isNamespaceScoped && ` / ${nodesHostingCount} hosting ${currentNamespace}`}
           </span>
         </div>
 
         {/* View Mode Switcher: Matrix Grid vs Telemetry Table */}
         <div className="flex items-center gap-2 self-start sm:self-auto">
-          <span className="text-[11px] text-[var(--muted)] font-mono hidden lg:inline">
-            Click node to inspect
-          </span>
           <div
             className="relative flex items-center p-0.5 rounded-lg border border-[var(--border)] bg-[var(--surface)] text-xs font-mono select-none"
             role="group"

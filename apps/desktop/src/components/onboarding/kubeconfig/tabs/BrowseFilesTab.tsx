@@ -134,7 +134,7 @@ export function BrowseFilesTab({
           <button
             type="button"
             onClick={() => fileInputRef.current?.click()}
-            className="px-3.5 py-1.5 rounded-lg bg-[var(--surface-active)] text-xs font-semibold text-[var(--foreground)] border border-[var(--border)] hover:border-[#F08A42] hover:text-[#F08A42] transition-all flex items-center gap-1.5 cursor-pointer shadow-xs"
+            className="px-3.5 py-1.5 rounded-lg bg-[var(--surface-active)] text-xs font-semibold text-[var(--foreground)] border border-[var(--border)] hover:border-black/20 dark:hover:border-white/20 hover:text-[var(--foreground)] transition-all flex items-center gap-1.5 cursor-pointer shadow-xs"
           >
             <FileCode className="w-3.5 h-3.5 text-[#F08A42]" />
             <span>Choose File(s)</span>
@@ -262,12 +262,12 @@ export function BrowseFilesTab({
                     ? "opacity-50 bg-black/[0.01] border-[var(--border)] cursor-not-allowed"
                     : file.selected
                     ? "bg-[#F08A42]/8 border-[#F08A42]/40"
-                    : "bg-black/[0.02] dark:bg-white/[0.02] border-[var(--border)] hover:border-[#F08A42]/30"
+                    : "bg-black/[0.02] dark:bg-white/[0.02] border-[var(--border)] hover:border-black/20 dark:hover:border-white/20"
                 )}
               >
                 <div className="flex items-center gap-3 min-w-0 pr-2">
                   {/* Checkbox */}
-                  <div className="text-[var(--muted)] group-hover:text-[#F08A42] transition-colors shrink-0">
+                  <div className="text-[var(--muted)] group-hover:text-[var(--foreground)] transition-colors shrink-0">
                     {file.selected ? (
                       <CheckSquare className="w-4 h-4 text-[#F08A42]" />
                     ) : (

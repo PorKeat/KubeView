@@ -1,6 +1,7 @@
 "use client";
 
 import * as React from "react";
+import { CheckCircle2, ChevronRight } from "lucide-react";
 import { useClusterStore } from "@/stores/clusterStore";
 import { useTabStore } from "@/stores/tabStore";
 import { toast } from "sonner";
@@ -49,11 +50,11 @@ export function ClusterOverviewView() {
   React.useEffect(() => {
     if (connectionStatus === "connected" || connectionStatus === "degraded") {
       loadClusterOverview(currentContext, currentNamespace);
-      if (pods.length === 0) {
+      if (useClusterStore.getState().pods.length === 0) {
         loadPods();
       }
     }
-  }, [connectionStatus, currentContext, currentNamespace, loadClusterOverview, pods.length, loadPods]);
+  }, [connectionStatus, currentContext, currentNamespace, loadClusterOverview, loadPods]);
 
   // Periodic Auto-refresh timer for live telemetry sync
   React.useEffect(() => {
@@ -282,7 +283,7 @@ export function ClusterOverviewView() {
   };
 
   return (
-    <div className="flex-1 overflow-y-auto p-5 md:p-6 lg:p-8 space-y-6 select-none w-full">
+    <div className="flex-1 overflow-y-auto p-4 md:p-5 lg:p-6 space-y-4 select-none w-full">
       {/* Degraded Warning Banner */}
       {connectionStatus === "degraded" && (
         <ErrorBanner
@@ -301,8 +302,6 @@ export function ClusterOverviewView() {
         isNamespaceScoped={isNamespaceScoped}
         currentNamespace={currentNamespace}
         totalPodsCount={clusterOverview?.totalPods ?? scopedPods.length}
-        autoRefreshInterval={autoRefreshInterval}
-        onSetAutoRefreshInterval={setAutoRefreshInterval}
         onOpenDiagnostics={handleOpenDiagnostics}
         onBrowsePods={handleBrowsePods}
         onRefresh={handleRefresh}
@@ -357,24 +356,67 @@ export function ClusterOverviewView() {
         onFilterPodsForNode={handleFilterPodsForNode}
       />
 
-      {/* 4. Split Grid: Workload Controllers & Warning Incidents */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-5 items-stretch">
-        <WorkloadControllersCard
-          workloads={clusterOverview?.workloads}
-          isNamespaceScoped={isNamespaceScoped}
-          currentNamespace={currentNamespace}
-          onInspectWorkload={handleInspectWorkload}
-        />
+      {/* 4. Adaptive Layout: Workload Controllers & Incident Journal */}
+      {clusterOverview?.warningEvents && clusterOverview.warningEvents.length > 0 ? (
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-5 items-stretch">
+          <WorkloadControllersCard
+            workloads={clusterOverview?.workloads}
+            isNamespaceScoped={isNamespaceScoped}
+            currentNamespace={currentNamespace}
+            isFullWidth={false}
+            onInspectWorkload={handleInspectWorkload}
+          />
 
-        <WarningEventsCard
-          warningEvents={clusterOverview?.warningEvents}
-          isNamespaceScoped={isNamespaceScoped}
-          currentNamespace={currentNamespace}
-          availableNamespacesCount={availableNamespaces.length}
-          onOpenPodsView={handleBrowsePods}
-          onTriageEvent={handleTriageEvent}
-        />
-      </div>
+          <div id="cluster-warning-events-card" className="h-full">
+            <WarningEventsCard
+              warningEvents={clusterOverview?.warningEvents}
+              isNamespaceScoped={isNamespaceScoped}
+              currentNamespace={currentNamespace}
+              availableNamespacesCount={availableNamespaces.length}
+              onOpenPodsView={handleBrowsePods}
+              onTriageEvent={handleTriageEvent}
+            />
+          </div>
+        </div>
+      ) : (
+        <div className="space-y-3.5">
+          {/* Calm Incident Indicator when 0 Active Warnings */}
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 px-4 py-2.5 rounded-lg border border-[var(--border)] bg-[var(--surface)] text-xs text-[var(--muted)] shadow-xs select-none">
+            <div className="flex items-center gap-2.5 min-w-0">
+              <div className="w-5 h-5 rounded-md bg-emerald-500/10 text-emerald-500 flex items-center justify-center shrink-0">
+                <CheckCircle2 className="w-3.5 h-3.5" aria-hidden="true" />
+              </div>
+              <div className="flex items-center gap-2 flex-wrap">
+                <span className="font-semibold text-[var(--foreground)]">Cluster Health:</span>
+                <span className="font-mono text-emerald-600 dark:text-emerald-400 font-medium">
+                  0 Active Warnings
+                </span>
+                <span className="text-[var(--muted)] font-mono hidden md:inline">
+                  All cluster workloads report healthy condition
+                </span>
+              </div>
+            </div>
+
+            <button
+              type="button"
+              onClick={handleBrowsePods}
+              className="text-[var(--accent)] hover:underline font-mono text-xs font-medium flex items-center gap-1 cursor-pointer self-start sm:self-auto"
+            >
+              <span>Pods Explorer</span>
+              <ChevronRight className="w-3.5 h-3.5" aria-hidden="true" />
+            </button>
+          </div>
+
+          {/* Full-width 3-Column Workload Controllers */}
+          <WorkloadControllersCard
+            workloads={clusterOverview?.workloads}
+            isNamespaceScoped={isNamespaceScoped}
+            currentNamespace={currentNamespace}
+            isFullWidth={true}
+            onInspectWorkload={handleInspectWorkload}
+          />
+        </div>
+      )}
 
       {/* Connection & Security Diagnostics On-Demand Drawer */}
       <ConnectionDiagnosticsDrawer

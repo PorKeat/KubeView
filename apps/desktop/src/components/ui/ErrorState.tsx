@@ -90,18 +90,18 @@ export function ErrorState({
     return (
       <div
         className={cn(
-          "p-4 rounded-xl border border-rose-500/20 bg-rose-500/[0.04] backdrop-blur-md flex items-center justify-between gap-4",
+          "p-3.5 rounded-xl border border-[var(--border)] bg-[var(--surface)] shadow-xs flex items-center justify-between gap-4 select-none",
           className
         )}
       >
-        <div className="flex items-center gap-3">
-          <div className="w-8 h-8 rounded-lg bg-rose-500/10 border border-rose-500/20 flex items-center justify-center shrink-0 text-rose-400">
+        <div className="flex items-center gap-3 min-w-0">
+          <div className="w-8 h-8 rounded-lg bg-rose-500/10 border border-rose-500/20 flex items-center justify-center shrink-0 text-rose-500 dark:text-rose-400">
             <AlertTriangle className="w-4 h-4" />
           </div>
-          <div>
+          <div className="min-w-0">
             <div className="flex items-center gap-2">
-              <span className="text-xs font-semibold text-[var(--foreground)]">{title}</span>
-              <span className="px-1.5 py-0.5 rounded text-[9px] font-mono bg-rose-500/10 text-rose-400 border border-rose-500/20">
+              <span className="text-xs font-semibold text-[var(--foreground)] truncate">{title}</span>
+              <span className="px-1.5 py-0.5 rounded text-[9px] font-mono bg-rose-500/10 text-rose-600 dark:text-rose-400 border border-rose-500/20 shrink-0">
                 {code}
               </span>
             </div>
@@ -114,7 +114,7 @@ export function ErrorState({
             <button
               onClick={handleRetry}
               disabled={isRetrying}
-              className="px-2.5 py-1 rounded-md text-xs font-medium bg-rose-500/15 text-rose-300 hover:bg-rose-500/25 border border-rose-500/30 flex items-center gap-1.5 transition-all cursor-pointer"
+              className="px-2.5 py-1 rounded-md text-xs font-medium bg-[var(--surface-hover)] hover:bg-black/[0.06] dark:hover:bg-white/[0.08] text-[var(--foreground)] border border-[var(--border)] flex items-center gap-1.5 transition-all cursor-pointer active:scale-[0.98]"
             >
               <RotateCw className={cn("w-3 h-3", isRetrying && "animate-spin")} />
               <span>Retry</span>
@@ -132,39 +132,32 @@ export function ErrorState({
         className
       )}
     >
-      {/* Ambient Red Glow */}
-      <div className="absolute w-96 h-96 bg-rose-500/10 rounded-full blur-3xl pointer-events-none -top-24" />
-
-      <div className="relative z-10 max-w-lg w-full p-6 rounded-2xl glass-panel border border-rose-500/20 shadow-2xl space-y-5 text-center">
-        {/* Cyber Error Badge & Glow */}
-        <div className="relative mx-auto w-14 h-14 rounded-2xl bg-gradient-to-b from-rose-500/20 to-rose-500/5 border border-rose-500/30 flex items-center justify-center text-rose-400 shadow-[0_0_24px_rgba(244,63,94,0.25)]">
-          <ShieldAlert className="w-7 h-7" />
-          <span className="absolute -top-1 -right-1 flex h-3 w-3">
-            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-rose-400 opacity-75" />
-            <span className="relative inline-flex rounded-full h-3 w-3 bg-rose-500" />
-          </span>
+      <div className="w-full max-w-md p-6 sm:p-7 rounded-2xl bg-[var(--surface)] border border-[var(--border)] shadow-xl shadow-black/5 dark:shadow-black/30 space-y-5 text-center animate-in fade-in duration-200">
+        {/* Error Icon - Clean, refined, without dots or heavy glow */}
+        <div className="w-12 h-12 rounded-xl bg-rose-500/10 border border-rose-500/20 flex items-center justify-center text-rose-500 dark:text-rose-400 mx-auto shadow-xs">
+          <ShieldAlert className="w-6 h-6" />
         </div>
 
         {/* Title & Description */}
         <div className="space-y-1.5">
-          <div className="inline-flex items-center gap-2 px-2.5 py-0.5 rounded-full text-[10px] font-mono font-semibold bg-rose-500/10 text-rose-400 border border-rose-500/20 mb-1">
+          <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-mono font-medium bg-rose-500/10 text-rose-600 dark:text-rose-400 border border-rose-500/20">
             <span>{code}</span>
           </div>
-          <h2 className="text-base font-bold text-[var(--foreground)] tracking-tight">
+          <h2 className="text-base font-semibold text-[var(--foreground)] tracking-tight">
             {title}
           </h2>
-          <p className="text-xs text-[var(--muted)] leading-relaxed max-w-md mx-auto">
+          <p className="text-xs text-[var(--muted)] leading-relaxed max-w-sm mx-auto">
             {message}
           </p>
         </div>
 
         {/* Action Buttons */}
-        <div className="flex items-center justify-center gap-2.5 pt-1">
+        <div className="flex items-center justify-center gap-2 pt-1">
           {onRetry && (
             <button
               onClick={handleRetry}
               disabled={isRetrying}
-              className="px-4 py-2 rounded-lg bg-[var(--accent)] hover:bg-[var(--accent-hover)] text-white text-xs font-semibold shadow-md transition-all cursor-pointer flex items-center gap-2"
+              className="px-3.5 py-2 rounded-lg bg-[var(--foreground)] text-[var(--background)] hover:opacity-90 text-xs font-medium transition-all cursor-pointer flex items-center gap-2 shadow-xs active:scale-[0.98] disabled:opacity-50"
             >
               <RotateCw className={cn("w-3.5 h-3.5", isRetrying && "animate-spin")} />
               <span>Retry Request</span>
@@ -174,14 +167,14 @@ export function ErrorState({
           {secondaryAction ? (
             <button
               onClick={secondaryAction.onClick}
-              className="px-3.5 py-2 rounded-lg bg-black/[0.04] dark:bg-white/[0.06] hover:bg-black/[0.08] dark:hover:bg-white/[0.1] text-xs font-medium text-[var(--foreground)] border border-[var(--border)] transition-all cursor-pointer"
+              className="px-3.5 py-2 rounded-lg bg-[var(--surface-hover)] hover:bg-black/[0.06] dark:hover:bg-white/[0.08] text-xs font-medium text-[var(--foreground)] border border-[var(--border)] transition-all cursor-pointer active:scale-[0.98]"
             >
               {secondaryAction.label}
             </button>
           ) : (
             <button
               onClick={() => openTab({ id: "overview", title: "Cluster Overview", closable: false })}
-              className="px-3.5 py-2 rounded-lg bg-black/[0.04] dark:bg-white/[0.06] hover:bg-black/[0.08] dark:hover:bg-white/[0.1] text-xs font-medium text-[var(--foreground)] border border-[var(--border)] transition-all cursor-pointer flex items-center gap-1.5"
+              className="px-3.5 py-2 rounded-lg bg-[var(--surface-hover)] hover:bg-black/[0.06] dark:hover:bg-white/[0.08] text-xs font-medium text-[var(--foreground)] border border-[var(--border)] transition-all cursor-pointer flex items-center gap-1.5 active:scale-[0.98]"
             >
               <ArrowLeft className="w-3.5 h-3.5 text-[var(--muted)]" />
               <span>Back to Overview</span>
@@ -190,10 +183,15 @@ export function ErrorState({
 
           <button
             onClick={handleCopy}
-            className="px-2.5 py-2 rounded-lg bg-black/[0.04] dark:bg-white/[0.04] hover:bg-black/[0.08] dark:hover:bg-white/[0.08] text-xs text-[var(--muted)] hover:text-[var(--foreground)] border border-[var(--border)] transition-all cursor-pointer"
-            title="Copy Diagnostic JSON"
+            className="p-2 rounded-lg bg-[var(--surface-hover)] hover:bg-black/[0.06] dark:hover:bg-white/[0.08] text-[var(--muted)] hover:text-[var(--foreground)] border border-[var(--border)] transition-all cursor-pointer active:scale-[0.98]"
+            title={copied ? "Copied diagnostic report" : "Copy diagnostic report"}
+            aria-label="Copy diagnostic report"
           >
-            {copied ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
+            {copied ? (
+              <Check className="w-3.5 h-3.5 text-emerald-500 dark:text-emerald-400" />
+            ) : (
+              <Copy className="w-3.5 h-3.5" />
+            )}
           </button>
         </div>
 
@@ -202,17 +200,21 @@ export function ErrorState({
           <div className="pt-2 border-t border-[var(--border)] text-left">
             <button
               onClick={() => setShowDetails(!showDetails)}
-              className="flex items-center justify-between w-full text-[11px] text-[var(--muted)] hover:text-[var(--foreground)] transition-colors py-1 cursor-pointer font-mono"
+              className="flex items-center justify-between w-full px-2 py-1.5 rounded-lg text-[11px] font-mono text-[var(--muted)] hover:text-[var(--foreground)] hover:bg-[var(--surface-hover)] transition-colors cursor-pointer"
             >
               <span className="flex items-center gap-1.5">
-                <Terminal className="w-3 h-3 text-[var(--muted)]" />
+                <Terminal className="w-3.5 h-3.5 text-[var(--muted)]" />
                 Technical Traceback & Diagnostics
               </span>
-              {showDetails ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
+              {showDetails ? (
+                <ChevronUp className="w-3.5 h-3.5 text-[var(--muted)]" />
+              ) : (
+                <ChevronDown className="w-3.5 h-3.5 text-[var(--muted)]" />
+              )}
             </button>
 
             {showDetails && (
-              <pre className="mt-2 p-3 rounded-lg bg-slate-900 dark:bg-black/60 border border-[var(--border)] text-[10px] font-mono text-rose-300/90 overflow-x-auto max-h-36 whitespace-pre-wrap leading-relaxed select-text">
+              <pre className="mt-2 p-3 rounded-xl bg-black/[0.03] dark:bg-black/50 border border-[var(--border)] text-[10px] font-mono text-rose-600 dark:text-rose-300/90 overflow-x-auto max-h-40 whitespace-pre-wrap leading-relaxed select-text">
                 {formattedDetails}
               </pre>
             )}

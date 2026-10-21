@@ -27,7 +27,7 @@ export function LabelPill({ labelKey, value }: LabelPillProps) {
     <div
       onClick={handleCopy}
       title={`Click to copy: ${labelKey}=${value}`}
-      className="group inline-flex items-center text-[10px] font-mono rounded-lg border border-[var(--border)] bg-[var(--surface-active)] hover:border-[var(--accent)]/50 transition-all cursor-pointer overflow-hidden shadow-2xs max-w-full"
+      className="group inline-flex items-center text-[10px] font-mono rounded-lg border border-[var(--border)] bg-[var(--surface-active)] hover:border-black/20 dark:hover:border-white/20 transition-all cursor-pointer overflow-hidden shadow-2xs max-w-full"
     >
       <div className="px-2 py-1 flex items-center gap-0.5 border-r border-[var(--border)] bg-black/[0.02] dark:bg-white/[0.02] min-w-0 truncate">
         {prefix && (

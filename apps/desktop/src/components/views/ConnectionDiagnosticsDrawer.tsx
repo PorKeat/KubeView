@@ -45,6 +45,26 @@ export function ConnectionDiagnosticsDrawer({
   const [showRawJson, setShowRawJson] = React.useState(false);
   const [copied, setCopied] = React.useState(false);
 
+  // Smooth slide sheet transition state matching ResourceInspectorDrawer
+  const [isRendered, setIsRendered] = React.useState(isOpen);
+  const [isMounted, setIsMounted] = React.useState(false);
+
+  React.useEffect(() => {
+    if (isOpen) {
+      setIsRendered(true);
+      const timer = setTimeout(() => {
+        setIsMounted(true);
+      }, 20);
+      return () => clearTimeout(timer);
+    } else {
+      setIsMounted(false);
+      const timer = setTimeout(() => {
+        setIsRendered(false);
+      }, 250);
+      return () => clearTimeout(timer);
+    }
+  }, [isOpen]);
+
   // Keyboard accessibility: ESC to close
   React.useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -77,7 +97,7 @@ export function ConnectionDiagnosticsDrawer({
     setTimeout(() => setCopied(false), 2000);
   };
 
-  if (!isOpen) return null;
+  if (!isRendered) return null;
 
   const netStage = diagnosticResult?.stages?.network;
   const authStage = diagnosticResult?.stages?.authentication;
@@ -95,17 +115,31 @@ export function ConnectionDiagnosticsDrawer({
       role="dialog"
       aria-modal="true"
       aria-labelledby="diagnostics-drawer-title"
-      className="fixed inset-0 z-50 overflow-hidden select-none"
+      className={cn(
+        "fixed inset-0 z-50 overflow-hidden select-none transition-all duration-200 motion-reduce:transition-none",
+        isMounted ? "pointer-events-auto" : "pointer-events-none"
+      )}
     >
-      {/* Backdrop */}
+      {/* Backdrop / Dim Overlay with smooth fade */}
       <div
-        className="fixed inset-0 bg-black/50 dark:bg-black/70 backdrop-blur-xs transition-opacity duration-200"
+        className={cn(
+          "fixed inset-0 bg-black/40 dark:bg-black/60 backdrop-blur-[2px] transition-opacity motion-reduce:transition-none cursor-pointer",
+          isMounted ? "opacity-100 duration-250 ease-out" : "opacity-0 duration-200 ease-in"
+        )}
         onClick={onClose}
         aria-hidden="true"
       />
 
-      {/* Drawer Panel */}
-      <aside className="fixed inset-y-0 right-0 z-50 w-full max-w-lg sm:max-w-xl bg-[var(--surface)] border-l border-[var(--border)] shadow-2xl flex flex-col transition-transform duration-200 ease-out">
+      {/* Drawer Panel: Slide sheet with spring curve ease-[cubic-bezier(0.16,1,0.3,1)] */}
+      <aside
+        className={cn(
+          "fixed inset-y-0 right-0 z-50 w-full max-w-lg sm:max-w-xl glass-panel border-l border-[var(--border)] shadow-2xl flex flex-col select-none backdrop-blur-xl",
+          "transform transition-transform motion-reduce:transition-none motion-reduce:transform-none",
+          isMounted
+            ? "translate-x-0 duration-250 ease-[cubic-bezier(0.16,1,0.3,1)]"
+            : "translate-x-full duration-200 ease-in"
+        )}
+      >
         {/* Header */}
         <div className="p-5 border-b border-[var(--border)] flex items-center justify-between shrink-0 bg-[var(--surface-hover)]/30">
           <div className="flex items-center gap-3 min-w-0">

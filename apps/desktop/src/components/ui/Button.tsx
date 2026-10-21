@@ -15,7 +15,7 @@ const buttonVariants = cva(
         primary:
           "bg-[#f08a42] text-zinc-950 font-semibold hover:bg-[#ff9d5c] shadow-xs",
         secondary:
-          "bg-[var(--surface)] text-[var(--foreground)] border border-[var(--border)] hover:bg-[var(--surface-hover)] hover:border-[var(--accent)]/40",
+          "bg-[var(--surface)] text-[var(--foreground)] border border-[var(--border)] hover:bg-[var(--surface-hover)] hover:border-black/20 dark:hover:border-white/20",
         outline:
           "border border-[var(--border)] bg-transparent hover:bg-[var(--surface-hover)] text-[var(--foreground)]",
         ghost:
