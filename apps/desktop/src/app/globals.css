@@ -231,3 +231,14 @@
     transparent 100%
   );
 }
+
+/* Border Beam Animation (Aceternity UI & Animate UI) */
+@keyframes border-beam {
+  100% {
+    offset-distance: 100%;
+  }
+}
+
+.animate-border-beam {
+  animation: border-beam var(--duration, 10s) infinite linear;
+}

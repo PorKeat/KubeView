@@ -112,7 +112,8 @@ export function AppHeader() {
 
         <button
           onClick={() => setTheme(resolvedTheme === "dark" ? "light" : "dark")}
-          aria-label={`Switch to ${resolvedTheme === "dark" ? "light" : "dark"} theme`}
+          aria-label={mounted ? `Switch to ${resolvedTheme === "dark" ? "light" : "dark"} theme` : "Toggle Theme"}
+          suppressHydrationWarning
           className="h-9 w-9 rounded-lg flex items-center justify-center hover:bg-black/[0.05] dark:hover:bg-white/[0.06] text-[var(--muted)] hover:text-[var(--foreground)] focus-visible:ring-2 focus-visible:ring-[var(--accent)] focus-visible:outline-hidden transition-colors cursor-pointer"
           title="Toggle Theme"
         >

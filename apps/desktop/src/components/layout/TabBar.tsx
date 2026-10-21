@@ -1,6 +1,7 @@
 "use client";
 
 import * as React from "react";
+import { motion } from "motion/react";
 import {
   X,
   Plus,
@@ -68,12 +69,24 @@ export function TabBar() {
                 }
               }}
               className={cn(
-                "group h-7 px-3 flex items-center gap-2 text-xs rounded-md cursor-pointer transition-colors shrink-0 select-none focus-visible:ring-2 focus-visible:ring-[var(--accent)] focus-visible:outline-hidden",
+                "group relative h-7 px-3 flex items-center gap-2 text-xs rounded-md cursor-pointer transition-colors shrink-0 select-none focus-visible:ring-2 focus-visible:ring-[var(--accent)] focus-visible:outline-hidden",
                 isActive
-                  ? "bg-black/[0.06] dark:bg-white/[0.08] text-[var(--foreground)] font-medium border border-[var(--border)] shadow-xs"
+                  ? "text-[var(--foreground)] font-medium"
                   : "bg-transparent text-[var(--muted)] hover:bg-black/[0.03] dark:hover:bg-white/[0.04] hover:text-[var(--foreground)]"
               )}
             >
+              {isActive && (
+                <motion.div
+                  layoutId="tabbar-active-pill"
+                  transition={{
+                    type: "spring",
+                    stiffness: 450,
+                    damping: 35,
+                  }}
+                  className="absolute inset-0 rounded-md bg-black/[0.06] dark:bg-white/[0.08] border border-[var(--border)] shadow-xs -z-10 motion-reduce:transition-none"
+                />
+              )}
+
               <Icon className={cn("w-3.5 h-3.5 shrink-0 transition-colors", isActive ? "text-[var(--accent)]" : "text-[var(--muted)]")} aria-hidden="true" />
               <span className="truncate max-w-[130px] font-sans text-xs">{tab.title}</span>
 

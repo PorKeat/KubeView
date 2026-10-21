@@ -3,7 +3,14 @@ import { engineBridge } from "@/lib/server/engineBridge";
 
 export async function POST(req: NextRequest) {
   try {
-    const body = await req.json();
+    const text = await req.text();
+    if (!text || !text.trim()) {
+      return NextResponse.json(
+        { error: { code: -32600, message: "Empty request body" } },
+        { status: 400 }
+      );
+    }
+    const body = JSON.parse(text);
     const { method, params } = body;
 
     if (!method || typeof method !== "string") {

@@ -25,14 +25,17 @@ type Manager struct {
 	currentContext string
 	clientsets     map[string]kubernetes.Interface
 	restConfigs    map[string]*rest.Config
+	overviewCache  map[string]*ClusterOverviewResult
+	overviewMu     sync.RWMutex
 }
 
 // NewManager creates a new cluster Manager
 func NewManager(customConfigPath string) (*Manager, error) {
 	mgr := &Manager{
-		configPath:  customConfigPath,
-		clientsets:  make(map[string]kubernetes.Interface),
-		restConfigs: make(map[string]*rest.Config),
+		configPath:    customConfigPath,
+		clientsets:    make(map[string]kubernetes.Interface),
+		restConfigs:   make(map[string]*rest.Config),
+		overviewCache: make(map[string]*ClusterOverviewResult),
 	}
 
 	if err := mgr.ReloadConfig(); err != nil {
@@ -242,6 +245,13 @@ func (m *Manager) ListContexts() (*ListContextsResult, error) {
 	}, nil
 }
 
+// GetCurrentContext returns the active context name
+func (m *Manager) GetCurrentContext() string {
+	m.mu.RLock()
+	defer m.mu.RUnlock()
+	return m.currentContext
+}
+
 // SwitchContext sets the active context and prepares the client
 func (m *Manager) SwitchContext(contextName string) (*SwitchContextResult, error) {
 	m.mu.Lock()
@@ -331,6 +341,19 @@ func (m *Manager) GetClientForContext(ctxName string) (kubernetes.Interface, *re
 	m.clientsets[ctxName] = client
 	m.restConfigs[ctxName] = restConfig
 	return client, restConfig, nil
+}
+
+// GetAuthInfoForContext retrieves the raw AuthInfo struct for a given context name
+func (m *Manager) GetAuthInfoForContext(ctxName string) *clientcmdapi.AuthInfo {
+	m.mu.RLock()
+	defer m.mu.RUnlock()
+	if m.rawConfig == nil {
+		return nil
+	}
+	if ctx, ok := m.rawConfig.Contexts[ctxName]; ok {
+		return m.rawConfig.AuthInfos[ctx.AuthInfo]
+	}
+	return nil
 }
 
 func (m *Manager) buildRESTConfig(ctxName string) (*rest.Config, error) {

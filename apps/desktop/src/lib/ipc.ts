@@ -51,22 +51,75 @@ export async function invokeRpc<T>(method: string, params?: unknown): Promise<T>
   return mockRpcFallback<T>(method, params);
 }
 
+let cachedStreamPort: number | null = null;
+
+export async function getStreamPort(): Promise<number> {
+  if (cachedStreamPort) return cachedStreamPort;
+  try {
+    const res = await invokeRpc<{ streamPort?: number }>("handshake", {
+      clientVersion: "0.1.0",
+      protocolVersion: "1.0.0",
+      capabilities: ["stream", "exec", "logs"],
+    });
+    if (res?.streamPort) {
+      cachedStreamPort = res.streamPort;
+      return cachedStreamPort;
+    }
+  } catch (err) {
+    console.warn("[IPC] Failed to query stream port from handshake:", err);
+  }
+  return cachedStreamPort || 54428;
+}
+
+let browserEventSource: EventSource | null = null;
+
+async function getBrowserEventSource(): Promise<EventSource | null> {
+  if (typeof window === "undefined") return null;
+  if (!browserEventSource) {
+    const port = await getStreamPort();
+    browserEventSource = new EventSource(`http://127.0.0.1:${port}/api/stream/events`);
+    browserEventSource.onerror = () => {
+      // Native EventSource auto-reconnects on error
+    };
+  }
+  return browserEventSource;
+}
+
 export async function listenNotification<T>(
   event: string,
   handler: (payload: T) => void
 ): Promise<() => void> {
+  const safeEvent = event.replace(/\./g, ":");
+
   if (isTauri()) {
     try {
       const { listen } = await import("@tauri-apps/api/event");
       // Tauri 2 events must include only alphanumeric characters, '-', '/', ':', and '_'
-      const safeEvent = event.replace(/\./g, ":");
       const unlisten = await listen<T>(safeEvent, (ev) => handler(ev.payload));
       return unlisten;
     } catch (err) {
       console.warn(`[IPC] Failed to listen for event '${event}':`, err);
     }
+    return () => {};
   }
-  return () => {};
+
+  // Web / Browser mode: listen via Server-Sent Events (SSE) directly from engine
+  const es = await getBrowserEventSource();
+  if (!es) return () => {};
+
+  const listener = (e: MessageEvent) => {
+    try {
+      const data = JSON.parse(e.data);
+      handler(data);
+    } catch {
+      handler(e.data as unknown as T);
+    }
+  };
+
+  es.addEventListener(safeEvent, listener);
+  return () => {
+    es.removeEventListener(safeEvent, listener);
+  };
 }
 
 function mockRpcFallback<T>(method: string, _params?: unknown): T {

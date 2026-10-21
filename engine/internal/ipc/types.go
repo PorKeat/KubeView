@@ -71,4 +71,5 @@ type HandshakeResult struct {
 	ProtocolVersion      string   `json:"protocolVersion"`
 	Status               string   `json:"status"` // "ready" | "degraded"
 	SupportedAPIVersions []string `json:"supportedApiVersions"`
+	StreamPort           int      `json:"streamPort,omitempty"`
 }

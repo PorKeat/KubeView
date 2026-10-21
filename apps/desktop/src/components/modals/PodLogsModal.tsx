@@ -20,6 +20,7 @@ import { useClusterStore } from "@/stores/clusterStore";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { CustomSelect } from "@/components/ui/CustomSelect";
+import { getStreamPort } from "@/lib/ipc";
 
 export function PodLogsModal() {
   const { logsModalPod, closeLogsModal, getPodLogs } = useClusterStore();
@@ -86,23 +87,114 @@ export function PodLogsModal() {
     }
   }, [logsModalPod]);
 
-  // Re-fetch when container, tail lines, previous flag, or timestamps toggle changes
+  // Re-fetch when container, tail lines, previous flag, or timestamps toggle changes (snapshot mode)
   React.useEffect(() => {
-    if (logsModalPod && selectedContainer) {
+    if (logsModalPod && selectedContainer && !isFollowing) {
       fetchLogs(false);
     }
-  }, [selectedContainer, tailLines, previous, showTimestamps]);
+  }, [selectedContainer, tailLines, previous, showTimestamps, isFollowing]);
 
-  // Live Follow polling interval
+  // Real-time SSE Log Stream when isFollowing is active (zero polling)
   React.useEffect(() => {
     if (!isFollowing || !logsModalPod) return;
 
-    const timer = setInterval(() => {
-      fetchLogs(true);
-    }, 2000);
+    let es: EventSource | null = null;
+    let isCancelled = false;
+    let buffer: string[] = [];
+    let flushTimer: NodeJS.Timeout | null = null;
 
-    return () => clearInterval(timer);
-  }, [isFollowing, logsModalPod, fetchLogs]);
+    const flushBuffer = () => {
+      if (buffer.length === 0) return;
+      const chunk = buffer.join("\n");
+      buffer = [];
+      setLogs((prev) => (prev ? prev + "\n" + chunk : chunk));
+      if (logsContainerRef.current) {
+        logsContainerRef.current.scrollTop = logsContainerRef.current.scrollHeight;
+      }
+    };
+
+    const startStream = async () => {
+      setIsLoading(true);
+      setLogs(""); // Clear previous snapshot logs for a fresh live stream
+      try {
+        const port = await getStreamPort();
+        if (isCancelled) return;
+
+        const url = new URL(`http://127.0.0.1:${port}/api/stream/logs`);
+        url.searchParams.set("namespace", logsModalPod.namespace);
+        url.searchParams.set("pod", logsModalPod.name);
+        if (selectedContainer || logsModalPod.container) {
+          url.searchParams.set("container", selectedContainer || logsModalPod.container || "");
+        }
+        url.searchParams.set("tailLines", String(tailLines));
+        url.searchParams.set("timestamps", showTimestamps ? "true" : "false");
+        url.searchParams.set("previous", previous ? "true" : "false");
+        url.searchParams.set("follow", "true");
+
+        es = new EventSource(url.toString());
+
+        es.onopen = () => {
+          if (!isCancelled) {
+            setIsLoading(false);
+          }
+        };
+
+        es.addEventListener("init", (_e) => {
+          if (!isCancelled) {
+            setIsLoading(false);
+          }
+        });
+
+        es.onmessage = (e) => {
+          if (isCancelled) return;
+          try {
+            const line = JSON.parse(e.data);
+            buffer.push(line);
+          } catch {
+            buffer.push(e.data);
+          }
+
+          if (!flushTimer) {
+            flushTimer = setTimeout(() => {
+              flushBuffer();
+              flushTimer = null;
+            }, 40); // 25fps batching for smooth rendering under heavy log volume
+          }
+        };
+
+        es.onerror = () => {
+          if (flushTimer) clearTimeout(flushTimer);
+          flushBuffer();
+          if (!isCancelled) {
+            setIsLoading(false);
+          }
+        };
+      } catch (err: unknown) {
+        console.warn("[PodLogsModal] SSE stream error:", err);
+        if (!isCancelled) {
+          setIsLoading(false);
+        }
+      }
+    };
+
+    startStream();
+
+    return () => {
+      isCancelled = true;
+      if (flushTimer) clearTimeout(flushTimer);
+      if (es) {
+        es.close();
+      }
+    };
+  }, [
+    isFollowing,
+    logsModalPod?.name,
+    logsModalPod?.namespace,
+    selectedContainer,
+    tailLines,
+    previous,
+    showTimestamps,
+  ]);
 
   // Auto-scroll when logs change if user is following
   React.useEffect(() => {
@@ -216,7 +308,7 @@ export function PodLogsModal() {
                 setIsFollowing(next);
                 if (next) {
                   scrollToBottom();
-                  toast.info("Live log streaming enabled (auto-refreshing)");
+                  toast.info("Live real-time log stream active (SSE)");
                 }
               }}
               className={cn(

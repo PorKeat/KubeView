@@ -4,11 +4,14 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"log"
 	"math"
 	"sort"
 	"strings"
+	"sync"
 	"time"
 
+	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -39,60 +42,172 @@ type NodeSummary struct {
 
 type ClusterOverviewParams struct {
 	ContextName string `json:"contextName"`
+	Namespace   string `json:"namespace,omitempty"`
+}
+
+type WorkloadControllerHealth struct {
+	Total       int      `json:"total"`
+	Ready       int      `json:"ready"`
+	Degraded    int      `json:"degraded"`
+	UnreadyList []string `json:"unreadyList,omitempty"`
+}
+
+type WorkloadsSummary struct {
+	Deployments  WorkloadControllerHealth `json:"deployments"`
+	StatefulSets WorkloadControllerHealth `json:"statefulSets"`
+	DaemonSets   WorkloadControllerHealth `json:"daemonSets"`
 }
 
 type ClusterOverviewResult struct {
-	ContextName        string         `json:"contextName"`
-	TotalNodes         int            `json:"totalNodes"`
-	ReadyNodes         int            `json:"readyNodes"`
-	TotalPods          int            `json:"totalPods"`
-	RunningPods        int            `json:"runningPods"`
-	PendingPods        int            `json:"pendingPods"`
-	FailedPods         int            `json:"failedPods"`
-	SucceededPods      int            `json:"succeededPods"`
-	TotalCPUCores      float64        `json:"totalCpuCores"`
-	AllocatedCPUCores  float64        `json:"allocatedCpuCores"`
-	CPUPercent         int            `json:"cpuPercent"`
-	UsedCPUCores       float64        `json:"usedCpuCores,omitempty"`
-	CPUUsagePercent    int            `json:"cpuUsagePercent,omitempty"`
-	TotalMemoryGiB     float64        `json:"totalMemoryGiB"`
-	AllocatedMemoryGiB float64        `json:"allocatedMemoryGiB"`
-	MemoryPercent      int            `json:"memoryPercent"`
-	UsedMemoryGiB      float64        `json:"usedMemoryGiB,omitempty"`
-	MemoryUsagePercent int            `json:"memoryUsagePercent,omitempty"`
-	PodCapacity        int64          `json:"podCapacity"`
-	PodPercent         int            `json:"podPercent"`
-	HasMetrics         bool           `json:"hasMetrics"`
-	Nodes              []NodeSummary  `json:"nodes"`
-	WarningEvents      []PodEventItem `json:"warningEvents"`
+	ContextName        string           `json:"contextName"`
+	Namespace          string           `json:"namespace,omitempty"`
+	TotalNodes         int              `json:"totalNodes"`
+	ReadyNodes         int              `json:"readyNodes"`
+	TotalPods          int              `json:"totalPods"`
+	RunningPods        int              `json:"runningPods"`
+	PendingPods        int              `json:"pendingPods"`
+	FailedPods         int              `json:"failedPods"`
+	SucceededPods      int              `json:"succeededPods"`
+	TotalCPUCores      float64          `json:"totalCpuCores"`
+	AllocatedCPUCores  float64          `json:"allocatedCpuCores"`
+	CPUPercent         int              `json:"cpuPercent"`
+	UsedCPUCores       float64          `json:"usedCpuCores,omitempty"`
+	CPUUsagePercent    int              `json:"cpuUsagePercent,omitempty"`
+	TotalMemoryGiB     float64          `json:"totalMemoryGiB"`
+	AllocatedMemoryGiB float64          `json:"allocatedMemoryGiB"`
+	MemoryPercent      int              `json:"memoryPercent"`
+	UsedMemoryGiB      float64          `json:"usedMemoryGiB,omitempty"`
+	MemoryUsagePercent int              `json:"memoryUsagePercent,omitempty"`
+	PodCapacity        int64            `json:"podCapacity"`
+	PodPercent         int              `json:"podPercent"`
+	HasMetrics         bool             `json:"hasMetrics"`
+	Nodes              []NodeSummary    `json:"nodes"`
+	WarningEvents      []PodEventItem   `json:"warningEvents"`
+	Workloads          WorkloadsSummary `json:"workloads"`
 }
 
 
 // GetClusterOverview aggregates node capacity, pod allocations, and cluster events
-func (m *Manager) GetClusterOverview(ctx context.Context, contextName string) (*ClusterOverviewResult, error) {
+func (m *Manager) GetClusterOverview(ctx context.Context, contextName string, namespace ...string) (*ClusterOverviewResult, error) {
+	targetNs := ""
+	if len(namespace) > 0 && namespace[0] != "all" {
+		targetNs = strings.TrimSpace(namespace[0])
+	}
+
+	cacheKey := contextName
+	if targetNs != "" {
+		cacheKey = contextName + "::" + targetNs
+	}
+
 	client, _, err := m.GetClientForContext(contextName)
 	if err != nil {
+		m.overviewMu.RLock()
+		cached, ok := m.overviewCache[cacheKey]
+		m.overviewMu.RUnlock()
+		if ok && cached != nil {
+			log.Printf("[overview] Using cached overview for '%s' due to client error: %v", cacheKey, err)
+			return cached, nil
+		}
 		return nil, err
 	}
 
-	// 1. Fetch all Nodes
-	nodeList, err := client.CoreV1().Nodes().List(ctx, metav1.ListOptions{})
-	if err != nil {
-		return nil, fmt.Errorf("failed to list nodes: %w", err)
+	var (
+		nodeList   *corev1.NodeList
+		nodeErr    error
+		podList    *corev1.PodList
+		podErr     error
+		eventList  *corev1.EventList
+		metricsRaw []byte
+		depsList   *appsv1.DeploymentList
+		stssList   *appsv1.StatefulSetList
+		dssList    *appsv1.DaemonSetList
+		wg         sync.WaitGroup
+	)
+
+	wg.Add(7)
+
+	// 1. Fetch all Nodes (parallel)
+	go func() {
+		defer wg.Done()
+		nodeList, nodeErr = client.CoreV1().Nodes().List(ctx, metav1.ListOptions{})
+	}()
+
+	// 2. Fetch Pods (scoped if namespace specified)
+	go func() {
+		defer wg.Done()
+		podList, podErr = client.CoreV1().Pods(targetNs).List(ctx, metav1.ListOptions{})
+	}()
+
+	// 3. Fetch cluster Warning Events (scoped if namespace specified)
+	go func() {
+		defer wg.Done()
+		evs, err := client.CoreV1().Events(targetNs).List(ctx, metav1.ListOptions{
+			FieldSelector: "type=Warning",
+			Limit:         100,
+		})
+		if err != nil || evs == nil || len(evs.Items) == 0 {
+			// Fallback to regular list if field-selector is unsupported or returns 0
+			evs, _ = client.CoreV1().Events(targetNs).List(ctx, metav1.ListOptions{
+				Limit: 100,
+			})
+		}
+		eventList = evs
+	}()
+
+	// 4. Real-time Node metrics from Metrics Server (parallel)
+	go func() {
+		defer wg.Done()
+		metricsCtx, metricsCancel := context.WithTimeout(ctx, 3*time.Second)
+		defer metricsCancel()
+		raw, _ := client.CoreV1().RESTClient().Get().AbsPath("/apis/metrics.k8s.io/v1beta1/nodes").DoRaw(metricsCtx)
+		metricsRaw = raw
+	}()
+
+	// 5. Deployments (scoped if namespace specified)
+	go func() {
+		defer wg.Done()
+		depsList, _ = client.AppsV1().Deployments(targetNs).List(ctx, metav1.ListOptions{})
+	}()
+
+	// 6. StatefulSets (scoped if namespace specified)
+	go func() {
+		defer wg.Done()
+		stssList, _ = client.AppsV1().StatefulSets(targetNs).List(ctx, metav1.ListOptions{})
+	}()
+
+	// 7. DaemonSets (scoped if namespace specified)
+	go func() {
+		defer wg.Done()
+		dssList, _ = client.AppsV1().DaemonSets(targetNs).List(ctx, metav1.ListOptions{})
+	}()
+
+	wg.Wait()
+
+	// If node listing failed due to transient timeout/network jitter, return cached overview if available
+	if nodeErr != nil {
+		m.overviewMu.RLock()
+		cached, ok := m.overviewCache[cacheKey]
+		m.overviewMu.RUnlock()
+		if ok && cached != nil {
+			log.Printf("[overview] Node list failed, returning cached overview for '%s': %v", cacheKey, nodeErr)
+			return cached, nil
+		}
+		return nil, fmt.Errorf("failed to list nodes: %w", nodeErr)
 	}
 
-	// 2. Fetch all Pods
-	podList, err := client.CoreV1().Pods("").List(ctx, metav1.ListOptions{})
-	if err != nil {
-		return nil, fmt.Errorf("failed to list cluster pods: %w", err)
+	// If pod listing failed, return cached overview if available
+	if podErr != nil {
+		m.overviewMu.RLock()
+		cached, ok := m.overviewCache[cacheKey]
+		m.overviewMu.RUnlock()
+		if ok && cached != nil {
+			log.Printf("[overview] Pod list failed, returning cached overview for '%s': %v", cacheKey, podErr)
+			return cached, nil
+		}
+		return nil, fmt.Errorf("failed to list cluster pods: %w", podErr)
 	}
 
-	// 3. Fetch cluster Warning Events
-	eventList, _ := client.CoreV1().Events("").List(ctx, metav1.ListOptions{
-		Limit: 100,
-	})
-
-	// 4. Attempt to fetch real-time Node metrics from Metrics Server (metrics.k8s.io/v1beta1/nodes)
+	// Process Metrics Server results
 	hasMetrics := false
 	type nodeMetricItem struct {
 		Metadata struct {
@@ -112,11 +227,7 @@ func (m *Manager) GetClusterOverview(ctx context.Context, contextName string) (*
 	var totalCpuUsageMillis int64
 	var totalMemUsageBytes int64
 
-	metricsCtx, metricsCancel := context.WithTimeout(ctx, 3*time.Second)
-	defer metricsCancel()
-
-	metricsRaw, metricsErr := client.CoreV1().RESTClient().Get().AbsPath("/apis/metrics.k8s.io/v1beta1/nodes").DoRaw(metricsCtx)
-	if metricsErr == nil && len(metricsRaw) > 0 {
+	if len(metricsRaw) > 0 {
 		var ml nodeMetricsList
 		if err := json.Unmarshal(metricsRaw, &ml); err == nil && len(ml.Items) > 0 {
 			hasMetrics = true
@@ -157,14 +268,14 @@ func (m *Manager) GetClusterOverview(ctx context.Context, contextName string) (*
 			succeededPods++
 		}
 
+		// Only active (non-terminated) pods consume scheduled CPU, memory allocations, and pod capacity
+		if pod.Status.Phase == corev1.PodSucceeded || pod.Status.Phase == corev1.PodFailed {
+			continue
+		}
+
 		nodeName := pod.Spec.NodeName
 		if nodeName != "" {
 			nodePodCounts[nodeName]++
-		}
-
-		// Only active (non-terminated) pods consume scheduled CPU and memory allocations
-		if pod.Status.Phase == corev1.PodSucceeded || pod.Status.Phase == corev1.PodFailed {
-			continue
 		}
 
 		var podCpu int64
@@ -242,11 +353,20 @@ func (m *Manager) GetClusterOverview(ctx context.Context, contextName string) (*
 
 		cpuCapQ := n.Status.Capacity[corev1.ResourceCPU]
 		memCapQ := n.Status.Capacity[corev1.ResourceMemory]
-		podCapQ := n.Status.Capacity[corev1.ResourcePods]
+
+		// True schedulable pod capacity follows Allocatable, fallback to Capacity, default 110
+		podCapQ := n.Status.Allocatable[corev1.ResourcePods]
+		nodePodCap := podCapQ.Value()
+		if nodePodCap <= 0 {
+			podCapQ = n.Status.Capacity[corev1.ResourcePods]
+			nodePodCap = podCapQ.Value()
+		}
+		if nodePodCap <= 0 {
+			nodePodCap = 110
+		}
 
 		nodeCpuCapMillis := cpuCapQ.MilliValue()
 		nodeMemCapBytes := memCapQ.Value()
-		nodePodCap := podCapQ.Value()
 
 		// Allocatable resources (used for scheduler and kubectl top metrics percentages)
 		cpuAllocQ := n.Status.Allocatable[corev1.ResourceCPU]
@@ -391,8 +511,56 @@ func (m *Manager) GetClusterOverview(ctx context.Context, contextName string) (*
 		warningItems = warningItems[:10]
 	}
 
-	return &ClusterOverviewResult{
+	// 5. Workload Controllers from parallel pre-fetch
+	var workloads WorkloadsSummary
+	if depsList != nil {
+		workloads.Deployments.Total = len(depsList.Items)
+		for _, d := range depsList.Items {
+			desired := int32(1)
+			if d.Spec.Replicas != nil {
+				desired = *d.Spec.Replicas
+			}
+			if desired == 0 || d.Status.ReadyReplicas >= desired {
+				workloads.Deployments.Ready++
+			} else {
+				workloads.Deployments.Degraded++
+				workloads.Deployments.UnreadyList = append(workloads.Deployments.UnreadyList, fmt.Sprintf("%s/%s (%d/%d)", d.Namespace, d.Name, d.Status.ReadyReplicas, desired))
+			}
+		}
+	}
+
+	if stssList != nil {
+		workloads.StatefulSets.Total = len(stssList.Items)
+		for _, s := range stssList.Items {
+			desired := int32(1)
+			if s.Spec.Replicas != nil {
+				desired = *s.Spec.Replicas
+			}
+			if desired == 0 || s.Status.ReadyReplicas >= desired {
+				workloads.StatefulSets.Ready++
+			} else {
+				workloads.StatefulSets.Degraded++
+				workloads.StatefulSets.UnreadyList = append(workloads.StatefulSets.UnreadyList, fmt.Sprintf("%s/%s (%d/%d)", s.Namespace, s.Name, s.Status.ReadyReplicas, desired))
+			}
+		}
+	}
+
+	if dssList != nil {
+		workloads.DaemonSets.Total = len(dssList.Items)
+		for _, d := range dssList.Items {
+			desired := d.Status.DesiredNumberScheduled
+			if desired == 0 || d.Status.NumberReady >= desired {
+				workloads.DaemonSets.Ready++
+			} else {
+				workloads.DaemonSets.Degraded++
+				workloads.DaemonSets.UnreadyList = append(workloads.DaemonSets.UnreadyList, fmt.Sprintf("%s/%s (%d/%d)", d.Namespace, d.Name, d.Status.NumberReady, desired))
+			}
+		}
+	}
+
+	result := &ClusterOverviewResult{
 		ContextName:        contextName,
+		Namespace:          targetNs,
 		TotalNodes:         len(nodeList.Items),
 		ReadyNodes:         readyNodes,
 		TotalPods:          len(podList.Items),
@@ -415,5 +583,15 @@ func (m *Manager) GetClusterOverview(ctx context.Context, contextName string) (*
 		HasMetrics:         hasMetrics,
 		Nodes:              nodeSummaries,
 		WarningEvents:      warningItems,
-	}, nil
+		Workloads:          workloads,
+	}
+
+	m.overviewMu.Lock()
+	if m.overviewCache == nil {
+		m.overviewCache = make(map[string]*ClusterOverviewResult)
+	}
+	m.overviewCache[cacheKey] = result
+	m.overviewMu.Unlock()
+
+	return result, nil
 }

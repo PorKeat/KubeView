@@ -1,0 +1,219 @@
+"use client";
+
+import * as React from "react";
+import {
+  Server,
+  Box,
+  Copy,
+  Check,
+  FileText,
+  Terminal,
+  RotateCw,
+  Trash2,
+  X,
+} from "lucide-react";
+import { toast } from "sonner";
+import { cn } from "@/lib/utils";
+import type { SelectedResource } from "@/stores/clusterStore";
+import type { PodSummary, NodeSummary } from "@kubeview/contracts";
+
+export interface InspectorHeaderProps {
+  currentResource: SelectedResource;
+  isNode: boolean;
+  nodeData?: NodeSummary;
+  podData?: PodSummary;
+  onClose: () => void;
+  onOpenLogsModal: (pod: { name: string; namespace: string }) => void;
+  onOpenExecModal: (pod: { name: string; namespace: string }) => void;
+  onOpenRestartConfirm: (pod: { name: string; namespace: string }) => void;
+  onOpenDeleteConfirm: (pod: { name: string; namespace: string }) => void;
+}
+
+export function InspectorHeader({
+  currentResource,
+  isNode,
+  nodeData,
+  podData,
+  onClose,
+  onOpenLogsModal,
+  onOpenExecModal,
+  onOpenRestartConfirm,
+  onOpenDeleteConfirm,
+}: InspectorHeaderProps) {
+  const [copiedTitle, setCopiedTitle] = React.useState(false);
+
+  const handleCopyTitle = () => {
+    navigator.clipboard.writeText(currentResource.name);
+    setCopiedTitle(true);
+    toast.success(`Copied: ${currentResource.name}`);
+    setTimeout(() => setCopiedTitle(false), 2000);
+  };
+
+  const renderStatusBadge = (status: string) => {
+    switch (status) {
+      case "Running":
+      case "Active":
+      case "Ready":
+        return (
+          <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-semibold bg-emerald-500/15 text-emerald-700 dark:text-emerald-400 border border-emerald-500/25 shrink-0">
+            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+            {status}
+          </span>
+        );
+      case "Pending":
+      case "ContainerCreating":
+      case "Terminating":
+        return (
+          <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-semibold bg-amber-500/15 text-amber-700 dark:text-amber-400 border border-amber-500/25 shrink-0">
+            <span className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-ping motion-reduce:animate-none" />
+            {status}
+          </span>
+        );
+      case "Completed":
+      case "Succeeded":
+        return (
+          <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-semibold bg-black/[0.04] dark:bg-white/[0.06] text-[var(--muted)] border border-[var(--border)] shrink-0">
+            <span className="w-1.5 h-1.5 rounded-full bg-[var(--muted)]" />
+            {status}
+          </span>
+        );
+      default:
+        return (
+          <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-semibold bg-rose-500/15 text-rose-700 dark:text-rose-400 border border-rose-500/25 shrink-0">
+            <span className="w-1.5 h-1.5 rounded-full bg-rose-500 animate-pulse motion-reduce:animate-none" />
+            {status}
+          </span>
+        );
+    }
+  };
+
+  return (
+    <div className="h-16 border-b border-[var(--border)] px-4 flex items-center justify-between shrink-0 bg-slate-50/80 dark:bg-black/40">
+      <div className="flex items-center gap-3 min-w-0 pr-2">
+        <div className="p-2.5 rounded-xl bg-[var(--surface-hover)] text-[var(--foreground)] border border-[var(--border)] shrink-0">
+          {isNode ? <Server className="w-5 h-5 text-[var(--accent)]" /> : <Box className="w-5 h-5 text-[var(--accent)]" />}
+        </div>
+        <div className="min-w-0">
+          <div className="flex items-center gap-2">
+            <span
+              onClick={handleCopyTitle}
+              title={`Click to copy: ${currentResource.name}`}
+              className="text-xs font-bold text-[var(--foreground)] truncate font-mono hover:text-[var(--accent)] cursor-pointer transition-colors max-w-[280px] sm:max-w-[340px]"
+            >
+              {currentResource.name}
+            </span>
+            <button
+              onClick={handleCopyTitle}
+              className="p-1 rounded hover:bg-[var(--surface-hover)] text-[var(--muted)] hover:text-[var(--foreground)] transition-colors cursor-pointer shrink-0"
+              title="Copy Full Name"
+            >
+              {copiedTitle ? <Check className="w-3 h-3 text-emerald-500" /> : <Copy className="w-3 h-3" />}
+            </button>
+            {renderStatusBadge(currentResource.status)}
+          </div>
+
+          {/* Micro-Badges Subheader */}
+          <div className="flex flex-wrap items-center gap-1.5 text-[10px] text-[var(--muted)] mt-1 font-mono">
+            <span className="px-1.5 py-0.2 rounded font-semibold bg-black/5 dark:bg-white/5 text-[var(--foreground)] border border-[var(--border)]">
+              {currentResource.kind}
+            </span>
+            <span>•</span>
+            {isNode ? (
+              <>
+                <span>
+                  IP: <strong className="text-[var(--foreground)]">{nodeData?.internalIP || "-"}</strong>
+                </span>
+                {nodeData?.architecture && (
+                  <>
+                    <span>•</span>
+                    <span>
+                      Arch: <strong className="text-[var(--foreground)]">{nodeData.architecture}</strong>
+                    </span>
+                  </>
+                )}
+              </>
+            ) : (
+              <>
+                <div className="flex items-center gap-1">
+                  <span>ns:</span>
+                  <strong className="text-[var(--foreground)]">{currentResource.namespace}</strong>
+                </div>
+                {podData?.nodeName && (
+                  <>
+                    <span>•</span>
+                    <div className="flex items-center gap-1">
+                      <span>node:</span>
+                      <strong className="text-[var(--foreground)]">{podData.nodeName}</strong>
+                    </div>
+                  </>
+                )}
+              </>
+            )}
+          </div>
+        </div>
+      </div>
+
+      {/* Action Controls Toolbar */}
+      <div className="flex items-center gap-1 shrink-0 bg-black/5 dark:bg-white/5 p-1 rounded-xl border border-[var(--border)]">
+        {!isNode ? (
+          <>
+            <button
+              onClick={() => onOpenLogsModal({ name: currentResource.name, namespace: currentResource.namespace })}
+              className="p-1.5 rounded-lg hover:bg-[var(--surface-hover)] text-[var(--muted)] hover:text-[var(--foreground)] transition-colors cursor-pointer"
+              title="View Real-Time Logs"
+            >
+              <FileText className="w-4 h-4" />
+            </button>
+
+            <button
+              onClick={() => onOpenExecModal({ name: currentResource.name, namespace: currentResource.namespace })}
+              className="p-1.5 rounded-lg hover:bg-[var(--surface-hover)] text-[var(--muted)] hover:text-[var(--foreground)] transition-colors cursor-pointer"
+              title="Interactive Exec Shell"
+            >
+              <Terminal className="w-4 h-4" />
+            </button>
+
+            <button
+              onClick={() => onOpenRestartConfirm({ name: currentResource.name, namespace: currentResource.namespace })}
+              className="p-1.5 rounded-lg hover:bg-[var(--surface-hover)] text-[var(--muted)] hover:text-[var(--foreground)] transition-colors cursor-pointer"
+              title="Restart Pod"
+            >
+              <RotateCw className="w-4 h-4" />
+            </button>
+
+            <button
+              onClick={() => onOpenDeleteConfirm({ name: currentResource.name, namespace: currentResource.namespace })}
+              className="p-1.5 rounded-lg hover:bg-rose-500/15 text-[var(--muted)] hover:text-rose-500 transition-colors cursor-pointer"
+              title="Delete Pod"
+            >
+              <Trash2 className="w-4 h-4" />
+            </button>
+          </>
+        ) : (
+          <button
+            onClick={() => {
+              navigator.clipboard.writeText(currentResource.name);
+              toast.success(`Node name copied: ${currentResource.name}`);
+            }}
+            className="p-1.5 rounded-lg hover:bg-[var(--surface-hover)] text-[var(--muted)] hover:text-[var(--foreground)] transition-colors cursor-pointer"
+            title="Copy Node Name"
+          >
+            <Copy className="w-4 h-4" />
+          </button>
+        )}
+
+        <div className="h-4 w-[1px] bg-[var(--border)] mx-0.5" />
+
+        <button
+          onClick={onClose}
+          data-testid="inspector-close-btn"
+          aria-label="Close drawer (Escape)"
+          className="p-1.5 rounded-lg hover:bg-[var(--surface-hover)] text-[var(--muted)] hover:text-[var(--foreground)] transition-colors cursor-pointer focus-visible:ring-2 focus-visible:ring-[var(--accent)] focus-visible:outline-hidden"
+          title="Close Drawer (Esc)"
+        >
+          <X className="w-4 h-4" aria-hidden="true" />
+        </button>
+      </div>
+    </div>
+  );
+}

@@ -182,66 +182,98 @@ func (r *Runner) probeAuth(authInfo *clientcmdapi.AuthInfo, restConfig *rest.Con
 	start := time.Now()
 	latency := time.Since(start).Milliseconds()
 
-	if authInfo == nil {
-		return DiagnosticStage{
-			Name:      "authentication",
-			Passed:    true,
-			Message:   "Anonymous or default credential configured",
-			LatencyMs: latency,
-		}
-	}
+	if authInfo != nil {
+		// If using exec credential plugin (e.g. AWS EKS, AKS, GKE)
+		if authInfo.Exec != nil {
+			cmdName := authInfo.Exec.Command
+			if _, err := exec.LookPath(cmdName); err != nil {
+				return DiagnosticStage{
+					Name:      "authentication",
+					Passed:    false,
+					Message:   fmt.Sprintf("Credential helper binary '%s' was not found in system PATH. Please install the CLI plugin.", cmdName),
+					LatencyMs: latency,
+					Details: map[string]interface{}{
+						"command": cmdName,
+					},
+				}
+			}
 
-	// If using exec credential plugin (e.g. AWS EKS, AKS, GKE)
-	if authInfo.Exec != nil {
-		cmdName := authInfo.Exec.Command
-		if _, err := exec.LookPath(cmdName); err != nil {
 			return DiagnosticStage{
 				Name:      "authentication",
-				Passed:    false,
-				Message:   fmt.Sprintf("Credential helper binary '%s' was not found in system PATH. Please install the CLI plugin.", cmdName),
+				Passed:    true,
+				Message:   fmt.Sprintf("Exec plugin '%s' found in PATH and configured", cmdName),
 				LatencyMs: latency,
 				Details: map[string]interface{}{
 					"command": cmdName,
+					"args":    authInfo.Exec.Args,
 				},
 			}
 		}
 
-		return DiagnosticStage{
-			Name:      "authentication",
-			Passed:    true,
-			Message:   fmt.Sprintf("Exec plugin '%s' found in PATH and configured", cmdName),
-			LatencyMs: latency,
-			Details: map[string]interface{}{
-				"command": cmdName,
-				"args":    authInfo.Exec.Args,
-			},
+		// If using client certificate
+		if len(authInfo.ClientCertificateData) > 0 || authInfo.ClientCertificate != "" {
+			return DiagnosticStage{
+				Name:      "authentication",
+				Passed:    true,
+				Message:   "Client X.509 certificate and private key configured",
+				LatencyMs: latency,
+			}
+		}
+
+		// If using bearer token
+		if authInfo.Token != "" || authInfo.TokenFile != "" {
+			return DiagnosticStage{
+				Name:      "authentication",
+				Passed:    true,
+				Message:   "Bearer token authentication configured",
+				LatencyMs: latency,
+			}
 		}
 	}
 
-	// If using client certificate
-	if len(authInfo.ClientCertificateData) > 0 || authInfo.ClientCertificate != "" {
-		return DiagnosticStage{
-			Name:      "authentication",
-			Passed:    true,
-			Message:   "Client X.509 certificate and private key configured",
-			LatencyMs: latency,
+	// Fallback: check restConfig
+	if restConfig != nil {
+		if restConfig.ExecProvider != nil {
+			cmdName := restConfig.ExecProvider.Command
+			if _, err := exec.LookPath(cmdName); err != nil {
+				return DiagnosticStage{
+					Name:      "authentication",
+					Passed:    false,
+					Message:   fmt.Sprintf("Credential helper binary '%s' was not found in PATH", cmdName),
+					LatencyMs: latency,
+				}
+			}
+			return DiagnosticStage{
+				Name:      "authentication",
+				Passed:    true,
+				Message:   fmt.Sprintf("Exec plugin '%s' configured", cmdName),
+				LatencyMs: latency,
+			}
 		}
-	}
 
-	// If using bearer token
-	if authInfo.Token != "" || authInfo.TokenFile != "" {
-		return DiagnosticStage{
-			Name:      "authentication",
-			Passed:    true,
-			Message:   "Bearer token authentication configured",
-			LatencyMs: latency,
+		if len(restConfig.CertData) > 0 || restConfig.CertFile != "" {
+			return DiagnosticStage{
+				Name:      "authentication",
+				Passed:    true,
+				Message:   "Client X.509 certificate and private key configured",
+				LatencyMs: latency,
+			}
+		}
+
+		if restConfig.BearerToken != "" || restConfig.BearerTokenFile != "" {
+			return DiagnosticStage{
+				Name:      "authentication",
+				Passed:    true,
+				Message:   "Bearer token authentication configured",
+				LatencyMs: latency,
+			}
 		}
 	}
 
 	return DiagnosticStage{
 		Name:      "authentication",
 		Passed:    true,
-		Message:   "Standard authentication configured",
+		Message:   "Anonymous or default credential configured",
 		LatencyMs: latency,
 	}
 }

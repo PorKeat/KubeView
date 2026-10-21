@@ -13,9 +13,30 @@ interface PendingRequest {
 class EngineBridge {
   private proc: ChildProcessWithoutNullStreams | null = null;
   private pending = new Map<number, PendingRequest>();
+  private notificationListeners = new Set<(event: string, data: any) => void>();
+  private streamPort: number | null = null;
   private seq = 1;
   private binPath: string | null = null;
   private isStarting = false;
+
+  public async getStreamPort(): Promise<number> {
+    if (this.streamPort) return this.streamPort;
+    try {
+      const res = await this.request<{ streamPort?: number }>("handshake");
+      if (res?.streamPort) {
+        this.streamPort = res.streamPort;
+        return res.streamPort;
+      }
+    } catch (e) {
+      console.warn("[EngineBridge] Handshake to retrieve streamPort failed:", e);
+    }
+    throw new Error("Streaming server port not available from engine handshake");
+  }
+
+  public onNotification(fn: (event: string, data: any) => void): () => void {
+    this.notificationListeners.add(fn);
+    return () => this.notificationListeners.delete(fn);
+  }
 
   private findBinary(): string | null {
     if (this.binPath && fs.existsSync(this.binPath)) {
@@ -104,6 +125,15 @@ class EngineBridge {
                 req.reject(data.error);
               } else {
                 req.resolve(data.result);
+              }
+            } else if (data.method && !data.id) {
+              // Server-initiated notification from Go engine
+              for (const listener of this.notificationListeners) {
+                try {
+                  listener(data.method, data.params);
+                } catch (err) {
+                  console.error("[EngineBridge] Notification listener error:", err);
+                }
               }
             }
           } catch (e) {

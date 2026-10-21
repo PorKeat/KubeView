@@ -23,4 +23,30 @@ test.describe("KubeView UI - Cluster Overview & Health Metrics", () => {
     // Verify node name or cluster status
     await expect(page.locator("body")).toContainText(/v1\.34|Ready|10\.1/i);
   });
+
+  test("filters cluster overview when namespace is selected and reverts on clear", async ({ page }) => {
+    // Locate the namespace dropdown button in the header
+    const nsButton = page.locator('button[aria-label*="Select Kubernetes namespace"]');
+    await expect(nsButton).toBeVisible({ timeout: 10000 });
+
+    // Open dropdown
+    await nsButton.click();
+
+    // Look for a namespace option such as "woodpecker" or "kube-system"
+    const targetNsOption = page.locator('[role="menuitem"]').filter({ hasText: /kube-system|woodpecker/i }).first();
+    await expect(targetNsOption).toBeVisible({ timeout: 5000 });
+    const chosenNs = (await targetNsOption.innerText()).split("\n")[0].trim();
+    await targetNsOption.click();
+
+    // Verify ambient banner is displayed on Cluster Overview
+    await expect(page.locator("body")).toContainText(/Filtered by Namespace:/i, { timeout: 10000 });
+
+    // Verify the Clear Filter button is present and click it
+    const clearButton = page.getByRole("button", { name: /Clear Filter/i });
+    await expect(clearButton).toBeVisible();
+    await clearButton.click();
+
+    // Verify filter is cleared
+    await expect(page.locator("body")).not.toContainText(/Overview Filtered by Namespace:/i);
+  });
 });

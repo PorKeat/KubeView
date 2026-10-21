@@ -16,10 +16,18 @@ export function NamespaceSelectorDropdown({
   variant = "header",
   className,
 }: NamespaceSelectorDropdownProps) {
-  const { currentNamespace, availableNamespaces, setCurrentNamespace } = useClusterStore();
+  const { currentNamespace, availableNamespaces, setCurrentNamespace, pods } = useClusterStore();
   const [search, setSearch] = React.useState("");
   const [filterCategory, setFilterCategory] = React.useState<"all" | "workloads" | "system">("all");
   const [isOpen, setIsOpen] = React.useState(false);
+
+  const namespaceCounts = React.useMemo(() => {
+    const counts: Record<string, number> = {};
+    for (const p of pods) {
+      counts[p.namespace] = (counts[p.namespace] || 0) + 1;
+    }
+    return counts;
+  }, [pods]);
 
   const isSystemNamespace = (ns: string) => {
     if (ns === "all") return false;
@@ -221,8 +229,11 @@ export function NamespaceSelectorDropdown({
                   </div>
 
                   <div className="flex items-center gap-1.5 shrink-0 ml-2">
+                    <span className="text-[10px] text-[var(--muted)] font-mono tabular-nums px-1.5 py-0.5 rounded bg-black/[0.03] dark:bg-white/[0.04] border border-[var(--border)]/50">
+                      {isAll ? pods.length : (namespaceCounts[ns] || 0)}
+                    </span>
                     {isSystem && !isAll && (
-                      <span className="px-1.5 py-0.5 text-[11px] rounded font-mono bg-black/5 dark:bg-white/5 text-[var(--muted)] border border-[var(--border)]">
+                      <span className="px-1.5 py-0.5 text-[10px] rounded font-mono bg-black/5 dark:bg-white/5 text-[var(--muted)] border border-[var(--border)]">
                         sys
                       </span>
                     )}

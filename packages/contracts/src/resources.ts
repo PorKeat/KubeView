@@ -248,6 +248,19 @@ export interface ClusterOverviewParams {
   contextName?: string;
 }
 
+export interface WorkloadControllerHealth {
+  total: number;
+  ready: number;
+  degraded: number;
+  unreadyList?: string[];
+}
+
+export interface WorkloadsSummary {
+  deployments: WorkloadControllerHealth;
+  statefulSets: WorkloadControllerHealth;
+  daemonSets: WorkloadControllerHealth;
+}
+
 export interface ClusterOverviewResult {
   contextName: string;
   totalNodes: number;
@@ -272,6 +285,7 @@ export interface ClusterOverviewResult {
   hasMetrics?: boolean;
   nodes: NodeSummary[];
   warningEvents: PodEventItem[];
+  workloads?: WorkloadsSummary;
 }
 
 

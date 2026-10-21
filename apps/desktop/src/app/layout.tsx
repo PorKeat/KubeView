@@ -27,7 +27,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" suppressHydrationWarning className={`${inter.variable} ${GeistMono.variable}`}>
-      <body className="h-screen w-screen font-sans antialiased overflow-hidden select-none">
+      <body suppressHydrationWarning className="h-screen w-screen font-sans antialiased overflow-hidden select-none">
         <ThemeProvider attribute="class" defaultTheme="dark" enableSystem disableTransitionOnChange>
           <QueryProvider>
             {children}

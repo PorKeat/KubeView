@@ -13,6 +13,7 @@ import (
 	"github.com/kubeview/engine/internal/cluster"
 	"github.com/kubeview/engine/internal/diagnostics"
 	"github.com/kubeview/engine/internal/ipc"
+	"github.com/kubeview/engine/internal/stream"
 )
 
 func main() {
@@ -29,6 +30,15 @@ func main() {
 	}
 
 	diagRunner := diagnostics.NewRunner()
+	var resWatcher *cluster.ResourceWatcher
+
+	// Start local HTTP / SSE / WebSocket streaming server
+	streamSrv := stream.NewStreamServer(mgr)
+	if err := streamSrv.Start("127.0.0.1:0"); err != nil {
+		server.Log("Warning: streaming server failed to start: %v", err)
+	} else {
+		defer streamSrv.Stop()
+	}
 
 	// 2. Register RPC Handlers
 
@@ -46,6 +56,7 @@ func main() {
 			ProtocolVersion:      ipc.ProtocolVersion,
 			Status:               "ready",
 			SupportedAPIVersions: []string{"v1"},
+			StreamPort:           streamSrv.GetPort(),
 		}, nil
 	})
 
@@ -100,6 +111,9 @@ func main() {
 		}
 
 		server.Log("Switched active context to: %s", targetCtx)
+		if resWatcher != nil {
+			resWatcher.SwitchContext(context.Background(), targetCtx)
+		}
 		return res, nil
 	})
 
@@ -259,7 +273,8 @@ func main() {
 		ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 		defer cancel()
 
-		diagResult := diagRunner.Diagnose(ctx, ctxName, restConfig, nil, client)
+		authInfo := mgr.GetAuthInfoForContext(ctxName)
+		diagResult := diagRunner.Diagnose(ctx, ctxName, restConfig, authInfo, client)
 		return diagResult, nil
 	})
 
@@ -308,7 +323,7 @@ func main() {
 			}
 		}
 
-		ctx, cancel := context.WithTimeout(context.Background(), 8*time.Second)
+		ctx, cancel := context.WithTimeout(context.Background(), 16*time.Second)
 		defer cancel()
 
 		res, err := mgr.ListPods(ctx, ctxName, p.Namespace)
@@ -508,10 +523,10 @@ func main() {
 			}
 		}
 
-		ctx, cancel := context.WithTimeout(context.Background(), 8*time.Second)
+		ctx, cancel := context.WithTimeout(context.Background(), 16*time.Second)
 		defer cancel()
 
-		res, err := mgr.GetClusterOverview(ctx, ctxName)
+		res, err := mgr.GetClusterOverview(ctx, ctxName, p.Namespace)
 		if err != nil {
 			return nil, &ipc.RPCError{
 				Code:    ipc.ErrK8sConnFailed,
@@ -521,13 +536,39 @@ func main() {
 		return res, nil
 	})
 
-	// 3. Setup out-of-band file watcher
+	// 3. Setup out-of-band file watcher and live K8s resource stream
 	if mgr != nil {
+		resWatcher = cluster.NewResourceWatcher(
+			mgr,
+			func(event cluster.PodChangeEvent) {
+				_ = server.SendNotification("pods.changed", event)
+				streamSrv.BroadcastNotification("pods.changed", event)
+			},
+			func(event cluster.PodEventItem) {
+				_ = server.SendNotification("events.warning", event)
+				streamSrv.BroadcastNotification("events.warning", event)
+			},
+			func(contextName string) {
+				payload := map[string]string{
+					"context": contextName,
+				}
+				_ = server.SendNotification("clusters.overviewChanged", payload)
+				streamSrv.BroadcastNotification("clusters.overviewChanged", payload)
+			},
+		)
+
+		initialCtx := mgr.GetCurrentContext()
+		if initialCtx != "" {
+			resWatcher.SwitchContext(context.Background(), initialCtx)
+		}
+		defer resWatcher.Stop()
+
 		watcher := cluster.NewWatcher(mgr, func() {
 			server.Log("Emitting clusters.contextsChanged notification")
 			contexts, err := mgr.ListContexts()
 			if err == nil {
 				_ = server.SendNotification("clusters.contextsChanged", contexts)
+				streamSrv.BroadcastNotification("clusters.contextsChanged", contexts)
 			}
 		})
 

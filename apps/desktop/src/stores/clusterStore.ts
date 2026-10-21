@@ -27,120 +27,11 @@ import type {
   ImportDetectedContextsParams,
 } from "@kubeview/contracts";
 import { invokeRpc, listenNotification } from "@/lib/ipc";
+import type { ClusterState, ClusterContextInfo, SelectedResource } from "./clusterTypes";
 
-export interface ClusterContextInfo {
-  name: string;
-  cluster: string;
-  server: string;
-  provider: ProviderType;
-  status: "connected" | "degraded" | "offline" | "checking";
-  latencyMs: number;
-  namespace?: string;
-  authType?: string;
-}
+export * from "./clusterTypes";
 
-export interface SelectedResource {
-  kind: string;
-  name: string;
-  namespace: string;
-  status: string;
-  data?: Record<string, unknown>;
-}
-
-interface ClusterState {
-  currentContext: string;
-  availableContexts: ClusterContextInfo[];
-  currentNamespace: string;
-  availableNamespaces: string[];
-  connectionStatus: "connected" | "degraded" | "checking" | "offline";
-  serverVersion: string;
-  latencyMs: number;
-  rbacMode: "cluster-admin" | "namespace-scoped";
-  configPath: string;
-  diagnosticResult: DiagnosticResult | null;
-  selectedResource: SelectedResource | null;
-  isInspectorOpen: boolean;
-  isLoading: boolean;
-  isKubeconfigModalOpen: boolean;
-  kubeconfigModalTab: "auto" | "browse" | "paste" | "manage";
-  splashDismissed: boolean;
-
-  // Real cluster overview & pods telemetry
-  clusterOverview: ClusterOverviewResult | null;
-  isOverviewLoading: boolean;
-  pods: PodSummary[];
-  totalPodsCount: number;
-  isPodsLoading: boolean;
-
-  // OS Auto-Detected Kubeconfig Contexts
-  detectedSystemConfigs: DetectedContextInfo[];
-  isDetectingConfigs: boolean;
-
-  // Action modals for Pods
-  logsModalPod: { name: string; namespace: string; container?: string } | null;
-  execModalPod: { name: string; namespace: string; container?: string } | null;
-  deleteConfirmPod: { name: string; namespace: string } | null;
-  restartConfirmPod: { name: string; namespace: string } | null;
-  bulkDeleteConfirmPods: { name: string; namespace: string }[] | null;
-  bulkRestartConfirmPods: { name: string; namespace: string }[] | null;
-
-  // Auto-refresh interval (0 = off, 3000, 5000, 10000, 30000)
-  autoRefreshInterval: number;
-  setAutoRefreshInterval: (interval: number) => void;
-
-  // Endpoint configuration modal
-  isEndpointModalOpen: boolean;
-  endpointModalContextName: string;
-  endpointModalCurrentServer: string;
-  openEndpointModal: (contextName: string, currentServer: string) => void;
-  closeEndpointModal: () => void;
-
-  // Actions
-  loadContexts: () => Promise<void>;
-  switchContext: (contextName: string) => Promise<void>;
-  diagnoseContext: (contextName?: string) => Promise<DiagnosticResult | null>;
-  loadNamespaces: (contextName?: string) => Promise<void>;
-  loadClusterOverview: (contextName?: string) => Promise<ClusterOverviewResult | null>;
-  loadPods: (namespace?: string, contextName?: string) => Promise<void>;
-  getPodLogs: (params: PodLogsParams) => Promise<PodLogsResult>;
-  deletePod: (params: DeletePodParams) => Promise<void>;
-  restartPod: (params: RestartPodParams) => Promise<void>;
-  bulkDeletePods: (pods: { name: string; namespace: string }[], force?: boolean) => Promise<{ succeeded: number; failed: number }>;
-  bulkRestartPods: (pods: { name: string; namespace: string }[]) => Promise<{ succeeded: number; failed: number }>;
-  execPod: (params: ExecPodParams) => Promise<ExecPodResult>;
-  getPodYaml: (podName: string, namespace: string, contextName?: string) => Promise<string>;
-  getPodEvents: (podName: string, namespace: string, contextName?: string) => Promise<PodEventItem[]>;
-
-  openLogsModal: (pod: { name: string; namespace: string; container?: string }) => void;
-  closeLogsModal: () => void;
-  openExecModal: (pod: { name: string; namespace: string; container?: string }) => void;
-  closeExecModal: () => void;
-  openDeleteConfirm: (pod: { name: string; namespace: string }) => void;
-  closeDeleteConfirm: () => void;
-  openRestartConfirm: (pod: { name: string; namespace: string }) => void;
-  closeRestartConfirm: () => void;
-  openBulkDeleteConfirm: (pods: { name: string; namespace: string }[]) => void;
-  closeBulkDeleteConfirm: () => void;
-  openBulkRestartConfirm: (pods: { name: string; namespace: string }[]) => void;
-  closeBulkRestartConfirm: () => void;
-
-  setCurrentContext: (context: string) => void;
-  setCurrentNamespace: (namespace: string) => void;
-  setConnectionStatus: (status: "connected" | "degraded" | "checking" | "offline") => void;
-  setServerInfo: (version: string, latency: number) => void;
-  openInspector: (resource: SelectedResource) => void;
-  closeInspector: () => void;
-  openKubeconfigModal: (tab?: "auto" | "browse" | "paste" | "manage") => void;
-  closeKubeconfigModal: () => void;
-  setSplashDismissed: (dismissed: boolean) => void;
-  importKubeconfig: (params: ImportKubeconfigParams) => Promise<ImportKubeconfigResult>;
-  detectSystemConfigs: () => Promise<DetectedContextInfo[]>;
-  importDetectedContexts: (contexts: ImportDetectedContextItem[]) => Promise<ImportKubeconfigResult>;
-  deleteContext: (contextName: string) => Promise<void>;
-  updateEndpoint: (contextName: string, newServer: string, insecure?: boolean) => Promise<void>;
-  clearAllContexts: () => Promise<void>;
-  initEventListener: () => Promise<() => void>;
-}
+let inFlightPodsPromise: Promise<void> | null = null;
 
 export const useClusterStore = create<ClusterState>((set, get) => ({
   currentContext: "",
@@ -164,7 +55,10 @@ export const useClusterStore = create<ClusterState>((set, get) => ({
   isOverviewLoading: false,
   pods: [],
   totalPodsCount: 0,
-  isPodsLoading: false,
+  isPodsLoading: true,
+  hasLoadedPodsOnce: false,
+  podNodeFilter: null,
+  setPodNodeFilter: (nodeName) => set({ podNodeFilter: nodeName }),
 
   detectedSystemConfigs: [],
   isDetectingConfigs: false,
@@ -249,6 +143,8 @@ export const useClusterStore = create<ClusterState>((set, get) => ({
           clusterOverview: null,
           pods: [],
           totalPodsCount: 0,
+          isPodsLoading: false,
+          hasLoadedPodsOnce: true,
         });
       }
     } catch (err) {
@@ -259,6 +155,8 @@ export const useClusterStore = create<ClusterState>((set, get) => ({
         clusterOverview: null,
         pods: [],
         totalPodsCount: 0,
+        isPodsLoading: false,
+        hasLoadedPodsOnce: true,
       });
     }
   },
@@ -268,6 +166,9 @@ export const useClusterStore = create<ClusterState>((set, get) => ({
       currentContext: contextName,
       connectionStatus: "checking",
       diagnosticResult: null,
+      hasLoadedPodsOnce: false,
+      isPodsLoading: true,
+      pods: [],
     });
 
     try {
@@ -357,17 +258,20 @@ export const useClusterStore = create<ClusterState>((set, get) => ({
     }
   },
 
-  loadClusterOverview: async (contextName?: string) => {
+  loadClusterOverview: async (contextName?: string, namespace?: string) => {
     const target = contextName || get().currentContext;
     if (!target) {
       set({ clusterOverview: null, isOverviewLoading: false });
       return null;
     }
 
+    const targetNs = namespace !== undefined ? namespace : get().currentNamespace;
+
     set({ isOverviewLoading: true });
     try {
       const res = await invokeRpc<ClusterOverviewResult>("clusters.overview", {
         contextName: target,
+        namespace: targetNs === "all" ? "" : targetNs,
       });
       if (res) {
         set({ clusterOverview: res, isOverviewLoading: false });
@@ -376,8 +280,9 @@ export const useClusterStore = create<ClusterState>((set, get) => ({
       set({ isOverviewLoading: false });
       return null;
     } catch (err) {
-      console.warn("[ClusterStore] Failed to load cluster overview:", err);
-      set({ clusterOverview: null, isOverviewLoading: false });
+      console.warn("[ClusterStore] Failed to load cluster overview (preserving existing telemetry):", err);
+      // Stale-while-revalidate: Preserve existing clusterOverview so dashboard does not flicker to empty state
+      set({ isOverviewLoading: false });
       return null;
     }
   },
@@ -389,28 +294,51 @@ export const useClusterStore = create<ClusterState>((set, get) => ({
       return;
     }
 
-    const targetNs = namespace ?? get().currentNamespace;
-    set({ isPodsLoading: true });
-
-    try {
-      const res = await invokeRpc<ListPodsResult>("pods.list", {
-        contextName: targetCtx,
-        namespace: targetNs === "all" ? "" : targetNs,
-      });
-
-      if (res && res.items) {
-        set({
-          pods: res.items,
-          totalPodsCount: res.totalCount ?? res.items.length,
-          isPodsLoading: false,
-        });
-      } else {
-        set({ pods: [], totalPodsCount: 0, isPodsLoading: false });
-      }
-    } catch (err) {
-      console.warn("[ClusterStore] Failed to load pods:", err);
-      set({ pods: [], totalPodsCount: 0, isPodsLoading: false });
+    // Deduplicate in-flight requests to avoid redundant RPC storms
+    if (inFlightPodsPromise) {
+      return inFlightPodsPromise;
     }
+
+    const currentPods = get().pods;
+    // Stale-While-Revalidate: Only display skeleton loader on first initial cold load
+    if (currentPods.length === 0) {
+      set({ isPodsLoading: true });
+    }
+
+    inFlightPodsPromise = (async () => {
+      try {
+        // In cluster-admin mode (default), fetch all cluster pods (namespace: "")
+        // so client-side switching between namespaces, nodes, search queries, and status filters
+        // is 0ms instantaneous without any loading flicker or network latency.
+        // If the cluster restricts permissions (rbacMode === "namespace-scoped"), query the specific namespace.
+        const rbac = get().rbacMode;
+        const targetNs = namespace ?? get().currentNamespace;
+        const queryNs = rbac === "namespace-scoped" && targetNs !== "all" ? targetNs : "";
+
+        const res = await invokeRpc<ListPodsResult>("pods.list", {
+          contextName: targetCtx,
+          namespace: queryNs,
+        });
+
+        if (res && res.items) {
+          set({
+            pods: res.items,
+            totalPodsCount: res.totalCount ?? res.items.length,
+            isPodsLoading: false,
+            hasLoadedPodsOnce: true,
+          });
+        } else {
+          set({ pods: [], totalPodsCount: 0, isPodsLoading: false, hasLoadedPodsOnce: true });
+        }
+      } catch (err) {
+        console.warn("[ClusterStore] Failed to load pods:", err);
+        set({ isPodsLoading: false, hasLoadedPodsOnce: true });
+      } finally {
+        inFlightPodsPromise = null;
+      }
+    })();
+
+    return inFlightPodsPromise;
   },
 
   getPodLogs: async (params: PodLogsParams) => {
@@ -519,7 +447,12 @@ export const useClusterStore = create<ClusterState>((set, get) => ({
   setCurrentContext: (context) => set({ currentContext: context }),
   setCurrentNamespace: (namespace) => {
     set({ currentNamespace: namespace });
-    get().loadPods(namespace);
+    // In namespace-scoped mode, switching namespaces requires querying the newly scoped namespace
+    if (get().rbacMode === "namespace-scoped") {
+      get().loadPods(namespace);
+    }
+    // Refresh cluster overview dynamically for the scoped namespace
+    get().loadClusterOverview(get().currentContext, namespace);
   },
   setConnectionStatus: (status) => set({ connectionStatus: status }),
   setServerInfo: (version, latency) => set({ serverVersion: version, latencyMs: latency }),
@@ -630,7 +563,7 @@ export const useClusterStore = create<ClusterState>((set, get) => ({
   },
 
   initEventListener: async () => {
-    const unlisten = await listenNotification<ListContextsResult>(
+    const unlistenContexts = await listenNotification<ListContextsResult>(
       "clusters:contextsChanged",
       (res) => {
         console.log("[ClusterStore] Kubeconfig contexts changed on disk:", res);
@@ -660,6 +593,79 @@ export const useClusterStore = create<ClusterState>((set, get) => ({
         }
       }
     );
-    return unlisten;
+
+    // Real-Time K8s Pod Watcher stream
+    const unlistenPods = await listenNotification<{ type: string; pod: PodSummary }>(
+      "pods:changed",
+      (event) => {
+        if (!event || !event.pod) return;
+        const currentPods = get().pods;
+        if (get().rbacMode === "namespace-scoped") {
+          const targetNs = get().currentNamespace;
+          if (targetNs !== "all" && event.pod.namespace !== targetNs) {
+            return;
+          }
+        }
+
+        if (event.type === "DELETED") {
+          const next = currentPods.filter(
+            (p) => !(p.name === event.pod.name && p.namespace === event.pod.namespace)
+          );
+          set({ pods: next, totalPodsCount: Math.max(0, get().totalPodsCount - 1) });
+        } else {
+          const idx = currentPods.findIndex(
+            (p) => p.name === event.pod.name && p.namespace === event.pod.namespace
+          );
+          if (idx >= 0) {
+            const next = [...currentPods];
+            next[idx] = event.pod;
+            set({ pods: next });
+          } else {
+            set({
+              pods: [event.pod, ...currentPods],
+              totalPodsCount: get().totalPodsCount + 1,
+            });
+          }
+        }
+      }
+    );
+
+    // Real-Time Cluster Overview & Workloads stream
+    const unlistenOverview = await listenNotification<{ context: string }>(
+      "clusters:overviewChanged",
+      (payload) => {
+        if (!payload || payload.context === get().currentContext) {
+          get().loadClusterOverview();
+        }
+      }
+    );
+
+    // Real-Time Warning Events Stream
+    const unlistenEvents = await listenNotification<PodEventItem>(
+      "events:warning",
+      (item) => {
+        if (!item) return;
+        const ov = get().clusterOverview;
+        if (ov) {
+          const existing = ov.warningEvents || [];
+          set({
+            clusterOverview: {
+              ...ov,
+              warningEvents: [
+                item,
+                ...existing.filter((e) => e.message !== item.message),
+              ].slice(0, 15),
+            },
+          });
+        }
+      }
+    );
+
+    return () => {
+      unlistenContexts();
+      unlistenPods();
+      unlistenOverview();
+      unlistenEvents();
+    };
   },
 }));

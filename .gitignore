@@ -57,3 +57,17 @@ playwright/.cache/
 # Design taste artifacts
 .taste-skill/inspect/
 
+# Graphify knowledge graph & caches
+graphify-out/
+
+# AI Agent & local IDE files
+.gemini/
+.agents/
+GEMINI.md
+.claude/
+.cursor/
+
+# Turbo & caches
+.turbo/
+coverage/
+*.log
