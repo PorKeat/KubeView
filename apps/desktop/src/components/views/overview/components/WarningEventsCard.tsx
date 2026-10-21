@@ -225,8 +225,8 @@ export function WarningEventsCard({
           </div>
         </div>
 
-        {/* Scrollable Events List (Fills height dynamically matching left card) */}
-        <div className="divide-y divide-[var(--border)]/50 overflow-y-auto flex-1 min-h-[190px] pr-1 scrollbar-thin">
+        {/* Scrollable Events List (Scrolls if many events with modern clean scrollbar) */}
+        <div className="divide-y divide-[var(--border)]/50 overflow-y-auto h-[242px] max-h-[242px] min-h-[242px] pr-1.5 modern-scrollbar">
           {filteredAndSortedEvents.length === 0 ? (
             <div className="h-full min-h-[175px] flex flex-col items-center justify-center text-center text-xs text-[var(--muted)] gap-2 py-4">
               <CheckCircle2 className="w-5 h-5 text-emerald-500" />
