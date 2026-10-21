@@ -5,6 +5,8 @@ import { useClusterStore, SelectedResource } from "@/stores/clusterStore";
 import { useTabStore } from "@/stores/tabStore";
 import type { PodSummary, PodEventItem, NodeSummary } from "@kubeview/contracts";
 import { toast } from "sonner";
+import { motion } from "motion/react";
+import { LayoutDashboard, Box, HeartPulse, Bell, FileCode } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 import { InspectorHeader } from "./components/InspectorHeader";
@@ -326,42 +328,56 @@ export function ResourceInspectorDrawer() {
 
         {/* Segmented Tabs Bar (Pods Only) */}
         {!isNode && (
-          <div className="h-10 border-b border-[var(--border)] px-4 flex items-center gap-1.5 bg-[var(--surface)] shrink-0">
-            {(
-              [
-                { id: "overview", label: "Overview", count: null },
-                { id: "containers", label: "Containers", count: podData?.containers?.length || 0 },
-                { id: "conditions", label: "Conditions", count: podData?.conditions?.length || 0 },
-                { id: "events", label: "Events", count: liveEvents.length > 0 ? liveEvents.length : null },
-                { id: "yaml", label: "YAML", count: null },
-              ] as const
-            ).map((t) => (
-              <button
-                key={t.id}
-                data-testid={`inspector-tab-${t.id}`}
-                onClick={() => setActiveTab(t.id)}
-                className={cn(
-                  "px-3 py-1 text-xs rounded-lg capitalize transition-all font-medium cursor-pointer flex items-center gap-1.5",
-                  activeTab === t.id
-                    ? "bg-[var(--surface-active)] text-[#F08A42] font-semibold border border-[var(--border)] shadow-xs"
-                    : "text-[var(--muted)] hover:text-[var(--foreground)] hover:bg-[var(--surface-hover)]"
-                )}
-              >
-                <span>{t.label}</span>
-                {t.count !== null && (
-                  <span
+          <div className="h-11 border-b border-[var(--border)] px-4 flex items-center bg-[var(--surface)] shrink-0 overflow-x-auto scrollbar-none">
+            <div className="flex items-center gap-1 p-0.5 rounded-lg bg-black/[0.04] dark:bg-white/[0.05] border border-[var(--border)] text-xs select-none">
+              {(
+                [
+                  { id: "overview", label: "Overview", icon: LayoutDashboard, count: null },
+                  { id: "containers", label: "Containers", icon: Box, count: podData?.containers?.length || 0 },
+                  { id: "conditions", label: "Conditions", icon: HeartPulse, count: podData?.conditions?.length || 0 },
+                  { id: "events", label: "Events", icon: Bell, count: liveEvents.length > 0 ? liveEvents.length : null },
+                  { id: "yaml", label: "YAML", icon: FileCode, count: null },
+                ] as const
+              ).map((t) => {
+                const Icon = t.icon;
+                const isActive = activeTab === t.id;
+                return (
+                  <button
+                    key={t.id}
+                    data-testid={`inspector-tab-${t.id}`}
+                    onClick={() => setActiveTab(t.id)}
                     className={cn(
-                      "px-1.5 py-0.2 rounded-full text-[9px] font-mono",
-                      activeTab === t.id
-                        ? "bg-[#F08A42]/15 text-[#F08A42]"
-                        : "bg-black/5 dark:bg-white/5 text-[var(--muted)]"
+                      "relative px-2.5 py-1 text-xs rounded-md capitalize transition-colors font-medium cursor-pointer flex items-center gap-1.5 outline-hidden focus-visible:ring-1 focus-visible:ring-[var(--accent)]",
+                      isActive
+                        ? "text-[var(--foreground)] font-semibold"
+                        : "text-[var(--muted)] hover:text-[var(--foreground)]"
                     )}
                   >
-                    {t.count}
-                  </span>
-                )}
-              </button>
-            ))}
+                    {isActive && (
+                      <motion.div
+                        layoutId="inspector-active-tab-indicator"
+                        transition={{ type: "spring", stiffness: 450, damping: 35 }}
+                        className="absolute inset-0 rounded-md bg-[var(--surface-elevated)] dark:bg-white/10 shadow-xs border border-[var(--border)] -z-10 motion-reduce:transition-none"
+                      />
+                    )}
+                    <Icon className={cn("w-3.5 h-3.5 transition-colors", isActive ? "text-[var(--accent)]" : "text-[var(--muted)]")} />
+                    <span>{t.label}</span>
+                    {t.count !== null && (
+                      <span
+                        className={cn(
+                          "px-1.5 py-0.2 rounded-full text-[9px] font-mono tabular-nums transition-colors",
+                          isActive
+                            ? "bg-[var(--accent)]/15 text-[var(--accent)] font-bold"
+                            : "bg-black/5 dark:bg-white/5 text-[var(--muted)]"
+                        )}
+                      >
+                        {t.count}
+                      </span>
+                    )}
+                  </button>
+                );
+              })}
+            </div>
           </div>
         )}
 

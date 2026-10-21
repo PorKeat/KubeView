@@ -243,25 +243,27 @@ export function InspectorYamlTab({
       {/* VS Code Window Frame */}
       <div className="rounded-xl border border-white/[0.1] bg-[#1e1e1e] shadow-2xl overflow-hidden flex flex-col font-mono text-[12px]">
         {/* VS Code Editor Tab Bar */}
-        <div className="bg-[#252526] border-b border-[#181818] flex items-center justify-between px-2 h-9 select-none shrink-0">
+        <div className="bg-[#14161f] border-b border-white/[0.08] flex items-center justify-between px-2.5 h-10 select-none shrink-0">
           {/* Active File Tab */}
-          <div className="flex items-center h-full">
-            <div className="flex items-center gap-2 px-3 h-full bg-[#1e1e1e] border-t-2 border-[#f08a42] text-slate-200 text-xs font-mono font-medium shadow-xs border-r border-[#181818]">
-              <FileCode className="w-3.5 h-3.5 text-[#cb171e]" />
-              <span className="truncate max-w-[200px]">
+          <div className="flex items-center h-full pt-1.5">
+            <div className="relative flex items-center gap-2 px-3.5 h-[calc(100%+1px)] bg-[#1e1e1e] rounded-t-lg border-t border-x border-white/[0.1] text-slate-200 text-xs font-mono font-medium shadow-xs">
+              {/* Refined gradient active indicator */}
+              <div className="absolute top-0 inset-x-2 h-[2px] bg-gradient-to-r from-[var(--accent)] to-[#e85d26] rounded-full" />
+              <FileCode className="w-3.5 h-3.5 text-[var(--accent)] shrink-0" />
+              <span className="truncate max-w-[220px] tracking-tight">
                 {resourceName ? `${resourceName}.yaml` : "manifest.yaml"}
               </span>
-              <span className="text-[9px] px-1.5 py-0.2 rounded font-mono bg-white/[0.06] text-slate-400">
+              <span className="text-[9px] px-1.5 py-0.5 rounded font-mono font-semibold bg-white/[0.06] text-slate-400 border border-white/[0.08] tracking-wider">
                 YAML
               </span>
             </div>
           </div>
 
           {/* Action Toolbar */}
-          <div className="flex items-center gap-1">
+          <div className="flex items-center gap-1.5 py-1">
             {/* Inline Search Bar */}
             {isSearchOpen ? (
-              <div className="flex items-center gap-1 bg-[#1e1e1e] border border-[#3c3c3c] rounded-md px-2 py-0.5 text-xs mr-1 animate-in fade-in duration-150">
+              <div className="flex items-center gap-1.5 bg-[#14161f] border border-white/15 rounded-lg px-2.5 h-7 text-xs animate-in fade-in duration-150 shadow-inner">
                 <Search className="w-3 h-3 text-slate-400 shrink-0" />
                 <input
                   ref={searchInputRef}
@@ -275,15 +277,15 @@ export function InspectorYamlTab({
                   className="w-32 bg-transparent text-[11px] font-mono text-slate-200 placeholder-slate-500 outline-none"
                 />
                 {searchQuery && (
-                  <span className="text-[10px] font-mono text-slate-400 px-1">
+                  <span className="text-[10px] font-mono text-slate-400 px-1 tabular-nums">
                     {searchMatchCount}
                   </span>
                 )}
-                <Tooltip content="Close search">
+                <Tooltip content="Close search" shortcut="Esc">
                   <button
                     type="button"
                     onClick={handleCloseSearch}
-                    className="text-slate-400 hover:text-white p-0.5 cursor-pointer"
+                    className="text-slate-400 hover:text-white p-0.5 cursor-pointer rounded hover:bg-white/10 transition-colors"
                     aria-label="Close search"
                   >
                     <X className="w-3 h-3" />
@@ -296,7 +298,7 @@ export function InspectorYamlTab({
                   type="button"
                   onClick={handleOpenSearch}
                   aria-label="Search in YAML"
-                  className="p-1.5 rounded-md hover:bg-white/[0.08] text-slate-400 hover:text-white transition-colors cursor-pointer"
+                  className="h-7 w-7 rounded-lg flex items-center justify-center hover:bg-white/[0.08] text-slate-400 hover:text-white transition-colors cursor-pointer"
                 >
                   <Search className="w-3.5 h-3.5" />
                 </button>
@@ -310,10 +312,10 @@ export function InspectorYamlTab({
                 onClick={() => setIsWrap((prev) => !prev)}
                 aria-label={isWrap ? "Disable Word Wrap" : "Enable Word Wrap"}
                 className={cn(
-                  "p-1.5 rounded-md transition-colors cursor-pointer",
+                  "h-7 w-7 rounded-lg flex items-center justify-center transition-all cursor-pointer border",
                   isWrap
-                    ? "bg-white/[0.1] text-amber-300"
-                    : "hover:bg-white/[0.08] text-slate-400 hover:text-white"
+                    ? "bg-[var(--accent)]/15 border-[var(--accent)]/30 text-[var(--accent)] shadow-2xs"
+                    : "border-transparent hover:bg-white/[0.08] text-slate-400 hover:text-white"
                 )}
               >
                 <WrapText className="w-3.5 h-3.5" />
@@ -328,12 +330,12 @@ export function InspectorYamlTab({
                   onClick={onRetry}
                   disabled={isLoading}
                   aria-label="Re-fetch YAML manifest from cluster"
-                  className="p-1.5 rounded-md hover:bg-white/[0.08] text-slate-400 hover:text-white transition-colors cursor-pointer disabled:opacity-50"
+                  className="h-7 w-7 rounded-lg flex items-center justify-center hover:bg-white/[0.08] text-slate-400 hover:text-white transition-colors cursor-pointer disabled:opacity-40"
                 >
                   <RotateCw
                     className={cn(
                       "w-3.5 h-3.5",
-                      isLoading && "animate-spin text-[#f08a42]"
+                      isLoading && "animate-spin text-[var(--accent)]"
                     )}
                   />
                 </button>
@@ -347,34 +349,36 @@ export function InspectorYamlTab({
                 onClick={onDownload}
                 disabled={isLoading}
                 aria-label="Download YAML to file"
-                className="p-1.5 rounded-md hover:bg-white/[0.08] text-slate-400 hover:text-white transition-colors cursor-pointer disabled:opacity-50"
+                className="h-7 w-7 rounded-lg flex items-center justify-center hover:bg-white/[0.08] text-slate-400 hover:text-white transition-colors cursor-pointer disabled:opacity-40"
               >
                 <Download className="w-3.5 h-3.5" />
               </button>
             </Tooltip>
 
+            <div className="h-4 w-px bg-white/10 mx-0.5" />
+
             {/* Copy Button */}
-            <button
-              type="button"
-              onClick={onCopy}
-              disabled={isLoading}
-              title="Copy YAML to clipboard"
-              className={cn(
-                "flex items-center gap-1.5 px-2.5 py-1 text-xs rounded-md font-mono transition-colors cursor-pointer ml-1 shadow-xs",
-                copiedYaml
-                  ? "bg-emerald-500/20 text-emerald-300 border border-emerald-500/30"
-                  : "bg-white/[0.08] hover:bg-white/[0.14] text-slate-200 border border-white/[0.1]"
-              )}
-            >
-              {copiedYaml ? (
-                <Check className="w-3.5 h-3.5 text-emerald-400" />
-              ) : (
-                <Copy className="w-3.5 h-3.5" />
-              )}
-              <span className="text-[11px] font-medium">
-                {copiedYaml ? "Copied" : "Copy"}
-              </span>
-            </button>
+            <Tooltip content={copiedYaml ? "Copied to clipboard" : "Copy YAML to clipboard"}>
+              <button
+                type="button"
+                onClick={onCopy}
+                disabled={isLoading}
+                aria-label="Copy YAML to clipboard"
+                className={cn(
+                  "h-7 px-2.5 rounded-lg font-mono text-[11px] font-medium transition-all flex items-center gap-1.5 cursor-pointer shadow-xs active:scale-[0.98] border",
+                  copiedYaml
+                    ? "bg-emerald-500/20 text-emerald-300 border-emerald-500/30"
+                    : "bg-white/[0.06] hover:bg-white/[0.12] text-slate-200 border-white/[0.1]"
+                )}
+              >
+                {copiedYaml ? (
+                  <Check className="w-3.5 h-3.5 text-emerald-400" />
+                ) : (
+                  <Copy className="w-3.5 h-3.5 text-slate-400" />
+                )}
+                <span>{copiedYaml ? "Copied" : "Copy"}</span>
+              </button>
+            </Tooltip>
           </div>
         </div>
 
