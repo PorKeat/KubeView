@@ -94,9 +94,9 @@ if ! command -v go >/dev/null 2>&1; then
   exit 1
 fi
 
-go -C engine build -o bin/kubeview-engine ./cmd/kubeview-engine
+go -C engine build -ldflags="-s -w" -o bin/kubeview-engine ./cmd/kubeview-engine
 chmod +x engine/bin/kubeview-engine
-echo -e "${GREEN}✓ Go engine binary compiled: engine/bin/kubeview-engine${NC}"
+echo -e "${GREEN}✓ Go engine binary compiled (stripped): engine/bin/kubeview-engine${NC}"
 
 # Graceful cleanup on exit
 cleanup() {

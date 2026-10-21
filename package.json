@@ -10,7 +10,7 @@
     "dev": "./scripts/dev.sh",
     "dev:web": "pnpm --filter @kubeview/desktop dev",
     "dev:tauri": "./scripts/dev.sh --tauri",
-    "build:engine": "go -C engine build -o bin/kubeview-engine ./cmd/kubeview-engine",
+    "build:engine": "go -C engine build -ldflags=\"-s -w\" -o bin/kubeview-engine ./cmd/kubeview-engine",
     "build:contracts": "pnpm --filter @kubeview/contracts build",
     "build": "pnpm build:contracts && pnpm build:engine && pnpm --filter @kubeview/desktop build",
     "lint": "pnpm --recursive lint",

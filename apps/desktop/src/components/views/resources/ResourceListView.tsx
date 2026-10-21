@@ -11,6 +11,8 @@ import {
   Box,
   ChevronLeft,
   ChevronRight,
+  ChevronsLeft,
+  ChevronsRight,
   RefreshCw,
   Globe,
 } from "lucide-react";
@@ -55,7 +57,9 @@ export function ResourceListView({ resourceType }: ResourceListViewProps) {
     setPodNodeFilter,
   } = useClusterStore();
 
+  // Free-text search with useDeferredValue for 120Hz input responsiveness
   const [search, setSearch] = React.useState("");
+  const deferredSearch = React.useDeferredValue(search);
   const [statusFilter, setStatusFilter] = React.useState("all");
   const [density, setDensity] = React.useState<"comfortable" | "compact">(
     "comfortable",
@@ -67,6 +71,14 @@ export function ResourceListView({ resourceType }: ResourceListViewProps) {
   const [selectedItems, setSelectedItems] = React.useState<Set<string>>(
     new Set(),
   );
+
+  // Client-side pagination for low memory & fast rendering on 1,000+ pods
+  const [pageSize, setPageSize] = React.useState<number>(50);
+  const [currentPage, setCurrentPage] = React.useState<number>(1);
+
+  React.useEffect(() => {
+    setCurrentPage(1);
+  }, [deferredSearch, statusFilter, podNodeFilter, currentNamespace, pageSize]);
 
   // Initial fetch when mounted, when context changes, or if pods are empty
   React.useEffect(() => {
@@ -191,9 +203,9 @@ export function ResourceListView({ resourceType }: ResourceListViewProps) {
           return false;
       }
 
-      // 4. Free-text search
-      if (search.trim()) {
-        const query = search.toLowerCase();
+      // 4. Free-text search (debounced via useDeferredValue for 120 FPS typing)
+      if (deferredSearch.trim()) {
+        const query = deferredSearch.toLowerCase();
         const matchesName = pod.name.toLowerCase().includes(query);
         const matchesNs = pod.namespace.toLowerCase().includes(query);
         const matchesNode = pod.nodeName?.toLowerCase().includes(query);
@@ -203,7 +215,7 @@ export function ResourceListView({ resourceType }: ResourceListViewProps) {
 
       return true;
     });
-  }, [pods, podNodeFilter, currentNamespace, statusFilter, search]);
+  }, [pods, podNodeFilter, currentNamespace, statusFilter, deferredSearch]);
 
   // Sort items
   const sortedItems = React.useMemo(() => {
@@ -233,13 +245,32 @@ export function ResourceListView({ resourceType }: ResourceListViewProps) {
     });
   }, [filteredItems, sortField, sortAsc]);
 
+  const totalPages =
+    pageSize > 0 ? Math.max(1, Math.ceil(sortedItems.length / pageSize)) : 1;
+  const safeCurrentPage = Math.min(currentPage, totalPages);
+
+  const paginatedItems = React.useMemo(() => {
+    if (pageSize <= 0) return sortedItems;
+    const start = (safeCurrentPage - 1) * pageSize;
+    return sortedItems.slice(start, start + pageSize);
+  }, [sortedItems, safeCurrentPage, pageSize]);
+
+  const isPageAllSelected =
+    paginatedItems.length > 0 &&
+    paginatedItems.every((i) => selectedItems.has(`${i.namespace}/${i.name}`));
+  const isPageSomeSelected =
+    !isPageAllSelected &&
+    paginatedItems.some((i) => selectedItems.has(`${i.namespace}/${i.name}`));
+
   const toggleSelectAll = () => {
-    if (selectedItems.size === sortedItems.length && sortedItems.length > 0) {
-      setSelectedItems(new Set());
+    if (isPageAllSelected) {
+      const next = new Set(selectedItems);
+      paginatedItems.forEach((i) => next.delete(`${i.namespace}/${i.name}`));
+      setSelectedItems(next);
     } else {
-      setSelectedItems(
-        new Set(sortedItems.map((i) => `${i.namespace}/${i.name}`)),
-      );
+      const next = new Set(selectedItems);
+      paginatedItems.forEach((i) => next.add(`${i.namespace}/${i.name}`));
+      setSelectedItems(next);
     }
   };
 
@@ -328,11 +359,11 @@ export function ResourceListView({ resourceType }: ResourceListViewProps) {
                   <button
                     onClick={toggleSelectAll}
                     className="text-[var(--muted)] hover:text-[var(--foreground)] flex items-center justify-center cursor-pointer"
+                    title={isPageAllSelected ? "Deselect all on page" : "Select all on page"}
                   >
-                    {selectedItems.size === sortedItems.length &&
-                    sortedItems.length > 0 ? (
+                    {isPageAllSelected ? (
                       <CheckSquare className="w-3.5 h-3.5 text-[var(--accent)]" />
-                    ) : selectedItems.size > 0 ? (
+                    ) : isPageSomeSelected || selectedItems.size > 0 ? (
                       <MinusSquare className="w-3.5 h-3.5 text-[var(--accent)]" />
                     ) : (
                       <Square className="w-3.5 h-3.5" />
@@ -449,7 +480,7 @@ export function ResourceListView({ resourceType }: ResourceListViewProps) {
               </tr>
             </thead>
             <tbody className="divide-y divide-[var(--border)]">
-              {sortedItems.map((item) => (
+              {paginatedItems.map((item) => (
                 <ResourceTableRow
                   key={`${item.namespace}/${item.name}`}
                   item={item}
@@ -622,63 +653,127 @@ export function ResourceListView({ resourceType }: ResourceListViewProps) {
         </div>
       )}
 
-      {/* Footer Status Bar */}
-      <div className="h-8 border-t border-[var(--border)] px-4 flex items-center justify-between text-[11px] text-[var(--muted)] bg-[var(--surface)] shrink-0">
-        <div>
-          Showing{" "}
-          <span className="text-[var(--foreground)] font-mono">
-            {sortedItems.length}
-          </span>{" "}
-          of{" "}
-          <span className="text-[var(--foreground)] font-mono">
-            {podNodeFilter
-              ? basePods.length
-              : totalPodsCount > 0
-                ? totalPodsCount
-                : clusterOverview?.totalPods ?? pods.length}
-          </span>{" "}
-          {podNodeFilter ? (
-            <>
-              pods on node{" "}
-              <strong className="text-[var(--foreground)] font-mono">
-                {podNodeFilter}
-              </strong>
-              {currentNamespace !== "all" && (
-                <>
-                  {" "}
-                  in namespace{" "}
-                  <strong className="text-[var(--foreground)] font-mono">
-                    {currentNamespace}
-                  </strong>
-                </>
-              )}
-            </>
-          ) : (
-            <>
-              items in namespace{" "}
-              <strong className="text-[var(--foreground)] font-mono">
-                {currentNamespace}
-              </strong>
-            </>
+      {/* Footer Status Bar with Enterprise Pagination Controls */}
+      <div className="h-9 border-t border-[var(--border)] px-4 flex items-center justify-between text-[11px] text-[var(--muted)] bg-[var(--surface)] shrink-0 gap-4">
+        <div className="flex items-center gap-2 truncate">
+          <span>
+            Showing{" "}
+            <span className="text-[var(--foreground)] font-mono font-medium">
+              {sortedItems.length === 0
+                ? "0"
+                : pageSize > 0
+                  ? `${(safeCurrentPage - 1) * pageSize + 1}–${Math.min(
+                      safeCurrentPage * pageSize,
+                      sortedItems.length,
+                    )}`
+                  : `1–${sortedItems.length}`}
+            </span>{" "}
+            of{" "}
+            <span className="text-[var(--foreground)] font-mono font-medium">
+              {sortedItems.length}
+            </span>{" "}
+            {podNodeFilter ? (
+              <>
+                pods on node{" "}
+                <strong className="text-[var(--foreground)] font-mono font-medium">
+                  {podNodeFilter}
+                </strong>
+                {currentNamespace !== "all" && (
+                  <>
+                    {" "}
+                    in namespace{" "}
+                    <strong className="text-[var(--foreground)] font-mono font-medium">
+                      {currentNamespace}
+                    </strong>
+                  </>
+                )}
+              </>
+            ) : (
+              <>
+                items in namespace{" "}
+                <strong className="text-[var(--foreground)] font-mono font-medium">
+                  {currentNamespace}
+                </strong>
+              </>
+            )}
+          </span>
+          {sortedItems.length !== (podNodeFilter ? basePods.length : pods.length) && (
+            <span className="text-[10px] text-[var(--muted)] opacity-70">
+              (filtered from {podNodeFilter ? basePods.length : pods.length} total)
+            </span>
           )}
         </div>
 
-        <div className="flex items-center gap-2">
-          <span>Page 1 of 1</span>
-          <div className="flex items-center gap-0.5">
-            <button
-              disabled
-              className="p-1 rounded text-[var(--muted)] opacity-50 cursor-not-allowed"
-            >
-              <ChevronLeft className="w-3.5 h-3.5" />
-            </button>
-            <button
-              disabled
-              className="p-1 rounded text-[var(--muted)] opacity-50 cursor-not-allowed"
-            >
-              <ChevronRight className="w-3.5 h-3.5" />
-            </button>
+        <div className="flex items-center gap-4 shrink-0">
+          {/* Page size selector */}
+          <div className="flex items-center gap-1.5">
+            <span className="text-[10px] uppercase tracking-wider text-[var(--muted)] font-medium">
+              Rows:
+            </span>
+            <div className="inline-flex rounded-md border border-[var(--border)] bg-[var(--background)] p-0.5">
+              {[50, 100, 250, 0].map((size) => (
+                <button
+                  key={size}
+                  onClick={() => {
+                    setPageSize(size);
+                    setCurrentPage(1);
+                  }}
+                  className={cn(
+                    "px-1.5 py-0.5 rounded text-[10px] font-mono transition-colors cursor-pointer",
+                    pageSize === size
+                      ? "bg-[var(--accent)] text-white font-semibold"
+                      : "text-[var(--muted)] hover:text-[var(--foreground)]"
+                  )}
+                >
+                  {size === 0 ? "All" : size}
+                </button>
+              ))}
+            </div>
           </div>
+
+          {/* Page navigation */}
+          {pageSize > 0 && totalPages > 1 && (
+            <div className="flex items-center gap-1.5">
+              <span className="font-mono text-[11px]">
+                Page <strong className="text-[var(--foreground)]">{safeCurrentPage}</strong> of{" "}
+                <strong className="text-[var(--foreground)]">{totalPages}</strong>
+              </span>
+              <div className="flex items-center gap-0.5">
+                <button
+                  disabled={safeCurrentPage <= 1}
+                  onClick={() => setCurrentPage(1)}
+                  className="p-1 rounded text-[var(--muted)] hover:text-[var(--foreground)] hover:bg-[var(--surface-hover)] disabled:opacity-30 disabled:pointer-events-none transition-colors cursor-pointer"
+                  title="First page"
+                >
+                  <ChevronsLeft className="w-3.5 h-3.5" />
+                </button>
+                <button
+                  disabled={safeCurrentPage <= 1}
+                  onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+                  className="p-1 rounded text-[var(--muted)] hover:text-[var(--foreground)] hover:bg-[var(--surface-hover)] disabled:opacity-30 disabled:pointer-events-none transition-colors cursor-pointer"
+                  title="Previous page"
+                >
+                  <ChevronLeft className="w-3.5 h-3.5" />
+                </button>
+                <button
+                  disabled={safeCurrentPage >= totalPages}
+                  onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+                  className="p-1 rounded text-[var(--muted)] hover:text-[var(--foreground)] hover:bg-[var(--surface-hover)] disabled:opacity-30 disabled:pointer-events-none transition-colors cursor-pointer"
+                  title="Next page"
+                >
+                  <ChevronRight className="w-3.5 h-3.5" />
+                </button>
+                <button
+                  disabled={safeCurrentPage >= totalPages}
+                  onClick={() => setCurrentPage(totalPages)}
+                  className="p-1 rounded text-[var(--muted)] hover:text-[var(--foreground)] hover:bg-[var(--surface-hover)] disabled:opacity-30 disabled:pointer-events-none transition-colors cursor-pointer"
+                  title="Last page"
+                >
+                  <ChevronsRight className="w-3.5 h-3.5" />
+                </button>
+              </div>
+            </div>
+          )}
         </div>
       </div>
     </div>

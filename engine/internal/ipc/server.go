@@ -65,9 +65,10 @@ func (s *Server) SendNotification(method string, params interface{}) error {
 		return fmt.Errorf("failed to marshal notification: %w", err)
 	}
 
+	data = append(data, '\n')
 	s.mu.Lock()
 	defer s.mu.Unlock()
-	_, err = fmt.Fprintf(s.writer, "%s\n", string(data))
+	_, err = s.writer.Write(data)
 	return err
 }
 
@@ -180,9 +181,10 @@ func (s *Server) sendResult(id interface{}, result interface{}) {
 		return
 	}
 
+	data = append(data, '\n')
 	s.mu.Lock()
 	defer s.mu.Unlock()
-	_, _ = fmt.Fprintf(s.writer, "%s\n", string(data))
+	_, _ = s.writer.Write(data)
 }
 
 func (s *Server) sendError(id interface{}, rpcErr *RPCError) {
@@ -198,7 +200,8 @@ func (s *Server) sendError(id interface{}, rpcErr *RPCError) {
 		return
 	}
 
+	data = append(data, '\n')
 	s.mu.Lock()
 	defer s.mu.Unlock()
-	_, _ = fmt.Fprintf(s.writer, "%s\n", string(data))
+	_, _ = s.writer.Write(data)
 }
