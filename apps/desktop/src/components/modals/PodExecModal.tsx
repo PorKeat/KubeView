@@ -528,6 +528,8 @@ export function PodExecModal() {
                   closeExecModal();
                 }
               }}
+              containerList={containerList}
+              onSelectContainer={setSelectedContainer}
             />
           </div>
         ) : (
