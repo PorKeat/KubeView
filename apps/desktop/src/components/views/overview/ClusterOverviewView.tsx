@@ -367,7 +367,7 @@ export function ClusterOverviewView() {
             onInspectWorkload={handleInspectWorkload}
           />
 
-          <div id="cluster-warning-events-card" className="h-full">
+          <div id="cluster-warning-events-card" className="h-full flex flex-col">
             <WarningEventsCard
               warningEvents={clusterOverview?.warningEvents}
               isNamespaceScoped={isNamespaceScoped}

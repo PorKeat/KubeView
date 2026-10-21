@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { Box, Database, Layers, Server, AlertTriangle } from "lucide-react";
+import { Box, Database, Layers, Server, AlertTriangle, ChevronRight } from "lucide-react";
 import { SpotlightCard } from "@/components/ui";
 import { cn } from "@/lib/utils";
 import type { WorkloadsSummary } from "@kubeview/contracts";
@@ -29,18 +29,31 @@ export function WorkloadControllersCard({
   const stsPct = sts.total > 0 ? Math.round((sts.ready / sts.total) * 100) : 100;
   const dsPct = ds.total > 0 ? Math.round((ds.ready / ds.total) * 100) : 100;
   const totalWorkloads = dep.total + sts.total + ds.total;
+  const totalDegraded = dep.degraded + sts.degraded + ds.degraded;
 
   return (
-    <SpotlightCard className="p-4 sm:p-5 flex flex-col justify-between h-full space-y-4">
-      <div className="space-y-3.5">
-        <div className="flex items-center justify-between pb-3 border-b border-[var(--border)]/70">
-          <div className="flex items-center gap-2.5">
-            <Layers className="w-4 h-4 text-[var(--accent)]" />
+    <SpotlightCard className="p-5 flex flex-col justify-between h-full space-y-4">
+      <div className="flex flex-col space-y-3.5">
+        {/* Card Header with Title and Status Pill (matching WarningEventsCard layout) */}
+        <div className="flex items-center justify-between pb-3.5 border-b border-[var(--border)]/70 gap-2 flex-wrap">
+          <div className="flex items-center gap-2">
+            <Layers className="w-4 h-4 text-[var(--accent)] shrink-0" />
             <h3 className="text-sm font-semibold text-[var(--foreground)] tracking-tight">
               Workload Controllers
             </h3>
-            <span className="text-xs font-mono px-2 py-0.5 rounded-md bg-[var(--surface-hover)] border border-[var(--border)] text-[var(--foreground)] font-medium tabular-nums">
+          </div>
+
+          <div className="flex items-center gap-2">
+            <span
+              className={cn(
+                "px-2.5 py-0.5 rounded-full text-xs font-mono font-semibold tabular-nums border",
+                totalDegraded > 0
+                  ? "bg-rose-500/10 text-rose-600 dark:text-rose-400 border-rose-500/20"
+                  : "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20"
+              )}
+            >
               {totalWorkloads} {isNamespaceScoped ? `in ${currentNamespace}` : "Total"}
+              {totalDegraded === 0 ? " • Healthy" : ` • ${totalDegraded} Degraded`}
             </span>
           </div>
         </div>
@@ -70,7 +83,7 @@ export function WorkloadControllersCard({
 
               <span
                 className={cn(
-                  "text-[11px] font-mono font-medium px-2 py-0.5 rounded border tabular-nums shrink-0",
+                  "text-[11px] font-mono font-semibold px-2.5 py-0.5 rounded-full border tabular-nums shrink-0",
                   dep.degraded === 0
                     ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20"
                     : "bg-rose-500/10 text-rose-600 dark:text-rose-400 border-rose-500/20"
@@ -95,9 +108,10 @@ export function WorkloadControllersCard({
               <button
                 type="button"
                 onClick={() => onInspectWorkload(isNamespaceScoped ? currentNamespace : "all")}
-                className="text-[var(--accent)] hover:underline text-xs font-mono font-medium cursor-pointer"
+                className="text-[var(--accent)] hover:underline text-xs font-medium flex items-center gap-0.5 cursor-pointer"
               >
-                Inspect &rarr;
+                <span>Inspect</span>
+                <ChevronRight className="w-3.5 h-3.5" aria-hidden="true" />
               </button>
             </div>
           </div>
@@ -119,10 +133,10 @@ export function WorkloadControllersCard({
 
               <span
                 className={cn(
-                  "text-[11px] font-mono font-medium px-2 py-0.5 rounded border tabular-nums shrink-0",
+                  "text-[11px] font-mono font-semibold px-2.5 py-0.5 rounded-full border tabular-nums shrink-0",
                   sts.degraded === 0
                     ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20"
-                    : "bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/20 font-semibold"
+                    : "bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/20"
                 )}
               >
                 {sts.ready} / {sts.total} Ready
@@ -165,9 +179,10 @@ export function WorkloadControllersCard({
                 <button
                   type="button"
                   onClick={() => onInspectWorkload(isNamespaceScoped ? currentNamespace : "all")}
-                  className="text-[var(--accent)] hover:underline text-xs font-mono font-medium cursor-pointer"
+                  className="text-[var(--accent)] hover:underline text-xs font-medium flex items-center gap-0.5 cursor-pointer"
                 >
-                  Inspect &rarr;
+                  <span>Inspect</span>
+                  <ChevronRight className="w-3.5 h-3.5" aria-hidden="true" />
                 </button>
               </div>
             )}
@@ -190,7 +205,7 @@ export function WorkloadControllersCard({
 
               <span
                 className={cn(
-                  "text-[11px] font-mono font-medium px-2 py-0.5 rounded border tabular-nums shrink-0",
+                  "text-[11px] font-mono font-semibold px-2.5 py-0.5 rounded-full border tabular-nums shrink-0",
                   ds.degraded === 0
                     ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20"
                     : "bg-rose-500/10 text-rose-600 dark:text-rose-400 border-rose-500/20"
@@ -215,13 +230,38 @@ export function WorkloadControllersCard({
               <button
                 type="button"
                 onClick={() => onInspectWorkload(isNamespaceScoped ? currentNamespace : "kube-system")}
-                className="text-[var(--accent)] hover:underline text-xs font-mono font-medium cursor-pointer"
+                className="text-[var(--accent)] hover:underline text-xs font-medium flex items-center gap-0.5 cursor-pointer"
               >
-                Inspect &rarr;
+                <span>Inspect</span>
+                <ChevronRight className="w-3.5 h-3.5" aria-hidden="true" />
               </button>
             </div>
           </div>
         </div>
+      </div>
+
+      {/* Card Footer (matching WarningEventsCard footer layout) */}
+      <div className="pt-2.5 border-t border-[var(--border)]/60 text-xs text-[var(--muted)] flex items-center justify-between">
+        <span className="tabular-nums font-mono text-xs">
+          {isNamespaceScoped
+            ? `Workloads in namespace: ${currentNamespace}`
+            : `Monitored across ${totalWorkloads} workload controllers`}
+        </span>
+        <button
+          type="button"
+          onClick={() => onInspectWorkload(isNamespaceScoped ? currentNamespace : "all")}
+          aria-label={
+            isNamespaceScoped
+              ? `View ${currentNamespace} workloads`
+              : "View workloads explorer"
+          }
+          className="text-[var(--accent)] hover:underline cursor-pointer flex items-center gap-1 font-medium text-xs transition-colors duration-150 focus-visible:ring-2 focus-visible:ring-[var(--accent)] rounded focus-visible:outline-hidden"
+        >
+          <span>
+            View {isNamespaceScoped ? `${currentNamespace} Workloads` : "Workloads Explorer"}
+          </span>
+          <ChevronRight className="w-3.5 h-3.5" aria-hidden="true" />
+        </button>
       </div>
     </SpotlightCard>
   );
