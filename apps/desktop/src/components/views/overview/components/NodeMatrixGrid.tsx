@@ -182,7 +182,10 @@ export function NodeMatrixGrid({
                   </span>
                 ) : (
                   <span className="tabular-nums">
-                    {availablePods} pods available
+                    {n.activePods} active {n.activePods === 1 ? "pod" : "pods"}
+                    <span className="text-[var(--muted)] opacity-75 font-normal ml-1">
+                      ({availablePods} free)
+                    </span>
                   </span>
                 )}
               </button>
