@@ -5,7 +5,7 @@
 # KubeView
 
 <p align="center">
-  <a href="LICENSE"><img src="https://img.shields.io/badge/License-Proprietary-red.svg?style=flat-square" alt="License: Proprietary" /></a>
+  <a href="LICENSE"><img src="https://img.shields.io/badge/License-BSL_1.1-blue.svg?style=flat-square" alt="License: BSL 1.1" /></a>
   <a href="SECURITY.md"><img src="https://img.shields.io/badge/Security-Policy_Active-38B879.svg?style=flat-square" alt="Security Policy" /></a>
   <a href="CONTRIBUTING.md"><img src="https://img.shields.io/badge/PRs-Welcome-F08A42.svg?style=flat-square" alt="PRs Welcome" /></a>
   <a href="CODE_OF_CONDUCT.md"><img src="https://img.shields.io/badge/Contributor_Covenant-v2.1-teal.svg?style=flat-square" alt="Code of Conduct" /></a>
@@ -203,17 +203,21 @@ Explore the detailed architecture and technical specifications in [`docs/`](docs
 KubeView is built for enterprise production readiness, adhering to open-source governance and security standards:
 
 - 🔒 [**Security Policy (SECURITY.md)**](SECURITY.md) — Vulnerability reporting, Coordinated Disclosure SLA, trust model, and scope.
-- 📜 [**License (LICENSE)**](LICENSE) — Proprietary & Confidential (All Rights Reserved). Strictly prohibits copying, forking, or derivative works.
+- 📜 [**License (LICENSE)**](LICENSE) — Licensed under **Business Source License 1.1 (BSL 1.1)**. Free for personal, educational, and internal cluster use; strictly prohibits competing forks and commercial clones.
 - 🤝 [**Contributing Guide (CONTRIBUTING.md)**](CONTRIBUTING.md) — Local development, conventional commits, quality gates, and PR review process.
 - 💖 [**Code of Conduct (CODE_OF_CONDUCT.md)**](CODE_OF_CONDUCT.md) — Contributor Covenant v2.1 community pledge and enforcement standards.
 - 📋 [**Changelog (CHANGELOG.md)**](CHANGELOG.md) — Keep a Changelog version history and release notes.
 
 ---
 
-## 📄 License & Proprietary Terms
+## 📄 License & Community Usage
 
-**Proprietary & Confidential. All Rights Reserved.**
+KubeView is licensed under the **Business Source License 1.1 (BSL 1.1)**.
+
+- **Free for Developers & Community:** You are 100% free to download, run, test, and use KubeView for all personal, educational, and internal organizational cluster management operations.
+- **Anti-Competitor & Anti-Fork Restriction:** You may NOT make the functionality of KubeView available to third parties as a competing product, commercial fork, SaaS, or hosted Kubernetes management service without an explicit commercial license.
+- **Open-Source Transition:** On October 21, 2030, this release automatically transitions to the Apache License, Version 2.0.
+
+See the [LICENSE](LICENSE) file for the full legal text.
 
 Copyright © 2026 [PorKeat](https://github.com/PorKeat). All Rights Reserved.
-
-**Strict Policy:** You may NOT copy, fork, modify, redistribute, sublicense, create derivative works, or build on top of this software for public or commercial distribution without prior express written authorization from the copyright holder. See the [LICENSE](LICENSE) file for complete legal terms.
