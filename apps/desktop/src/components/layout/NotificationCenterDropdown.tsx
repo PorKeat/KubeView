@@ -13,6 +13,7 @@ import {
   Stethoscope,
   X,
 } from "lucide-react";
+import { motion, AnimatePresence } from "motion/react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { useClusterStore } from "@/stores/clusterStore";
@@ -34,7 +35,7 @@ export function NotificationCenterDropdown() {
 
   const { openTab, setActiveTab } = useTabStore();
 
-  // Close on outside click
+  // Close on outside click and Escape key
   React.useEffect(() => {
     if (!isOpen) return;
     const handleClickOutside = (e: MouseEvent) => {
@@ -259,6 +260,7 @@ export function NotificationCenterDropdown() {
 
   return (
     <div className="relative" ref={dropdownRef}>
+      {/* Tactile Bell Button with Micro-Interaction */}
       <button
         type="button"
         onClick={() => setIsOpen((prev) => !prev)}
@@ -269,172 +271,210 @@ export function NotificationCenterDropdown() {
             : "Cluster Notifications & Health (100% optimal)"
         }
         className={cn(
-          "relative h-9 w-9 rounded-lg flex items-center justify-center transition-colors cursor-pointer outline-hidden focus-visible:ring-2 focus-visible:ring-[var(--accent)]",
+          "relative h-9 w-9 rounded-lg flex items-center justify-center transition-colors cursor-pointer outline-hidden focus-visible:ring-2 focus-visible:ring-[var(--accent)] select-none",
           isOpen
             ? "bg-black/[0.08] dark:bg-white/[0.1] text-[var(--foreground)]"
             : "hover:bg-black/[0.05] dark:hover:bg-white/[0.06] text-[var(--muted)] hover:text-[var(--foreground)]",
         )}
       >
-        <Bell className="w-4 h-4" aria-hidden="true" />
-
-        {/* Notification Count Badge */}
-        {deductions.length > 0 && (
-          <span className="absolute -top-0.5 -right-0.5 flex h-4 min-w-4 px-0.5 items-center justify-center">
-            {hasCritical && (
-              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-rose-400 opacity-75" />
-            )}
-            <span
-              className={cn(
-                "relative inline-flex items-center justify-center rounded-full text-[10px] font-bold font-mono text-white leading-none px-1 h-3.5 min-w-3.5 shadow-xs",
-                hasCritical
-                  ? "bg-rose-500 shadow-rose-500/40"
-                  : hasWarning
-                  ? "bg-amber-500 shadow-amber-500/40"
-                  : "bg-blue-500 shadow-blue-500/40",
-              )}
-            >
-              {deductions.length}
-            </span>
-          </span>
-        )}
-      </button>
-
-      {/* Floating Popover Panel */}
-      {isOpen && (
-        <div
-          onClick={(e) => e.stopPropagation()}
-          className="absolute right-0 top-11 z-50 w-96 max-w-[calc(100vw-2rem)] rounded-2xl bg-[var(--surface)] border border-[var(--border)] shadow-2xl shadow-black/20 dark:shadow-black/60 backdrop-blur-xl animate-in fade-in zoom-in-95 duration-150 overflow-hidden"
+        <motion.div
+          animate={isOpen ? { rotate: [0, -14, 12, -8, 4, 0] } : { rotate: 0 }}
+          transition={{ duration: 0.4, ease: "easeOut" }}
+          className="flex items-center justify-center"
         >
-          {/* Header */}
-          <div className="flex items-center justify-between p-3.5 border-b border-[var(--border)]/70 bg-black/[0.02] dark:bg-white/[0.02]">
-            <div className="flex items-center gap-2 min-w-0">
-              <div
-                className={cn(
-                  "w-2 h-2 rounded-full shrink-0",
-                  statusColor === "rose"
-                    ? "bg-rose-500 animate-pulse"
-                    : statusColor === "amber"
-                    ? "bg-amber-500"
-                    : "bg-emerald-500",
-                )}
-              />
-              <span className="text-xs font-semibold text-[var(--foreground)] truncate">
-                Cluster Notifications
-              </span>
-            </div>
+          <Bell className="w-4 h-4" aria-hidden="true" />
+        </motion.div>
 
-            {/* Health Score Pill */}
-            <div className="flex items-center gap-1.5 shrink-0">
+        {/* Notification Count Badge with spring entrance */}
+        <AnimatePresence>
+          {deductions.length > 0 && (
+            <motion.span
+              initial={{ scale: 0, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0, opacity: 0 }}
+              transition={{ type: "spring", stiffness: 500, damping: 25 }}
+              className="absolute -top-0.5 -right-0.5 flex h-4 min-w-4 px-0.5 items-center justify-center pointer-events-none"
+            >
+              {hasCritical && (
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-rose-400 opacity-75" />
+              )}
               <span
                 className={cn(
-                  "px-2 py-0.5 rounded-full text-[10px] font-bold font-mono tracking-wider uppercase border",
-                  statusColor === "rose"
-                    ? "bg-rose-500/10 text-rose-600 dark:text-rose-400 border-rose-500/30"
-                    : statusColor === "amber"
-                    ? "bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/30"
-                    : "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/30",
+                  "relative inline-flex items-center justify-center rounded-full text-[10px] font-bold font-mono text-white leading-none px-1 h-3.5 min-w-3.5 shadow-xs",
+                  hasCritical
+                    ? "bg-rose-500 shadow-rose-500/40"
+                    : hasWarning
+                    ? "bg-amber-500 shadow-amber-500/40"
+                    : "bg-blue-500 shadow-blue-500/40",
                 )}
               >
-                {score}% {statusLabel}
+                {deductions.length}
               </span>
-              <button
-                type="button"
-                onClick={() => setIsOpen(false)}
-                className="p-1 rounded-md text-[var(--muted)] hover:text-[var(--foreground)] hover:bg-black/5 dark:hover:bg-white/5 transition-colors cursor-pointer"
-                title="Close"
-              >
-                <X className="w-3.5 h-3.5" />
-              </button>
-            </div>
-          </div>
+            </motion.span>
+          )}
+        </AnimatePresence>
+      </button>
 
-          {/* Alerts Content List */}
-          <div className="max-h-80 overflow-y-auto p-3 space-y-2">
-            {deductions.length === 0 ? (
-              <div className="py-6 px-4 text-center space-y-2">
-                <div className="w-10 h-10 rounded-full bg-emerald-500/10 text-emerald-500 flex items-center justify-center mx-auto">
-                  <ShieldCheck className="w-5 h-5" />
-                </div>
-                <div className="text-xs font-semibold text-[var(--foreground)]">
-                  All Systems Healthy
-                </div>
-                <p className="text-[11px] text-[var(--muted)] max-w-xs mx-auto">
-                  Cluster pulse is 100%. No unready workloads, failing pods, or
-                  warning events detected.
-                </p>
-              </div>
-            ) : (
-              deductions.map((item) => (
+      {/* Floating Popover Panel with Spring Transition */}
+      <AnimatePresence>
+        {isOpen && (
+          <motion.div
+            initial={{ opacity: 0, scale: 0.92, y: -10 }}
+            animate={{ opacity: 1, scale: 1, y: 0 }}
+            exit={{ opacity: 0, scale: 0.94, y: -8 }}
+            transition={{
+              type: "spring",
+              stiffness: 420,
+              damping: 28,
+              mass: 0.8,
+            }}
+            style={{ transformOrigin: "top right" }}
+            onClick={(e) => e.stopPropagation()}
+            className="absolute right-0 top-11 z-50 w-96 max-w-[calc(100vw-2rem)] rounded-2xl bg-[var(--surface)] border border-[var(--border)] shadow-2xl shadow-black/25 dark:shadow-black/70 backdrop-blur-2xl overflow-hidden"
+          >
+            {/* Header */}
+            <div className="flex items-center justify-between p-3.5 border-b border-[var(--border)]/70 bg-black/[0.02] dark:bg-white/[0.02]">
+              <div className="flex items-center gap-2 min-w-0">
                 <div
-                  key={item.id}
-                  className="p-2.5 rounded-xl bg-black/[0.02] dark:bg-white/[0.02] border border-[var(--border)]/70 hover:border-[var(--accent)]/40 transition-colors space-y-1.5"
+                  className={cn(
+                    "w-2 h-2 rounded-full shrink-0",
+                    statusColor === "rose"
+                      ? "bg-rose-500 animate-pulse"
+                      : statusColor === "amber"
+                      ? "bg-amber-500"
+                      : "bg-emerald-500",
+                  )}
+                />
+                <span className="text-xs font-semibold text-[var(--foreground)] truncate">
+                  Cluster Notifications
+                </span>
+              </div>
+
+              {/* Health Score Pill */}
+              <div className="flex items-center gap-1.5 shrink-0">
+                <span
+                  className={cn(
+                    "px-2 py-0.5 rounded-full text-[10px] font-bold font-mono tracking-wider uppercase border transition-colors",
+                    statusColor === "rose"
+                      ? "bg-rose-500/10 text-rose-600 dark:text-rose-400 border-rose-500/30"
+                      : statusColor === "amber"
+                      ? "bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/30"
+                      : "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/30",
+                  )}
                 >
-                  <div className="flex items-start justify-between gap-2">
-                    <div className="flex items-center gap-1.5 min-w-0">
-                      {item.severity === "critical" ? (
-                        <AlertOctagon className="w-3.5 h-3.5 text-rose-500 shrink-0" />
-                      ) : item.severity === "warning" ? (
-                        <AlertTriangle className="w-3.5 h-3.5 text-amber-500 shrink-0" />
-                      ) : (
-                        <Activity className="w-3.5 h-3.5 text-blue-500 shrink-0" />
-                      )}
-                      <span className="text-xs font-semibold text-[var(--foreground)] truncate">
-                        {item.title}
+                  {score}% {statusLabel}
+                </span>
+                <button
+                  type="button"
+                  onClick={() => setIsOpen(false)}
+                  className="p-1 rounded-md text-[var(--muted)] hover:text-[var(--foreground)] hover:bg-black/5 dark:hover:bg-white/5 transition-colors cursor-pointer"
+                  title="Close"
+                >
+                  <X className="w-3.5 h-3.5" />
+                </button>
+              </div>
+            </div>
+
+            {/* Alerts Content List */}
+            <div className="max-h-80 overflow-y-auto p-3 space-y-2">
+              {deductions.length === 0 ? (
+                <motion.div
+                  initial={{ opacity: 0, scale: 0.96 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  transition={{ duration: 0.25 }}
+                  className="py-6 px-4 text-center space-y-2"
+                >
+                  <div className="w-10 h-10 rounded-full bg-emerald-500/10 text-emerald-500 flex items-center justify-center mx-auto">
+                    <ShieldCheck className="w-5 h-5" />
+                  </div>
+                  <div className="text-xs font-semibold text-[var(--foreground)]">
+                    All Systems Healthy
+                  </div>
+                  <p className="text-[11px] text-[var(--muted)] max-w-xs mx-auto">
+                    Cluster pulse is 100%. No unready workloads, failing pods, or
+                    warning events detected.
+                  </p>
+                </motion.div>
+              ) : (
+                deductions.map((item, idx) => (
+                  <motion.div
+                    key={item.id}
+                    initial={{ opacity: 0, y: 8 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{
+                      delay: 0.04 + idx * 0.035,
+                      duration: 0.22,
+                      ease: "easeOut",
+                    }}
+                    className="p-2.5 rounded-xl bg-black/[0.02] dark:bg-white/[0.02] border border-[var(--border)]/70 hover:border-[var(--accent)]/40 hover:bg-black/[0.03] dark:hover:bg-white/[0.04] transition-all space-y-1.5"
+                  >
+                    <div className="flex items-start justify-between gap-2">
+                      <div className="flex items-center gap-1.5 min-w-0">
+                        {item.severity === "critical" ? (
+                          <AlertOctagon className="w-3.5 h-3.5 text-rose-500 shrink-0" />
+                        ) : item.severity === "warning" ? (
+                          <AlertTriangle className="w-3.5 h-3.5 text-amber-500 shrink-0" />
+                        ) : (
+                          <Activity className="w-3.5 h-3.5 text-blue-500 shrink-0" />
+                        )}
+                        <span className="text-xs font-semibold text-[var(--foreground)] truncate">
+                          {item.title}
+                        </span>
+                      </div>
+                      <span className="text-[10px] font-mono font-semibold text-rose-500 dark:text-rose-400 bg-rose-500/10 px-1.5 py-0.2 rounded border border-rose-500/20 shrink-0">
+                        -{item.penalty} pts
                       </span>
                     </div>
-                    <span className="text-[10px] font-mono font-semibold text-rose-500 dark:text-rose-400 bg-rose-500/10 px-1.5 py-0.2 rounded border border-rose-500/20 shrink-0">
-                      -{item.penalty} pts
-                    </span>
-                  </div>
 
-                  <p className="text-[11px] text-[var(--muted)] leading-relaxed pl-5">
-                    {item.reason}
-                  </p>
+                    <p className="text-[11px] text-[var(--muted)] leading-relaxed pl-5">
+                      {item.reason}
+                    </p>
 
-                  {item.action && item.actionLabel && (
-                    <div className="pl-5 pt-0.5">
-                      <button
-                        type="button"
-                        onClick={item.action}
-                        className="inline-flex items-center gap-1 text-[11px] font-medium text-[var(--accent)] hover:underline cursor-pointer"
-                      >
-                        <span>{item.actionLabel}</span>
-                        <ArrowRight className="w-3 h-3" />
-                      </button>
-                    </div>
-                  )}
-                </div>
-              ))
-            )}
-          </div>
-
-          {/* Footer Bar */}
-          <div className="p-2.5 border-t border-[var(--border)]/70 bg-black/[0.02] dark:bg-white/[0.02] flex items-center justify-between text-xs">
-            <span className="text-[10px] text-[var(--muted)] font-mono truncate max-w-[170px]">
-              {currentContext}
-            </span>
-            <div className="flex items-center gap-1">
-              <button
-                type="button"
-                onClick={handleRunDiagnostics}
-                className="inline-flex items-center gap-1 px-2 py-1 rounded-md text-[11px] font-medium text-[var(--muted)] hover:text-[var(--foreground)] hover:bg-black/5 dark:hover:bg-white/5 transition-colors cursor-pointer"
-                title="Run Diagnostics"
-              >
-                <Stethoscope className="w-3 h-3" />
-                <span>Diagnostics</span>
-              </button>
-              <button
-                type="button"
-                onClick={handleRefreshTelemetry}
-                className="p-1 rounded-md text-[var(--muted)] hover:text-[var(--foreground)] hover:bg-black/5 dark:hover:bg-white/5 transition-colors cursor-pointer"
-                title="Refresh Telemetry"
-              >
-                <RefreshCw className="w-3 h-3" />
-              </button>
+                    {item.action && item.actionLabel && (
+                      <div className="pl-5 pt-0.5">
+                        <button
+                          type="button"
+                          onClick={item.action}
+                          className="inline-flex items-center gap-1 text-[11px] font-medium text-[var(--accent)] hover:underline cursor-pointer group/act"
+                        >
+                          <span>{item.actionLabel}</span>
+                          <ArrowRight className="w-3 h-3 group-hover/act:translate-x-0.5 transition-transform" />
+                        </button>
+                      </div>
+                    )}
+                  </motion.div>
+                ))
+              )}
             </div>
-          </div>
-        </div>
-      )}
+
+            {/* Footer Bar */}
+            <div className="p-2.5 border-t border-[var(--border)]/70 bg-black/[0.02] dark:bg-white/[0.02] flex items-center justify-between text-xs">
+              <span className="text-[10px] text-[var(--muted)] font-mono truncate max-w-[170px]">
+                {currentContext}
+              </span>
+              <div className="flex items-center gap-1">
+                <button
+                  type="button"
+                  onClick={handleRunDiagnostics}
+                  className="inline-flex items-center gap-1 px-2 py-1 rounded-md text-[11px] font-medium text-[var(--muted)] hover:text-[var(--foreground)] hover:bg-black/5 dark:hover:bg-white/5 transition-colors cursor-pointer"
+                  title="Run Diagnostics"
+                >
+                  <Stethoscope className="w-3 h-3" />
+                  <span>Diagnostics</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={handleRefreshTelemetry}
+                  className="p-1 rounded-md text-[var(--muted)] hover:text-[var(--foreground)] hover:bg-black/5 dark:hover:bg-white/5 transition-colors cursor-pointer"
+                  title="Refresh Telemetry"
+                >
+                  <RefreshCw className="w-3 h-3" />
+                </button>
+              </div>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }
