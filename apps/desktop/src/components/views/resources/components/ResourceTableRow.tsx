@@ -11,6 +11,10 @@ import {
   Copy,
   Check,
   Server,
+  ChevronRight,
+  Layers,
+  Tag,
+  Code2,
 } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
@@ -23,11 +27,12 @@ export interface ResourceTableRowProps {
   density?: "comfortable" | "compact";
   onToggleSelect: (key: string) => void;
   onRowClick: (item: PodSummary) => void;
-  onLogsClick: (item: PodSummary) => void;
-  onExecClick: (item: PodSummary) => void;
+  onLogsClick: (item: PodSummary, containerName?: string) => void;
+  onExecClick: (item: PodSummary, containerName?: string) => void;
   onRestartClick: (item: PodSummary) => void;
   onDeleteClick: (item: PodSummary) => void;
   onFilterNode?: (nodeName: string) => void;
+  onFilterLabel?: (label: string) => void;
 }
 
 export function ResourceTableRow({
@@ -41,10 +46,30 @@ export function ResourceTableRow({
   onRestartClick,
   onDeleteClick,
   onFilterNode,
+  onFilterLabel,
 }: ResourceTableRowProps) {
   const itemKey = `${item.namespace}/${item.name}`;
   const [copiedName, setCopiedName] = React.useState(false);
   const [copiedIp, setCopiedIp] = React.useState(false);
+  const [isExpanded, setIsExpanded] = React.useState(false);
+  const [showKubectlMenu, setShowKubectlMenu] = React.useState(false);
+  const [copiedCommand, setCopiedCommand] = React.useState<string | null>(null);
+  const kubectlMenuRef = React.useRef<HTMLDivElement>(null);
+
+  // Close kubectl menu on outside click
+  React.useEffect(() => {
+    if (!showKubectlMenu) return;
+    const handleClickOutside = (e: MouseEvent) => {
+      if (
+        kubectlMenuRef.current &&
+        !kubectlMenuRef.current.contains(e.target as Node)
+      ) {
+        setShowKubectlMenu(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, [showKubectlMenu]);
 
   const handleCopyName = (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -61,6 +86,40 @@ export function ResourceTableRow({
     setCopiedIp(true);
     toast.success(`Copied IP: ${item.ip}`);
     setTimeout(() => setCopiedIp(false), 1500);
+  };
+
+  const defaultPort = item.containers?.[0]?.ports?.[0]?.containerPort || 8080;
+  const kubectlCommands = [
+    {
+      label: "Logs (Follow)",
+      command: `kubectl logs ${item.name} -n ${item.namespace} -f`,
+    },
+    {
+      label: "Interactive Shell",
+      command: `kubectl exec -it ${item.name} -n ${item.namespace} -- /bin/sh`,
+    },
+    {
+      label: "Describe Pod",
+      command: `kubectl describe pod ${item.name} -n ${item.namespace}`,
+    },
+    {
+      label: "Port Forward",
+      command: `kubectl port-forward pod/${item.name} ${defaultPort}:${defaultPort} -n ${item.namespace}`,
+    },
+    {
+      label: "Delete Pod",
+      command: `kubectl delete pod ${item.name} -n ${item.namespace}`,
+    },
+  ];
+
+  const handleCopyKubectl = (cmd: string, label: string) => {
+    navigator.clipboard.writeText(cmd);
+    setCopiedCommand(label);
+    toast.success(`Copied: ${cmd}`);
+    setTimeout(() => {
+      setCopiedCommand(null);
+      setShowKubectlMenu(false);
+    }, 1000);
   };
 
   const renderStatus = (status: string) => {
@@ -109,199 +168,484 @@ export function ResourceTableRow({
   const isCompact = density === "compact";
 
   return (
-    <tr
-      onClick={() => onRowClick(item)}
-      className={cn(
-        "hover:bg-[var(--surface-hover)] cursor-pointer transition-colors group",
-        isCompact ? "h-7 text-[11px]" : "h-9 text-xs",
-        isSelected && "bg-[var(--accent)]/5 dark:bg-[var(--accent)]/10",
-      )}
-    >
-      <td className="px-3 text-center" onClick={(e) => e.stopPropagation()}>
-        <button
-          onClick={() => onToggleSelect(itemKey)}
-          className="text-[var(--muted)] hover:text-[var(--foreground)] flex items-center justify-center cursor-pointer"
-        >
-          {isSelected ? (
-            <CheckSquare className="w-3.5 h-3.5 text-[var(--accent)]" />
-          ) : (
-            <Square className="w-3.5 h-3.5 opacity-60 group-hover:opacity-100" />
-          )}
-        </button>
-      </td>
-
-      {/* Name with Quick Copy */}
-      <td className="py-1 px-3 font-medium font-mono text-[var(--foreground)] truncate max-w-[260px]">
-        <div className="flex items-center gap-1.5 min-w-0">
-          <span className="truncate" title={item.name}>
-            {item.name}
-          </span>
-          <button
-            type="button"
-            onClick={handleCopyName}
-            className="p-0.5 rounded hover:bg-black/10 dark:hover:bg-white/10 text-[var(--muted)] hover:text-[var(--foreground)] opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer shrink-0"
-            title="Copy pod name"
-          >
-            {copiedName ? (
-              <Check className="w-3 h-3 text-emerald-500" />
-            ) : (
-              <Copy className="w-3 h-3" />
-            )}
-          </button>
-        </div>
-      </td>
-
-      {/* Namespace */}
-      <td className="py-1 px-3 font-mono text-[var(--muted)] truncate max-w-[130px]">
-        {item.namespace}
-      </td>
-
-      {/* Status */}
-      <td className="py-1 px-3">{renderStatus(item.status)}</td>
-
-      {/* Ready */}
-      <td className="py-1 px-3 font-mono text-[var(--foreground)]">
-        {item.ready}
-      </td>
-
-      {/* Restarts */}
-      <td className="py-1 px-3 font-mono text-[var(--muted)]">
-        <span
-          className={cn(item.restarts > 0 && "text-amber-500 font-semibold")}
-        >
-          {item.restarts}
-        </span>
-      </td>
-
-      {/* Node (Clickable Filter Pill) */}
-      <td className="py-1 px-3" onClick={(e) => e.stopPropagation()}>
-        {item.nodeName ? (
-          <button
-            type="button"
-            onClick={() => onFilterNode && onFilterNode(item.nodeName!)}
-            title={`Filter pods on node '${item.nodeName}'`}
-            className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-mono bg-black/5 dark:bg-white/5 hover:bg-[var(--accent)]/15 hover:text-[var(--accent)] border border-[var(--border)] transition-colors cursor-pointer truncate max-w-[140px]"
-          >
-            <Server className="w-2.5 h-2.5 shrink-0 opacity-60" />
-            <span className="truncate">{item.nodeName}</span>
-          </button>
-        ) : (
-          <span className="text-[10px] text-[var(--muted)] font-mono italic">
-            unassigned
-          </span>
+    <React.Fragment>
+      <tr
+        onClick={() => onRowClick(item)}
+        className={cn(
+          "hover:bg-[var(--surface-hover)] cursor-pointer transition-colors group",
+          isCompact ? "h-7 text-[11px]" : "h-9 text-xs",
+          isSelected && "bg-[var(--accent)]/5 dark:bg-[var(--accent)]/10",
+          isExpanded && "bg-[var(--surface-hover)]/70",
         )}
-      </td>
-
-      {/* IP with Click-to-Copy */}
-      <td
-        className="py-1 px-3 font-mono text-[var(--muted)] text-[11px]"
-        onClick={(e) => e.stopPropagation()}
       >
-        {item.ip ? (
+        <td className="px-3 text-center" onClick={(e) => e.stopPropagation()}>
           <button
-            type="button"
-            onClick={handleCopyIp}
-            className="inline-flex items-center gap-1 hover:text-[var(--foreground)] transition-colors cursor-pointer group/ip"
-            title="Click to copy IP"
+            onClick={() => onToggleSelect(itemKey)}
+            className="text-[var(--muted)] hover:text-[var(--foreground)] flex items-center justify-center cursor-pointer"
           >
-            <span>{item.ip}</span>
-            {copiedIp ? (
-              <Check className="w-2.5 h-2.5 text-emerald-500 shrink-0" />
+            {isSelected ? (
+              <CheckSquare className="w-3.5 h-3.5 text-[var(--accent)]" />
             ) : (
-              <Copy className="w-2.5 h-2.5 opacity-0 group-hover/ip:opacity-100 transition-opacity shrink-0" />
+              <Square className="w-3.5 h-3.5 opacity-60 group-hover:opacity-100" />
             )}
           </button>
-        ) : (
-          <span className="opacity-40">-</span>
-        )}
-      </td>
+        </td>
 
-      {/* CPU */}
-      <td className="py-1 px-3">
-        <div className="flex items-center gap-2">
-          <span className="font-mono text-[var(--foreground)] text-[11px] w-9">
-            {item.cpu}
-          </span>
-          {!isCompact && item.cpuPercent > 0 && (
-            <div className="flex-1 h-1.5 rounded-full bg-[var(--surface-active)] overflow-hidden w-10">
-              <div
-                className="h-full rounded-full bg-[var(--accent)]"
-                style={{ width: `${item.cpuPercent}%` }}
-              />
-            </div>
-          )}
-        </div>
-      </td>
-
-      {/* Memory */}
-      <td className="py-1 px-3">
-        <div className="flex items-center gap-2">
-          <span className="font-mono text-[var(--foreground)] text-[11px] w-12">
-            {item.memory}
-          </span>
-          {!isCompact && item.memoryPercent > 0 && (
-            <div className="flex-1 h-1.5 rounded-full bg-[var(--surface-active)] overflow-hidden w-10">
-              <div
+        {/* Name with Expand Chevron & Quick Copy */}
+        <td className="py-1 px-3 font-medium font-mono text-[var(--foreground)] truncate max-w-[280px]">
+          <div className="flex items-center gap-1.5 min-w-0">
+            <button
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation();
+                setIsExpanded((prev) => !prev);
+              }}
+              className="p-0.5 -ml-1 rounded hover:bg-black/10 dark:hover:bg-white/10 text-[var(--muted)] hover:text-[var(--foreground)] transition-colors cursor-pointer shrink-0"
+              title={
+                isExpanded ? "Collapse containers" : "Expand containers & sidecars"
+              }
+              aria-label={
+                isExpanded ? "Collapse containers" : "Expand containers & sidecars"
+              }
+            >
+              <ChevronRight
                 className={cn(
-                  "h-full rounded-full",
-                  item.memoryPercent > 70
-                    ? "bg-rose-500"
-                    : "bg-cyan-500 dark:bg-cyan-400",
+                  "w-3.5 h-3.5 transition-transform duration-200",
+                  isExpanded && "rotate-90 text-[var(--accent)]",
                 )}
-                style={{ width: `${item.memoryPercent}%` }}
               />
-            </div>
+            </button>
+            <span className="truncate" title={item.name}>
+              {item.name}
+            </span>
+            {item.containers && item.containers.length > 1 && (
+              <span
+                className="px-1.5 py-0.2 rounded text-[10px] font-mono bg-blue-500/10 text-blue-500 dark:text-blue-400 border border-blue-500/20 shrink-0 select-none"
+                title={`${item.containers.length} containers in this pod`}
+              >
+                {item.containers.length}c
+              </span>
+            )}
+            <button
+              type="button"
+              onClick={handleCopyName}
+              className="p-0.5 rounded hover:bg-black/10 dark:hover:bg-white/10 text-[var(--muted)] hover:text-[var(--foreground)] opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer shrink-0"
+              title="Copy pod name"
+            >
+              {copiedName ? (
+                <Check className="w-3 h-3 text-emerald-500" />
+              ) : (
+                <Copy className="w-3 h-3" />
+              )}
+            </button>
+          </div>
+        </td>
+
+        {/* Namespace */}
+        <td className="py-1 px-3 font-mono text-[var(--muted)] truncate max-w-[130px]">
+          {item.namespace}
+        </td>
+
+        {/* Status */}
+        <td className="py-1 px-3">{renderStatus(item.status)}</td>
+
+        {/* Ready */}
+        <td className="py-1 px-3 font-mono text-[var(--foreground)]">
+          {item.ready}
+        </td>
+
+        {/* Restarts */}
+        <td className="py-1 px-3 font-mono text-[var(--muted)]">
+          <span
+            className={cn(item.restarts > 0 && "text-amber-500 font-semibold")}
+          >
+            {item.restarts}
+          </span>
+        </td>
+
+        {/* Node (Clickable Filter Pill) */}
+        <td className="py-1 px-3" onClick={(e) => e.stopPropagation()}>
+          {item.nodeName ? (
+            <button
+              type="button"
+              onClick={() => onFilterNode && onFilterNode(item.nodeName!)}
+              title={`Filter pods on node '${item.nodeName}'`}
+              className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-mono bg-black/5 dark:bg-white/5 hover:bg-[var(--accent)]/15 hover:text-[var(--accent)] border border-[var(--border)] transition-colors cursor-pointer truncate max-w-[140px]"
+            >
+              <Server className="w-2.5 h-2.5 shrink-0 opacity-60" />
+              <span className="truncate">{item.nodeName}</span>
+            </button>
+          ) : (
+            <span className="text-[10px] text-[var(--muted)] font-mono italic">
+              unassigned
+            </span>
           )}
-        </div>
-      </td>
+        </td>
 
-      {/* Age */}
-      <td className="py-1 px-3 font-mono text-[var(--muted)]">{item.age}</td>
+        {/* IP with Click-to-Copy */}
+        <td
+          className="py-1 px-3 font-mono text-[var(--muted)] text-[11px]"
+          onClick={(e) => e.stopPropagation()}
+        >
+          {item.ip ? (
+            <button
+              type="button"
+              onClick={handleCopyIp}
+              className="inline-flex items-center gap-1 hover:text-[var(--foreground)] transition-colors cursor-pointer group/ip"
+              title="Click to copy IP"
+            >
+              <span>{item.ip}</span>
+              {copiedIp ? (
+                <Check className="w-2.5 h-2.5 text-emerald-500 shrink-0" />
+              ) : (
+                <Copy className="w-2.5 h-2.5 opacity-0 group-hover/ip:opacity-100 transition-opacity shrink-0" />
+              )}
+            </button>
+          ) : (
+            <span className="opacity-40">-</span>
+          )}
+        </td>
 
-      {/* Action Buttons */}
-      <td className="py-1 px-3 text-right" onClick={(e) => e.stopPropagation()}>
-        <div className="flex items-center justify-end gap-1 opacity-40 group-hover:opacity-100 transition-opacity">
-          {/* 1. View Logs */}
-          <button
-            onClick={() => onLogsClick(item)}
-            className="p-1 rounded hover:bg-[var(--surface-active)] text-[var(--muted)] hover:text-[var(--foreground)] transition-colors cursor-pointer"
-            title="View Logs"
-            aria-label={`View logs for ${item.name}`}
+        {/* CPU */}
+        <td className="py-1 px-3">
+          <div className="flex items-center gap-2">
+            <span className="font-mono text-[var(--foreground)] text-[11px] w-9">
+              {item.cpu}
+            </span>
+            {!isCompact && item.cpuPercent > 0 && (
+              <div className="flex-1 h-1.5 rounded-full bg-[var(--surface-active)] overflow-hidden w-10">
+                <div
+                  className="h-full rounded-full bg-[var(--accent)]"
+                  style={{ width: `${item.cpuPercent}%` }}
+                />
+              </div>
+            )}
+          </div>
+        </td>
+
+        {/* Memory */}
+        <td className="py-1 px-3">
+          <div className="flex items-center gap-2">
+            <span className="font-mono text-[var(--foreground)] text-[11px] w-12">
+              {item.memory}
+            </span>
+            {!isCompact && item.memoryPercent > 0 && (
+              <div className="flex-1 h-1.5 rounded-full bg-[var(--surface-active)] overflow-hidden w-10">
+                <div
+                  className={cn(
+                    "h-full rounded-full",
+                    item.memoryPercent > 70
+                      ? "bg-rose-500"
+                      : "bg-cyan-500 dark:bg-cyan-400",
+                  )}
+                  style={{ width: `${item.memoryPercent}%` }}
+                />
+              </div>
+            )}
+          </div>
+        </td>
+
+        {/* Age */}
+        <td className="py-1 px-3 font-mono text-[var(--muted)]">{item.age}</td>
+
+        {/* Action Buttons */}
+        <td
+          className="py-1 px-3 text-right"
+          onClick={(e) => e.stopPropagation()}
+        >
+          <div className="flex items-center justify-end gap-1 opacity-40 group-hover:opacity-100 transition-opacity">
+            {/* 1. View Logs */}
+            <button
+              onClick={() => onLogsClick(item)}
+              className="p-1 rounded hover:bg-[var(--surface-active)] text-[var(--muted)] hover:text-[var(--foreground)] transition-colors cursor-pointer"
+              title="View Logs"
+              aria-label={`View logs for ${item.name}`}
+            >
+              <FileText className="w-3.5 h-3.5" />
+            </button>
+
+            {/* 2. Exec Shell */}
+            <button
+              onClick={() => onExecClick(item)}
+              className="p-1 rounded hover:bg-[var(--surface-active)] text-[var(--muted)] hover:text-[var(--foreground)] transition-colors cursor-pointer"
+              title="Exec Shell"
+              aria-label={`Exec shell in ${item.name}`}
+            >
+              <Terminal className="w-3.5 h-3.5" />
+            </button>
+
+            {/* 3. Quick kubectl CLI Menu */}
+            <div className="relative" ref={kubectlMenuRef}>
+              <button
+                type="button"
+                onClick={() => setShowKubectlMenu((v) => !v)}
+                className={cn(
+                  "p-1 rounded transition-colors cursor-pointer",
+                  showKubectlMenu
+                    ? "bg-[var(--accent)] text-white"
+                    : "hover:bg-[var(--surface-active)] text-[var(--muted)] hover:text-[var(--foreground)]",
+                )}
+                title="Copy kubectl CLI Commands"
+                aria-label="Copy kubectl CLI Commands"
+              >
+                <Code2 className="w-3.5 h-3.5" />
+              </button>
+
+              {showKubectlMenu && (
+                <div
+                  onClick={(e) => e.stopPropagation()}
+                  className="absolute right-0 top-8 z-50 w-72 p-2 rounded-xl bg-[var(--surface)] border border-[var(--border)] shadow-2xl animate-in fade-in zoom-in-95 duration-150 backdrop-blur-md"
+                >
+                  <div className="flex items-center justify-between px-2 py-1 border-b border-[var(--border)]/60 mb-1">
+                    <span className="text-[11px] font-semibold text-[var(--foreground)] flex items-center gap-1.5">
+                      <Terminal className="w-3.5 h-3.5 text-[var(--accent)]" />
+                      Quick kubectl CLI
+                    </span>
+                    <span className="text-[10px] text-[var(--muted)] font-mono">
+                      {item.namespace}
+                    </span>
+                  </div>
+
+                  <div className="space-y-1">
+                    {kubectlCommands.map((kc) => {
+                      const isCopied = copiedCommand === kc.label;
+                      return (
+                        <button
+                          key={kc.label}
+                          type="button"
+                          onClick={() => handleCopyKubectl(kc.command, kc.label)}
+                          className="w-full text-left p-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-white/[0.06] transition-colors cursor-pointer group/kcmd flex items-start justify-between gap-2"
+                        >
+                          <div className="min-w-0">
+                            <div className="text-[11px] font-medium text-[var(--foreground)]">
+                              {kc.label}
+                            </div>
+                            <div className="text-[10px] font-mono text-[var(--muted)] truncate max-w-[210px]">
+                              {kc.command}
+                            </div>
+                          </div>
+                          <div className="p-1 shrink-0 text-[var(--muted)] group-hover/kcmd:text-[var(--foreground)]">
+                            {isCopied ? (
+                              <Check className="w-3 h-3 text-emerald-500" />
+                            ) : (
+                              <Copy className="w-3 h-3 opacity-60 group-hover/kcmd:opacity-100" />
+                            )}
+                          </div>
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* 4. Restart */}
+            <button
+              onClick={() => onRestartClick(item)}
+              className="p-1 rounded hover:bg-[var(--surface-active)] text-[var(--muted)] hover:text-[var(--foreground)] transition-colors cursor-pointer"
+              title="Restart Pod"
+              aria-label={`Restart ${item.name}`}
+            >
+              <RotateCw className="w-3.5 h-3.5" />
+            </button>
+
+            {/* 5. Delete Pod */}
+            <button
+              onClick={() => onDeleteClick(item)}
+              className="p-1 rounded hover:bg-rose-500/15 text-[var(--muted)] hover:text-rose-500 transition-colors cursor-pointer"
+              title="Delete Pod"
+              aria-label={`Delete ${item.name}`}
+            >
+              <Trash2 className="w-3.5 h-3.5" />
+            </button>
+          </div>
+        </td>
+      </tr>
+
+      {/* Expanded Container and Sidecars Sub-row */}
+      {isExpanded && (
+        <tr className="bg-slate-50/70 dark:bg-white/[0.015] border-b border-[var(--border)]">
+          <td
+            colSpan={12}
+            className="px-4 py-3"
+            onClick={(e) => e.stopPropagation()}
           >
-            <FileText className="w-3.5 h-3.5" />
-          </button>
+            <div className="bg-slate-100/70 dark:bg-black/40 rounded-xl border border-[var(--border)]/80 p-3 shadow-xs space-y-3">
+              {/* Top Header: Meta and Labels */}
+              <div className="flex flex-wrap items-center justify-between gap-2 pb-2 border-b border-[var(--border)]/60 text-xs">
+                <div className="flex items-center gap-2">
+                  <Layers className="w-3.5 h-3.5 text-[var(--accent)]" />
+                  <span className="font-semibold text-[var(--foreground)]">
+                    Containers &amp; Sidecars ({item.containers?.length || 0})
+                  </span>
+                  {item.controlledBy && (
+                    <span className="text-[11px] text-[var(--muted)] font-mono">
+                      Controlled by:{" "}
+                      <strong className="text-[var(--foreground)]">
+                        {item.controlledBy}
+                      </strong>
+                    </span>
+                  )}
+                  {item.qosClass && (
+                    <span className="px-1.5 py-0.5 rounded text-[10px] font-mono bg-black/5 dark:bg-white/5 border border-[var(--border)] text-[var(--muted)]">
+                      QoS: {item.qosClass}
+                    </span>
+                  )}
+                </div>
 
-          {/* 2. Exec Shell */}
-          <button
-            onClick={() => onExecClick(item)}
-            className="p-1 rounded hover:bg-[var(--surface-active)] text-[var(--muted)] hover:text-[var(--foreground)] transition-colors cursor-pointer"
-            title="Exec Shell"
-            aria-label={`Exec shell in ${item.name}`}
-          >
-            <Terminal className="w-3.5 h-3.5" />
-          </button>
+                {/* Labels (Feature 3: Clickable chips to filter) */}
+                {item.labels && Object.keys(item.labels).length > 0 && (
+                  <div className="flex flex-wrap items-center gap-1.5 max-w-xl">
+                    <span className="text-[10px] font-medium text-[var(--muted)] flex items-center gap-1">
+                      <Tag className="w-3 h-3" /> Labels:
+                    </span>
+                    {Object.entries(item.labels)
+                      .slice(0, 8)
+                      .map(([k, v]) => (
+                        <button
+                          key={k}
+                          type="button"
+                          onClick={() =>
+                            onFilterLabel && onFilterLabel(`${k}=${v}`)
+                          }
+                          className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-mono bg-indigo-500/10 text-indigo-500 dark:text-indigo-400 hover:bg-indigo-500/20 border border-indigo-500/20 transition-colors cursor-pointer"
+                          title={`Filter pods by label ${k}=${v}`}
+                        >
+                          <span className="font-medium">{k}</span>
+                          <span className="opacity-60">=</span>
+                          <span className="text-[var(--foreground)] dark:text-white truncate max-w-[120px]">
+                            {v}
+                          </span>
+                        </button>
+                      ))}
+                    {Object.keys(item.labels).length > 8 && (
+                      <span className="text-[10px] text-[var(--muted)] font-mono">
+                        +{Object.keys(item.labels).length - 8} more
+                      </span>
+                    )}
+                  </div>
+                )}
+              </div>
 
-          {/* 3. Restart */}
-          <button
-            onClick={() => onRestartClick(item)}
-            className="p-1 rounded hover:bg-[var(--surface-active)] text-[var(--muted)] hover:text-[var(--foreground)] transition-colors cursor-pointer"
-            title="Restart Pod"
-            aria-label={`Restart ${item.name}`}
-          >
-            <RotateCw className="w-3.5 h-3.5" />
-          </button>
+              {/* Container Cards / Items */}
+              <div className="grid grid-cols-1 gap-2">
+                {!item.containers || item.containers.length === 0 ? (
+                  <div className="text-xs text-[var(--muted)] italic py-2">
+                    No container telemetry available for this pod.
+                  </div>
+                ) : (
+                  item.containers.map((c) => {
+                    const isReady = c.ready;
+                    const stateStr =
+                      c.state || (isReady ? "Running" : "Pending");
+                    return (
+                      <div
+                        key={c.name}
+                        className="flex flex-wrap items-center justify-between gap-3 p-2.5 rounded-lg bg-white/80 dark:bg-white/[0.04] border border-[var(--border)] text-xs transition-colors hover:border-[var(--accent)]/40"
+                      >
+                        {/* Left: Container Identity & Status */}
+                        <div className="flex items-center gap-2.5 min-w-0 flex-1">
+                          <span
+                            className={cn(
+                              "w-2 h-2 rounded-full shrink-0",
+                              isReady
+                                ? "bg-emerald-500 shadow-xs shadow-emerald-500/50"
+                                : "bg-rose-500 shadow-xs shadow-rose-500/50",
+                            )}
+                          />
+                          <div className="min-w-0">
+                            <div className="flex items-center gap-2">
+                              <span className="font-mono font-semibold text-[var(--foreground)] truncate">
+                                {c.name}
+                              </span>
+                              <span
+                                className={cn(
+                                  "px-1.5 py-0.2 rounded text-[10px] font-mono uppercase font-semibold",
+                                  isReady
+                                    ? "bg-emerald-500/10 text-emerald-500 border border-emerald-500/20"
+                                    : "bg-amber-500/10 text-amber-500 border border-amber-500/20",
+                                )}
+                              >
+                                {c.stateReason || stateStr}
+                              </span>
+                              {c.restartCount > 0 && (
+                                <span className="text-[10px] font-mono text-amber-500 font-medium">
+                                  {c.restartCount} restart
+                                  {c.restartCount > 1 ? "s" : ""}
+                                </span>
+                              )}
+                            </div>
+                            <div className="flex items-center gap-1.5 mt-0.5 text-[11px] text-[var(--muted)] font-mono truncate max-w-lg">
+                              <span className="truncate" title={c.image}>
+                                {c.image}
+                              </span>
+                            </div>
+                          </div>
+                        </div>
 
-          {/* 4. Delete Pod */}
-          <button
-            onClick={() => onDeleteClick(item)}
-            className="p-1 rounded hover:bg-rose-500/15 text-[var(--muted)] hover:text-rose-500 transition-colors cursor-pointer"
-            title="Delete Pod"
-            aria-label={`Delete ${item.name}`}
-          >
-            <Trash2 className="w-3.5 h-3.5" />
-          </button>
-        </div>
-      </td>
-    </tr>
+                        {/* Center: Ports if present */}
+                        <div className="flex items-center gap-2">
+                          {c.ports && c.ports.length > 0 && (
+                            <div className="flex items-center gap-1 flex-wrap">
+                              {c.ports.map((p, idx) => (
+                                <span
+                                  key={idx}
+                                  className="px-1.5 py-0.5 rounded text-[10px] font-mono bg-black/5 dark:bg-white/5 border border-[var(--border)] text-[var(--muted)]"
+                                  title={
+                                    p.name
+                                      ? `${p.name}: ${p.containerPort}/${p.protocol || "TCP"}`
+                                      : `${p.containerPort}/${p.protocol || "TCP"}`
+                                  }
+                                >
+                                  {p.containerPort}/{p.protocol || "TCP"}
+                                </span>
+                              ))}
+                            </div>
+                          )}
+                        </div>
+
+                        {/* Right: Container-specific Actions */}
+                        <div className="flex items-center gap-1 shrink-0">
+                          <button
+                            type="button"
+                            onClick={() => onLogsClick(item, c.name)}
+                            className="inline-flex items-center gap-1 px-2 py-1 rounded text-xs font-medium bg-[var(--surface)] hover:bg-[var(--surface-hover)] border border-[var(--border)] text-[var(--foreground)] transition-colors cursor-pointer"
+                            title={`View logs for container '${c.name}'`}
+                          >
+                            <FileText className="w-3 h-3 text-[var(--muted)]" />
+                            <span>Logs</span>
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => onExecClick(item, c.name)}
+                            className="inline-flex items-center gap-1 px-2 py-1 rounded text-xs font-medium bg-[var(--surface)] hover:bg-[var(--surface-hover)] border border-[var(--border)] text-[var(--foreground)] transition-colors cursor-pointer"
+                            title={`Exec shell in container '${c.name}'`}
+                          >
+                            <Terminal className="w-3 h-3 text-[var(--muted)]" />
+                            <span>Exec</span>
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              const cmd = `kubectl logs ${item.name} -c ${c.name} -n ${item.namespace} -f`;
+                              navigator.clipboard.writeText(cmd);
+                              toast.success(`Copied container logs command`);
+                            }}
+                            className="p-1 rounded text-[var(--muted)] hover:text-[var(--foreground)] hover:bg-black/10 dark:hover:bg-white/10 transition-colors cursor-pointer"
+                            title="Copy kubectl logs CLI command for this container"
+                          >
+                            <Copy className="w-3 h-3" />
+                          </button>
+                        </div>
+                      </div>
+                    );
+                  })
+                )}
+              </div>
+            </div>
+          </td>
+        </tr>
+      )}
+    </React.Fragment>
   );
 }

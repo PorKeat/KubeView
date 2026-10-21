@@ -61,6 +61,7 @@ export function ResourceListView({ resourceType }: ResourceListViewProps) {
   const [search, setSearch] = React.useState("");
   const deferredSearch = React.useDeferredValue(search);
   const [statusFilter, setStatusFilter] = React.useState("all");
+  const [labelFilter, setLabelFilter] = React.useState<string | null>(null);
   const [density, setDensity] = React.useState<"comfortable" | "compact">(
     "comfortable",
   );
@@ -78,7 +79,14 @@ export function ResourceListView({ resourceType }: ResourceListViewProps) {
 
   React.useEffect(() => {
     setCurrentPage(1);
-  }, [deferredSearch, statusFilter, podNodeFilter, currentNamespace, pageSize]);
+  }, [
+    deferredSearch,
+    statusFilter,
+    podNodeFilter,
+    labelFilter,
+    currentNamespace,
+    pageSize,
+  ]);
 
   // Initial fetch when mounted, when context changes, or if pods are empty
   React.useEffect(() => {
@@ -172,6 +180,22 @@ export function ResourceListView({ resourceType }: ResourceListViewProps) {
         }
       }
 
+      // 1.5 Label filter
+      if (labelFilter) {
+        if (!pod.labels) return false;
+        const [filterKey, filterVal] = labelFilter.includes("=")
+          ? labelFilter.split("=")
+          : [labelFilter, undefined];
+        const actualVal = pod.labels[filterKey.trim()];
+        if (actualVal === undefined) return false;
+        if (
+          filterVal !== undefined &&
+          actualVal.trim() !== filterVal.trim()
+        ) {
+          return false;
+        }
+      }
+
       // 2. Namespace filter
       if (
         currentNamespace !== "all" &&
@@ -215,7 +239,14 @@ export function ResourceListView({ resourceType }: ResourceListViewProps) {
 
       return true;
     });
-  }, [pods, podNodeFilter, currentNamespace, statusFilter, deferredSearch]);
+  }, [
+    pods,
+    podNodeFilter,
+    labelFilter,
+    currentNamespace,
+    statusFilter,
+    deferredSearch,
+  ]);
 
   // Sort items
   const sortedItems = React.useMemo(() => {
@@ -301,6 +332,8 @@ export function ResourceListView({ resourceType }: ResourceListViewProps) {
         resourceType={resourceType}
         podNodeFilter={podNodeFilter}
         setPodNodeFilter={setPodNodeFilter}
+        labelFilter={labelFilter}
+        setLabelFilter={setLabelFilter}
         statusFilter={statusFilter}
         setStatusFilter={setStatusFilter}
         pods={pods}
@@ -490,6 +523,7 @@ export function ResourceListView({ resourceType }: ResourceListViewProps) {
                   density={density}
                   onToggleSelect={toggleSelectItem}
                   onFilterNode={(node) => setPodNodeFilter(node)}
+                  onFilterLabel={(label) => setLabelFilter(label)}
                   onRowClick={(pod) =>
                     openInspector({
                       kind: "Pod",
@@ -499,11 +533,19 @@ export function ResourceListView({ resourceType }: ResourceListViewProps) {
                       data: pod as unknown as Record<string, unknown>,
                     })
                   }
-                  onLogsClick={(pod) =>
-                    openLogsModal({ name: pod.name, namespace: pod.namespace })
+                  onLogsClick={(pod, containerName) =>
+                    openLogsModal({
+                      name: pod.name,
+                      namespace: pod.namespace,
+                      container: containerName,
+                    })
                   }
-                  onExecClick={(pod) =>
-                    openExecModal({ name: pod.name, namespace: pod.namespace })
+                  onExecClick={(pod, containerName) =>
+                    openExecModal({
+                      name: pod.name,
+                      namespace: pod.namespace,
+                      container: containerName,
+                    })
                   }
                   onRestartClick={(pod) =>
                     openRestartConfirm({

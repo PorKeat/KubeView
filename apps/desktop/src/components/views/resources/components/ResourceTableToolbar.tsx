@@ -9,6 +9,7 @@ import {
   Rows2,
   Rows3,
   AlertTriangle,
+  Tag,
 } from "lucide-react";
 import { motion } from "motion/react";
 import { cn } from "@/lib/utils";
@@ -20,6 +21,8 @@ export interface ResourceTableToolbarProps {
   resourceType: string;
   podNodeFilter: string | null;
   setPodNodeFilter: (node: string | null) => void;
+  labelFilter?: string | null;
+  setLabelFilter?: (label: string | null) => void;
   statusFilter: string;
   setStatusFilter: (status: string) => void;
   pods: PodSummary[];
@@ -39,6 +42,8 @@ export function ResourceTableToolbar({
   resourceType,
   podNodeFilter,
   setPodNodeFilter,
+  labelFilter,
+  setLabelFilter,
   statusFilter,
   setStatusFilter,
   pods,
@@ -73,8 +78,26 @@ export function ResourceTableToolbar({
       });
     }
 
+    if (labelFilter) {
+      list = list.filter((p) => {
+        if (!p.labels) return false;
+        const [filterKey, filterVal] = labelFilter.includes("=")
+          ? labelFilter.split("=")
+          : [labelFilter, undefined];
+        const actualVal = p.labels[filterKey.trim()];
+        if (actualVal === undefined) return false;
+        if (
+          filterVal !== undefined &&
+          actualVal.trim() !== filterVal.trim()
+        ) {
+          return false;
+        }
+        return true;
+      });
+    }
+
     return list;
-  }, [podNodeFilter, pods, currentNamespace]);
+  }, [podNodeFilter, labelFilter, pods, currentNamespace]);
 
   const filterPills = React.useMemo(() => {
     const issuesCount = basePods.filter(
@@ -158,6 +181,28 @@ export function ResourceTableToolbar({
             className="ml-1 p-0.5 hover:bg-[var(--accent)]/20 rounded-full transition-colors cursor-pointer"
             title="Clear node filter"
             aria-label="Clear node filter"
+          >
+            <X className="w-3 h-3" />
+          </button>
+        </div>
+      )}
+
+      {/* Active Label Filter Pill */}
+      {labelFilter && (
+        <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-indigo-500/10 text-indigo-500 dark:text-indigo-400 border border-indigo-500/30 text-xs font-mono font-medium shrink-0 animate-in fade-in duration-150">
+          <Tag className="w-3.5 h-3.5" aria-hidden="true" />
+          <span>
+            Label:{" "}
+            <strong className="text-[var(--foreground)] dark:text-white">
+              {labelFilter}
+            </strong>
+          </span>
+          <button
+            type="button"
+            onClick={() => setLabelFilter && setLabelFilter(null)}
+            className="ml-1 p-0.5 hover:bg-indigo-500/20 rounded-full transition-colors cursor-pointer"
+            title="Clear label filter"
+            aria-label="Clear label filter"
           >
             <X className="w-3 h-3" />
           </button>

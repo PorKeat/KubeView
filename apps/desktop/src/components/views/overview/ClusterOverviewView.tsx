@@ -8,6 +8,7 @@ import { OverviewSkeleton, OfflineState, ErrorBanner } from "@/components/ui";
 import { ConnectionDiagnosticsDrawer } from "../ConnectionDiagnosticsDrawer";
 
 import { ClusterOverviewHeader } from "./components/ClusterOverviewHeader";
+import { ClusterHealthPulse } from "./components/ClusterHealthPulse";
 import { NamespaceScopeBanner } from "./components/NamespaceScopeBanner";
 import { BentoMetricCards } from "./components/BentoMetricCards";
 import { NodeTopologySection } from "./components/NodeTopologySection";
@@ -281,6 +282,25 @@ export function ClusterOverviewView() {
     }
   };
 
+  const handleTriageFailingPods = () => {
+    openTab({
+      id: "pods",
+      title: isNamespaceScoped ? `Pods (${currentNamespace})` : "Pods",
+      closable: true,
+    });
+    loadPods(isNamespaceScoped ? currentNamespace : "all");
+    toast.info("Navigated to Pods browser to triage failing or pending workloads");
+  };
+
+  const handleReviewIncidents = () => {
+    const el = document.getElementById("cluster-warning-events-card");
+    if (el) {
+      el.scrollIntoView({ behavior: "smooth" });
+    } else {
+      handleBrowsePods();
+    }
+  };
+
   return (
     <div className="flex-1 overflow-y-auto p-5 md:p-6 lg:p-8 space-y-6 select-none w-full">
       {/* Degraded Warning Banner */}
@@ -306,6 +326,17 @@ export function ClusterOverviewView() {
         onOpenDiagnostics={handleOpenDiagnostics}
         onBrowsePods={handleBrowsePods}
         onRefresh={handleRefresh}
+      />
+
+      {/* 2. Cluster Health Pulse & AI Triage Advisor */}
+      <ClusterHealthPulse
+        clusterOverview={clusterOverview}
+        connectionStatus={connectionStatus}
+        isNamespaceScoped={isNamespaceScoped}
+        currentNamespace={currentNamespace}
+        onTriageFailingPods={handleTriageFailingPods}
+        onInspectWorkloads={() => handleBrowsePods()}
+        onReviewIncidents={handleReviewIncidents}
       />
 
       {/* Dynamic Namespace Filter Ambient Banner */}
