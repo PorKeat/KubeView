@@ -5,7 +5,19 @@ import { Terminal } from "@xterm/xterm";
 import { FitAddon } from "@xterm/addon-fit";
 import "@xterm/xterm/css/xterm.css";
 import { getStreamPort } from "@/lib/ipc";
-import { RefreshCw, Terminal as TerminalIcon, AlertCircle, CheckCircle2, Copy, ShieldAlert, FileText } from "lucide-react";
+import {
+  RefreshCw,
+  Terminal as TerminalIcon,
+  AlertCircle,
+  CheckCircle2,
+  Copy,
+  ShieldAlert,
+  FileText,
+  ChevronDown,
+  Check,
+  Sparkles,
+} from "lucide-react";
+import { motion, AnimatePresence } from "motion/react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 
@@ -20,6 +32,74 @@ interface InteractiveTerminalProps {
   onSwitchToRunner?: () => void;
   onOpenLogs?: () => void;
 }
+
+interface ShellOption {
+  value: string;
+  label: string;
+  triggerLabel: string;
+  badge: string;
+  badgeClass: string;
+  description: string;
+}
+
+const SHELL_OPTIONS: ShellOption[] = [
+  {
+    value: "auto",
+    label: "Auto-detect",
+    triggerLabel: "Auto (sh, bash, ash)",
+    badge: "Recommended",
+    badgeClass: "bg-emerald-500/15 text-emerald-300 border-emerald-500/30",
+    description: "Automatic fallback: sh ➔ bash ➔ ash with binary probe",
+  },
+  {
+    value: "/bin/sh",
+    label: "/bin/sh",
+    triggerLabel: "/bin/sh",
+    badge: "Default",
+    badgeClass: "bg-cyan-500/15 text-cyan-300 border-cyan-500/30",
+    description: "Standard POSIX system shell present in most containers",
+  },
+  {
+    value: "/bin/bash",
+    label: "/bin/bash",
+    triggerLabel: "/bin/bash",
+    badge: "Bash",
+    badgeClass: "bg-purple-500/15 text-purple-300 border-purple-500/30",
+    description: "GNU Bourne-Again Shell with rich syntax & built-ins",
+  },
+  {
+    value: "/bin/ash",
+    label: "/bin/ash",
+    triggerLabel: "/bin/ash",
+    badge: "Alpine",
+    badgeClass: "bg-sky-500/15 text-sky-300 border-sky-500/30",
+    description: "Lightweight Almquist Shell standard for Alpine Linux",
+  },
+  {
+    value: "sh",
+    label: "sh",
+    triggerLabel: "sh",
+    badge: "PATH",
+    badgeClass: "bg-white/[0.06] text-slate-400 border-white/[0.08]",
+    description: "Lookup 'sh' binary from container system $PATH",
+  },
+  {
+    value: "bash",
+    label: "bash",
+    triggerLabel: "bash",
+    badge: "PATH",
+    badgeClass: "bg-white/[0.06] text-slate-400 border-white/[0.08]",
+    description: "Lookup 'bash' binary from container system $PATH",
+  },
+  {
+    value: "/bin/zsh",
+    label: "/bin/zsh",
+    triggerLabel: "/bin/zsh",
+    badge: "Zsh",
+    badgeClass: "bg-indigo-500/15 text-indigo-300 border-indigo-500/30",
+    description: "Z Shell commonly used in specialized developer images",
+  },
+];
 
 export function InteractiveTerminal({
   podName,
@@ -42,6 +122,41 @@ export function InteractiveTerminal({
   const [errorMsg, setErrorMsg] = React.useState<string>("");
   const [isDistroless, setIsDistroless] = React.useState(false);
   const [reconnectKey, setReconnectKey] = React.useState(0);
+  const [isShellOpen, setIsShellOpen] = React.useState(false);
+  const shellMenuRef = React.useRef<HTMLDivElement>(null);
+  const [focusedShellIndex, setFocusedShellIndex] = React.useState<number>(-1);
+
+  // Close dropdown on outside click or Escape
+  React.useEffect(() => {
+    if (!isShellOpen) return;
+    const handleClickOutside = (e: MouseEvent) => {
+      if (shellMenuRef.current && !shellMenuRef.current.contains(e.target as Node)) {
+        setIsShellOpen(false);
+      }
+    };
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") {
+        e.stopPropagation();
+        e.preventDefault();
+        setIsShellOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    document.addEventListener("keydown", handleKeyDown, true);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+      document.removeEventListener("keydown", handleKeyDown, true);
+    };
+  }, [isShellOpen]);
+
+  const activeShellOption = SHELL_OPTIONS.find((o) => o.value === shell) || {
+    value: shell,
+    label: shell,
+    triggerLabel: shell,
+    badge: "Custom",
+    badgeClass: "bg-white/[0.06] text-slate-400 border-white/[0.08]",
+    description: "Custom shell binary path",
+  };
 
   // Handle quick command insertion
   React.useEffect(() => {
@@ -280,20 +395,168 @@ export function InteractiveTerminal({
           </span>
           <span className="text-white/20">/</span>
 
-          {/* Shell Selector */}
-          <select
-            value={shell}
-            onChange={(e) => onShellChange?.(e.target.value)}
-            className="text-[10px] font-mono bg-white/[0.04] hover:bg-white/[0.08] text-slate-300 border border-white/[0.08] rounded px-1.5 py-0.5 outline-none cursor-pointer"
-          >
-            <option value="auto" className="bg-[#0f172a] text-white">Auto (sh, bash, ash)</option>
-            <option value="/bin/sh" className="bg-[#0f172a] text-white">/bin/sh</option>
-            <option value="/bin/bash" className="bg-[#0f172a] text-white">/bin/bash</option>
-            <option value="/bin/ash" className="bg-[#0f172a] text-white">/bin/ash</option>
-            <option value="sh" className="bg-[#0f172a] text-white">sh</option>
-            <option value="bash" className="bg-[#0f172a] text-white">bash</option>
-            <option value="/bin/zsh" className="bg-[#0f172a] text-white">/bin/zsh</option>
-          </select>
+          {/* Custom Dark-Glass Shell Selector */}
+          <div className="relative" ref={shellMenuRef}>
+            {/* Native select kept visually hidden for accessibility & automation backwards-compatibility */}
+            <select
+              value={shell}
+              onChange={(e) => onShellChange?.(e.target.value)}
+              tabIndex={-1}
+              aria-hidden="true"
+              className="sr-only"
+            >
+              {SHELL_OPTIONS.map((opt) => (
+                <option key={opt.value} value={opt.value}>
+                  {opt.triggerLabel}
+                </option>
+              ))}
+            </select>
+
+            {/* Custom Aesthetic Trigger Button */}
+            <button
+              type="button"
+              data-testid="shell-selector-trigger"
+              aria-expanded={isShellOpen}
+              aria-haspopup="listbox"
+              aria-label="Select container shell environment"
+              onClick={() => {
+                setIsShellOpen((prev) => !prev);
+                const currentIdx = SHELL_OPTIONS.findIndex((o) => o.value === shell);
+                setFocusedShellIndex(currentIdx >= 0 ? currentIdx : 0);
+              }}
+              onKeyDown={(e) => {
+                if (e.key === "ArrowDown" || e.key === "ArrowUp") {
+                  e.preventDefault();
+                  if (!isShellOpen) {
+                    setIsShellOpen(true);
+                    const currentIdx = SHELL_OPTIONS.findIndex((o) => o.value === shell);
+                    setFocusedShellIndex(currentIdx >= 0 ? currentIdx : 0);
+                  }
+                }
+              }}
+              className={cn(
+                "h-6 px-2 text-[11px] font-mono rounded-md border flex items-center gap-1.5 transition-all cursor-pointer select-none outline-hidden focus-visible:ring-1 focus-visible:ring-[var(--accent)]",
+                isShellOpen
+                  ? "bg-white/[0.1] border-white/20 text-white shadow-xs"
+                  : "bg-white/[0.04] hover:bg-white/[0.08] active:bg-white/[0.1] border-white/[0.08] text-slate-300 hover:text-white"
+              )}
+            >
+              {activeShellOption.value === "auto" ? (
+                <Sparkles className="w-3 h-3 text-[var(--accent)] shrink-0" />
+              ) : (
+                <TerminalIcon className="w-3 h-3 text-slate-400 shrink-0" />
+              )}
+              <span className="font-medium">{activeShellOption.triggerLabel}</span>
+              <ChevronDown
+                className={cn(
+                  "w-3 h-3 text-slate-400 transition-transform duration-200 shrink-0",
+                  isShellOpen && "rotate-180 text-white"
+                )}
+              />
+            </button>
+
+            {/* Glassy Popover Dropdown */}
+            <AnimatePresence>
+              {isShellOpen && (
+                <motion.div
+                  initial={{ opacity: 0, scale: 0.95, y: -4 }}
+                  animate={{ opacity: 1, scale: 1, y: 0 }}
+                  exit={{ opacity: 0, scale: 0.95, y: -4 }}
+                  transition={{ type: "spring", stiffness: 450, damping: 30, mass: 0.8 }}
+                  style={{ transformOrigin: "top left" }}
+                  className="absolute left-0 top-full mt-1.5 z-50 w-80 rounded-xl bg-[#0c0f17]/95 border border-white/[0.12] shadow-2xl shadow-black/90 backdrop-blur-xl p-1.5 overflow-hidden font-mono select-none"
+                  role="listbox"
+                  aria-label="Shell Environments"
+                  onClick={(e) => e.stopPropagation()}
+                  onKeyDown={(e) => {
+                    if (e.key === "ArrowDown") {
+                      e.preventDefault();
+                      setFocusedShellIndex((prev) => (prev + 1) % SHELL_OPTIONS.length);
+                    } else if (e.key === "ArrowUp") {
+                      e.preventDefault();
+                      setFocusedShellIndex((prev) => (prev - 1 + SHELL_OPTIONS.length) % SHELL_OPTIONS.length);
+                    } else if (e.key === "Enter" && focusedShellIndex >= 0) {
+                      e.preventDefault();
+                      const target = SHELL_OPTIONS[focusedShellIndex];
+                      if (target) {
+                        onShellChange?.(target.value);
+                        setIsShellOpen(false);
+                        setTimeout(() => termRef.current?.focus(), 50);
+                      }
+                    }
+                  }}
+                >
+                  {/* Header Strip */}
+                  <div className="flex items-center justify-between px-2.5 py-1.5 mb-1 border-b border-white/[0.06] text-[10px]">
+                    <span className="font-semibold text-slate-400 uppercase tracking-wider flex items-center gap-1.5">
+                      <TerminalIcon className="w-3 h-3 text-[var(--accent)]" /> Shell Environment
+                    </span>
+                    <span className="px-1.5 py-0.2 rounded text-[9px] font-mono bg-white/[0.06] text-slate-400 border border-white/[0.08]">
+                      {SHELL_OPTIONS.length} options
+                    </span>
+                  </div>
+
+                  {/* Shell Options List */}
+                  <div className="space-y-0.5">
+                    {SHELL_OPTIONS.map((opt, idx) => {
+                      const isSelected = opt.value === shell;
+                      const isFocused = idx === focusedShellIndex;
+                      return (
+                        <button
+                          key={opt.value}
+                          type="button"
+                          role="option"
+                          aria-selected={isSelected}
+                          data-testid={`shell-option-${opt.value}`}
+                          onMouseEnter={() => setFocusedShellIndex(idx)}
+                          onClick={() => {
+                            onShellChange?.(opt.value);
+                            setIsShellOpen(false);
+                            setTimeout(() => termRef.current?.focus(), 50);
+                          }}
+                          className={cn(
+                            "w-full text-left flex items-start justify-between gap-2 px-2.5 py-2 rounded-lg transition-all text-xs cursor-pointer select-none group border outline-hidden",
+                            isSelected
+                              ? "bg-white/[0.09] border-white/20 text-white shadow-xs"
+                              : isFocused
+                              ? "bg-white/[0.05] border-white/10 text-slate-200"
+                              : "border-transparent hover:bg-white/[0.04] text-slate-300 hover:text-white"
+                          )}
+                        >
+                          <div className="min-w-0 flex-1">
+                            <div className="flex items-center gap-2">
+                              {opt.value === "auto" ? (
+                                <Sparkles className="w-3 h-3 text-[var(--accent)] shrink-0" />
+                              ) : (
+                                <TerminalIcon className="w-3 h-3 text-slate-500 group-hover:text-slate-400 shrink-0" />
+                              )}
+                              <span className={cn("text-[11px] font-semibold tracking-tight", isSelected ? "text-white" : "text-slate-200")}>
+                                {opt.label}
+                              </span>
+                              <span className={cn("px-1.5 py-0.2 rounded text-[9px] font-mono font-medium border", opt.badgeClass)}>
+                                {opt.badge}
+                              </span>
+                            </div>
+                            <p className="text-[10px] text-slate-400 leading-tight mt-1 pl-5">
+                              {opt.description}
+                            </p>
+                          </div>
+
+                          <div className="shrink-0 pt-0.5">
+                            {isSelected ? (
+                              <Check className="w-3.5 h-3.5 text-[var(--accent)]" />
+                            ) : (
+                              <span className="w-3.5 h-3.5 block" />
+                            )}
+                          </div>
+                        </button>
+                      );
+                    })}
+                  </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </div>
 
           {/* Connection Status Indicator */}
           <div className="flex items-center gap-1.5 ml-2">

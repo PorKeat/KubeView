@@ -95,11 +95,22 @@ test.describe("KubeView UI - Deep Conditions & Edge Case Verification", () => {
     const quickCmdDirectory = page.locator('button:has-text("Directory")');
     await expect(quickCmdDirectory).toBeVisible();
 
-    // Verify Shell selector dropdown has auto and standard options
-    const shellSelect = page.locator("select").filter({ hasText: /bin\/sh|auto/i });
-    if (await shellSelect.isVisible()) {
-      await expect(shellSelect).toContainText(/Auto|sh/i);
-    }
+    // Verify Shell selector custom dropdown
+    const shellTrigger = page.locator('[data-testid="shell-selector-trigger"]');
+    await expect(shellTrigger).toBeVisible({ timeout: 5000 });
+    await expect(shellTrigger).toContainText(/Auto|sh/i);
+
+    // Open custom dropdown menu and verify options
+    await shellTrigger.click();
+    const shellListbox = page.locator('[role="listbox"][aria-label="Shell Environments"]');
+    await expect(shellListbox).toBeVisible({ timeout: 5000 });
+    await expect(page.locator('[data-testid="shell-option-auto"]')).toBeVisible();
+    await expect(page.locator('[data-testid="shell-option-/bin/sh"]')).toBeVisible();
+    await expect(page.locator('[data-testid="shell-option-/bin/bash"]')).toBeVisible();
+
+    // Close dropdown with Escape key
+    await page.keyboard.press("Escape");
+    await expect(shellListbox).not.toBeVisible({ timeout: 5000 });
 
     // Toggle to Command Runner mode
     const commandRunnerTab = page.getByRole("button", { name: /Command Runner/i });
