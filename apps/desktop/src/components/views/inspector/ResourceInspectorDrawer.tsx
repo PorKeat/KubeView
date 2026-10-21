@@ -15,6 +15,79 @@ import { InspectorConditionsTab } from "./tabs/InspectorConditionsTab";
 import { InspectorEventsTab } from "./tabs/InspectorEventsTab";
 import { InspectorYamlTab } from "./tabs/InspectorYamlTab";
 
+function synthesizePodYaml(pod: PodSummary): string {
+  const lines: string[] = [
+    "apiVersion: v1",
+    "kind: Pod",
+    "metadata:",
+    `  name: ${pod.name}`,
+    `  namespace: ${pod.namespace || "default"}`,
+  ];
+
+  if (pod.creationTimestamp) {
+    lines.push(`  creationTimestamp: "${pod.creationTimestamp}"`);
+  }
+
+  if (pod.labels && Object.keys(pod.labels).length > 0) {
+    lines.push("  labels:");
+    for (const [k, v] of Object.entries(pod.labels)) {
+      lines.push(`    ${k}: "${v}"`);
+    }
+  }
+
+  if (pod.annotations && Object.keys(pod.annotations).length > 0) {
+    lines.push("  annotations:");
+    for (const [k, v] of Object.entries(pod.annotations)) {
+      lines.push(`    ${k}: "${v.replace(/"/g, '\\"')}"`);
+    }
+  }
+
+  lines.push("spec:");
+  if (pod.nodeName) {
+    lines.push(`  nodeName: ${pod.nodeName}`);
+  }
+
+  if (pod.containers && pod.containers.length > 0) {
+    lines.push("  containers:");
+    for (const c of pod.containers) {
+      lines.push(`  - name: ${c.name}`);
+      lines.push(`    image: ${c.image}`);
+      if (c.ports && c.ports.length > 0) {
+        lines.push("    ports:");
+        for (const p of c.ports) {
+          lines.push(`    - containerPort: ${p.containerPort}`);
+          if (p.name) lines.push(`      name: ${p.name}`);
+          if (p.protocol) lines.push(`      protocol: ${p.protocol}`);
+        }
+      }
+      if (c.resources) {
+        lines.push("    resources:");
+        if (c.resources.requests) {
+          lines.push("      requests:");
+          if (c.resources.requests.cpu) lines.push(`        cpu: ${c.resources.requests.cpu}`);
+          if (c.resources.requests.memory) lines.push(`        memory: ${c.resources.requests.memory}`);
+        }
+        if (c.resources.limits) {
+          lines.push("      limits:");
+          if (c.resources.limits.cpu) lines.push(`        cpu: ${c.resources.limits.cpu}`);
+          if (c.resources.limits.memory) lines.push(`        memory: ${c.resources.limits.memory}`);
+        }
+      }
+    }
+  }
+
+  lines.push("status:");
+  lines.push(`  phase: ${pod.status}`);
+  if (pod.ip) {
+    lines.push(`  podIP: ${pod.ip}`);
+  }
+  if (pod.qosClass) {
+    lines.push(`  qosClass: ${pod.qosClass}`);
+  }
+
+  return lines.join("\n");
+}
+
 export function ResourceInspectorDrawer() {
   const {
     isInspectorOpen,
@@ -91,19 +164,49 @@ export function ResourceInspectorDrawer() {
   }, [isInspectorOpen, isNode, pods.length, loadPods]);
 
   // Load real YAML when YAML tab is active (Pods only)
+  const handleReloadYaml = React.useCallback(() => {
+    if (!currentResource || isNode) return;
+    setIsLoadingYaml(true);
+
+    const resolvedNs =
+      currentResource.namespace &&
+      currentResource.namespace !== "all" &&
+      currentResource.namespace !== "Cluster Scope"
+        ? currentResource.namespace
+        : podData?.namespace ||
+          pods.find((p) => p.name === currentResource.name)?.namespace ||
+          "default";
+
+    getPodYaml(currentResource.name, resolvedNs)
+      .then((yamlStr) => {
+        if (yamlStr && yamlStr.trim()) {
+          setLiveYaml(yamlStr);
+        } else if (podData) {
+          setLiveYaml(synthesizePodYaml(podData));
+        } else {
+          setLiveYaml("# No YAML returned from cluster.\n# Click 'Refresh' to try again.");
+        }
+      })
+      .catch((err) => {
+        if (podData) {
+          setLiveYaml(
+            `# Notice: Live cluster YAML fetch unavailable (${err?.message || err})\n# Displaying cached resource definition:\n\n` +
+              synthesizePodYaml(podData),
+          );
+        } else {
+          setLiveYaml(
+            `# Error loading manifest: ${err?.message || err}\n# Click 'Refresh' above to try fetching again.`,
+          );
+        }
+      })
+      .finally(() => setIsLoadingYaml(false));
+  }, [currentResource, isNode, podData, pods, getPodYaml]);
+
   React.useEffect(() => {
-    if (isInspectorOpen && currentResource && activeTab === "yaml" && !isNode) {
-      setIsLoadingYaml(true);
-      getPodYaml(currentResource.name, currentResource.namespace)
-        .then((yamlStr) => {
-          setLiveYaml(yamlStr || "# No YAML returned from cluster");
-        })
-        .catch((err) => {
-          setLiveYaml(`# Error loading manifest: ${err?.message || err}`);
-        })
-        .finally(() => setIsLoadingYaml(false));
+    if (isInspectorOpen && activeTab === "yaml" && !isNode) {
+      handleReloadYaml();
     }
-  }, [isInspectorOpen, currentResource?.name, currentResource?.namespace, activeTab, getPodYaml, isNode]);
+  }, [isInspectorOpen, currentResource?.name, currentResource?.namespace, activeTab, isNode, handleReloadYaml]);
 
   // Load real Events when events tab is active (Pods only)
   React.useEffect(() => {
@@ -312,6 +415,7 @@ export function ResourceInspectorDrawer() {
                   isLoading={isLoadingYaml}
                   onCopy={copyYaml}
                   onDownload={downloadYaml}
+                  onRetry={handleReloadYaml}
                   copiedYaml={copiedYaml}
                 />
               )}

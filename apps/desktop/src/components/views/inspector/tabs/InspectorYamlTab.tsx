@@ -2,12 +2,14 @@
 
 import * as React from "react";
 import { Download, Copy, Check, RotateCw } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 export interface InspectorYamlTabProps {
   yaml: string;
   isLoading: boolean;
   onCopy: () => void;
   onDownload: () => void;
+  onRetry?: () => void;
   copiedYaml: boolean;
 }
 
@@ -16,6 +18,7 @@ export function InspectorYamlTab({
   isLoading,
   onCopy,
   onDownload,
+  onRetry,
   copiedYaml,
 }: InspectorYamlTabProps) {
   return (
@@ -23,6 +26,17 @@ export function InspectorYamlTab({
       <div className="flex items-center justify-between pb-1">
         <span className="text-[11px] font-mono text-[var(--muted)]">Live Kubernetes YAML Definition</span>
         <div className="flex items-center gap-1.5">
+          {onRetry && (
+            <button
+              onClick={onRetry}
+              disabled={isLoading}
+              title="Re-fetch YAML manifest from cluster"
+              className="flex items-center gap-1.5 px-3 py-1.5 text-xs rounded-xl bg-[var(--surface)] hover:bg-[var(--surface-hover)] text-[var(--foreground)] border border-[var(--border)] transition-colors cursor-pointer disabled:opacity-50"
+            >
+              <RotateCw className={cn("w-3.5 h-3.5", isLoading && "animate-spin text-[var(--accent)]")} />
+              <span>Refresh</span>
+            </button>
+          )}
           <button
             onClick={onDownload}
             disabled={isLoading}

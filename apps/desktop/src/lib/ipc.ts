@@ -196,8 +196,27 @@ function mockRpcFallback<T>(method: string, _params?: unknown): T {
   }
 
   if (method === "pods.yaml") {
+    const p = _params as { podName?: string; namespace?: string } | undefined;
+    const name = p?.podName || "workload-pod";
+    const ns = p?.namespace && p.namespace !== "all" ? p.namespace : "default";
     return {
-      yaml: "",
+      yaml: `apiVersion: v1
+kind: Pod
+metadata:
+  name: ${name}
+  namespace: ${ns}
+  creationTimestamp: "${new Date().toISOString()}"
+  labels:
+    app.kubernetes.io/name: ${name}
+spec:
+  containers:
+  - name: app
+    image: nginx:alpine
+    ports:
+    - containerPort: 80
+      name: http
+status:
+  phase: Running`,
     } as T;
   }
 
