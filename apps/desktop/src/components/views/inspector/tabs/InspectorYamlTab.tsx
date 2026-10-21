@@ -12,6 +12,7 @@ import {
   FileCode,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { Tooltip } from "@/components/ui/Tooltip";
 
 export interface InspectorYamlTabProps {
   yaml: string;
@@ -278,69 +279,79 @@ export function InspectorYamlTab({
                     {searchMatchCount}
                   </span>
                 )}
-                <button
-                  type="button"
-                  onClick={handleCloseSearch}
-                  className="text-slate-400 hover:text-white p-0.5"
-                  title="Close search"
-                >
-                  <X className="w-3 h-3" />
-                </button>
+                <Tooltip content="Close search">
+                  <button
+                    type="button"
+                    onClick={handleCloseSearch}
+                    className="text-slate-400 hover:text-white p-0.5 cursor-pointer"
+                    aria-label="Close search"
+                  >
+                    <X className="w-3 h-3" />
+                  </button>
+                </Tooltip>
               </div>
             ) : (
-              <button
-                type="button"
-                onClick={handleOpenSearch}
-                title="Search in YAML (Ctrl+F)"
-                className="p-1.5 rounded-md hover:bg-white/[0.08] text-slate-400 hover:text-white transition-colors cursor-pointer"
-              >
-                <Search className="w-3.5 h-3.5" />
-              </button>
+              <Tooltip content="Find in YAML" shortcut="Ctrl+F">
+                <button
+                  type="button"
+                  onClick={handleOpenSearch}
+                  aria-label="Search in YAML"
+                  className="p-1.5 rounded-md hover:bg-white/[0.08] text-slate-400 hover:text-white transition-colors cursor-pointer"
+                >
+                  <Search className="w-3.5 h-3.5" />
+                </button>
+              </Tooltip>
             )}
 
             {/* Word Wrap Toggle */}
-            <button
-              type="button"
-              onClick={() => setIsWrap((prev) => !prev)}
-              title={isWrap ? "Disable Word Wrap" : "Enable Word Wrap"}
-              className={cn(
-                "p-1.5 rounded-md transition-colors cursor-pointer",
-                isWrap
-                  ? "bg-white/[0.1] text-amber-300"
-                  : "hover:bg-white/[0.08] text-slate-400 hover:text-white"
-              )}
-            >
-              <WrapText className="w-3.5 h-3.5" />
-            </button>
+            <Tooltip content={isWrap ? "Disable word wrap" : "Enable word wrap"}>
+              <button
+                type="button"
+                onClick={() => setIsWrap((prev) => !prev)}
+                aria-label={isWrap ? "Disable Word Wrap" : "Enable Word Wrap"}
+                className={cn(
+                  "p-1.5 rounded-md transition-colors cursor-pointer",
+                  isWrap
+                    ? "bg-white/[0.1] text-amber-300"
+                    : "hover:bg-white/[0.08] text-slate-400 hover:text-white"
+                )}
+              >
+                <WrapText className="w-3.5 h-3.5" />
+              </button>
+            </Tooltip>
 
             {/* Refresh */}
             {onRetry && (
-              <button
-                type="button"
-                onClick={onRetry}
-                disabled={isLoading}
-                title="Re-fetch YAML manifest from cluster"
-                className="p-1.5 rounded-md hover:bg-white/[0.08] text-slate-400 hover:text-white transition-colors cursor-pointer disabled:opacity-50"
-              >
-                <RotateCw
-                  className={cn(
-                    "w-3.5 h-3.5",
-                    isLoading && "animate-spin text-[#f08a42]"
-                  )}
-                />
-              </button>
+              <Tooltip content="Re-fetch YAML manifest">
+                <button
+                  type="button"
+                  onClick={onRetry}
+                  disabled={isLoading}
+                  aria-label="Re-fetch YAML manifest from cluster"
+                  className="p-1.5 rounded-md hover:bg-white/[0.08] text-slate-400 hover:text-white transition-colors cursor-pointer disabled:opacity-50"
+                >
+                  <RotateCw
+                    className={cn(
+                      "w-3.5 h-3.5",
+                      isLoading && "animate-spin text-[#f08a42]"
+                    )}
+                  />
+                </button>
+              </Tooltip>
             )}
 
             {/* Download */}
-            <button
-              type="button"
-              onClick={onDownload}
-              disabled={isLoading}
-              title="Download YAML to file"
-              className="p-1.5 rounded-md hover:bg-white/[0.08] text-slate-400 hover:text-white transition-colors cursor-pointer disabled:opacity-50"
-            >
-              <Download className="w-3.5 h-3.5" />
-            </button>
+            <Tooltip content="Download YAML file">
+              <button
+                type="button"
+                onClick={onDownload}
+                disabled={isLoading}
+                aria-label="Download YAML to file"
+                className="p-1.5 rounded-md hover:bg-white/[0.08] text-slate-400 hover:text-white transition-colors cursor-pointer disabled:opacity-50"
+              >
+                <Download className="w-3.5 h-3.5" />
+              </button>
+            </Tooltip>
 
             {/* Copy Button */}
             <button

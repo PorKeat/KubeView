@@ -6,6 +6,7 @@ import { motion, AnimatePresence } from "motion/react";
 import { useClusterStore } from "@/stores/clusterStore";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
+import { Tooltip } from "@/components/ui/Tooltip";
 
 interface NamespaceSelectorDropdownProps {
   variant?: "header" | "toolbar" | "unified";
@@ -174,14 +175,16 @@ export function NamespaceSelectorDropdown({
                   className="w-full pl-8 pr-7 py-1.5 text-xs bg-black/[0.025] dark:bg-white/[0.035] border border-[var(--border)] rounded-lg text-[var(--foreground)] placeholder:text-[var(--muted)] outline-hidden focus:border-[var(--accent)] focus-visible:ring-1 focus-visible:ring-[var(--accent)] font-mono transition-all"
                 />
                 {search && (
-                  <button
-                    type="button"
-                    onClick={() => setSearch("")}
-                    aria-label="Clear search"
-                    className="absolute right-2 top-1/2 -translate-y-1/2 text-[var(--muted)] hover:text-[var(--foreground)] cursor-pointer"
-                  >
-                    <X className="w-3.5 h-3.5" aria-hidden="true" />
-                  </button>
+                  <Tooltip content="Clear search">
+                    <button
+                      type="button"
+                      onClick={() => setSearch("")}
+                      aria-label="Clear search"
+                      className="absolute right-2 top-1/2 -translate-y-1/2 text-[var(--muted)] hover:text-[var(--foreground)] cursor-pointer"
+                    >
+                      <X className="w-3.5 h-3.5" aria-hidden="true" />
+                    </button>
+                  </Tooltip>
                 )}
               </div>
 

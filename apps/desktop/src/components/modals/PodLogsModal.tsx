@@ -22,6 +22,7 @@ import { useClusterStore } from "@/stores/clusterStore";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { CustomSelect } from "@/components/ui/CustomSelect";
+import { Tooltip } from "@/components/ui/Tooltip";
 import { getStreamPort } from "@/lib/ipc";
 
 const ERROR_REGEX = /error|fatal|fail|panic|exception/i;
@@ -537,53 +538,60 @@ export function PodLogsModal() {
 
             {/* Utility Actions */}
             <div className="flex items-center gap-1">
-              <button
-                type="button"
-                onClick={() => fetchLogs(false)}
-                disabled={isLoading}
-                className="p-1.5 rounded-lg hover:bg-[var(--surface-hover)] text-[var(--muted)] hover:text-[var(--foreground)] border border-transparent hover:border-[var(--border)] transition-all cursor-pointer active:scale-[0.98]"
-                title="Refresh logs"
-              >
-                <RotateCw
-                  className={cn("w-3.5 h-3.5", isLoading && "animate-spin text-[var(--accent)]")}
-                />
-              </button>
+              <Tooltip content="Refresh logs">
+                <button
+                  type="button"
+                  onClick={() => fetchLogs(false)}
+                  disabled={isLoading}
+                  className="p-1.5 rounded-lg hover:bg-[var(--surface-hover)] text-[var(--muted)] hover:text-[var(--foreground)] border border-transparent hover:border-[var(--border)] transition-all cursor-pointer active:scale-[0.98]"
+                  aria-label="Refresh logs"
+                >
+                  <RotateCw
+                    className={cn("w-3.5 h-3.5", isLoading && "animate-spin text-[var(--accent)]")}
+                  />
+                </button>
+              </Tooltip>
 
-              <button
-                type="button"
-                onClick={handleCopy}
-                className="p-1.5 rounded-lg hover:bg-[var(--surface-hover)] text-[var(--muted)] hover:text-[var(--foreground)] border border-transparent hover:border-[var(--border)] transition-all cursor-pointer active:scale-[0.98]"
-                title="Copy logs to clipboard"
-              >
-                {copied ? (
-                  <Check className="w-3.5 h-3.5 text-emerald-500" />
-                ) : (
-                  <Copy className="w-3.5 h-3.5" />
-                )}
-              </button>
+              <Tooltip content={copied ? "Copied to clipboard" : "Copy logs to clipboard"}>
+                <button
+                  type="button"
+                  onClick={handleCopy}
+                  className="p-1.5 rounded-lg hover:bg-[var(--surface-hover)] text-[var(--muted)] hover:text-[var(--foreground)] border border-transparent hover:border-[var(--border)] transition-all cursor-pointer active:scale-[0.98]"
+                  aria-label="Copy logs to clipboard"
+                >
+                  {copied ? (
+                    <Check className="w-3.5 h-3.5 text-emerald-500" />
+                  ) : (
+                    <Copy className="w-3.5 h-3.5" />
+                  )}
+                </button>
+              </Tooltip>
 
-              <button
-                type="button"
-                onClick={handleDownload}
-                className="p-1.5 rounded-lg hover:bg-[var(--surface-hover)] text-[var(--muted)] hover:text-[var(--foreground)] border border-transparent hover:border-[var(--border)] transition-all cursor-pointer active:scale-[0.98]"
-                title="Download logs file"
-              >
-                <Download className="w-3.5 h-3.5" />
-              </button>
+              <Tooltip content="Download logs to file">
+                <button
+                  type="button"
+                  onClick={handleDownload}
+                  className="p-1.5 rounded-lg hover:bg-[var(--surface-hover)] text-[var(--muted)] hover:text-[var(--foreground)] border border-transparent hover:border-[var(--border)] transition-all cursor-pointer active:scale-[0.98]"
+                  aria-label="Download logs file"
+                >
+                  <Download className="w-3.5 h-3.5" />
+                </button>
+              </Tooltip>
             </div>
 
             <div className="h-4 w-px bg-[var(--border)] mx-0.5" />
 
             {/* Close Button */}
-            <button
-              type="button"
-              onClick={closeLogsModal}
-              className="p-1.5 rounded-lg hover:bg-rose-500/10 hover:text-rose-500 text-[var(--muted)] transition-colors cursor-pointer"
-              title="Close modal (Esc)"
-              aria-label="Close logs dialog"
-            >
-              <X className="w-4 h-4" />
-            </button>
+            <Tooltip content="Close dialog" shortcut="Esc">
+              <button
+                type="button"
+                onClick={closeLogsModal}
+                className="p-1.5 rounded-lg hover:bg-rose-500/10 hover:text-rose-500 text-[var(--muted)] transition-colors cursor-pointer"
+                aria-label="Close logs dialog"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </Tooltip>
           </div>
         </div>
 
@@ -604,14 +612,16 @@ export function PodLogsModal() {
                 <span className="text-[10px] font-mono text-[var(--muted)]">
                   {filteredLines.length}
                 </span>
-                <button
-                  type="button"
-                  onClick={() => setSearch("")}
-                  className="text-[var(--muted)] hover:text-[var(--foreground)] cursor-pointer"
-                  title="Clear search"
-                >
-                  <X className="w-3 h-3" />
-                </button>
+                <Tooltip content="Clear search">
+                  <button
+                    type="button"
+                    onClick={() => setSearch("")}
+                    className="text-[var(--muted)] hover:text-[var(--foreground)] cursor-pointer"
+                    aria-label="Clear search"
+                  >
+                    <X className="w-3 h-3" />
+                  </button>
+                </Tooltip>
               </div>
             )}
           </div>

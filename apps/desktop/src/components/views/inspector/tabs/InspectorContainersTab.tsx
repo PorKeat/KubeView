@@ -4,6 +4,7 @@ import * as React from "react";
 import { Box, Copy, Network, Folder, FileText, Terminal } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
+import { Tooltip } from "@/components/ui/Tooltip";
 import { ContainerEnvSection } from "../components/ContainerEnvSection";
 import type { PodSummary } from "@kubeview/contracts";
 import type { SelectedResource } from "@/stores/clusterStore";
@@ -63,16 +64,18 @@ export function InspectorContainersTab({
                 <span className="text-[var(--foreground)] truncate font-mono text-[10px]" title={c.image}>
                   {c.image}
                 </span>
-                <button
-                  onClick={() => {
-                    navigator.clipboard.writeText(c.image);
-                    toast.success("Image copied to clipboard");
-                  }}
-                  className="opacity-0 group-hover/img:opacity-100 p-0.5 text-[var(--muted)] hover:text-[var(--foreground)] transition-opacity cursor-pointer"
-                  title="Copy Image"
-                >
-                  <Copy className="w-3 h-3" />
-                </button>
+                <Tooltip content="Copy Image name">
+                  <button
+                    onClick={() => {
+                      navigator.clipboard.writeText(c.image);
+                      toast.success("Image copied to clipboard");
+                    }}
+                    className="opacity-0 group-hover/img:opacity-100 p-0.5 text-[var(--muted)] hover:text-[var(--foreground)] transition-opacity cursor-pointer"
+                    aria-label="Copy Image"
+                  >
+                    <Copy className="w-3 h-3" />
+                  </button>
+                </Tooltip>
               </div>
             </div>
 

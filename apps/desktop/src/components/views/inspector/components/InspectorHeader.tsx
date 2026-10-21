@@ -14,6 +14,7 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
+import { Tooltip } from "@/components/ui/Tooltip";
 import type { SelectedResource } from "@/stores/clusterStore";
 import type { PodSummary, NodeSummary } from "@kubeview/contracts";
 
@@ -153,62 +154,73 @@ export function InspectorHeader({
       <div className="flex items-center gap-1 shrink-0 bg-black/5 dark:bg-white/5 p-1 rounded-xl border border-[var(--border)]">
         {!isNode ? (
           <>
-            <button
-              onClick={() => onOpenLogsModal({ name: currentResource.name, namespace: currentResource.namespace })}
-              className="p-1.5 rounded-lg hover:bg-[var(--surface-hover)] text-[var(--muted)] hover:text-[var(--foreground)] transition-colors cursor-pointer"
-              title="View Real-Time Logs"
-            >
-              <FileText className="w-4 h-4" />
-            </button>
+            <Tooltip content="View Real-Time Logs">
+              <button
+                onClick={() => onOpenLogsModal({ name: currentResource.name, namespace: currentResource.namespace })}
+                className="p-1.5 rounded-lg hover:bg-[var(--surface-hover)] text-[var(--muted)] hover:text-[var(--foreground)] transition-colors cursor-pointer"
+                aria-label="View Real-Time Logs"
+              >
+                <FileText className="w-4 h-4" />
+              </button>
+            </Tooltip>
 
-            <button
-              onClick={() => onOpenExecModal({ name: currentResource.name, namespace: currentResource.namespace })}
-              className="p-1.5 rounded-lg hover:bg-[var(--surface-hover)] text-[var(--muted)] hover:text-[var(--foreground)] transition-colors cursor-pointer"
-              title="Interactive Exec Shell"
-            >
-              <Terminal className="w-4 h-4" />
-            </button>
+            <Tooltip content="Interactive Exec Shell">
+              <button
+                onClick={() => onOpenExecModal({ name: currentResource.name, namespace: currentResource.namespace })}
+                className="p-1.5 rounded-lg hover:bg-[var(--surface-hover)] text-[var(--muted)] hover:text-[var(--foreground)] transition-colors cursor-pointer"
+                aria-label="Interactive Exec Shell"
+              >
+                <Terminal className="w-4 h-4" />
+              </button>
+            </Tooltip>
 
-            <button
-              onClick={() => onOpenRestartConfirm({ name: currentResource.name, namespace: currentResource.namespace })}
-              className="p-1.5 rounded-lg hover:bg-[var(--surface-hover)] text-[var(--muted)] hover:text-[var(--foreground)] transition-colors cursor-pointer"
-              title="Restart Pod"
-            >
-              <RotateCw className="w-4 h-4" />
-            </button>
+            <Tooltip content="Restart Pod">
+              <button
+                onClick={() => onOpenRestartConfirm({ name: currentResource.name, namespace: currentResource.namespace })}
+                className="p-1.5 rounded-lg hover:bg-[var(--surface-hover)] text-[var(--muted)] hover:text-[var(--foreground)] transition-colors cursor-pointer"
+                aria-label="Restart Pod"
+              >
+                <RotateCw className="w-4 h-4" />
+              </button>
+            </Tooltip>
 
-            <button
-              onClick={() => onOpenDeleteConfirm({ name: currentResource.name, namespace: currentResource.namespace })}
-              className="p-1.5 rounded-lg hover:bg-rose-500/15 text-[var(--muted)] hover:text-rose-500 transition-colors cursor-pointer"
-              title="Delete Pod"
-            >
-              <Trash2 className="w-4 h-4" />
-            </button>
+            <Tooltip content="Delete Pod">
+              <button
+                onClick={() => onOpenDeleteConfirm({ name: currentResource.name, namespace: currentResource.namespace })}
+                className="p-1.5 rounded-lg hover:bg-rose-500/15 text-[var(--muted)] hover:text-rose-500 transition-colors cursor-pointer"
+                aria-label="Delete Pod"
+              >
+                <Trash2 className="w-4 h-4" />
+              </button>
+            </Tooltip>
           </>
         ) : (
-          <button
-            onClick={() => {
-              navigator.clipboard.writeText(currentResource.name);
-              toast.success(`Node name copied: ${currentResource.name}`);
-            }}
-            className="p-1.5 rounded-lg hover:bg-[var(--surface-hover)] text-[var(--muted)] hover:text-[var(--foreground)] transition-colors cursor-pointer"
-            title="Copy Node Name"
-          >
-            <Copy className="w-4 h-4" />
-          </button>
+          <Tooltip content="Copy Node Name">
+            <button
+              onClick={() => {
+                navigator.clipboard.writeText(currentResource.name);
+                toast.success(`Node name copied: ${currentResource.name}`);
+              }}
+              className="p-1.5 rounded-lg hover:bg-[var(--surface-hover)] text-[var(--muted)] hover:text-[var(--foreground)] transition-colors cursor-pointer"
+              aria-label="Copy Node Name"
+            >
+              <Copy className="w-4 h-4" />
+            </button>
+          </Tooltip>
         )}
 
         <div className="h-4 w-[1px] bg-[var(--border)] mx-0.5" />
 
-        <button
-          onClick={onClose}
-          data-testid="inspector-close-btn"
-          aria-label="Close drawer (Escape)"
-          className="p-1.5 rounded-lg hover:bg-[var(--surface-hover)] text-[var(--muted)] hover:text-[var(--foreground)] transition-colors cursor-pointer focus-visible:ring-2 focus-visible:ring-[var(--accent)] focus-visible:outline-hidden"
-          title="Close Drawer (Esc)"
-        >
-          <X className="w-4 h-4" aria-hidden="true" />
-        </button>
+        <Tooltip content="Close drawer" shortcut="Esc">
+          <button
+            onClick={onClose}
+            data-testid="inspector-close-btn"
+            aria-label="Close drawer (Escape)"
+            className="p-1.5 rounded-lg hover:bg-[var(--surface-hover)] text-[var(--muted)] hover:text-[var(--foreground)] transition-colors cursor-pointer focus-visible:ring-2 focus-visible:ring-[var(--accent)] focus-visible:outline-hidden"
+          >
+            <X className="w-4 h-4" aria-hidden="true" />
+          </button>
+        </Tooltip>
       </div>
     </div>
   );

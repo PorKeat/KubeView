@@ -21,7 +21,7 @@ import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { useClusterStore } from "@/stores/clusterStore";
 import type { PodSummary } from "@kubeview/contracts";
-import { TableSkeleton, EmptyState } from "@/components/ui";
+import { TableSkeleton, EmptyState, Tooltip } from "@/components/ui";
 
 import { ResourceTableToolbar } from "./components/ResourceTableToolbar";
 import { ResourceBatchToolbar } from "./components/ResourceBatchToolbar";
@@ -553,19 +553,21 @@ export function ResourceListView({ resourceType }: ResourceListViewProps) {
             <thead className="sticky top-0 bg-[var(--surface)] z-10 border-b border-[var(--border)] select-none">
               <tr className="text-[11px] font-semibold text-[var(--muted)] uppercase tracking-wider h-8">
                 <th className="w-8 px-2 text-center">
-                  <button
-                    onClick={toggleSelectAll}
-                    className="text-[var(--muted)] hover:text-[var(--foreground)] flex items-center justify-center cursor-pointer"
-                    title={isPageAllSelected ? "Deselect all on page" : "Select all on page"}
-                  >
-                    {isPageAllSelected ? (
-                      <CheckSquare className="w-3.5 h-3.5 text-[var(--accent)]" />
-                    ) : isPageSomeSelected || selectedItems.size > 0 ? (
-                      <MinusSquare className="w-3.5 h-3.5 text-[var(--accent)]" />
-                    ) : (
-                      <Square className="w-3.5 h-3.5" />
-                    )}
-                  </button>
+                  <Tooltip content={isPageAllSelected ? "Deselect all on page" : "Select all on page"}>
+                    <button
+                      onClick={toggleSelectAll}
+                      className="text-[var(--muted)] hover:text-[var(--foreground)] flex items-center justify-center cursor-pointer"
+                      aria-label={isPageAllSelected ? "Deselect all on page" : "Select all on page"}
+                    >
+                      {isPageAllSelected ? (
+                        <CheckSquare className="w-3.5 h-3.5 text-[var(--accent)]" />
+                      ) : isPageSomeSelected || selectedItems.size > 0 ? (
+                        <MinusSquare className="w-3.5 h-3.5 text-[var(--accent)]" />
+                      ) : (
+                        <Square className="w-3.5 h-3.5" />
+                      )}
+                    </button>
+                  </Tooltip>
                 </th>
                 <th
                   onClick={() => handleSort("name")}
@@ -843,46 +845,57 @@ export function ResourceListView({ resourceType }: ResourceListViewProps) {
               </span>
 
               <div className="flex items-center gap-1">
-                <motion.button
-                  whileHover={{ scale: 1.05 }}
-                  whileTap={{ scale: 0.92 }}
-                  disabled={safeCurrentPage <= 1}
-                  onClick={() => setCurrentPage(1)}
-                  className="w-6.5 h-6.5 inline-flex items-center justify-center rounded-md border border-[var(--border)]/80 bg-[var(--surface)] hover:bg-[var(--surface-hover)] text-[var(--muted)] hover:text-[var(--foreground)] disabled:opacity-25 disabled:pointer-events-none transition-colors cursor-pointer"
-                  title="First page"
-                >
-                  <ChevronsLeft className="w-3.5 h-3.5" />
-                </motion.button>
-                <motion.button
-                  whileHover={{ scale: 1.05 }}
-                  whileTap={{ scale: 0.92 }}
-                  disabled={safeCurrentPage <= 1}
-                  onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
-                  className="w-6.5 h-6.5 inline-flex items-center justify-center rounded-md border border-[var(--border)]/80 bg-[var(--surface)] hover:bg-[var(--surface-hover)] text-[var(--muted)] hover:text-[var(--foreground)] disabled:opacity-25 disabled:pointer-events-none transition-colors cursor-pointer"
-                  title="Previous page"
-                >
-                  <ChevronLeft className="w-3.5 h-3.5" />
-                </motion.button>
-                <motion.button
-                  whileHover={{ scale: 1.05 }}
-                  whileTap={{ scale: 0.92 }}
-                  disabled={safeCurrentPage >= totalPages}
-                  onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
-                  className="w-6.5 h-6.5 inline-flex items-center justify-center rounded-md border border-[var(--border)]/80 bg-[var(--surface)] hover:bg-[var(--surface-hover)] text-[var(--muted)] hover:text-[var(--foreground)] disabled:opacity-25 disabled:pointer-events-none transition-colors cursor-pointer"
-                  title="Next page"
-                >
-                  <ChevronRight className="w-3.5 h-3.5" />
-                </motion.button>
-                <motion.button
-                  whileHover={{ scale: 1.05 }}
-                  whileTap={{ scale: 0.92 }}
-                  disabled={safeCurrentPage >= totalPages}
-                  onClick={() => setCurrentPage(totalPages)}
-                  className="w-6.5 h-6.5 inline-flex items-center justify-center rounded-md border border-[var(--border)]/80 bg-[var(--surface)] hover:bg-[var(--surface-hover)] text-[var(--muted)] hover:text-[var(--foreground)] disabled:opacity-25 disabled:pointer-events-none transition-colors cursor-pointer"
-                  title="Last page"
-                >
-                  <ChevronsRight className="w-3.5 h-3.5" />
-                </motion.button>
+                <Tooltip content="First page" disabled={safeCurrentPage <= 1}>
+                  <motion.button
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.92 }}
+                    disabled={safeCurrentPage <= 1}
+                    onClick={() => setCurrentPage(1)}
+                    className="w-6.5 h-6.5 inline-flex items-center justify-center rounded-md border border-[var(--border)]/80 bg-[var(--surface)] hover:bg-[var(--surface-hover)] text-[var(--muted)] hover:text-[var(--foreground)] disabled:opacity-25 disabled:pointer-events-none transition-colors cursor-pointer"
+                    aria-label="First page"
+                  >
+                    <ChevronsLeft className="w-3.5 h-3.5" />
+                  </motion.button>
+                </Tooltip>
+
+                <Tooltip content="Previous page" disabled={safeCurrentPage <= 1}>
+                  <motion.button
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.92 }}
+                    disabled={safeCurrentPage <= 1}
+                    onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+                    className="w-6.5 h-6.5 inline-flex items-center justify-center rounded-md border border-[var(--border)]/80 bg-[var(--surface)] hover:bg-[var(--surface-hover)] text-[var(--muted)] hover:text-[var(--foreground)] disabled:opacity-25 disabled:pointer-events-none transition-colors cursor-pointer"
+                    aria-label="Previous page"
+                  >
+                    <ChevronLeft className="w-3.5 h-3.5" />
+                  </motion.button>
+                </Tooltip>
+
+                <Tooltip content="Next page" disabled={safeCurrentPage >= totalPages}>
+                  <motion.button
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.92 }}
+                    disabled={safeCurrentPage >= totalPages}
+                    onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+                    className="w-6.5 h-6.5 inline-flex items-center justify-center rounded-md border border-[var(--border)]/80 bg-[var(--surface)] hover:bg-[var(--surface-hover)] text-[var(--muted)] hover:text-[var(--foreground)] disabled:opacity-25 disabled:pointer-events-none transition-colors cursor-pointer"
+                    aria-label="Next page"
+                  >
+                    <ChevronRight className="w-3.5 h-3.5" />
+                  </motion.button>
+                </Tooltip>
+
+                <Tooltip content="Last page" disabled={safeCurrentPage >= totalPages}>
+                  <motion.button
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.92 }}
+                    disabled={safeCurrentPage >= totalPages}
+                    onClick={() => setCurrentPage(totalPages)}
+                    className="w-6.5 h-6.5 inline-flex items-center justify-center rounded-md border border-[var(--border)]/80 bg-[var(--surface)] hover:bg-[var(--surface-hover)] text-[var(--muted)] hover:text-[var(--foreground)] disabled:opacity-25 disabled:pointer-events-none transition-colors cursor-pointer"
+                    aria-label="Last page"
+                  >
+                    <ChevronsRight className="w-3.5 h-3.5" />
+                  </motion.button>
+                </Tooltip>
               </div>
             </div>
           )}

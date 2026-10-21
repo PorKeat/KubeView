@@ -21,6 +21,7 @@ import {
 import { useTabStore, TabItem } from "@/stores/tabStore";
 import { useLayoutStore } from "@/stores/layoutStore";
 import { cn } from "@/lib/utils";
+import { Tooltip } from "@/components/ui/Tooltip";
 
 export function TabBar() {
   const { openTabs, activeTabId, setActiveTab, closeTab } = useTabStore();
@@ -91,33 +92,35 @@ export function TabBar() {
               <span className="truncate max-w-[130px] font-sans text-xs">{tab.title}</span>
 
               {tab.closable && (
-                <button
-                  type="button"
-                  aria-label={`Close ${tab.title} tab`}
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    closeTab(tab.id);
-                  }}
-                  className="p-0.5 rounded hover:bg-black/10 dark:hover:bg-white/10 text-[var(--muted)] hover:text-[var(--foreground)] opacity-50 group-hover:opacity-100 transition-opacity ml-0.5 focus-visible:ring-1 focus-visible:ring-[var(--accent)] focus-visible:outline-hidden"
-                  title="Close tab (Cmd+W)"
-                >
-                  <X className="w-3 h-3" aria-hidden="true" />
-                </button>
+                <Tooltip content={`Close ${tab.title}`} shortcut="⌘W" side="bottom">
+                  <button
+                    type="button"
+                    aria-label={`Close ${tab.title} tab`}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      closeTab(tab.id);
+                    }}
+                    className="p-0.5 rounded hover:bg-black/10 dark:hover:bg-white/10 text-[var(--muted)] hover:text-[var(--foreground)] opacity-50 group-hover:opacity-100 transition-opacity ml-0.5 focus-visible:ring-1 focus-visible:ring-[var(--accent)] focus-visible:outline-hidden"
+                  >
+                    <X className="w-3 h-3" aria-hidden="true" />
+                  </button>
+                </Tooltip>
               )}
             </div>
           );
         })}
 
         {/* New Tab Quick-Open Trigger */}
-        <button
-          type="button"
-          onClick={() => setCommandPaletteOpen(true)}
-          aria-label="Open new tab (Command K)"
-          className="h-7 w-7 rounded-md flex items-center justify-center hover:bg-black/[0.04] dark:hover:bg-white/[0.06] text-[var(--muted)] hover:text-[var(--foreground)] transition-colors ml-0.5 focus-visible:ring-2 focus-visible:ring-[var(--accent)] focus-visible:outline-hidden cursor-pointer"
-          title="Open New Tab (Cmd+K)"
-        >
-          <Plus className="w-3.5 h-3.5" aria-hidden="true" />
-        </button>
+        <Tooltip content="Open New Tab" shortcut="⌘K" side="bottom">
+          <button
+            type="button"
+            onClick={() => setCommandPaletteOpen(true)}
+            aria-label="Open new tab (Command K)"
+            className="h-7 w-7 rounded-md flex items-center justify-center hover:bg-black/[0.04] dark:hover:bg-white/[0.06] text-[var(--muted)] hover:text-[var(--foreground)] transition-colors ml-0.5 focus-visible:ring-2 focus-visible:ring-[var(--accent)] focus-visible:outline-hidden cursor-pointer"
+          >
+            <Plus className="w-3.5 h-3.5" aria-hidden="true" />
+          </button>
+        </Tooltip>
       </div>
     </div>
   );

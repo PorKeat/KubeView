@@ -12,6 +12,7 @@ import {
 } from "lucide-react";
 import { motion } from "motion/react";
 import { cn } from "@/lib/utils";
+import { Tooltip } from "@/components/ui/Tooltip";
 import type { PodSummary } from "@kubeview/contracts";
 import {
   isPodFailing,
@@ -147,12 +148,15 @@ export function ResourceTableToolbar({
           className="w-full pl-8 pr-7 py-1 text-xs bg-slate-50 dark:bg-black/30 border border-[var(--border)] rounded-lg text-[var(--foreground)] placeholder:text-[var(--muted)] outline-hidden focus:border-[var(--accent)] transition-all font-mono"
         />
         {search && (
-          <button
-            onClick={() => setSearch("")}
-            className="absolute right-2 top-1/2 -translate-y-1/2 text-[var(--muted)] hover:text-[var(--foreground)] cursor-pointer"
-          >
-            <X className="w-3 h-3" />
-          </button>
+          <Tooltip content="Clear search">
+            <button
+              onClick={() => setSearch("")}
+              className="absolute right-2 top-1/2 -translate-y-1/2 text-[var(--muted)] hover:text-[var(--foreground)] cursor-pointer"
+              aria-label="Clear search"
+            >
+              <X className="w-3 h-3" />
+            </button>
+          </Tooltip>
         )}
       </div>
 
@@ -166,15 +170,16 @@ export function ResourceTableToolbar({
               {podNodeFilter}
             </strong>
           </span>
-          <button
-            type="button"
-            onClick={() => setPodNodeFilter(null)}
-            className="ml-1 p-0.5 hover:bg-[var(--accent)]/20 rounded-full transition-colors cursor-pointer"
-            title="Clear node filter"
-            aria-label="Clear node filter"
-          >
-            <X className="w-3 h-3" />
-          </button>
+          <Tooltip content="Clear node filter">
+            <button
+              type="button"
+              onClick={() => setPodNodeFilter(null)}
+              className="ml-1 p-0.5 hover:bg-[var(--accent)]/20 rounded-full transition-colors cursor-pointer"
+              aria-label="Clear node filter"
+            >
+              <X className="w-3 h-3" />
+            </button>
+          </Tooltip>
         </div>
       )}
 
@@ -188,15 +193,16 @@ export function ResourceTableToolbar({
               {labelFilter}
             </strong>
           </span>
-          <button
-            type="button"
-            onClick={() => setLabelFilter && setLabelFilter(null)}
-            className="ml-1 p-0.5 hover:bg-indigo-500/20 rounded-full transition-colors cursor-pointer"
-            title="Clear label filter"
-            aria-label="Clear label filter"
-          >
-            <X className="w-3 h-3" />
-          </button>
+          <Tooltip content="Clear label filter">
+            <button
+              type="button"
+              onClick={() => setLabelFilter && setLabelFilter(null)}
+              className="ml-1 p-0.5 hover:bg-indigo-500/20 rounded-full transition-colors cursor-pointer"
+              aria-label="Clear label filter"
+            >
+              <X className="w-3 h-3" />
+            </button>
+          </Tooltip>
         </div>
       )}
 
@@ -248,19 +254,21 @@ export function ResourceTableToolbar({
       <div className="flex items-center gap-2 text-xs text-[var(--muted)] shrink-0">
         <span className="font-mono text-[11px]">{sortedItemsCount} items</span>
         <div className="h-3 w-[1px] bg-[var(--border)]" />
-        <button
-          onClick={handleRefresh}
-          disabled={isPodsLoading}
-          className="p-1.5 rounded-lg hover:bg-[var(--surface-hover)] text-[var(--muted)] hover:text-[var(--foreground)] transition-colors cursor-pointer"
-          title="Refresh list"
-        >
-          <RefreshCw
-            className={cn(
-              "w-3.5 h-3.5",
-              isPodsLoading && "animate-spin text-[var(--accent)]",
-            )}
-          />
-        </button>
+        <Tooltip content="Refresh list">
+          <button
+            onClick={handleRefresh}
+            disabled={isPodsLoading}
+            className="p-1.5 rounded-lg hover:bg-[var(--surface-hover)] text-[var(--muted)] hover:text-[var(--foreground)] transition-colors cursor-pointer"
+            aria-label="Refresh list"
+          >
+            <RefreshCw
+              className={cn(
+                "w-3.5 h-3.5",
+                isPodsLoading && "animate-spin text-[var(--accent)]",
+              )}
+            />
+          </button>
+        </Tooltip>
       </div>
     </div>
   );

@@ -23,7 +23,7 @@ import {
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import type { PodSummary } from "@kubeview/contracts";
-import { StatusBeacon } from "@/components/ui";
+import { StatusBeacon, Tooltip } from "@/components/ui";
 
 export interface ResourceTableRowProps {
   item: PodSummary;
@@ -254,42 +254,43 @@ export function ResourceTableRow({
         {/* Name with Expand Chevron & Quick Copy */}
         <td className="py-1 px-3 font-medium font-mono text-[var(--foreground)] truncate">
           <div className="flex items-center gap-1 min-w-0">
-            <button
-              type="button"
-              onClick={(e) => {
-                e.stopPropagation();
-                setIsExpanded((prev) => !prev);
-              }}
-              className="p-0.5 -ml-0.5 rounded hover:bg-black/10 dark:hover:bg-white/10 text-[var(--muted)] hover:text-[var(--foreground)] transition-colors cursor-pointer shrink-0"
-              title={
-                isExpanded ? "Collapse containers" : "Expand containers & sidecars"
-              }
-              aria-label={
-                isExpanded ? "Collapse containers" : "Expand containers & sidecars"
-              }
-            >
-              <ChevronRight
-                className={cn(
-                  "w-3.5 h-3.5 transition-transform duration-200",
-                  isExpanded && "rotate-90 text-[var(--accent)]",
-                )}
-              />
-            </button>
+            <Tooltip content={isExpanded ? "Collapse containers" : "Expand containers & sidecars"}>
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setIsExpanded((prev) => !prev);
+                }}
+                className="p-0.5 -ml-0.5 rounded hover:bg-black/10 dark:hover:bg-white/10 text-[var(--muted)] hover:text-[var(--foreground)] transition-colors cursor-pointer shrink-0"
+                aria-label={
+                  isExpanded ? "Collapse containers" : "Expand containers & sidecars"
+                }
+              >
+                <ChevronRight
+                  className={cn(
+                    "w-3.5 h-3.5 transition-transform duration-200",
+                    isExpanded && "rotate-90 text-[var(--accent)]",
+                  )}
+                />
+              </button>
+            </Tooltip>
             <span className="truncate" title={item.name}>
               {item.name}
             </span>
-            <button
-              type="button"
-              onClick={handleCopyName}
-              className="p-0.5 rounded hover:bg-black/10 dark:hover:bg-white/10 text-[var(--muted)] hover:text-[var(--foreground)] opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer shrink-0"
-              title="Copy pod name"
-            >
-              {copiedName ? (
-                <Check className="w-3 h-3 text-emerald-500" />
-              ) : (
-                <Copy className="w-3 h-3" />
-              )}
-            </button>
+            <Tooltip content={copiedName ? "Copied!" : "Copy pod name"}>
+              <button
+                type="button"
+                onClick={handleCopyName}
+                className="p-0.5 rounded hover:bg-black/10 dark:hover:bg-white/10 text-[var(--muted)] hover:text-[var(--foreground)] opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer shrink-0"
+                aria-label="Copy pod name"
+              >
+                {copiedName ? (
+                  <Check className="w-3 h-3 text-emerald-500" />
+                ) : (
+                  <Copy className="w-3 h-3" />
+                )}
+              </button>
+            </Tooltip>
           </div>
         </td>
 
@@ -397,21 +398,22 @@ export function ResourceTableRow({
           onClick={(e) => e.stopPropagation()}
         >
           <div className="relative inline-flex items-center justify-end" ref={actionMenuRef}>
-            <button
-              ref={actionButtonRef}
-              type="button"
-              onClick={handleToggleActionMenu}
-              className={cn(
-                "p-1 rounded-md transition-colors cursor-pointer text-[var(--muted)] hover:text-[var(--foreground)]",
-                showActionMenu
-                  ? "bg-[var(--surface-active)] text-[var(--foreground)] opacity-100"
-                  : "hover:bg-black/10 dark:hover:bg-white/10 opacity-60 group-hover:opacity-100",
-              )}
-              title="Actions"
-              aria-label={`Actions for ${item.name}`}
-            >
-              <MoreHorizontal className="w-4 h-4" />
-            </button>
+            <Tooltip content="Actions menu" disabled={showActionMenu} side="left">
+              <button
+                ref={actionButtonRef}
+                type="button"
+                onClick={handleToggleActionMenu}
+                className={cn(
+                  "p-1 rounded-md transition-colors cursor-pointer text-[var(--muted)] hover:text-[var(--foreground)]",
+                  showActionMenu
+                    ? "bg-[var(--surface-active)] text-[var(--foreground)] opacity-100"
+                    : "hover:bg-black/10 dark:hover:bg-white/10 opacity-60 group-hover:opacity-100",
+                )}
+                aria-label={`Actions for ${item.name}`}
+              >
+                <MoreHorizontal className="w-4 h-4" />
+              </button>
+            </Tooltip>
 
             <AnimatePresence>
               {showActionMenu && (

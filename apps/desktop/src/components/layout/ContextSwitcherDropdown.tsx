@@ -16,6 +16,7 @@ import { useClusterStore, ClusterContextInfo } from "@/stores/clusterStore";
 import { isInternalEndpoint } from "@/lib/endpointUtils";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
+import { Tooltip } from "@/components/ui/Tooltip";
 
 interface ContextSwitcherDropdownProps {
   variant?: "default" | "unified";
@@ -276,37 +277,40 @@ export function ContextSwitcherDropdown({
                     </div>
 
                     <div className="flex items-center gap-1.5 shrink-0 pt-0.5">
-                      <button
-                        type="button"
-                        data-testid="configure-endpoint-btn"
-                        aria-label={`Configure endpoint for ${ctx.name}`}
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          setIsOpen(false);
-                          setTimeout(() => {
-                            openEndpointModal(ctx.name, ctx.server);
-                          }, 50);
-                        }}
-                        className="p-1 rounded hover:bg-black/10 dark:hover:bg-white/10 text-[var(--muted)] hover:text-[var(--foreground)] transition-colors cursor-pointer"
-                        title="Configure endpoint IP / URL"
-                      >
-                        <SlidersHorizontal className="w-3.5 h-3.5" aria-hidden="true" />
-                      </button>
-                      <button
-                        type="button"
-                        data-testid="remove-cluster-btn"
-                        aria-label={`Remove cluster ${ctx.name}`}
-                        onClick={async (e) => {
-                          e.stopPropagation();
-                          toast.info(`Removing ${ctx.name}...`);
-                          await deleteContext(ctx.name);
-                          toast.success(`Cluster removed: ${ctx.name}`);
-                        }}
-                        className="p-1 rounded hover:bg-rose-500/15 text-[var(--muted)] hover:text-rose-500 transition-colors cursor-pointer"
-                        title="Remove this cluster"
-                      >
-                        <Trash2 className="w-3.5 h-3.5" aria-hidden="true" />
-                      </button>
+                      <Tooltip content="Configure endpoint IP / URL" side="left">
+                        <button
+                          type="button"
+                          data-testid="configure-endpoint-btn"
+                          aria-label={`Configure endpoint for ${ctx.name}`}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setIsOpen(false);
+                            setTimeout(() => {
+                              openEndpointModal(ctx.name, ctx.server);
+                            }, 50);
+                          }}
+                          className="p-1 rounded hover:bg-black/10 dark:hover:bg-white/10 text-[var(--muted)] hover:text-[var(--foreground)] transition-colors cursor-pointer"
+                        >
+                          <SlidersHorizontal className="w-3.5 h-3.5" aria-hidden="true" />
+                        </button>
+                      </Tooltip>
+
+                      <Tooltip content="Remove this cluster" side="left">
+                        <button
+                          type="button"
+                          data-testid="remove-cluster-btn"
+                          aria-label={`Remove cluster ${ctx.name}`}
+                          onClick={async (e) => {
+                            e.stopPropagation();
+                            toast.info(`Removing ${ctx.name}...`);
+                            await deleteContext(ctx.name);
+                            toast.success(`Cluster removed: ${ctx.name}`);
+                          }}
+                          className="p-1 rounded hover:bg-rose-500/15 text-[var(--muted)] hover:text-rose-500 transition-colors cursor-pointer"
+                        >
+                          <Trash2 className="w-3.5 h-3.5" aria-hidden="true" />
+                        </button>
+                      </Tooltip>
                       {ctx.latencyMs > 0 && (
                         <span className="text-[10px] text-[var(--muted)] font-mono tabular-nums">
                           {ctx.latencyMs}ms

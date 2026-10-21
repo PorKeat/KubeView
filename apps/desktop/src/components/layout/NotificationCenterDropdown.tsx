@@ -16,6 +16,7 @@ import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { useClusterStore } from "@/stores/clusterStore";
 import { useTabStore } from "@/stores/tabStore";
+import { Tooltip } from "@/components/ui/Tooltip";
 
 interface ClusterAlertItem {
   id: string;
@@ -227,32 +228,36 @@ export function NotificationCenterDropdown() {
   return (
     <div className="relative" ref={dropdownRef}>
       {/* Tactile Bell Button */}
-      <button
-        type="button"
-        onClick={() => setIsOpen((prev) => !prev)}
-        aria-label={`Cluster Notifications (${alerts.length} active alerts)`}
-        title={
+      <Tooltip
+        content={
           alerts.length > 0
             ? `${alerts.length} active cluster alerts`
             : "Cluster Notifications (All systems normal)"
         }
-        className={cn(
-          "relative h-9 w-9 rounded-lg flex items-center justify-center transition-colors cursor-pointer outline-hidden focus-visible:ring-2 focus-visible:ring-[var(--accent)] select-none",
-          isOpen
-            ? "bg-black/[0.08] dark:bg-white/[0.1] text-[var(--foreground)]"
-            : "hover:bg-black/[0.05] dark:hover:bg-white/[0.06] text-[var(--muted)] hover:text-[var(--foreground)]",
-        )}
+        side="bottom"
+        disabled={isOpen}
       >
-        <motion.div
-          animate={isOpen ? { rotate: [0, -12, 10, -6, 2, 0] } : { rotate: 0 }}
-          transition={{ duration: 0.35, ease: "easeOut" }}
-          className="flex items-center justify-center"
+        <button
+          type="button"
+          onClick={() => setIsOpen((prev) => !prev)}
+          aria-label={`Cluster Notifications (${alerts.length} active alerts)`}
+          className={cn(
+            "relative h-9 w-9 rounded-lg flex items-center justify-center transition-colors cursor-pointer outline-hidden focus-visible:ring-2 focus-visible:ring-[var(--accent)] select-none",
+            isOpen
+              ? "bg-black/[0.08] dark:bg-white/[0.1] text-[var(--foreground)]"
+              : "hover:bg-black/[0.05] dark:hover:bg-white/[0.06] text-[var(--muted)] hover:text-[var(--foreground)]",
+          )}
         >
-          <Bell className="w-4 h-4" aria-hidden="true" />
-        </motion.div>
+          <motion.div
+            animate={isOpen ? { rotate: [0, -12, 10, -6, 2, 0] } : { rotate: 0 }}
+            transition={{ duration: 0.35, ease: "easeOut" }}
+            className="flex items-center justify-center"
+          >
+            <Bell className="w-4 h-4" aria-hidden="true" />
+          </motion.div>
 
-        {/* Solid Count Badge (Zero pulsing dot) */}
-        <AnimatePresence>
+          {/* Solid Count Badge (Zero pulsing dot) */}
+          <AnimatePresence>
           {alerts.length > 0 && (
             <motion.span
               initial={{ scale: 0, opacity: 0 }}
@@ -275,6 +280,7 @@ export function NotificationCenterDropdown() {
           )}
         </AnimatePresence>
       </button>
+      </Tooltip>
 
       {/* Floating Popover Panel */}
       <AnimatePresence>

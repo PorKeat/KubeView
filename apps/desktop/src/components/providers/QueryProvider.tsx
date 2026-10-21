@@ -3,6 +3,8 @@
 import * as React from "react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 
+import { TooltipProvider } from "@/components/ui/Tooltip";
+
 export function QueryProvider({ children }: { children: React.ReactNode }) {
   const [queryClient] = React.useState(
     () =>
@@ -18,6 +20,10 @@ export function QueryProvider({ children }: { children: React.ReactNode }) {
   );
 
   return (
-    <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
+    <QueryClientProvider client={queryClient}>
+      <TooltipProvider delayDuration={200} skipDelayDuration={150}>
+        {children}
+      </TooltipProvider>
+    </QueryClientProvider>
   );
 }

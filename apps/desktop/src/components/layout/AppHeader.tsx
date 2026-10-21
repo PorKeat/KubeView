@@ -18,6 +18,7 @@ import { Logo } from "@/components/brand/Logo";
 import { ContextSwitcherDropdown } from "./ContextSwitcherDropdown";
 import { NamespaceSelectorDropdown } from "./NamespaceSelectorDropdown";
 import { NotificationCenterDropdown } from "./NotificationCenterDropdown";
+import { Tooltip } from "@/components/ui/Tooltip";
 
 export function AppHeader() {
   const [mounted, setMounted] = React.useState(false);
@@ -103,37 +104,49 @@ export function AppHeader() {
       <div className="flex items-center gap-1">
         <NotificationCenterDropdown />
 
-        <button
-          onClick={handleRefresh}
-          aria-label="Refresh Resources"
-          className="h-9 w-9 rounded-lg flex items-center justify-center hover:bg-black/[0.05] dark:hover:bg-white/[0.06] text-[var(--muted)] hover:text-[var(--foreground)] focus-visible:ring-2 focus-visible:ring-[var(--accent)] focus-visible:outline-hidden transition-colors cursor-pointer"
-          title="Refresh Resources"
-        >
-          <RefreshCw className="w-4 h-4" aria-hidden="true" />
-        </button>
+        <Tooltip content="Refresh Resources" side="bottom">
+          <button
+            onClick={handleRefresh}
+            aria-label="Refresh Resources"
+            className="h-9 w-9 rounded-lg flex items-center justify-center hover:bg-black/[0.05] dark:hover:bg-white/[0.06] text-[var(--muted)] hover:text-[var(--foreground)] focus-visible:ring-2 focus-visible:ring-[var(--accent)] focus-visible:outline-hidden transition-colors cursor-pointer"
+          >
+            <RefreshCw className="w-4 h-4" aria-hidden="true" />
+          </button>
+        </Tooltip>
 
-        <button
-          onClick={() => setTheme(resolvedTheme === "dark" ? "light" : "dark")}
-          aria-label={mounted ? `Switch to ${resolvedTheme === "dark" ? "light" : "dark"} theme` : "Toggle Theme"}
-          suppressHydrationWarning
-          className="h-9 w-9 rounded-lg flex items-center justify-center hover:bg-black/[0.05] dark:hover:bg-white/[0.06] text-[var(--muted)] hover:text-[var(--foreground)] focus-visible:ring-2 focus-visible:ring-[var(--accent)] focus-visible:outline-hidden transition-colors cursor-pointer"
-          title="Toggle Theme"
+        <Tooltip
+          content={
+            mounted
+              ? resolvedTheme === "dark"
+                ? "Switch to Light Mode"
+                : "Switch to Dark Mode"
+              : "Toggle Theme"
+          }
+          side="bottom"
         >
-          {mounted ? (
-            resolvedTheme === "dark" ? <Sun className="w-4 h-4" aria-hidden="true" /> : <Moon className="w-4 h-4" aria-hidden="true" />
-          ) : (
-            <div className="w-4 h-4" />
-          )}
-        </button>
+          <button
+            onClick={() => setTheme(resolvedTheme === "dark" ? "light" : "dark")}
+            aria-label={mounted ? `Switch to ${resolvedTheme === "dark" ? "light" : "dark"} theme` : "Toggle Theme"}
+            suppressHydrationWarning
+            className="h-9 w-9 rounded-lg flex items-center justify-center hover:bg-black/[0.05] dark:hover:bg-white/[0.06] text-[var(--muted)] hover:text-[var(--foreground)] focus-visible:ring-2 focus-visible:ring-[var(--accent)] focus-visible:outline-hidden transition-colors cursor-pointer"
+          >
+            {mounted ? (
+              resolvedTheme === "dark" ? <Sun className="w-4 h-4" aria-hidden="true" /> : <Moon className="w-4 h-4" aria-hidden="true" />
+            ) : (
+              <div className="w-4 h-4" />
+            )}
+          </button>
+        </Tooltip>
 
-        <button
-          disabled
-          aria-label="Settings and global preferences (coming soon)"
-          className="h-9 w-9 rounded-lg flex items-center justify-center opacity-30 cursor-not-allowed text-[var(--muted)]"
-          title="Settings & Global Preferences (Coming Soon)"
-        >
-          <Settings className="w-4 h-4" aria-hidden="true" />
-        </button>
+        <Tooltip content="Settings & Preferences (Coming Soon)" side="bottom">
+          <button
+            disabled
+            aria-label="Settings and global preferences (coming soon)"
+            className="h-9 w-9 rounded-lg flex items-center justify-center opacity-30 cursor-not-allowed text-[var(--muted)]"
+          >
+            <Settings className="w-4 h-4" aria-hidden="true" />
+          </button>
+        </Tooltip>
       </div>
     </header>
   );

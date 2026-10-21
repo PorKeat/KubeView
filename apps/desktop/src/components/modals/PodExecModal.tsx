@@ -25,6 +25,7 @@ import { useClusterStore } from "@/stores/clusterStore";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { CustomSelect } from "@/components/ui/CustomSelect";
+import { Tooltip } from "@/components/ui/Tooltip";
 import { InteractiveTerminal } from "./InteractiveTerminal";
 
 interface CommandHistoryItem {
@@ -453,40 +454,49 @@ export function PodExecModal() {
             {/* Clear Screen (Command runner mode) */}
             {execMode === "history" && (
               <>
-                <button
-                  onClick={() => setHistory([])}
-                  className="p-1.5 rounded-lg hover:bg-[var(--surface-hover)] text-[var(--muted)] hover:text-[var(--foreground)] transition-colors cursor-pointer"
-                  title="Clear Terminal Output"
-                >
-                  <Trash2 className="w-4 h-4" />
-                </button>
+                <Tooltip content="Clear Terminal Output">
+                  <button
+                    onClick={() => setHistory([])}
+                    className="p-1.5 rounded-lg hover:bg-[var(--surface-hover)] text-[var(--muted)] hover:text-[var(--foreground)] transition-colors cursor-pointer"
+                    aria-label="Clear Terminal Output"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                  </button>
+                </Tooltip>
 
-                <button
-                  onClick={handleCopyHistory}
-                  className="p-1.5 rounded-lg hover:bg-[var(--surface-hover)] text-[var(--muted)] hover:text-[var(--foreground)] transition-colors cursor-pointer"
-                  title="Copy All Terminal History"
-                >
-                  {copied ? <Check className="w-4 h-4 text-emerald-500" /> : <Copy className="w-4 h-4" />}
-                </button>
+                <Tooltip content={copied ? "Copied to clipboard" : "Copy All Terminal Output"}>
+                  <button
+                    onClick={handleCopyHistory}
+                    className="p-1.5 rounded-lg hover:bg-[var(--surface-hover)] text-[var(--muted)] hover:text-[var(--foreground)] transition-colors cursor-pointer"
+                    aria-label="Copy All Terminal Output"
+                  >
+                    {copied ? <Check className="w-4 h-4 text-emerald-500" /> : <Copy className="w-4 h-4" />}
+                  </button>
+                </Tooltip>
               </>
             )}
 
             {/* Maximize / Restore */}
-            <button
-              onClick={() => setIsMaximized(!isMaximized)}
-              className="p-1.5 rounded-lg hover:bg-[var(--surface-hover)] text-[var(--muted)] hover:text-[var(--foreground)] transition-colors cursor-pointer"
-              title={isMaximized ? "Restore" : "Maximize"}
-            >
-              {isMaximized ? <Minimize2 className="w-4 h-4" /> : <Maximize2 className="w-4 h-4" />}
-            </button>
+            <Tooltip content={isMaximized ? "Restore window" : "Maximize window"}>
+              <button
+                onClick={() => setIsMaximized(!isMaximized)}
+                className="p-1.5 rounded-lg hover:bg-[var(--surface-hover)] text-[var(--muted)] hover:text-[var(--foreground)] transition-colors cursor-pointer"
+                aria-label={isMaximized ? "Restore window" : "Maximize window"}
+              >
+                {isMaximized ? <Minimize2 className="w-4 h-4" /> : <Maximize2 className="w-4 h-4" />}
+              </button>
+            </Tooltip>
 
             {/* Close */}
-            <button
-              onClick={closeExecModal}
-              className="p-1.5 rounded-lg hover:bg-rose-500/10 hover:text-rose-500 text-[var(--muted)] transition-colors cursor-pointer ml-1"
-            >
-              <X className="w-4 h-4" />
-            </button>
+            <Tooltip content="Close session" shortcut="Esc">
+              <button
+                onClick={closeExecModal}
+                className="p-1.5 rounded-lg hover:bg-rose-500/10 hover:text-rose-500 text-[var(--muted)] transition-colors cursor-pointer ml-1"
+                aria-label="Close interactive exec session"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </Tooltip>
           </div>
         </div>
 

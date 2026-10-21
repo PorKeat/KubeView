@@ -20,6 +20,7 @@ import {
 import { motion, AnimatePresence } from "motion/react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
+import { Tooltip } from "@/components/ui/Tooltip";
 
 interface InteractiveTerminalProps {
   podName: string;
@@ -620,16 +621,18 @@ export function InteractiveTerminal({
           >
             Clear
           </button>
-          <button
-            onClick={() => {
-              setIsDistroless(false);
-              setReconnectKey((k) => k + 1);
-            }}
-            className="p-1 rounded text-slate-400 hover:text-white hover:bg-white/[0.08] transition-colors cursor-pointer"
-            title="Reconnect shell session"
-          >
-            <RefreshCw className="w-3.5 h-3.5" />
-          </button>
+          <Tooltip content="Reconnect shell session">
+            <button
+              onClick={() => {
+                setIsDistroless(false);
+                setReconnectKey((k) => k + 1);
+              }}
+              className="p-1 rounded text-slate-400 hover:text-white hover:bg-white/[0.08] transition-colors cursor-pointer"
+              aria-label="Reconnect shell session"
+            >
+              <RefreshCw className="w-3.5 h-3.5" />
+            </button>
+          </Tooltip>
         </div>
       </div>
 

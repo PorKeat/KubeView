@@ -22,6 +22,7 @@ import {
 import { useClusterStore } from "@/stores/clusterStore";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
+import { Tooltip } from "@/components/ui/Tooltip";
 
 interface ConnectionDiagnosticsDrawerProps {
   isOpen: boolean;
@@ -161,14 +162,16 @@ export function ConnectionDiagnosticsDrawer({
             </div>
           </div>
 
-          <button
-            type="button"
-            onClick={onClose}
-            aria-label="Close diagnostics drawer"
-            className="w-8 h-8 rounded-lg flex items-center justify-center text-[var(--muted)] hover:text-[var(--foreground)] hover:bg-[var(--surface-active)] transition-colors cursor-pointer"
-          >
-            <X className="w-4 h-4" />
-          </button>
+          <Tooltip content="Close diagnostics" shortcut="Esc">
+            <button
+              type="button"
+              onClick={onClose}
+              aria-label="Close diagnostics drawer"
+              className="w-8 h-8 rounded-lg flex items-center justify-center text-[var(--muted)] hover:text-[var(--foreground)] hover:bg-[var(--surface-active)] transition-colors cursor-pointer"
+            >
+              <X className="w-4 h-4" />
+            </button>
+          </Tooltip>
         </div>
 
         {/* Content Body */}
