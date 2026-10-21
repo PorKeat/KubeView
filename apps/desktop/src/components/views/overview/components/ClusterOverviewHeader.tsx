@@ -49,7 +49,7 @@ export function ClusterOverviewHeader({
           onClick={onOpenDiagnostics}
           title="Inspect Connection & Security Diagnostics (TCP socket, TLS handshake, RBAC auth)"
           className={cn(
-            "px-2 py-0.5 rounded-full text-[11px] font-mono font-medium border inline-flex items-center gap-1 cursor-pointer transition-colors focus-visible:ring-1 focus-visible:ring-[var(--accent)] outline-hidden",
+            "px-2.5 py-0.5 rounded-full text-[11px] font-mono font-medium border inline-flex items-center gap-1.5 cursor-pointer transition-colors focus-visible:ring-1 focus-visible:ring-[var(--accent)] outline-hidden select-none",
             connectionStatus === "connected"
               ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/25 hover:bg-emerald-500/20"
               : connectionStatus === "checking"
@@ -57,6 +57,16 @@ export function ClusterOverviewHeader({
               : "bg-rose-500/10 text-rose-600 dark:text-rose-400 border-rose-500/25 hover:bg-rose-500/20"
           )}
         >
+          <span
+            className={cn(
+              "w-1.5 h-1.5 rounded-full shrink-0",
+              connectionStatus === "connected"
+                ? "bg-emerald-500"
+                : connectionStatus === "checking"
+                ? "bg-amber-500 animate-pulse"
+                : "bg-rose-500"
+            )}
+          />
           <span>
             {connectionStatus === "connected"
               ? "Active"
@@ -64,9 +74,18 @@ export function ClusterOverviewHeader({
               ? "Probing..."
               : "Degraded"}
           </span>
-          <span className="text-[10px] tabular-nums font-mono opacity-80">
-            ({latencyMs}ms)
-          </span>
+          {latencyMs > 0 && (
+            <span
+              className={cn(
+                "text-[10px] tabular-nums font-mono",
+                latencyMs > 1500
+                  ? "text-amber-600 dark:text-amber-400 font-semibold"
+                  : "opacity-80"
+              )}
+            >
+              ({latencyMs >= 1000 ? `${(latencyMs / 1000).toFixed(1)}s` : `${latencyMs}ms`})
+            </span>
+          )}
         </button>
 
         {/* Version info */}

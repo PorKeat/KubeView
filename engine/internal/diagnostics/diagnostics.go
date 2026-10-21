@@ -118,18 +118,26 @@ func (r *Runner) Diagnose(
 	stage4 := r.probeRBAC(ctx, client)
 	stages["rbac"] = stage4
 
-	totalLatency := time.Since(startAll).Milliseconds()
-
 	status := "connected"
 	if !stage4.Passed {
 		status = "degraded"
+	}
+
+	// True API round-trip latency to the Kubernetes API server (/version)
+	// Fall back to Stage 1 (TCP socket connect latency) if Stage 3 wasn't recorded
+	apiLatency := stage3.LatencyMs
+	if apiLatency <= 0 {
+		apiLatency = stage1.LatencyMs
+	}
+	if apiLatency <= 0 {
+		apiLatency = time.Since(startAll).Milliseconds()
 	}
 
 	return &DiagnosticResult{
 		ClusterID:     clusterID,
 		Status:        status,
 		ServerVersion: serverVersion,
-		LatencyMs:     totalLatency,
+		LatencyMs:     apiLatency,
 		Stages:        stages,
 	}
 }
@@ -155,8 +163,9 @@ func (r *Runner) probeNetwork(hostURL string) DiagnosticStage {
 		}
 	}
 
+	dialStart := time.Now()
 	conn, err := net.DialTimeout("tcp", host, 4*time.Second)
-	latency := time.Since(start).Milliseconds()
+	latency := time.Since(dialStart).Milliseconds()
 	if err != nil {
 		return DiagnosticStage{
 			Name:      "network",
@@ -320,8 +329,9 @@ func (r *Runner) probeTLSAndHealth(ctx context.Context, restConfig *rest.Config)
 		req.Header.Set("Authorization", "Bearer "+restConfig.BearerToken)
 	}
 
+	reqStart := time.Now()
 	resp, err := client.Do(req)
-	latency := time.Since(start).Milliseconds()
+	latency := time.Since(reqStart).Milliseconds()
 	if err != nil {
 		return DiagnosticStage{
 			Name:      "tls",
@@ -365,7 +375,6 @@ func (r *Runner) probeTLSAndHealth(ctx context.Context, restConfig *rest.Config)
 }
 
 func (r *Runner) probeRBAC(ctx context.Context, client kubernetes.Interface) DiagnosticStage {
-	start := time.Now()
 	if client == nil {
 		return DiagnosticStage{
 			Name:      "rbac",
@@ -388,8 +397,9 @@ func (r *Runner) probeRBAC(ctx context.Context, client kubernetes.Interface) Dia
 	checkCtx, cancel := context.WithTimeout(ctx, 4*time.Second)
 	defer cancel()
 
+	sarStart := time.Now()
 	review, err := client.AuthorizationV1().SelfSubjectAccessReviews().Create(checkCtx, sar, metav1.CreateOptions{})
-	latency := time.Since(start).Milliseconds()
+	latency := time.Since(sarStart).Milliseconds()
 
 	if err != nil {
 		// Fallback: cluster might not allow SelfSubjectAccessReview or RBAC is disabled

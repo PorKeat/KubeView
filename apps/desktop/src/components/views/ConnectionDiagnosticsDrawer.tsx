@@ -300,6 +300,11 @@ export function ConnectionDiagnosticsDrawer({
                 </div>
 
                 <div className="flex items-center gap-2 shrink-0">
+                  {typeof tlsStage?.latencyMs === "number" && tlsStage.latencyMs > 0 && (
+                    <span className="text-xs font-mono font-medium px-2 py-0.5 rounded bg-[var(--surface)] border border-[var(--border)] tabular-nums text-[var(--foreground)]">
+                      {tlsStage.latencyMs}ms
+                    </span>
+                  )}
                   <span
                     className={cn(
                       "text-xs font-mono font-medium px-2 py-0.5 rounded border",
@@ -341,6 +346,11 @@ export function ConnectionDiagnosticsDrawer({
                 </div>
 
                 <div className="flex items-center gap-2 shrink-0">
+                  {typeof rbacStage?.latencyMs === "number" && rbacStage.latencyMs > 0 && (
+                    <span className="text-xs font-mono font-medium px-2 py-0.5 rounded bg-[var(--surface)] border border-[var(--border)] tabular-nums text-[var(--foreground)]">
+                      {rbacStage.latencyMs}ms
+                    </span>
+                  )}
                   <span
                     className={cn(
                       "text-xs font-mono font-medium px-2 py-0.5 rounded border",

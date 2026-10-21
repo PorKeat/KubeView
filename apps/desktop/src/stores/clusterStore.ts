@@ -237,10 +237,17 @@ export const useClusterStore = create<ClusterState>((set, get) => ({
 
         set((state) => {
           const isActive = state.currentContext === target;
+          const apiLatency =
+            diag.stages?.tls?.passed && typeof diag.stages.tls.latencyMs === "number" && diag.stages.tls.latencyMs > 0
+              ? diag.stages.tls.latencyMs
+              : diag.stages?.network?.passed && typeof diag.stages.network.latencyMs === "number" && diag.stages.network.latencyMs > 0
+              ? diag.stages.network.latencyMs
+              : diag.latencyMs || 0;
+
           return {
             availableContexts: state.availableContexts.map((c) =>
               c.name === target
-                ? { ...c, status: newStatus, latencyMs: diag.latencyMs || 0 }
+                ? { ...c, status: newStatus, latencyMs: apiLatency }
                 : c
             ),
             ...(isActive
@@ -248,7 +255,7 @@ export const useClusterStore = create<ClusterState>((set, get) => ({
                   diagnosticResult: diag,
                   connectionStatus: newStatus,
                   serverVersion: diag.serverVersion || "Unavailable",
-                  latencyMs: diag.latencyMs || 0,
+                  latencyMs: apiLatency,
                   rbacMode: isClusterAdmin ? "cluster-admin" : "namespace-scoped",
                 }
               : {}),
