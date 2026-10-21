@@ -1,6 +1,5 @@
 export { ClusterOverviewView } from "./ClusterOverviewView";
 export { ClusterOverviewHeader } from "./components/ClusterOverviewHeader";
-export { ClusterHealthPulse } from "./components/ClusterHealthPulse";
 export { NamespaceScopeBanner } from "./components/NamespaceScopeBanner";
 export { BentoMetricCards } from "./components/BentoMetricCards";
 export { NodeTopologySection } from "./components/NodeTopologySection";

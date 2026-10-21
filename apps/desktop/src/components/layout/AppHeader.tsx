@@ -7,7 +7,6 @@ import {
   Moon,
   Laptop,
   Settings,
-  Bell,
   RefreshCw,
 } from "lucide-react";
 import { useTheme } from "next-themes";
@@ -18,6 +17,7 @@ import { toast } from "sonner";
 import { Logo } from "@/components/brand/Logo";
 import { ContextSwitcherDropdown } from "./ContextSwitcherDropdown";
 import { NamespaceSelectorDropdown } from "./NamespaceSelectorDropdown";
+import { NotificationCenterDropdown } from "./NotificationCenterDropdown";
 
 export function AppHeader() {
   const [mounted, setMounted] = React.useState(false);
@@ -101,6 +101,8 @@ export function AppHeader() {
 
       {/* Right: Quick Actions & Utilities - 36px Tactile Buttons */}
       <div className="flex items-center gap-1">
+        <NotificationCenterDropdown />
+
         <button
           onClick={handleRefresh}
           aria-label="Refresh Resources"
