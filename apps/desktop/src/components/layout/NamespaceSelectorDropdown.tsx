@@ -227,7 +227,7 @@ export function NamespaceSelectorDropdown({
             </div>
 
             {/* Namespaces List */}
-            <div className="max-h-60 overflow-y-auto p-1 space-y-0.5 mt-1">
+            <div className="max-h-60 overflow-y-auto p-1 space-y-0.5 mt-1" role="menu" aria-label="Available Namespaces">
               {filteredNamespaces.map((ns) => {
                 const isSelected = ns === currentNamespace;
                 const isSystem = isSystemNamespace(ns);
@@ -237,6 +237,8 @@ export function NamespaceSelectorDropdown({
                   <button
                     key={ns}
                     type="button"
+                    role="menuitem"
+                    data-testid="namespace-item"
                     onClick={() => {
                       setCurrentNamespace(ns);
                       toast.info(`Switched to namespace: ${isAll ? "All Namespaces" : ns}`);

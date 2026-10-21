@@ -40,6 +40,8 @@ export function ContextSwitcherDropdown({
   const [search, setSearch] = React.useState("");
   const [isOpen, setIsOpen] = React.useState(false);
   const dropdownRef = React.useRef<HTMLDivElement>(null);
+  const inputRef = React.useRef<HTMLInputElement>(null);
+  const listRef = React.useRef<HTMLDivElement>(null);
 
   // Close on outside click and Escape key
   React.useEffect(() => {
@@ -186,12 +188,23 @@ export function ContextSwitcherDropdown({
               <div className="relative">
                 <Search className="w-3.5 h-3.5 absolute left-2.5 top-1/2 -translate-y-1/2 text-[var(--muted)]" aria-hidden="true" />
                 <input
+                  ref={inputRef}
                   type="text"
                   autoFocus
                   value={search}
                   onChange={(e) => setSearch(e.target.value)}
                   onKeyDown={(e) => {
                     e.stopPropagation();
+                    if (e.key === "ArrowDown") {
+                      e.preventDefault();
+                      const firstItem = listRef.current?.querySelector<HTMLElement>('[role="menuitem"]');
+                      firstItem?.focus();
+                    } else if (e.key === "Enter" && filteredContexts.length > 0) {
+                      e.preventDefault();
+                      switchContext(filteredContexts[0].name);
+                      toast.info(`Connecting to cluster: ${filteredContexts[0].name}...`);
+                      setIsOpen(false);
+                    }
                   }}
                   aria-label="Filter cluster contexts"
                   placeholder="Search cluster or endpoint..."
@@ -201,7 +214,7 @@ export function ContextSwitcherDropdown({
             </div>
 
             {/* Contexts List */}
-            <div className="max-h-60 overflow-y-auto p-1 space-y-1" role="menu" aria-label="Available Clusters">
+            <div ref={listRef} className="max-h-60 overflow-y-auto p-1 space-y-1" role="menu" aria-label="Available Clusters">
               {filteredContexts.map((ctx) => {
                 const isSelected = ctx.name === currentContext;
                 const isInternal = isInternalEndpoint(ctx.server);
@@ -224,6 +237,18 @@ export function ContextSwitcherDropdown({
                         switchContext(ctx.name);
                         toast.info(`Connecting to cluster: ${ctx.name}...`);
                         setIsOpen(false);
+                      } else if (e.key === "ArrowDown") {
+                        e.preventDefault();
+                        const next = e.currentTarget.nextElementSibling as HTMLElement | null;
+                        next?.focus();
+                      } else if (e.key === "ArrowUp") {
+                        e.preventDefault();
+                        const prev = e.currentTarget.previousElementSibling as HTMLElement | null;
+                        if (prev) {
+                          prev.focus();
+                        } else {
+                          inputRef.current?.focus();
+                        }
                       }
                     }}
                     className={cn(

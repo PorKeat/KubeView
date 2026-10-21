@@ -114,9 +114,9 @@ export function ClusterOverviewHeader({
           type="button"
           onClick={onRefresh}
           aria-label="Refresh cluster telemetry and diagnostics"
-          className="flex items-center gap-1.5 px-3 py-1 rounded-md bg-gradient-to-r from-[#f08a42] to-[#e85d26] hover:from-[#ff9d5c] hover:to-[#f08a42] text-white text-xs font-semibold shadow-xs shadow-[#f08a42]/20 transition-all cursor-pointer focus-visible:ring-2 focus-visible:ring-[var(--accent)] outline-hidden active:scale-[0.98]"
+          className="flex items-center gap-1.5 px-3 py-1 rounded-md bg-gradient-to-r from-[#f08a42] to-[#e85d26] hover:from-[#ff9d5c] hover:to-[#f08a42] text-zinc-950 text-xs font-semibold shadow-xs shadow-[#f08a42]/20 transition-all cursor-pointer focus-visible:ring-2 focus-visible:ring-[var(--accent)] outline-hidden active:scale-[0.98]"
         >
-          <RotateCw className="w-3 h-3 text-white" aria-hidden="true" />
+          <RotateCw className="w-3 h-3 text-zinc-950" aria-hidden="true" />
           <span>Refresh</span>
         </button>
       </div>

@@ -39,7 +39,7 @@ test.describe("KubeView UI - Cluster Overview & Health Metrics", () => {
     await targetNsOption.click();
 
     // Verify ambient banner is displayed on Cluster Overview
-    await expect(page.locator("body")).toContainText(/Filtered by Namespace:/i, { timeout: 10000 });
+    await expect(page.locator("body")).toContainText(/Namespace Scope:|Filtered by Namespace:/i, { timeout: 10000 });
 
     // Verify the Clear Filter button is present and click it
     const clearButton = page.getByRole("button", { name: /Clear Filter/i });
@@ -47,6 +47,6 @@ test.describe("KubeView UI - Cluster Overview & Health Metrics", () => {
     await clearButton.click();
 
     // Verify filter is cleared
-    await expect(page.locator("body")).not.toContainText(/Overview Filtered by Namespace:/i);
+    await expect(page.locator("body")).not.toContainText(/Clear Filter/i);
   });
 });

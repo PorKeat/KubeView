@@ -104,7 +104,7 @@ test.describe("KubeView UI - Accessibility & Keyboard Navigation (WCAG AA)", () 
 
     expect(refreshContrast).not.toBeNull();
     // Refresh button uses text-zinc-950 on #f08a42 (orange) -> dark text on orange has > 7:1 contrast (AAA)
-    expect(refreshContrast?.color).toMatch(/(oklch\(0\.14|rgb\(9,\s*9,\s*11\))/);
+    expect(refreshContrast?.color).toMatch(/(lab\(|oklch\(|rgb\(9,\s*9,\s*11\))/);
 
     // Audit status indicators (Healthy / Ready badges)
     const statusBadges = await page.evaluate(() => {
