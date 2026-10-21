@@ -10,7 +10,6 @@ import {
   Trash2,
   Check,
   Layers,
-  Sparkles,
   CornerDownLeft,
   ArrowUp,
   ArrowDown,
@@ -500,7 +499,7 @@ export function PodExecModal() {
         {/* Quick Command Chips */}
         <div className="px-4 py-2 border-b border-[var(--border)] bg-black/[0.02] dark:bg-black/20 flex items-center gap-1.5 overflow-x-auto shrink-0 text-xs">
           <span className="text-[10px] text-[var(--muted)] uppercase font-semibold mr-1 shrink-0 flex items-center gap-1 font-mono">
-            <Sparkles className="w-3 h-3 text-[var(--accent)]" /> Quick Commands:
+            <Terminal className="w-3 h-3 text-[var(--accent)]" /> Quick Commands:
           </span>
           {QUICK_COMMANDS.map((qc) => (
             <button
