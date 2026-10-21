@@ -369,42 +369,23 @@ export function ResourceTableRow({
         </td>
 
         {/* CPU */}
-        <td className="py-1 px-2 truncate">
-          <div className="flex items-center gap-1.5">
-            <span className="font-mono text-[var(--foreground)] text-[11px] shrink-0">
-              {item.cpu}
-            </span>
-            {!isCompact && item.cpuPercent > 0 && (
-              <div className="flex-1 h-1.5 rounded-full bg-[var(--surface-active)] overflow-hidden min-w-4 max-w-8">
-                <div
-                  className="h-full rounded-full bg-[var(--accent)]"
-                  style={{ width: `${item.cpuPercent}%` }}
-                />
-              </div>
-            )}
-          </div>
+        <td className="py-1 px-2 font-mono text-[var(--foreground)] text-[11px] truncate">
+          <span
+            className={cn(item.cpu === "-" && "opacity-40")}
+            title={item.cpu !== "-" ? `CPU Request: ${item.cpu}` : "No CPU request specified"}
+          >
+            {item.cpu}
+          </span>
         </td>
 
         {/* Memory */}
-        <td className="py-1 px-2 truncate">
-          <div className="flex items-center gap-1.5">
-            <span className="font-mono text-[var(--foreground)] text-[11px] shrink-0">
-              {item.memory}
-            </span>
-            {!isCompact && item.memoryPercent > 0 && (
-              <div className="flex-1 h-1.5 rounded-full bg-[var(--surface-active)] overflow-hidden min-w-4 max-w-8">
-                <div
-                  className={cn(
-                    "h-full rounded-full",
-                    item.memoryPercent > 70
-                      ? "bg-rose-500"
-                      : "bg-cyan-500 dark:bg-cyan-400",
-                  )}
-                  style={{ width: `${item.memoryPercent}%` }}
-                />
-              </div>
-            )}
-          </div>
+        <td className="py-1 px-2 font-mono text-[var(--foreground)] text-[11px] truncate">
+          <span
+            className={cn(item.memory === "-" && "opacity-40")}
+            title={item.memory !== "-" ? `Memory Request: ${item.memory}` : "No memory request specified"}
+          >
+            {item.memory}
+          </span>
         </td>
 
         {/* Age */}
