@@ -5,8 +5,6 @@ import {
   AlertTriangle,
   CheckCircle2,
   ChevronRight,
-  ExternalLink,
-  ArrowRight,
 } from "lucide-react";
 import { SpotlightCard } from "@/components/ui";
 import { cn } from "@/lib/utils";
@@ -57,11 +55,11 @@ export function WarningEventsCard({
           </span>
         </div>
 
-        <div className="space-y-2 overflow-y-auto min-h-[175px] max-h-[235px] pr-1.5 scrollbar-thin">
+        <div className="divide-y divide-[var(--border)]/50 overflow-y-auto min-h-[175px] max-h-[230px] pr-1 scrollbar-thin">
           {events.length === 0 ? (
             <div className="h-full min-h-[175px] flex flex-col items-center justify-center text-center text-xs text-[var(--muted)] gap-2 py-4">
-              <CheckCircle2 className="w-6 h-6 text-emerald-500" />
-              <span className="font-semibold text-xs text-[var(--foreground)]">
+              <CheckCircle2 className="w-5 h-5 text-emerald-500" />
+              <span className="font-medium text-xs text-[var(--foreground)]">
                 {isNamespaceScoped
                   ? `No Warnings in ${currentNamespace}`
                   : "Cluster Operating Normally"}
@@ -117,80 +115,55 @@ export function WarningEventsCard({
                       }
                     }
                   }}
-                  className={cn(
-                    "p-3 rounded-xl border transition-all duration-150 cursor-pointer select-none space-y-1.5 group/ev",
-                    "bg-black/[0.02] dark:bg-white/[0.02] hover:bg-black/[0.04] dark:hover:bg-white/[0.04]",
-                    isSevere
-                      ? "border-rose-500/20 hover:border-rose-500/50 hover:shadow-[0_2px_12px_rgba(244,63,94,0.08)]"
-                      : "border-amber-500/20 hover:border-amber-500/50 hover:shadow-[0_2px_12px_rgba(245,158,11,0.08)]",
-                    "hover:-translate-y-0.5 active:translate-y-0 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-[var(--accent)]"
-                  )}
+                  className="py-2.5 px-2 rounded-lg hover:bg-black/[0.03] dark:hover:bg-white/[0.04] transition-colors duration-150 cursor-pointer select-none space-y-1 group/ev focus-visible:outline-hidden focus-visible:ring-1 focus-visible:ring-[var(--accent)]"
                 >
                   <div className="flex items-center justify-between text-xs">
                     <div className="flex items-center gap-2 min-w-0">
-                      <span className="relative flex h-2 w-2 shrink-0">
-                        {isSevere && (
-                          <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-rose-400 opacity-40" />
-                        )}
-                        <span
-                          className={cn(
-                            "relative inline-flex rounded-full h-2 w-2",
-                            isSevere
-                              ? "bg-rose-500 shadow-[0_0_6px_rgba(244,63,94,0.6)]"
-                              : "bg-amber-400 shadow-[0_0_6px_rgba(251,191,36,0.6)]",
-                          )}
-                        />
-                      </span>
                       <span
                         className={cn(
-                          "font-mono font-bold text-xs tracking-tight",
+                          "w-1.5 h-1.5 rounded-full shrink-0",
+                          isSevere ? "bg-rose-500" : "bg-amber-400"
+                        )}
+                      />
+                      <span
+                        className={cn(
+                          "font-mono font-semibold text-xs tracking-tight",
                           isSevere
-                            ? "text-rose-600 dark:text-rose-400 group-hover/ev:text-rose-500 dark:group-hover/ev:text-rose-300"
-                            : "text-amber-600 dark:text-amber-400 group-hover/ev:text-amber-500 dark:group-hover/ev:text-amber-300",
+                            ? "text-rose-500 dark:text-rose-400"
+                            : "text-amber-500 dark:text-amber-400"
                         )}
                       >
                         {ev.reason}
                       </span>
                       {detectedPod && (
-                        <span className="px-2 py-0.5 rounded text-[10px] font-mono font-medium bg-black/[0.04] dark:bg-white/[0.06] border border-[var(--border)] text-[var(--foreground)] group-hover/ev:border-[var(--accent)]/40 group-hover/ev:text-[var(--accent)] transition-colors truncate max-w-[150px]">
+                        <span className="px-1.5 py-0.5 rounded text-[10px] font-mono bg-black/[0.04] dark:bg-white/[0.05] border border-[var(--border)]/60 text-[var(--muted)] group-hover/ev:text-[var(--foreground)] transition-colors truncate max-w-[140px]">
                           pod/{detectedPod}
                         </span>
                       )}
                     </div>
+
                     <div className="flex items-center gap-2 shrink-0 font-mono text-[11px] text-[var(--muted)]">
-                      <span className="tabular-nums group-hover/ev:text-[var(--foreground)]/70 transition-colors">
-                        {formattedTime}
-                      </span>
-                      <span className="inline-flex items-center gap-0.5 text-[11px] font-medium text-[var(--accent)] opacity-0 group-hover/ev:opacity-100 transition-all duration-150 transform translate-x-1 group-hover/ev:translate-x-0">
+                      <span className="tabular-nums">{formattedTime}</span>
+                      <span className="inline-flex items-center gap-0.5 text-xs font-medium text-[var(--accent)] opacity-0 group-hover/ev:opacity-100 transition-opacity duration-150">
                         <span>Inspect</span>
-                        <ArrowRight className="w-3 h-3" aria-hidden="true" />
+                        <ChevronRight className="w-3 h-3" aria-hidden="true" />
                       </span>
                     </div>
                   </div>
+
                   <p
-                    className="text-xs text-[var(--foreground)]/80 dark:text-[var(--foreground)]/85 font-mono line-clamp-1 pl-4 group-hover/ev:text-[var(--foreground)] transition-colors leading-relaxed"
+                    className="text-xs text-[var(--muted)] group-hover/ev:text-[var(--foreground)] transition-colors duration-150 font-mono line-clamp-1 pl-3.5"
                     title={ev.message}
                   >
                     {ev.message}
                   </p>
-                  <div className="flex items-center justify-between text-[11px] font-mono text-[var(--muted)] pl-4 pt-1 border-t border-[var(--border)]/40">
-                    <span className="flex items-center gap-1.5">
-                      <span className="text-[10px] uppercase tracking-wider opacity-60">Source:</span>
-                      <span className="text-[var(--foreground)]/80 font-medium">{ev.source || "kubelet"}</span>
-                    </span>
-                    {ev.count > 1 ? (
-                      <span
-                        className={cn(
-                          "px-1.5 py-0.5 rounded text-[10px] font-mono tabular-nums font-semibold border",
-                          isSevere
-                            ? "bg-rose-500/10 text-rose-600 dark:text-rose-400 border-rose-500/20"
-                            : "bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/20",
-                        )}
-                      >
+
+                  <div className="flex items-center justify-between text-[11px] font-mono text-[var(--muted)] pl-3.5 pt-0.5">
+                    <span>Source: {ev.source || "kubelet"}</span>
+                    {ev.count > 1 && (
+                      <span className="tabular-nums text-[var(--muted)] font-medium">
                         Occurred {ev.count} times
                       </span>
-                    ) : (
-                      <span className="text-[10px] text-[var(--muted)]">1st occurrence</span>
                     )}
                   </div>
                 </div>
