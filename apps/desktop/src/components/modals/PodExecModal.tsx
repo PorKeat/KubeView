@@ -391,29 +391,18 @@ export function PodExecModal() {
         )}
       >
         {/* Header */}
-        <div className="h-14 border-b border-[var(--border)] px-4 flex items-center justify-between shrink-0 bg-slate-50/80 dark:bg-black/30 gap-2">
-          <div className="flex items-center gap-3 min-w-0">
-            <div className="p-2 rounded-lg bg-[var(--accent)]/15 text-[var(--accent)] border border-[var(--accent)]/20 shadow-xs shrink-0">
-              <Terminal className="w-4 h-4" />
-            </div>
-            <div className="min-w-0">
-              <div className="flex items-center gap-2">
-                <span className="text-xs font-semibold text-[var(--foreground)] truncate font-mono">
-                  {execModalPod.name}
-                </span>
-                <span className="px-2 py-0.5 rounded-full text-[10px] font-mono bg-black/[0.05] dark:bg-white/[0.08] text-[var(--muted)] border border-[var(--border)]">
-                  ns: {execModalPod.namespace}
-                </span>
-                <span className="inline-flex items-center px-2 py-0.5 rounded-md text-[9px] font-semibold font-mono bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border border-emerald-500/30">
-                  {execMode === "interactive" ? "WebSocket PTY" : "SPDY Exec"}
-                </span>
-              </div>
-              <p className="text-[10px] text-[var(--muted)] mt-0.5 font-mono">
-                {execMode === "interactive"
-                  ? "Full-duplex interactive terminal shell (supports vim, htop, arrow keys, resize)"
-                  : "Command runner with historical exit codes and structured stdout/stderr"}
-              </p>
-            </div>
+        <div className="h-11 border-b border-[var(--border)] px-4 flex items-center justify-between shrink-0 bg-slate-50/80 dark:bg-black/30 gap-2">
+          <div className="flex items-center gap-2.5 min-w-0">
+            <Terminal className="w-4 h-4 text-[var(--accent)] shrink-0" />
+            <span className="text-xs font-semibold text-[var(--foreground)] truncate font-mono">
+              {execModalPod.name}
+            </span>
+            <span className="px-1.5 py-0.5 rounded text-[10px] font-mono bg-black/[0.05] dark:bg-white/[0.08] text-[var(--muted)] border border-[var(--border)]">
+              ns: {execModalPod.namespace}
+            </span>
+            <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[9px] font-semibold font-mono bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border border-emerald-500/30">
+              {execMode === "interactive" ? "WebSocket PTY" : "SPDY Exec"}
+            </span>
           </div>
 
           <div className="flex items-center gap-2 shrink-0">
@@ -497,7 +486,7 @@ export function PodExecModal() {
         </div>
 
         {/* Quick Command Chips */}
-        <div className="px-4 py-2 border-b border-[var(--border)] bg-black/[0.02] dark:bg-black/20 flex items-center gap-1.5 overflow-x-auto shrink-0 text-xs">
+        <div className="px-4 py-1.5 border-b border-[var(--border)] bg-black/[0.02] dark:bg-black/20 flex items-center gap-1.5 overflow-x-auto shrink-0 text-xs">
           <span className="text-[10px] text-[var(--muted)] uppercase font-semibold mr-1 shrink-0 flex items-center gap-1 font-mono">
             <Terminal className="w-3 h-3 text-[var(--accent)]" /> Quick Commands:
           </span>
@@ -506,7 +495,7 @@ export function PodExecModal() {
               key={qc.cmd}
               onClick={() => handleRunCommand(qc.cmd)}
               disabled={isExecuting}
-              className="px-2.5 py-1 rounded-md bg-[var(--surface)] hover:bg-[var(--surface-hover)] border border-[var(--border)] text-[11px] font-mono text-[var(--foreground)] hover:border-black/20 dark:hover:border-white/20 transition-all cursor-pointer shrink-0 disabled:opacity-50"
+              className="px-2 py-0.5 rounded text-[10px] font-mono bg-[var(--surface)] hover:bg-[var(--surface-hover)] border border-[var(--border)] text-[var(--foreground)] hover:border-black/20 dark:hover:border-white/20 transition-all cursor-pointer shrink-0 disabled:opacity-50"
               title={qc.cmd}
             >
               {qc.label}
