@@ -569,7 +569,7 @@ export function ResourceListView({ resourceType }: ResourceListViewProps) {
                 </th>
                 <th
                   onClick={() => handleSort("name")}
-                  className="py-1 px-2 cursor-pointer hover:text-[var(--foreground)] transition-colors min-w-0"
+                  className="w-48 sm:w-56 md:w-64 py-1 px-3 cursor-pointer hover:text-[var(--foreground)] transition-colors min-w-0"
                 >
                   <div className="flex items-center gap-1">
                     <span>Name</span>
@@ -586,7 +586,7 @@ export function ResourceListView({ resourceType }: ResourceListViewProps) {
                 </th>
                 <th
                   onClick={() => handleSort("namespace")}
-                  className="w-24 sm:w-28 py-1 px-2 cursor-pointer hover:text-[var(--foreground)] transition-colors"
+                  className="w-24 sm:w-28 py-1 px-3 cursor-pointer hover:text-[var(--foreground)] transition-colors"
                 >
                   <div className="flex items-center gap-1">
                     <span>Namespace</span>
@@ -603,7 +603,7 @@ export function ResourceListView({ resourceType }: ResourceListViewProps) {
                 </th>
                 <th
                   onClick={() => handleSort("status")}
-                  className="w-24 py-1 px-2 cursor-pointer hover:text-[var(--foreground)] transition-colors"
+                  className="w-24 py-1 px-3 cursor-pointer hover:text-[var(--foreground)] transition-colors"
                 >
                   <div className="flex items-center gap-1">
                     <span>Status</span>
@@ -618,10 +618,10 @@ export function ResourceListView({ resourceType }: ResourceListViewProps) {
                     )}
                   </div>
                 </th>
-                <th className="w-12 py-1 px-2">Ready</th>
+                <th className="w-16 sm:w-20 py-1 px-3">Ready</th>
                 <th
                   onClick={() => handleSort("restarts")}
-                  className="w-16 py-1 px-2 cursor-pointer hover:text-[var(--foreground)] transition-colors"
+                  className="w-24 sm:w-28 py-1 px-3 cursor-pointer hover:text-[var(--foreground)] transition-colors"
                 >
                   <div className="flex items-center gap-1">
                     <span>Restarts</span>
@@ -638,7 +638,7 @@ export function ResourceListView({ resourceType }: ResourceListViewProps) {
                 </th>
                 <th
                   onClick={() => handleSort("node")}
-                  className="w-20 sm:w-24 py-1 px-2 cursor-pointer hover:text-[var(--foreground)] transition-colors"
+                  className="w-28 sm:w-36 py-1 px-3 cursor-pointer hover:text-[var(--foreground)] transition-colors"
                 >
                   <div className="flex items-center gap-1">
                     <span>Node</span>
@@ -653,12 +653,12 @@ export function ResourceListView({ resourceType }: ResourceListViewProps) {
                     )}
                   </div>
                 </th>
-                <th className="w-24 sm:w-28 py-1 px-2">IP</th>
-                <th className="w-16 sm:w-20 py-1 px-2">CPU</th>
-                <th className="w-20 sm:w-24 py-1 px-2">Memory</th>
+                <th className="w-24 sm:w-28 py-1 px-3">IP</th>
+                <th className="w-16 sm:w-20 py-1 px-3">CPU</th>
+                <th className="w-20 sm:w-24 py-1 px-3">Memory</th>
                 <th
                   onClick={() => handleSort("age")}
-                  className="w-12 py-1 px-2 cursor-pointer hover:text-[var(--foreground)] transition-colors"
+                  className="w-14 sm:w-16 py-1 px-3 cursor-pointer hover:text-[var(--foreground)] transition-colors"
                 >
                   <div className="flex items-center gap-1">
                     <span>Age</span>

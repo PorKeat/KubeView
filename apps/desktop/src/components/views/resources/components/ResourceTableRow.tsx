@@ -252,7 +252,7 @@ export function ResourceTableRow({
         </td>
 
         {/* Name with Expand Chevron & Quick Copy */}
-        <td className="py-1 px-2 font-medium font-mono text-[var(--foreground)] truncate">
+        <td className="py-1 px-3 font-medium font-mono text-[var(--foreground)] truncate">
           <div className="flex items-center gap-1 min-w-0">
             <button
               type="button"
@@ -294,20 +294,20 @@ export function ResourceTableRow({
         </td>
 
         {/* Namespace */}
-        <td className="py-1 px-2 font-mono text-[var(--muted)] truncate">
+        <td className="py-1 px-3 font-mono text-[var(--muted)] truncate">
           {item.namespace}
         </td>
 
         {/* Status */}
-        <td className="py-1 px-2 truncate">{renderStatus(item)}</td>
+        <td className="py-1 px-3 truncate">{renderStatus(item)}</td>
 
         {/* Ready */}
-        <td className="py-1 px-2 font-mono text-[var(--foreground)] truncate">
+        <td className="py-1 px-3 font-mono text-[var(--foreground)] truncate">
           {item.ready}
         </td>
 
         {/* Restarts */}
-        <td className="py-1 px-2 font-mono text-[var(--muted)] truncate">
+        <td className="py-1 px-3 font-mono text-[var(--muted)] truncate">
           <span
             className={cn(
               "tabular-nums text-xs",
@@ -326,7 +326,7 @@ export function ResourceTableRow({
         </td>
 
         {/* Node (Clickable Filter Pill) */}
-        <td className="py-1 px-2 truncate" onClick={(e) => e.stopPropagation()}>
+        <td className="py-1 px-3 truncate" onClick={(e) => e.stopPropagation()}>
           {item.nodeName ? (
             <button
               type="button"
@@ -346,7 +346,7 @@ export function ResourceTableRow({
 
         {/* IP with Click-to-Copy */}
         <td
-          className="py-1 px-2 font-mono text-[var(--muted)] text-[11px] truncate"
+          className="py-1 px-3 font-mono text-[var(--muted)] text-[11px] truncate"
           onClick={(e) => e.stopPropagation()}
         >
           {item.ip ? (
@@ -369,7 +369,7 @@ export function ResourceTableRow({
         </td>
 
         {/* CPU */}
-        <td className="py-1 px-2 font-mono text-[var(--foreground)] text-[11px] truncate">
+        <td className="py-1 px-3 font-mono text-[var(--foreground)] text-[11px] truncate">
           <span
             className={cn(item.cpu === "-" && "opacity-40")}
             title={item.cpu !== "-" ? `CPU Request: ${item.cpu}` : "No CPU request specified"}
@@ -379,7 +379,7 @@ export function ResourceTableRow({
         </td>
 
         {/* Memory */}
-        <td className="py-1 px-2 font-mono text-[var(--foreground)] text-[11px] truncate">
+        <td className="py-1 px-3 font-mono text-[var(--foreground)] text-[11px] truncate">
           <span
             className={cn(item.memory === "-" && "opacity-40")}
             title={item.memory !== "-" ? `Memory Request: ${item.memory}` : "No memory request specified"}
@@ -389,7 +389,7 @@ export function ResourceTableRow({
         </td>
 
         {/* Age */}
-        <td className="py-1 px-2 font-mono text-[var(--muted)] truncate">{item.age}</td>
+        <td className="py-1 px-3 font-mono text-[var(--muted)] truncate">{item.age}</td>
 
         {/* Action Buttons: Clean '...' Dropdown */}
         <td
