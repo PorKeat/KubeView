@@ -238,7 +238,7 @@ export function ResourceTableRow({
           isExpanded && "bg-[var(--surface-hover)]/70",
         )}
       >
-        <td className="px-3 text-center" onClick={(e) => e.stopPropagation()}>
+        <td className="px-2 text-center" onClick={(e) => e.stopPropagation()}>
           <button
             onClick={() => onToggleSelect(itemKey)}
             className="text-[var(--muted)] hover:text-[var(--foreground)] flex items-center justify-center cursor-pointer"
@@ -252,15 +252,15 @@ export function ResourceTableRow({
         </td>
 
         {/* Name with Expand Chevron & Quick Copy */}
-        <td className="py-1 px-3 font-medium font-mono text-[var(--foreground)] truncate max-w-[340px]">
-          <div className="flex items-center gap-1.5 min-w-0">
+        <td className="py-1 px-2 font-medium font-mono text-[var(--foreground)] truncate">
+          <div className="flex items-center gap-1 min-w-0">
             <button
               type="button"
               onClick={(e) => {
                 e.stopPropagation();
                 setIsExpanded((prev) => !prev);
               }}
-              className="p-0.5 -ml-1 rounded hover:bg-black/10 dark:hover:bg-white/10 text-[var(--muted)] hover:text-[var(--foreground)] transition-colors cursor-pointer shrink-0"
+              className="p-0.5 -ml-0.5 rounded hover:bg-black/10 dark:hover:bg-white/10 text-[var(--muted)] hover:text-[var(--foreground)] transition-colors cursor-pointer shrink-0"
               title={
                 isExpanded ? "Collapse containers" : "Expand containers & sidecars"
               }
@@ -294,20 +294,20 @@ export function ResourceTableRow({
         </td>
 
         {/* Namespace */}
-        <td className="py-1 px-3 font-mono text-[var(--muted)] truncate max-w-[130px]">
+        <td className="py-1 px-2 font-mono text-[var(--muted)] truncate">
           {item.namespace}
         </td>
 
         {/* Status */}
-        <td className="py-1 px-3">{renderStatus(item)}</td>
+        <td className="py-1 px-2 truncate">{renderStatus(item)}</td>
 
         {/* Ready */}
-        <td className="py-1 px-3 font-mono text-[var(--foreground)]">
+        <td className="py-1 px-2 font-mono text-[var(--foreground)] truncate">
           {item.ready}
         </td>
 
         {/* Restarts */}
-        <td className="py-1 px-3 font-mono text-[var(--muted)]">
+        <td className="py-1 px-2 font-mono text-[var(--muted)] truncate">
           <span
             className={cn(
               "tabular-nums text-xs",
@@ -326,13 +326,13 @@ export function ResourceTableRow({
         </td>
 
         {/* Node (Clickable Filter Pill) */}
-        <td className="py-1 px-3" onClick={(e) => e.stopPropagation()}>
+        <td className="py-1 px-2 truncate" onClick={(e) => e.stopPropagation()}>
           {item.nodeName ? (
             <button
               type="button"
               onClick={() => onFilterNode && onFilterNode(item.nodeName!)}
               title={`Filter pods on node '${item.nodeName}'`}
-              className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-mono bg-black/5 dark:bg-white/5 hover:bg-[var(--accent)]/15 hover:text-[var(--accent)] border border-[var(--border)] transition-colors cursor-pointer truncate max-w-[140px]"
+              className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-mono bg-black/5 dark:bg-white/5 hover:bg-[var(--accent)]/15 hover:text-[var(--accent)] border border-[var(--border)] transition-colors cursor-pointer truncate max-w-full"
             >
               <Server className="w-2.5 h-2.5 shrink-0 opacity-60" />
               <span className="truncate">{item.nodeName}</span>
@@ -346,17 +346,17 @@ export function ResourceTableRow({
 
         {/* IP with Click-to-Copy */}
         <td
-          className="py-1 px-3 font-mono text-[var(--muted)] text-[11px]"
+          className="py-1 px-2 font-mono text-[var(--muted)] text-[11px] truncate"
           onClick={(e) => e.stopPropagation()}
         >
           {item.ip ? (
             <button
               type="button"
               onClick={handleCopyIp}
-              className="inline-flex items-center gap-1 hover:text-[var(--foreground)] transition-colors cursor-pointer group/ip"
+              className="inline-flex items-center gap-1 hover:text-[var(--foreground)] transition-colors cursor-pointer group/ip truncate max-w-full"
               title="Click to copy IP"
             >
-              <span>{item.ip}</span>
+              <span className="truncate">{item.ip}</span>
               {copiedIp ? (
                 <Check className="w-2.5 h-2.5 text-emerald-500 shrink-0" />
               ) : (
@@ -369,13 +369,13 @@ export function ResourceTableRow({
         </td>
 
         {/* CPU */}
-        <td className="py-1 px-3">
-          <div className="flex items-center gap-2">
-            <span className="font-mono text-[var(--foreground)] text-[11px] w-9">
+        <td className="py-1 px-2 truncate">
+          <div className="flex items-center gap-1.5">
+            <span className="font-mono text-[var(--foreground)] text-[11px] shrink-0">
               {item.cpu}
             </span>
             {!isCompact && item.cpuPercent > 0 && (
-              <div className="flex-1 h-1.5 rounded-full bg-[var(--surface-active)] overflow-hidden w-10">
+              <div className="flex-1 h-1.5 rounded-full bg-[var(--surface-active)] overflow-hidden min-w-4 max-w-8">
                 <div
                   className="h-full rounded-full bg-[var(--accent)]"
                   style={{ width: `${item.cpuPercent}%` }}
@@ -386,13 +386,13 @@ export function ResourceTableRow({
         </td>
 
         {/* Memory */}
-        <td className="py-1 px-3">
-          <div className="flex items-center gap-2">
-            <span className="font-mono text-[var(--foreground)] text-[11px] w-12">
+        <td className="py-1 px-2 truncate">
+          <div className="flex items-center gap-1.5">
+            <span className="font-mono text-[var(--foreground)] text-[11px] shrink-0">
               {item.memory}
             </span>
             {!isCompact && item.memoryPercent > 0 && (
-              <div className="flex-1 h-1.5 rounded-full bg-[var(--surface-active)] overflow-hidden w-10">
+              <div className="flex-1 h-1.5 rounded-full bg-[var(--surface-active)] overflow-hidden min-w-4 max-w-8">
                 <div
                   className={cn(
                     "h-full rounded-full",
@@ -408,11 +408,11 @@ export function ResourceTableRow({
         </td>
 
         {/* Age */}
-        <td className="py-1 px-3 font-mono text-[var(--muted)]">{item.age}</td>
+        <td className="py-1 px-2 font-mono text-[var(--muted)] truncate">{item.age}</td>
 
         {/* Action Buttons: Clean '...' Dropdown */}
         <td
-          className="py-1 px-3 text-right"
+          className="py-1 px-2 text-right"
           onClick={(e) => e.stopPropagation()}
         >
           <div className="relative inline-flex items-center justify-end" ref={actionMenuRef}>
