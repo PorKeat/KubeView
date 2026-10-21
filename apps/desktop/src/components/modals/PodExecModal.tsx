@@ -17,8 +17,15 @@ import {
   Minimize2,
   Radio,
   History,
-  ShieldAlert,
   FileText,
+  Folder,
+  Sliders,
+  Activity,
+  HardDrive,
+  Info,
+  Globe,
+  Cpu,
+  Zap,
 } from "lucide-react";
 import { useClusterStore } from "@/stores/clusterStore";
 import { toast } from "sonner";
@@ -113,15 +120,71 @@ function formatAnsiOutput(raw: string): React.ReactNode {
   return elements;
 }
 
-const QUICK_COMMANDS = [
-  { label: "Directory", cmd: "ls -la" },
-  { label: "Environment", cmd: "env" },
-  { label: "Processes", cmd: "ps aux || ps -ef" },
-  { label: "Disk Usage", cmd: "df -h" },
-  { label: "OS Info", cmd: "uname -a" },
-  { label: "Network DNS", cmd: "cat /etc/resolv.conf" },
-  { label: "Listening Ports", cmd: "netstat -tuln || ss -tulpn || cat /proc/net/tcp" },
-  { label: "Memory Info", cmd: "free -m || cat /proc/meminfo" },
+interface QuickCommand {
+  label: string;
+  cmd: string;
+  shortCmd: string;
+  icon: React.ComponentType<{ className?: string }>;
+  iconColor: string;
+}
+
+const QUICK_COMMANDS: QuickCommand[] = [
+  {
+    label: "Directory",
+    cmd: "ls -la",
+    shortCmd: "ls -la",
+    icon: Folder,
+    iconColor: "text-sky-400",
+  },
+  {
+    label: "Environment",
+    cmd: "env",
+    shortCmd: "env",
+    icon: Sliders,
+    iconColor: "text-purple-400",
+  },
+  {
+    label: "Processes",
+    cmd: "ps aux || ps -ef",
+    shortCmd: "ps aux",
+    icon: Activity,
+    iconColor: "text-emerald-400",
+  },
+  {
+    label: "Disk Usage",
+    cmd: "df -h",
+    shortCmd: "df -h",
+    icon: HardDrive,
+    iconColor: "text-amber-400",
+  },
+  {
+    label: "OS Info",
+    cmd: "uname -a",
+    shortCmd: "uname",
+    icon: Info,
+    iconColor: "text-blue-400",
+  },
+  {
+    label: "Network DNS",
+    cmd: "cat /etc/resolv.conf",
+    shortCmd: "resolv",
+    icon: Globe,
+    iconColor: "text-cyan-400",
+  },
+  {
+    label: "Listening Ports",
+    cmd: "netstat -tuln || ss -tulpn || cat /proc/net/tcp",
+    shortCmd: "netstat",
+    icon: Radio,
+    iconColor: "text-rose-400",
+  },
+  {
+    label: "Memory Info",
+    cmd: "free -m || cat /proc/meminfo",
+    shortCmd: "free -m",
+    icon: Cpu,
+    iconColor: "text-teal-400",
+  },
 ];
 
 export function PodExecModal() {
@@ -138,6 +201,7 @@ export function PodExecModal() {
   const [isExecuting, setIsExecuting] = React.useState(false);
   const [copied, setCopied] = React.useState(false);
   const [isMaximized, setIsMaximized] = React.useState(false);
+  const [showQuickCmds, setShowQuickCmds] = React.useState(true);
   const outputEndRef = React.useRef<HTMLDivElement>(null);
   const inputRef = React.useRef<HTMLInputElement>(null);
 
@@ -434,6 +498,24 @@ export function PodExecModal() {
               </button>
             </div>
 
+            {/* Quick Snippets Toggle */}
+            <button
+              onClick={() => setShowQuickCmds((v) => !v)}
+              className={cn(
+                "flex items-center gap-1.5 px-2.5 py-1 rounded-md text-[11px] font-mono border transition-all cursor-pointer mr-1",
+                showQuickCmds
+                  ? "bg-amber-500/10 border-amber-500/30 text-amber-300 shadow-2xs"
+                  : "bg-black/[0.04] dark:bg-white/[0.06] border-[var(--border)] text-[var(--muted)] hover:text-[var(--foreground)]"
+              )}
+              title={showQuickCmds ? "Hide Quick Commands bar" : "Show Quick Commands bar"}
+            >
+              <Zap className="w-3.5 h-3.5 text-amber-400" />
+              <span>Snippets</span>
+              <span className="px-1 py-0.2 rounded text-[8px] font-mono bg-black/20 text-slate-400">
+                {QUICK_COMMANDS.length}
+              </span>
+            </button>
+
             {/* Container Selector */}
             {containerList.length > 1 && (
               <CustomSelect
@@ -485,23 +567,44 @@ export function PodExecModal() {
           </div>
         </div>
 
-        {/* Quick Command Chips */}
-        <div className="px-4 py-1.5 border-b border-[var(--border)] bg-black/[0.02] dark:bg-black/20 flex items-center gap-1.5 overflow-x-auto shrink-0 text-xs">
-          <span className="text-[10px] text-[var(--muted)] uppercase font-semibold mr-1 shrink-0 flex items-center gap-1 font-mono">
-            <Terminal className="w-3 h-3 text-[var(--accent)]" /> Quick Commands:
-          </span>
-          {QUICK_COMMANDS.map((qc) => (
+        {/* Quick Command Snippets Ribbon */}
+        {showQuickCmds && (
+          <div className="px-3 py-1.5 border-b border-white/[0.08] bg-[#0c0f17]/95 backdrop-blur-md flex items-center justify-between gap-2 overflow-x-auto shrink-0 text-xs select-none">
+            <div className="flex items-center gap-1.5 min-w-0 flex-1 overflow-x-auto no-scrollbar">
+              <span className="text-[10px] font-mono text-slate-400 font-semibold shrink-0 flex items-center gap-1 pr-1.5 border-r border-white/10">
+                <Zap className="w-3 h-3 text-amber-400" />
+                <span>QUICK:</span>
+              </span>
+              {QUICK_COMMANDS.map((qc) => {
+                const Icon = qc.icon;
+                return (
+                  <button
+                    key={qc.cmd}
+                    onClick={() => handleRunCommand(qc.cmd)}
+                    disabled={isExecuting}
+                    className="group inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md bg-white/[0.04] hover:bg-white/[0.08] active:bg-white/[0.12] border border-white/[0.08] hover:border-white/20 transition-all cursor-pointer shrink-0 disabled:opacity-50 text-left shadow-2xs"
+                    title={`Run in terminal: ${qc.cmd}`}
+                  >
+                    <Icon className={cn("w-3 h-3 shrink-0 transition-transform group-hover:scale-110", qc.iconColor)} />
+                    <span className="text-[11px] font-mono text-slate-200 group-hover:text-white transition-colors">
+                      {qc.label}
+                    </span>
+                    <span className="text-[9px] font-mono px-1 py-0.2 rounded bg-black/40 text-slate-400 group-hover:text-amber-300 group-hover:bg-amber-400/10 border border-white/[0.06] transition-colors">
+                      {qc.shortCmd}
+                    </span>
+                  </button>
+                );
+              })}
+            </div>
             <button
-              key={qc.cmd}
-              onClick={() => handleRunCommand(qc.cmd)}
-              disabled={isExecuting}
-              className="px-2 py-0.5 rounded text-[10px] font-mono bg-[var(--surface)] hover:bg-[var(--surface-hover)] border border-[var(--border)] text-[var(--foreground)] hover:border-black/20 dark:hover:border-white/20 transition-all cursor-pointer shrink-0 disabled:opacity-50"
-              title={qc.cmd}
+              onClick={() => setShowQuickCmds(false)}
+              className="p-1 rounded text-slate-500 hover:text-slate-300 hover:bg-white/[0.06] transition-colors cursor-pointer shrink-0"
+              title="Hide Quick Commands bar (can re-open via 'Snippets' button above)"
             >
-              {qc.label}
+              <X className="w-3 h-3" />
             </button>
-          ))}
-        </div>
+          </div>
+        )}
 
         {/* Body: Interactive Terminal vs Command Runner */}
         {execMode === "interactive" ? (
