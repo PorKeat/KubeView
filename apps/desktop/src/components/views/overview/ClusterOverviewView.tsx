@@ -12,7 +12,7 @@ import { NamespaceScopeBanner } from "./components/NamespaceScopeBanner";
 import { BentoMetricCards } from "./components/BentoMetricCards";
 import { NodeTopologySection } from "./components/NodeTopologySection";
 import { WorkloadControllersCard } from "./components/WorkloadControllersCard";
-import { WarningEventsCard } from "./components/WarningEventsCard";
+import { WarningEventsCard, extractPodName } from "./components/WarningEventsCard";
 import type { NodeSummary, PodEventItem } from "@kubeview/contracts";
 
 export function ClusterOverviewView() {
@@ -188,11 +188,25 @@ export function ClusterOverviewView() {
     );
   };
 
-  const handleTriageEvent = (event: PodEventItem, targetPod?: string) => {
-    if (targetPod) {
-      const found = pods.find(
-        (p) => p.name === targetPod || p.name.includes(targetPod),
+  const handleTriageEvent = async (event: PodEventItem, targetPod?: string) => {
+    const rawPodName = targetPod || extractPodName(event);
+    const targetNs =
+      event.involvedObjectNamespace ||
+      (isNamespaceScoped ? currentNamespace : undefined);
+
+    if (rawPodName) {
+      // 1. Check if pod is already loaded in store
+      let found = pods.find(
+        (p) =>
+          (p.name === rawPodName || p.name.includes(rawPodName)) &&
+          (!targetNs || p.namespace === targetNs),
       );
+      if (!found) {
+        found = pods.find(
+          (p) => p.name === rawPodName || p.name.includes(rawPodName),
+        );
+      }
+
       if (found) {
         openInspector({
           kind: "Pod",
@@ -201,10 +215,56 @@ export function ClusterOverviewView() {
           status: found.status,
           data: found as unknown as Record<string, unknown>,
         });
-        toast.info(`Inspecting pod '${found.name}' involved in warning event`);
+        toast.info(`Inspecting pod '${found.name}' (${found.namespace})`);
         return;
       }
+
+      // 2. Pod not currently in memory: switch namespace if different, and fetch pods
+      if (targetNs && targetNs !== currentNamespace && targetNs !== "all") {
+        setCurrentNamespace(targetNs);
+      }
+      await loadPods(targetNs || (isNamespaceScoped ? currentNamespace : "all"));
+      const latestPods = useClusterStore.getState().pods;
+      const latestFound =
+        latestPods.find(
+          (p) =>
+            (p.name === rawPodName || p.name.includes(rawPodName)) &&
+            (!targetNs || p.namespace === targetNs),
+        ) ||
+        latestPods.find(
+          (p) => p.name === rawPodName || p.name.includes(rawPodName),
+        );
+
+      if (latestFound) {
+        openInspector({
+          kind: "Pod",
+          name: latestFound.name,
+          namespace: latestFound.namespace,
+          status: latestFound.status,
+          data: latestFound as unknown as Record<string, unknown>,
+        });
+        toast.info(
+          `Inspecting pod '${latestFound.name}' (${latestFound.namespace})`,
+        );
+        return;
+      }
+
+      // 3. Fallback: open inspector with known event metadata (API streams live YAML & events)
+      openInspector({
+        kind: "Pod",
+        name: rawPodName,
+        namespace: targetNs || currentNamespace || "default",
+        status: "Warning",
+        data: {
+          name: rawPodName,
+          namespace: targetNs || currentNamespace || "default",
+          status: "Warning",
+        },
+      });
+      toast.info(`Inspecting pod '${rawPodName}'`);
+      return;
     }
+
     handleBrowsePods();
   };
 

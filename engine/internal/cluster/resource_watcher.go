@@ -201,12 +201,15 @@ func (rw *ResourceWatcher) runEventWatch(ctx context.Context, contextName string
 					ts = k8sEv.EventTime.Time.Format(time.RFC3339)
 				}
 				rw.onEvent(PodEventItem{
-					Type:          k8sEv.Type,
-					Reason:        k8sEv.Reason,
-					Message:       k8sEv.Message,
-					Count:         k8sEv.Count,
-					LastTimestamp: ts,
-					Source:        k8sEv.Source.Component,
+					Type:                    k8sEv.Type,
+					Reason:                  k8sEv.Reason,
+					Message:                 k8sEv.Message,
+					Count:                   k8sEv.Count,
+					LastTimestamp:           ts,
+					Source:                  k8sEv.Source.Component,
+					InvolvedObjectKind:      k8sEv.InvolvedObject.Kind,
+					InvolvedObjectName:      k8sEv.InvolvedObject.Name,
+					InvolvedObjectNamespace: k8sEv.InvolvedObject.Namespace,
 				})
 			}
 		}

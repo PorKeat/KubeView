@@ -492,12 +492,15 @@ func (m *Manager) GetClusterOverview(ctx context.Context, contextName string, na
 					ts = e.EventTime.Time.Format(time.RFC3339)
 				}
 				warningItems = append(warningItems, PodEventItem{
-					Type:          e.Type,
-					Reason:        e.Reason,
-					Message:       e.Message,
-					Count:         e.Count,
-					LastTimestamp: ts,
-					Source:        e.Source.Component,
+					Type:                    e.Type,
+					Reason:                  e.Reason,
+					Message:                 e.Message,
+					Count:                   e.Count,
+					LastTimestamp:           ts,
+					Source:                  e.Source.Component,
+					InvolvedObjectKind:      e.InvolvedObject.Kind,
+					InvolvedObjectName:      e.InvolvedObject.Name,
+					InvolvedObjectNamespace: e.InvolvedObject.Namespace,
 				})
 			}
 		}

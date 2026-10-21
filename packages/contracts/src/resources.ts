@@ -211,6 +211,9 @@ export interface PodEventItem {
   count: number;
   lastTimestamp: string;
   source: string;
+  involvedObjectKind?: string;
+  involvedObjectName?: string;
+  involvedObjectNamespace?: string;
 }
 
 export interface PodEventsResult {

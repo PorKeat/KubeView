@@ -146,12 +146,15 @@ type ExecPodResult struct {
 }
 
 type PodEventItem struct {
-	Type          string `json:"type"`
-	Reason        string `json:"reason"`
-	Message       string `json:"message"`
-	Count         int32  `json:"count"`
-	LastTimestamp string `json:"lastTimestamp"`
-	Source        string `json:"source"`
+	Type                    string `json:"type"`
+	Reason                  string `json:"reason"`
+	Message                 string `json:"message"`
+	Count                   int32  `json:"count"`
+	LastTimestamp           string `json:"lastTimestamp"`
+	Source                  string `json:"source"`
+	InvolvedObjectKind      string `json:"involvedObjectKind,omitempty"`
+	InvolvedObjectName      string `json:"involvedObjectName,omitempty"`
+	InvolvedObjectNamespace string `json:"involvedObjectNamespace,omitempty"`
 }
 
 type PodEventsResult struct {
@@ -448,12 +451,15 @@ func (m *Manager) GetPodEvents(ctx context.Context, contextName, namespace, podN
 			ts = e.EventTime.Time.Format(time.RFC3339)
 		}
 		items = append(items, PodEventItem{
-			Type:          e.Type,
-			Reason:        e.Reason,
-			Message:       e.Message,
-			Count:         e.Count,
-			LastTimestamp: ts,
-			Source:        e.Source.Component,
+			Type:                    e.Type,
+			Reason:                  e.Reason,
+			Message:                 e.Message,
+			Count:                   e.Count,
+			LastTimestamp:           ts,
+			Source:                  e.Source.Component,
+			InvolvedObjectKind:      e.InvolvedObject.Kind,
+			InvolvedObjectName:      e.InvolvedObject.Name,
+			InvolvedObjectNamespace: e.InvolvedObject.Namespace,
 		})
 	}
 

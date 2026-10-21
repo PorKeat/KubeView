@@ -19,13 +19,41 @@ export interface WarningEventsCardProps {
   onTriageEvent?: (event: PodEventItem, targetPod?: string) => void;
 }
 
-function extractPodName(msg: string, source: string): string | null {
-  if (!msg) return null;
-  const match1 = msg.match(/pod\s+["']?([a-zA-Z0-9_.-]+)["']?/i);
+export function extractPodName(ev: PodEventItem): string | null {
+  if (!ev) return null;
+
+  // 1. Direct involvedObject metadata from engine/K8s
+  if (ev.involvedObjectKind === "Pod" && ev.involvedObjectName) {
+    return ev.involvedObjectName;
+  }
+  if (
+    ev.involvedObjectName &&
+    (!ev.involvedObjectKind || ev.involvedObjectKind.toLowerCase() === "pod")
+  ) {
+    return ev.involvedObjectName;
+  }
+
+  // 2. Pattern matching in event message
+  const msg = ev.message || "";
+  const match1 = msg.match(/(?:in\s+pod|pod)\s+["']?([a-zA-Z0-9_.-]+)["']?/i);
   if (match1 && match1[1] && !match1[1].includes("/")) return match1[1];
+
   const match2 = msg.match(/pod\/([a-zA-Z0-9_.-]+)/i);
   if (match2 && match2[1]) return match2[1];
-  if (source && source.startsWith("pod/")) return source.replace("pod/", "");
+
+  const match3 = msg.match(/Pod:\s*([a-zA-Z0-9_.-]+)/i);
+  if (match3 && match3[1]) return match3[1];
+
+  // 3. Fallback to source component
+  if (ev.source && ev.source.startsWith("pod/")) {
+    return ev.source.replace("pod/", "");
+  }
+
+  // 4. Fallback to involvedObjectName even if kind not populated
+  if (ev.involvedObjectName) {
+    return ev.involvedObjectName;
+  }
+
   return null;
 }
 
@@ -75,22 +103,25 @@ export function WarningEventsCard({
               const isSevere =
                 ev.reason?.toLowerCase().includes("fail") ||
                 ev.message?.toLowerCase().includes("fail") ||
-                ev.message?.toLowerCase().includes("backoff");
+                ev.message?.toLowerCase().includes("backoff") ||
+                ev.reason?.toLowerCase().includes("crash");
 
-              const detectedPod = extractPodName(ev.message, ev.source);
+              const detectedPod = extractPodName(ev);
 
               let formattedTime = ev.lastTimestamp || "";
-              try {
-                const d = new Date(ev.lastTimestamp);
-                if (!isNaN(d.getTime())) {
-                  formattedTime = d.toLocaleTimeString([], {
-                    hour: "2-digit",
-                    minute: "2-digit",
-                    second: "2-digit",
-                  });
+              if (ev.lastTimestamp) {
+                try {
+                  const d = new Date(ev.lastTimestamp);
+                  if (!isNaN(d.getTime())) {
+                    formattedTime = d.toLocaleTimeString([], {
+                      hour: "2-digit",
+                      minute: "2-digit",
+                      second: "2-digit",
+                    });
+                  }
+                } catch {
+                  // Fallback to raw timestamp
                 }
-              } catch {
-                // Fallback to raw timestamp
               }
 
               return (
@@ -115,9 +146,9 @@ export function WarningEventsCard({
                       }
                     }
                   }}
-                  className="py-2.5 px-2 rounded-lg hover:bg-black/[0.03] dark:hover:bg-white/[0.04] transition-colors duration-150 cursor-pointer select-none space-y-1 group/ev focus-visible:outline-hidden focus-visible:ring-1 focus-visible:ring-[var(--accent)]"
+                  className="py-2.5 px-2 rounded-lg hover:bg-black/[0.03] dark:hover:bg-white/[0.04] transition-colors duration-150 cursor-pointer select-none space-y-1.5 group/ev focus-visible:outline-hidden focus-visible:ring-1 focus-visible:ring-[var(--accent)]"
                 >
-                  <div className="flex items-center justify-between text-xs">
+                  <div className="flex items-center justify-between text-xs gap-2">
                     <div className="flex items-center gap-2 min-w-0">
                       <span
                         className={cn(
@@ -127,7 +158,7 @@ export function WarningEventsCard({
                       />
                       <span
                         className={cn(
-                          "font-mono font-semibold text-xs tracking-tight",
+                          "font-mono font-semibold text-xs tracking-tight shrink-0",
                           isSevere
                             ? "text-rose-500 dark:text-rose-400"
                             : "text-amber-500 dark:text-amber-400"
@@ -136,32 +167,53 @@ export function WarningEventsCard({
                         {ev.reason}
                       </span>
                       {detectedPod && (
-                        <span className="px-1.5 py-0.5 rounded text-[10px] font-mono bg-black/[0.04] dark:bg-white/[0.05] border border-[var(--border)]/60 text-[var(--muted)] group-hover/ev:text-[var(--foreground)] transition-colors truncate max-w-[140px]">
+                        <span
+                          title={`Pod: ${detectedPod}`}
+                          className="px-1.5 py-0.5 rounded text-[10px] font-mono font-medium bg-sky-500/10 dark:bg-sky-500/15 text-sky-600 dark:text-sky-300 border border-sky-500/25 truncate max-w-[150px]"
+                        >
                           pod/{detectedPod}
                         </span>
                       )}
                     </div>
 
-                    <div className="flex items-center gap-2 shrink-0 font-mono text-[11px] text-[var(--muted)]">
-                      <span className="tabular-nums">{formattedTime}</span>
-                      <span className="inline-flex items-center gap-0.5 text-xs font-medium text-[var(--accent)] opacity-0 group-hover/ev:opacity-100 transition-opacity duration-150">
-                        <span>Inspect</span>
-                        <ChevronRight className="w-3 h-3" aria-hidden="true" />
+                    <div className="flex items-center shrink-0 font-mono text-xs select-none">
+                      <span className="text-xs font-mono tabular-nums text-zinc-400 dark:text-zinc-500 group-hover/ev:text-zinc-500 dark:group-hover/ev:text-zinc-400 transition-colors">
+                        {formattedTime}
                       </span>
+                      <div className="grid grid-cols-[0fr] group-hover/ev:grid-cols-[1fr] transition-all duration-200 ease-out motion-reduce:transition-none">
+                        <div className="overflow-hidden">
+                          <span className="inline-flex items-center gap-0.5 text-xs font-semibold text-[var(--accent)] pl-2 opacity-0 group-hover/ev:opacity-100 translate-x-1.5 group-hover/ev:translate-x-0 transition-all duration-200 ease-out whitespace-nowrap motion-reduce:translate-x-0">
+                            <span>Inspect</span>
+                            <ChevronRight className="w-3.5 h-3.5 shrink-0" aria-hidden="true" />
+                          </span>
+                        </div>
+                      </div>
                     </div>
                   </div>
 
                   <p
-                    className="text-xs text-[var(--muted)] group-hover/ev:text-[var(--foreground)] transition-colors duration-150 font-mono line-clamp-1 pl-3.5"
+                    className="text-xs font-mono text-zinc-700 dark:text-zinc-200 group-hover/ev:text-zinc-950 dark:group-hover/ev:text-white transition-colors duration-150 line-clamp-1 pl-3.5 leading-relaxed"
                     title={ev.message}
                   >
                     {ev.message}
                   </p>
 
-                  <div className="flex items-center justify-between text-[11px] font-mono text-[var(--muted)] pl-3.5 pt-0.5">
-                    <span>Source: {ev.source || "kubelet"}</span>
+                  <div className="flex items-center justify-between text-[11px] font-mono pl-3.5 pt-0.5">
+                    <span className="text-zinc-400 dark:text-zinc-500">
+                      Source:{" "}
+                      <span className="font-medium text-zinc-600 dark:text-zinc-300">
+                        {ev.source || "kubelet"}
+                      </span>
+                    </span>
                     {ev.count > 1 && (
-                      <span className="tabular-nums text-[var(--muted)] font-medium">
+                      <span
+                        className={cn(
+                          "tabular-nums font-semibold",
+                          isSevere
+                            ? "text-rose-600/90 dark:text-rose-400/90"
+                            : "text-amber-600/90 dark:text-amber-400/90"
+                        )}
+                      >
                         Occurred {ev.count} times
                       </span>
                     )}
