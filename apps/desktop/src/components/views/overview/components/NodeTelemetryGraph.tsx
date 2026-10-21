@@ -76,28 +76,8 @@ export function NodeTelemetryGraph({
           </div>
         </div>
 
-        {/* Pods (Interactive for 1-click filtering) */}
-        <div
-          role="button"
-          tabIndex={0}
-          onClick={(e) => {
-            e.stopPropagation();
-            onInspectPods?.();
-          }}
-          onKeyDown={(e) => {
-            if (e.key === "Enter" || e.key === " ") {
-              e.preventDefault();
-              e.stopPropagation();
-              onInspectPods?.();
-            }
-          }}
-          title={
-            isNamespaceScoped
-              ? `Filter pods in '${scopedNamespace}' running on ${nodeName}`
-              : `Filter pods running on ${nodeName}`
-          }
-          className="space-y-1 cursor-pointer group/podscol -m-1 p-1 rounded-lg hover:bg-black/[0.03] dark:hover:bg-white/[0.04] transition-colors"
-        >
+        {/* Pods */}
+        <div className="space-y-1">
           <div className="flex items-center gap-1.5">
             <span
               className={cn(
@@ -107,10 +87,10 @@ export function NodeTelemetryGraph({
             />
             <span
               className={cn(
-                "text-xs font-mono tracking-wider transition-colors truncate",
+                "text-xs font-mono tracking-wider truncate",
                 isNamespaceScoped
                   ? "text-[#f08a42] font-semibold"
-                  : "font-medium text-[var(--muted)] group-hover/podscol:text-[var(--foreground)]"
+                  : "font-medium text-[var(--muted)]"
               )}
             >
               {isNamespaceScoped ? `Pods (${scopedNamespace})` : "Pods"}
