@@ -123,17 +123,18 @@ export function StatusBar() {
   }, [latencyMs]);
 
   return (
-    <footer className="h-7 w-full border-t border-[var(--border)] bg-[var(--surface)]/95 backdrop-blur-xs flex items-center justify-between px-3 sm:px-4 text-[11px] text-[var(--muted)] select-none shrink-0 overflow-x-auto scrollbar-none font-sans">
+    <footer className="h-7 w-full border-t border-[var(--border)] bg-[var(--surface)] flex items-center justify-between px-3 text-[11px] text-[var(--muted)] select-none shrink-0 overflow-x-auto scrollbar-none font-sans">
       {/* Left: Cluster Telemetry & Active Scope */}
-      <div className="flex items-center gap-1 sm:gap-1.5 shrink-0">
+      <div className="flex items-center gap-1 shrink-0">
         {/* Connection Status & Latency Beacon */}
         <button
           type="button"
           onClick={handlePing}
-          className="flex items-center gap-1.5 px-1.5 py-0.5 rounded hover:bg-black/[0.04] dark:hover:bg-white/[0.06] transition-colors cursor-pointer group"
-          title={`Status: ${status.label} (${latencyMs}ms latency) • Click to ping`}
+          disabled={isDiagnosing}
+          className="flex items-center gap-1.5 px-1.5 py-0.5 rounded hover:bg-black/[0.04] dark:hover:bg-white/[0.06] hover:text-[var(--foreground)] transition-colors cursor-pointer group focus-visible:outline-hidden"
+          title={`Status: ${status.label} • Latency: ${latencyDisplay} • Click to test ping`}
         >
-          <span className="relative flex h-2 w-2">
+          <span className="relative flex h-2 w-2 shrink-0">
             {status.ping && (
               <span
                 className={cn(
@@ -145,112 +146,111 @@ export function StatusBar() {
             <span className={cn("relative inline-flex rounded-full h-2 w-2", status.beacon)} />
           </span>
           <span className={cn("font-medium", status.color)}>{status.label}</span>
-          <span className={cn("text-[10px] font-mono tabular-nums opacity-90", latencyColor)}>
+          <span className={cn("text-[10px] font-mono tabular-nums opacity-80", latencyColor)}>
             ({latencyDisplay})
           </span>
         </button>
 
-        <span className="text-[var(--border)] select-none text-[10px] hidden xs:inline">•</span>
+        <div className="h-3 w-[1px] bg-[var(--border)] opacity-60 shrink-0 mx-0.5" />
 
-        {/* Active Context Chip */}
+        {/* Active Context */}
         <button
           type="button"
           onClick={() => openKubeconfigModal?.("browse")}
-          className="flex items-center gap-1.5 px-1.5 py-0.5 rounded hover:bg-black/[0.04] dark:hover:bg-white/[0.06] hover:text-[var(--foreground)] transition-colors cursor-pointer group"
-          title={`Context: ${currentContext || "None"} • Click to switch cluster`}
+          className="flex items-center gap-1.5 px-1.5 py-0.5 rounded hover:bg-black/[0.04] dark:hover:bg-white/[0.06] hover:text-[var(--foreground)] transition-colors cursor-pointer group focus-visible:outline-hidden"
+          title={`Active Context: ${currentContext || "None"} • Click to switch cluster`}
         >
-          <Terminal className="w-3 h-3 text-[var(--accent)] shrink-0 opacity-80 group-hover:opacity-100" />
-          <span className="text-[10px] text-[var(--muted)] uppercase font-semibold tracking-wider hidden sm:inline">
-            ctx:
-          </span>
-          <span className="font-mono font-medium text-[var(--foreground)] truncate max-w-[150px] sm:max-w-[210px] md:max-w-[280px]">
+          <Terminal className="w-3 h-3 text-[var(--muted)] group-hover:text-[var(--foreground)] transition-colors shrink-0" />
+          <span className="font-mono text-[var(--foreground)] truncate max-w-[150px] sm:max-w-[210px] md:max-w-[280px]">
             {currentContext || "No context"}
           </span>
         </button>
 
-        <span className="text-[var(--border)] select-none text-[10px] hidden sm:inline">•</span>
+        <div className="h-3 w-[1px] bg-[var(--border)] opacity-60 shrink-0 mx-0.5" />
 
-        {/* Namespace Badge */}
+        {/* Namespace Scope */}
         <div
-          className="flex items-center gap-1 px-1.5 py-0.5 rounded text-[var(--muted)]"
+          className="flex items-center gap-1 px-1.5 py-0.5 text-[var(--muted)] shrink-0"
           title={`Active Namespace Scope: ${currentNamespace}`}
         >
-          <span className="text-[10px] text-[var(--muted)] uppercase font-semibold tracking-wider hidden sm:inline">
-            ns:
-          </span>
-          <span className="font-mono font-medium text-[var(--foreground)] bg-black/[0.04] dark:bg-white/[0.06] border border-[var(--border)] px-1.5 py-0.2 rounded text-[10px]">
+          <span className="text-[10px] text-[var(--muted)]/70">ns:</span>
+          <span className="font-mono text-[var(--foreground)]">
             {currentNamespace}
           </span>
         </div>
       </div>
 
       {/* Right: Runtime Engine, RBAC Security, Version & Incident Telemetry */}
-      <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
-        {/* Go Engine Sidecar Runtime Chip */}
+      <div className="flex items-center gap-1 shrink-0">
+        {/* Go Engine Sidecar Runtime */}
         <div
-          className="hidden md:flex items-center gap-1.5 px-2 py-0.5 rounded text-[10px] font-mono font-medium bg-[var(--accent)]/10 text-[var(--accent)] border border-[var(--accent)]/20 select-none"
+          className="hidden md:flex items-center gap-1.5 px-1.5 py-0.5 rounded text-[var(--muted)] select-none"
           title="Go client-go Sidecar runtime active (v1.23)"
         >
-          <Cpu className="w-3 h-3 text-[var(--accent)] shrink-0" />
-          <span>Go Engine 1.23</span>
+          <Cpu className="w-3 h-3 text-[var(--muted)]/70 shrink-0" />
+          <span className="font-mono text-[10px]">Go 1.23</span>
         </div>
 
-        {/* RBAC Security Guard Chip */}
+        <div className="hidden md:block h-3 w-[1px] bg-[var(--border)] opacity-60 shrink-0 mx-0.5" />
+
+        {/* RBAC Security Guard */}
         <div
-          className={cn(
-            "flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-mono font-medium border select-none",
-            rbacMode === "cluster-admin"
-              ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/25"
-              : "bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/25"
-          )}
+          className="hidden sm:flex items-center gap-1.5 px-1.5 py-0.5 rounded text-[var(--muted)] select-none"
           title={
             rbacMode === "cluster-admin"
-              ? "RBAC: SelfSubjectAccessReview Pre-Flight Enforcement Active (ClusterAdmin)"
+              ? "RBAC: ClusterAdmin access active (Full privileges)"
               : "RBAC: Namespace-scoped permissions active"
           }
         >
           {rbacMode === "cluster-admin" ? (
-            <ShieldCheck className="w-3 h-3 shrink-0" />
+            <ShieldCheck className="w-3 h-3 text-emerald-500/80 shrink-0" />
           ) : (
-            <Shield className="w-3 h-3 shrink-0" />
+            <Shield className="w-3 h-3 text-amber-500/80 shrink-0" />
           )}
-          <span className="capitalize">{rbacMode === "cluster-admin" ? "ClusterAdmin" : "Scoped"}</span>
+          <span className="text-[10px] font-medium capitalize">
+            {rbacMode === "cluster-admin" ? "ClusterAdmin" : "Scoped"}
+          </span>
         </div>
+
+        <div className="hidden sm:block h-3 w-[1px] bg-[var(--border)] opacity-60 shrink-0 mx-0.5" />
 
         {/* Kubernetes Server Version (Clickable to copy) */}
         <button
           type="button"
           onClick={copyVersion}
-          className="flex items-center gap-1 px-2 py-0.5 rounded text-[11px] font-mono text-[var(--muted)] hover:text-[var(--foreground)] hover:bg-black/[0.04] dark:hover:bg-white/[0.06] transition-colors cursor-pointer"
-          title="Click to copy Kubernetes version to clipboard"
+          className="flex items-center gap-1.5 px-1.5 py-0.5 rounded font-mono text-[var(--muted)] hover:text-[var(--foreground)] hover:bg-black/[0.04] dark:hover:bg-white/[0.06] transition-colors cursor-pointer group focus-visible:outline-hidden"
+          title="Kubernetes server version • Click to copy to clipboard"
         >
           {copied ? (
             <Check className="w-3 h-3 text-emerald-500 shrink-0" />
           ) : (
-            <Copy className="w-3 h-3 opacity-60 shrink-0" />
+            <Copy className="w-3 h-3 text-[var(--muted)]/60 group-hover:text-[var(--foreground)] transition-colors shrink-0" />
           )}
-          <span className="tabular-nums">{serverVersion}</span>
+          <span className="tabular-nums text-[10px]">{serverVersion}</span>
         </button>
+
+        <div className="h-3 w-[1px] bg-[var(--border)] opacity-60 shrink-0 mx-0.5" />
 
         {/* Cluster Incidents Telemetry / Notification Bell */}
         {warningCount > 0 ? (
           <button
             type="button"
             onClick={handleReviewIncidents}
-            className="flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-mono font-medium bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/25 hover:bg-amber-500/20 transition-colors cursor-pointer"
+            className="flex items-center gap-1.5 px-1.5 py-0.5 rounded font-mono text-amber-600 dark:text-amber-400 hover:bg-amber-500/10 transition-colors cursor-pointer focus-visible:outline-hidden"
             title={`${warningCount} Active Warning Events • Click to review in Overview`}
           >
-            <AlertTriangle className="w-3 h-3 text-amber-500 shrink-0 animate-pulse" />
-            <span className="tabular-nums">{warningCount} Active</span>
+            <AlertTriangle className="w-3 h-3 text-amber-500 shrink-0" />
+            <span className="tabular-nums font-medium text-[10px]">{warningCount} active</span>
           </button>
         ) : (
           <button
             type="button"
             onClick={() => toast.info("All cluster workloads healthy — 0 active warnings")}
-            className="p-1 rounded text-[var(--muted)] hover:text-[var(--foreground)] hover:bg-black/[0.04] dark:hover:bg-white/[0.06] transition-colors cursor-pointer"
+            className="flex items-center gap-1.5 px-1.5 py-0.5 rounded text-[var(--muted)] hover:text-[var(--foreground)] hover:bg-black/[0.04] dark:hover:bg-white/[0.06] transition-colors cursor-pointer focus-visible:outline-hidden"
             title="0 active warnings — Cluster healthy"
           >
-            <Bell className="w-3 h-3 opacity-70" />
+            <Bell className="w-3 h-3 text-[var(--muted)]/60 shrink-0" />
+            <span className="text-[10px]">0 issues</span>
           </button>
         )}
       </div>
