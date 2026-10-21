@@ -32,10 +32,13 @@ export function WorkloadControllersCard({
   const totalDegraded = dep.degraded + sts.degraded + ds.degraded;
 
   return (
-    <SpotlightCard className="p-5 flex flex-col justify-between h-full space-y-4">
-      <div className="flex flex-col space-y-3.5">
+    <SpotlightCard
+      containerClassName="h-full flex flex-col"
+      className="p-5 flex flex-col justify-between h-full flex-1 min-h-0 space-y-4"
+    >
+      <div className="flex flex-col flex-1 min-h-0 space-y-3.5">
         {/* Card Header with Title and Status Pill (matching WarningEventsCard layout) */}
-        <div className="flex items-center justify-between pb-3.5 border-b border-[var(--border)]/70 gap-2 flex-wrap">
+        <div className="flex items-center justify-between pb-3.5 border-b border-[var(--border)]/70 gap-2 flex-wrap shrink-0">
           <div className="flex items-center gap-2">
             <Layers className="w-4 h-4 text-[var(--accent)] shrink-0" />
             <h3 className="text-sm font-semibold text-[var(--foreground)] tracking-tight">
@@ -241,7 +244,7 @@ export function WorkloadControllersCard({
       </div>
 
       {/* Card Footer (matching WarningEventsCard footer layout) */}
-      <div className="pt-2.5 border-t border-[var(--border)]/60 text-xs text-[var(--muted)] flex items-center justify-between">
+      <div className="pt-2.5 border-t border-[var(--border)]/60 text-xs text-[var(--muted)] flex items-center justify-between shrink-0">
         <span className="tabular-nums font-mono text-xs">
           {isNamespaceScoped
             ? `Workloads in namespace: ${currentNamespace}`

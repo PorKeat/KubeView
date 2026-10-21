@@ -154,10 +154,13 @@ export function WarningEventsCard({
   const rawCount = warningEvents?.length || 0;
 
   return (
-    <SpotlightCard className="p-5 flex flex-col justify-between h-full space-y-4">
-      <div className="flex flex-col">
+    <SpotlightCard
+      containerClassName="h-full flex flex-col"
+      className="p-5 flex flex-col justify-between h-full flex-1 min-h-0 space-y-4"
+    >
+      <div className="flex flex-col flex-1 min-h-0 space-y-3.5">
         {/* Card Header with Title, Time Window Toggle, and Active Count */}
-        <div className="flex items-center justify-between pb-3.5 border-b border-[var(--border)]/70 gap-2 flex-wrap">
+        <div className="flex items-center justify-between pb-3.5 border-b border-[var(--border)]/70 gap-2 flex-wrap shrink-0">
           <div className="flex items-center gap-2">
             <AlertTriangle className="w-4 h-4 text-amber-500 shrink-0" />
             <h3 className="text-sm font-semibold text-[var(--foreground)] tracking-tight">
@@ -222,8 +225,8 @@ export function WarningEventsCard({
           </div>
         </div>
 
-        {/* Scrollable Events List (Ordered Newest First) */}
-        <div className="divide-y divide-[var(--border)]/50 overflow-y-auto min-h-[175px] max-h-[230px] pr-1 scrollbar-thin">
+        {/* Scrollable Events List (Fills height dynamically matching left card) */}
+        <div className="divide-y divide-[var(--border)]/50 overflow-y-auto flex-1 min-h-[190px] pr-1 scrollbar-thin">
           {filteredAndSortedEvents.length === 0 ? (
             <div className="h-full min-h-[175px] flex flex-col items-center justify-center text-center text-xs text-[var(--muted)] gap-2 py-4">
               <CheckCircle2 className="w-5 h-5 text-emerald-500" />
@@ -361,7 +364,7 @@ export function WarningEventsCard({
       </div>
 
       {/* Card Footer */}
-      <div className="pt-2.5 border-t border-[var(--border)]/60 text-xs text-[var(--muted)] flex items-center justify-between">
+      <div className="pt-2.5 border-t border-[var(--border)]/60 text-xs text-[var(--muted)] flex items-center justify-between shrink-0">
         <span className="tabular-nums font-mono text-xs">
           {isNamespaceScoped
             ? `Filtered to namespace: ${currentNamespace}`
