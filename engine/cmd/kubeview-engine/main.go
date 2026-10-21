@@ -446,6 +446,34 @@ func main() {
 		return res, nil
 	})
 
+	// Method: pods.launchDebugContainer
+	server.Register("pods.launchDebugContainer", func(params json.RawMessage) (interface{}, *ipc.RPCError) {
+		var p cluster.LaunchDebugContainerParams
+		if err := json.Unmarshal(params, &p); err != nil {
+			return nil, &ipc.RPCError{
+				Code:    ipc.ErrCodeInvalidParams,
+				Message: fmt.Sprintf("Invalid params: %v", err),
+			}
+		}
+		if p.ContextName == "" {
+			if listRes, err := mgr.ListContexts(); err == nil {
+				p.ContextName = listRes.CurrentContext
+			}
+		}
+
+		ctx, cancel := context.WithTimeout(context.Background(), 20*time.Second)
+		defer cancel()
+
+		res, err := mgr.LaunchDebugContainer(ctx, p)
+		if err != nil {
+			return nil, &ipc.RPCError{
+				Code:    ipc.ErrCodeInternalError,
+				Message: fmt.Sprintf("Failed to launch debug container: %v", err),
+			}
+		}
+		return res, nil
+	})
+
 	// Method: pods.yaml
 	server.Register("pods.yaml", func(params json.RawMessage) (interface{}, *ipc.RPCError) {
 		var p struct {

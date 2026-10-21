@@ -4,7 +4,7 @@ import * as React from "react";
 import { Terminal } from "@xterm/xterm";
 import { FitAddon } from "@xterm/addon-fit";
 import "@xterm/xterm/css/xterm.css";
-import { getStreamPort } from "@/lib/ipc";
+import { getStreamPort, invokeRpc } from "@/lib/ipc";
 import {
   RefreshCw,
   Terminal as TerminalIcon,
@@ -126,6 +126,8 @@ export function InteractiveTerminal({
   >("connecting");
   const [errorMsg, setErrorMsg] = React.useState<string>("");
   const [isDistroless, setIsDistroless] = React.useState(false);
+  const [isLaunchingDebug, setIsLaunchingDebug] = React.useState(false);
+  const hasAutoSwitchedRef = React.useRef(false);
   const [reconnectKey, setReconnectKey] = React.useState(0);
   const [isShellOpen, setIsShellOpen] = React.useState(false);
   const shellMenuRef = React.useRef<HTMLDivElement>(null);
@@ -186,6 +188,7 @@ export function InteractiveTerminal({
       if (!containerRef.current || isCancelled) return;
       setConnectionStatus("connecting");
       setErrorMsg("");
+      setIsDistroless(false);
 
       // Clear any prior content in container
       containerRef.current.innerHTML = "";
@@ -291,6 +294,21 @@ export function InteractiveTerminal({
             }
           }
 
+          // Check for structured switched_container event from backend auto-recovery
+          if (rawText.includes("switched_container")) {
+            try {
+              const parsed = JSON.parse(rawText);
+              if (parsed.container) {
+                onSelectContainer?.(parsed.container);
+                setIsDistroless(false);
+                toast.info(`Connected to container '${parsed.container}' (container '${parsed.original || containerName}' has no shell)`);
+              }
+            } catch {
+              // ignore json parse error
+            }
+            return;
+          }
+
           // Check for structured or text-based distroless signal
           if (
             rawText.includes("distroless_detected") ||
@@ -299,6 +317,14 @@ export function InteractiveTerminal({
             rawText.includes("stat /bin/bash: no such file or directory")
           ) {
             setIsDistroless(true);
+            const alternatives = containerList?.filter((c) => c !== containerName) || [];
+            if (alternatives.length > 0 && !hasAutoSwitchedRef.current) {
+              hasAutoSwitchedRef.current = true;
+              const nextContainer = alternatives[0];
+              toast.info(`Container '${containerName}' is distroless (no shell). Automatically switching to '${nextContainer}'...`);
+              onSelectContainer?.(nextContainer);
+              return;
+            }
           }
 
           // Suppress raw JSON control events from displaying on the terminal canvas
@@ -647,6 +673,47 @@ export function InteractiveTerminal({
             </div>
 
             <div className="flex items-center gap-2 shrink-0">
+              <button
+                disabled={isLaunchingDebug}
+                onClick={async () => {
+                  try {
+                    setIsLaunchingDebug(true);
+                    toast.loading(`Attaching ephemeral debug container to ${containerName || "agent"}...`, { id: "launch-debug" });
+                    const res = await invokeRpc<{ containerName?: string; success?: boolean; message?: string }>(
+                      "pods.launchDebugContainer",
+                      {
+                        contextName,
+                        namespace,
+                        podName,
+                        targetContainer: containerName || "agent",
+                        image: "busybox:stable-musl",
+                      }
+                    );
+                    if (res?.containerName) {
+                      toast.success(res.message || `Debug container '${res.containerName}' attached!`, { id: "launch-debug" });
+                      setIsDistroless(false);
+                      onSelectContainer?.(res.containerName);
+                    } else {
+                      toast.error("Failed to attach debug container", { id: "launch-debug" });
+                    }
+                  } catch (err: any) {
+                    console.error("[InteractiveTerminal] Failed to launch debug container:", err);
+                    toast.error(err.message || "Failed to launch debug container", { id: "launch-debug" });
+                  } finally {
+                    setIsLaunchingDebug(false);
+                  }
+                }}
+                className="px-2.5 py-1.5 rounded-lg bg-emerald-500/20 hover:bg-emerald-500/30 border border-emerald-500/40 text-emerald-200 text-xs font-medium transition-colors cursor-pointer flex items-center gap-1.5 disabled:opacity-50 shadow-xs"
+                title="Launch a temporary BusyBox debug container directly inside this pod"
+              >
+                {isLaunchingDebug ? (
+                  <RefreshCw className="w-3.5 h-3.5 animate-spin text-emerald-400" />
+                ) : (
+                  <Sparkles className="w-3.5 h-3.5 text-emerald-400" />
+                )}
+                <span>{isLaunchingDebug ? "Attaching Debugger..." : "Launch Debug Shell"}</span>
+              </button>
+
               {onSwitchToRunner && (
                 <button
                   onClick={onSwitchToRunner}

@@ -18,6 +18,7 @@ import (
 	"github.com/gorilla/websocket"
 	"github.com/kubeview/engine/internal/cluster"
 	corev1 "k8s.io/api/core/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes/scheme"
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/remotecommand"
@@ -499,8 +500,108 @@ func (s *StreamServer) handleExecWS(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// If all candidates failed with no such file error, this is a distroless / scratch container!
+	// If all candidates failed with no such file error, check for alternative containers in this pod
 	if isNoSuchFileError(lastErr) {
+		pod, podErr := client.CoreV1().Pods(namespace).Get(readCtx, podName, metav1.GetOptions{})
+		var altContainers []string
+		if podErr == nil {
+			for _, c := range pod.Spec.Containers {
+				if c.Name != containerName {
+					altContainers = append(altContainers, c.Name)
+				}
+			}
+			for _, ec := range pod.Spec.EphemeralContainers {
+				if ec.Name != containerName {
+					altContainers = append(altContainers, ec.Name)
+				}
+			}
+		}
+
+		// If alternative containers exist and shell is auto, try to connect to the alternative container!
+		if len(altContainers) > 0 && shell == "auto" {
+			for _, altName := range altContainers {
+				_ = conn.WriteMessage(websocket.TextMessage, []byte(fmt.Sprintf(
+					"\r\n\x1b[33m[KubeView] Container '%s' has no shell (distroless).\x1b[0m\r\n"+
+						"\x1b[36m[KubeView] Automatically connecting to alternative container: %s...\x1b[0m\r\n\r\n",
+					containerName, altName,
+				)))
+
+				for altIdx, cand := range candidates {
+					req := client.CoreV1().RESTClient().Post().
+						Resource("pods").
+						Name(podName).
+						Namespace(namespace).
+						SubResource("exec").
+						VersionedParams(&corev1.PodExecOptions{
+							Container: altName,
+							Command:   []string{cand},
+							Stdin:     true,
+							Stdout:    true,
+							Stderr:    true,
+							TTY:       true,
+						}, scheme.ParameterCodec)
+
+					executor, err := remotecommand.NewSPDYExecutor(execConfig, "POST", req.URL())
+					if err != nil {
+						continue
+					}
+
+					stdinReader, stdinWriter := io.Pipe()
+					altCtx, altCancel := context.WithCancel(readCtx)
+
+					go func(w *io.PipeWriter, ctx context.Context) {
+						defer w.Close()
+						for {
+							select {
+							case <-ctx.Done():
+								return
+							case data, ok := <-inputChan:
+								if !ok {
+									return
+								}
+								if _, err := w.Write(data); err != nil {
+									return
+								}
+							}
+						}
+					}(stdinWriter, altCtx)
+
+					if altIdx > 0 {
+						_ = conn.WriteMessage(websocket.TextMessage, []byte(fmt.Sprintf("\r\n\x1b[36m[KubeView] Trying alternative shell in %s: %s...\x1b[0m\r\n", altName, cand)))
+					}
+
+					eventPayload, _ := json.Marshal(map[string]string{
+						"__kubeview_event": "switched_container",
+						"container":        altName,
+						"original":         containerName,
+					})
+					_ = conn.WriteMessage(websocket.TextMessage, eventPayload)
+
+					err = executor.StreamWithContext(altCtx, remotecommand.StreamOptions{
+						Stdin:             stdinReader,
+						Stdout:            wsWriter,
+						Stderr:            wsWriter,
+						Tty:               true,
+						TerminalSizeQueue: sizeQueue,
+					})
+
+					altCancel()
+
+					if err == nil {
+						_ = conn.WriteMessage(websocket.TextMessage, []byte("\r\n\x1b[32mSession closed.\x1b[0m\r\n"))
+						return
+					}
+
+					if isNoSuchFileError(err) {
+						continue
+					}
+
+					_ = conn.WriteMessage(websocket.TextMessage, []byte(fmt.Sprintf("\r\n\x1b[33mSession terminated: %v\x1b[0m\r\n", err)))
+					return
+				}
+			}
+		}
+
 		distrolessNotice := fmt.Sprintf(
 			"\r\n\x1b[1;31m[KubeView] No interactive shell found in container (%s).\x1b[0m\r\n"+
 				"\x1b[33mℹ Distroless or Minimal Container Image Detected:\x1b[0m\r\n"+

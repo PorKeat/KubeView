@@ -147,11 +147,19 @@ export function PodExecModal() {
     (p) => p.name === execModalPod?.name && p.namespace === execModalPod?.namespace
   );
 
-  const containerList = currentPod?.containers.map((c) => c.name) || [];
+  const containerList = React.useMemo(
+    () => currentPod?.containers.map((c) => c.name) || [],
+    [currentPod?.containers]
+  );
 
   React.useEffect(() => {
     if (execModalPod) {
-      setSelectedContainer(execModalPod.container || containerList[0] || "");
+      setSelectedContainer((current) => {
+        if (current && containerList.includes(current)) {
+          return current;
+        }
+        return execModalPod.container || containerList[0] || "";
+      });
       if (execMode === "history") {
         setTimeout(() => inputRef.current?.focus(), 150);
       }
@@ -160,8 +168,9 @@ export function PodExecModal() {
       setInputCommand("");
       setHistoryIndex(-1);
       setQuickCmdToInsert("");
+      setSelectedContainer("");
     }
-  }, [execModalPod]);
+  }, [execModalPod?.name, execModalPod?.namespace, execModalPod?.container, containerList]);
 
   // Escape key to close
   React.useEffect(() => {

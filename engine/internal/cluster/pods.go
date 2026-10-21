@@ -150,6 +150,20 @@ type ExecPodResult struct {
 	ExitCode int    `json:"exitCode"`
 }
 
+type LaunchDebugContainerParams struct {
+	ContextName     string `json:"contextName"`
+	Namespace       string `json:"namespace"`
+	PodName         string `json:"podName"`
+	TargetContainer string `json:"targetContainer"`
+	Image           string `json:"image,omitempty"`
+}
+
+type LaunchDebugContainerResult struct {
+	ContainerName string `json:"containerName"`
+	Success       bool   `json:"success"`
+	Message       string `json:"message"`
+}
+
 type PodEventItem struct {
 	Type                    string `json:"type"`
 	Reason                  string `json:"reason"`
@@ -466,6 +480,105 @@ func (m *Manager) ExecPod(ctx context.Context, p ExecPodParams) (*ExecPodResult,
 	return res, err
 }
 
+// LaunchDebugContainer attaches an ephemeral debug container with full Unix tools to a running pod
+func (m *Manager) LaunchDebugContainer(ctx context.Context, p LaunchDebugContainerParams) (*LaunchDebugContainerResult, error) {
+	client, _, err := m.GetClientForContext(p.ContextName)
+	if err != nil {
+		return nil, err
+	}
+
+	pod, err := client.CoreV1().Pods(p.Namespace).Get(ctx, p.PodName, metav1.GetOptions{})
+	if err != nil {
+		return nil, fmt.Errorf("failed to fetch pod %s: %w", p.PodName, err)
+	}
+
+	// Check if a debug container targeting this container is already running
+	for _, ec := range pod.Status.EphemeralContainerStatuses {
+		if ec.State.Running != nil {
+			for _, specEC := range pod.Spec.EphemeralContainers {
+				if specEC.Name == ec.Name && (specEC.TargetContainerName == p.TargetContainer || p.TargetContainer == "") {
+					return &LaunchDebugContainerResult{
+						ContainerName: ec.Name,
+						Success:       true,
+						Message:       fmt.Sprintf("Reusing active debug container '%s'", ec.Name),
+					}, nil
+				}
+			}
+		}
+	}
+
+	img := p.Image
+	if img == "" {
+		img = "busybox:stable-musl"
+	}
+
+	cleanTarget := strings.ReplaceAll(p.TargetContainer, "_", "-")
+	if cleanTarget == "" {
+		cleanTarget = "app"
+	}
+	debugName := fmt.Sprintf("debug-%s-%d", cleanTarget, time.Now().Unix()%10000)
+	if len(debugName) > 40 {
+		debugName = debugName[:40]
+	}
+
+	ephem := corev1.EphemeralContainer{
+		TargetContainerName: p.TargetContainer,
+		EphemeralContainerCommon: corev1.EphemeralContainerCommon{
+			Name:                     debugName,
+			Image:                    img,
+			Command:                  []string{"sh"},
+			Stdin:                    true,
+			TTY:                      true,
+			TerminationMessagePolicy: corev1.TerminationMessageReadFile,
+			ImagePullPolicy:          corev1.PullIfNotPresent,
+		},
+	}
+
+	pod.Spec.EphemeralContainers = append(pod.Spec.EphemeralContainers, ephem)
+
+	_, err = client.CoreV1().Pods(p.Namespace).UpdateEphemeralContainers(ctx, p.PodName, pod, metav1.UpdateOptions{})
+	if err != nil {
+		return nil, fmt.Errorf("failed to attach ephemeral debug container: %w", err)
+	}
+
+	// Wait up to 8 seconds for container to enter Running status
+	timeoutCtx, cancel := context.WithTimeout(ctx, 8*time.Second)
+	defer cancel()
+
+	ticker := time.NewTicker(400 * time.Millisecond)
+	defer ticker.Stop()
+
+	for {
+		select {
+		case <-timeoutCtx.Done():
+			m.InvalidateOverviewCache(p.ContextName)
+			return &LaunchDebugContainerResult{
+				ContainerName: debugName,
+				Success:       true,
+				Message:       fmt.Sprintf("Debug container '%s' created (image pull in progress)", debugName),
+			}, nil
+		case <-ticker.C:
+			current, err := client.CoreV1().Pods(p.Namespace).Get(timeoutCtx, p.PodName, metav1.GetOptions{})
+			if err == nil {
+				for _, status := range current.Status.EphemeralContainerStatuses {
+					if status.Name == debugName {
+						if status.State.Running != nil {
+							m.InvalidateOverviewCache(p.ContextName)
+							return &LaunchDebugContainerResult{
+								ContainerName: debugName,
+								Success:       true,
+								Message:       fmt.Sprintf("Debug container '%s' is ready", debugName),
+							}, nil
+						} else if status.State.Waiting != nil && status.State.Waiting.Reason == "CrashLoopBackOff" {
+							return nil, fmt.Errorf("debug container failed: %s", status.State.Waiting.Message)
+						}
+					}
+				}
+			}
+		}
+	}
+}
+
 // GetPodYaml exports the live Kubernetes resource definition as YAML
 func (m *Manager) GetPodYaml(ctx context.Context, contextName, namespace, podName string) (*PodYamlResult, error) {
 	client, _, err := m.GetClientForContext(contextName)
@@ -661,6 +774,29 @@ func convertPodToSummary(pod *corev1.Pod) PodSummary {
 			Ports:                 portsList,
 			VolumeMounts:          volumeMountsList,
 			Resources:             resourcesInfo,
+		})
+	}
+
+	// Include running ephemeral debug containers
+	for _, ecs := range pod.Status.EphemeralContainerStatuses {
+		stateStr := "Unknown"
+		reasonStr := ""
+		if ecs.State.Running != nil {
+			stateStr = "Running"
+		} else if ecs.State.Waiting != nil {
+			stateStr = "Waiting"
+			reasonStr = ecs.State.Waiting.Reason
+		} else if ecs.State.Terminated != nil {
+			stateStr = "Terminated"
+			reasonStr = ecs.State.Terminated.Reason
+		}
+		containerInfos = append(containerInfos, ContainerInfo{
+			Name:         ecs.Name,
+			Image:        ecs.Image,
+			Ready:        ecs.Ready,
+			RestartCount: ecs.RestartCount,
+			State:        stateStr,
+			StateReason:  reasonStr,
 		})
 	}
 
