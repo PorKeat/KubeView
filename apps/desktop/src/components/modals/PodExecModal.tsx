@@ -397,23 +397,16 @@ export function PodExecModal() {
             <div className="p-2 rounded-lg bg-[var(--accent)]/15 text-[var(--accent)] border border-[var(--accent)]/20 shadow-xs shrink-0">
               <Terminal className="w-4 h-4" />
             </div>
-            <div className="min-w-0">
-              <div className="flex items-center gap-2">
-                <span className="text-xs font-semibold text-[var(--foreground)] truncate font-mono">
-                  {execModalPod.name}
-                </span>
-                <span className="px-2 py-0.5 rounded-full text-[10px] font-mono bg-black/[0.05] dark:bg-white/[0.08] text-[var(--muted)] border border-[var(--border)]">
-                  ns: {execModalPod.namespace}
-                </span>
-                <span className="inline-flex items-center px-2 py-0.5 rounded-md text-[9px] font-semibold font-mono bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border border-emerald-500/30">
-                  {execMode === "interactive" ? "WebSocket PTY" : "SPDY Exec"}
-                </span>
-              </div>
-              <p className="text-[10px] text-[var(--muted)] mt-0.5 font-mono">
-                {execMode === "interactive"
-                  ? "Full-duplex interactive terminal shell (supports vim, htop, arrow keys, resize)"
-                  : "Command runner with historical exit codes and structured stdout/stderr"}
-              </p>
+            <div className="flex items-center gap-2 min-w-0">
+              <span className="text-xs font-semibold text-[var(--foreground)] truncate font-mono">
+                {execModalPod.name}
+              </span>
+              <span className="px-2 py-0.5 rounded-full text-[10px] font-mono bg-black/[0.05] dark:bg-white/[0.08] text-[var(--muted)] border border-[var(--border)]">
+                ns: {execModalPod.namespace}
+              </span>
+              <span className="inline-flex items-center px-2 py-0.5 rounded-md text-[9px] font-semibold font-mono bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border border-emerald-500/30">
+                {execMode === "interactive" ? "WebSocket PTY" : "SPDY Exec"}
+              </span>
             </div>
           </div>
 
