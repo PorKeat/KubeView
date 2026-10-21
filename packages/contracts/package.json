@@ -2,7 +2,7 @@
   "name": "@kubeview/contracts",
   "version": "0.1.0",
   "description": "Versioned JSON-RPC 2.0 contract schemas and types for KubeView",
-  "license": "UNLICENSED",
+  "license": "BSL-1.1",
   "author": "PorKeat <alexkgm2412@gmail.com>",
   "main": "./dist/index.js",
   "module": "./dist/index.mjs",
