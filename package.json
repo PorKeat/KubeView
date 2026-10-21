@@ -3,7 +3,7 @@
   "private": true,
   "version": "0.1.0",
   "description": "Next-generation Kubernetes desktop IDE and operations platform",
-  "license": "UNLICENSED",
+  "license": "BSL-1.1",
   "author": "PorKeat <alexkgm2412@gmail.com>",
   "packageManager": "pnpm@11.9.0",
   "scripts": {
