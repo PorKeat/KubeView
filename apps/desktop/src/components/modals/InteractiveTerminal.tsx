@@ -5,7 +5,7 @@ import { Terminal } from "@xterm/xterm";
 import { FitAddon } from "@xterm/addon-fit";
 import "@xterm/xterm/css/xterm.css";
 import { getStreamPort } from "@/lib/ipc";
-import { RefreshCw, Terminal as TerminalIcon, AlertCircle, CheckCircle2, Copy } from "lucide-react";
+import { RefreshCw, Terminal as TerminalIcon, AlertCircle, CheckCircle2, Copy, ShieldAlert, FileText } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 
@@ -17,6 +17,8 @@ interface InteractiveTerminalProps {
   shell?: string;
   onShellChange?: (shell: string) => void;
   quickCommand?: string;
+  onSwitchToRunner?: () => void;
+  onOpenLogs?: () => void;
 }
 
 export function InteractiveTerminal({
@@ -24,9 +26,11 @@ export function InteractiveTerminal({
   namespace,
   containerName,
   contextName,
-  shell = "/bin/sh",
+  shell = "auto",
   onShellChange,
   quickCommand,
+  onSwitchToRunner,
+  onOpenLogs,
 }: InteractiveTerminalProps) {
   const containerRef = React.useRef<HTMLDivElement>(null);
   const termRef = React.useRef<Terminal | null>(null);
@@ -36,6 +40,7 @@ export function InteractiveTerminal({
     "connecting" | "connected" | "disconnected" | "error"
   >("connecting");
   const [errorMsg, setErrorMsg] = React.useState<string>("");
+  const [isDistroless, setIsDistroless] = React.useState(false);
   const [reconnectKey, setReconnectKey] = React.useState(0);
 
   // Handle quick command insertion
@@ -139,12 +144,38 @@ export function InteractiveTerminal({
             ws?.send(JSON.stringify({ type: "resize", cols, rows }));
           }
 
-          term?.writeln("\x1b[38;2;16;185;129m✓ Interactive shell session established (" + shell + ")\x1b[0m\r\n");
           term?.focus();
         };
 
         ws.onmessage = (event) => {
           if (isCancelled || !term) return;
+
+          let rawText = "";
+          if (typeof event.data === "string") {
+            rawText = event.data;
+          } else if (event.data instanceof ArrayBuffer) {
+            try {
+              rawText = new TextDecoder().decode(event.data);
+            } catch {
+              // binary fallback
+            }
+          }
+
+          // Check for structured or text-based distroless signal
+          if (
+            rawText.includes("distroless_detected") ||
+            rawText.includes("No interactive shell found in container") ||
+            rawText.includes("stat /bin/sh: no such file or directory") ||
+            rawText.includes("stat /bin/bash: no such file or directory")
+          ) {
+            setIsDistroless(true);
+          }
+
+          // Suppress raw JSON control events from displaying on the terminal canvas
+          if (rawText.includes("distroless_detected")) {
+            return;
+          }
+
           if (event.data instanceof ArrayBuffer) {
             term.write(new Uint8Array(event.data));
           } else {
@@ -255,8 +286,12 @@ export function InteractiveTerminal({
             onChange={(e) => onShellChange?.(e.target.value)}
             className="text-[10px] font-mono bg-white/[0.04] hover:bg-white/[0.08] text-slate-300 border border-white/[0.08] rounded px-1.5 py-0.5 outline-none cursor-pointer"
           >
+            <option value="auto" className="bg-[#0f172a] text-white">Auto (sh, bash, ash)</option>
             <option value="/bin/sh" className="bg-[#0f172a] text-white">/bin/sh</option>
             <option value="/bin/bash" className="bg-[#0f172a] text-white">/bin/bash</option>
+            <option value="/bin/ash" className="bg-[#0f172a] text-white">/bin/ash</option>
+            <option value="sh" className="bg-[#0f172a] text-white">sh</option>
+            <option value="bash" className="bg-[#0f172a] text-white">bash</option>
             <option value="/bin/zsh" className="bg-[#0f172a] text-white">/bin/zsh</option>
           </select>
 
@@ -304,7 +339,10 @@ export function InteractiveTerminal({
             Clear
           </button>
           <button
-            onClick={() => setReconnectKey((k) => k + 1)}
+            onClick={() => {
+              setIsDistroless(false);
+              setReconnectKey((k) => k + 1);
+            }}
             className="p-1 rounded text-slate-400 hover:text-white hover:bg-white/[0.08] transition-colors cursor-pointer"
             title="Reconnect shell session"
           >
@@ -313,12 +351,64 @@ export function InteractiveTerminal({
         </div>
       </div>
 
+      {/* Distroless / Scratch Container Action Banner */}
+      {isDistroless && (
+        <div className="mx-3 my-2 p-3 rounded-xl bg-amber-500/10 border border-amber-500/25 flex flex-col sm:flex-row sm:items-center justify-between gap-3 animate-in fade-in duration-200">
+          <div className="flex items-start gap-2.5 min-w-0">
+            <ShieldAlert className="w-4 h-4 text-amber-500 shrink-0 mt-0.5" />
+            <div className="min-w-0">
+              <div className="flex items-center gap-2">
+                <span className="text-xs font-semibold text-amber-500">Distroless Image Detected</span>
+                <span className="text-[10px] px-1.5 py-0.2 rounded bg-amber-500/15 text-amber-400 font-mono font-medium">No Shell</span>
+              </div>
+              <p className="text-[11px] text-[var(--muted)] mt-0.5">
+                <span className="font-mono text-slate-200">{containerName || podName}</span> does not include <code className="text-[10px] font-mono px-1 py-0.2 rounded bg-white/[0.06]">/bin/sh</code> or <code className="text-[10px] font-mono px-1 py-0.2 rounded bg-white/[0.06]">/bin/bash</code>.
+              </p>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-2 shrink-0">
+            <button
+              onClick={() => {
+                const cmd = `kubectl debug -it -n ${namespace} ${podName} --image=busybox --target=${containerName || "main"}`;
+                navigator.clipboard.writeText(cmd);
+                toast.success("Debug command copied to clipboard");
+              }}
+              className="px-2.5 py-1.5 rounded-lg bg-black/[0.05] dark:bg-white/[0.08] hover:bg-black/[0.1] dark:hover:bg-white/[0.15] border border-[var(--border)] text-xs font-mono text-[var(--foreground)] transition-colors cursor-pointer flex items-center gap-1.5"
+              title="Copy kubectl debug command to launch ephemeral container"
+            >
+              <Copy className="w-3.5 h-3.5" />
+              <span>Copy kubectl debug</span>
+            </button>
+
+            {onOpenLogs && (
+              <button
+                onClick={onOpenLogs}
+                className="px-2.5 py-1.5 rounded-lg bg-[var(--accent)] hover:bg-[var(--accent-hover)] text-white text-xs font-medium transition-colors cursor-pointer flex items-center gap-1.5 shadow-xs"
+              >
+                <FileText className="w-3.5 h-3.5" />
+                <span>View Logs</span>
+              </button>
+            )}
+
+            {onSwitchToRunner && (
+              <button
+                onClick={onSwitchToRunner}
+                className="px-2.5 py-1.5 rounded-lg bg-white/[0.08] hover:bg-white/[0.15] text-slate-200 text-xs font-medium transition-colors cursor-pointer"
+              >
+                <span>Command Runner</span>
+              </button>
+            )}
+          </div>
+        </div>
+      )}
+
       {/* Terminal Viewport */}
       <div
         ref={containerRef}
         onClick={() => termRef.current?.focus()}
         className="flex-1 w-full h-full p-2 overflow-hidden cursor-text"
-        style={{ height: "calc(100% - 36px)" }}
+        style={{ height: isDistroless ? "calc(100% - 100px)" : "calc(100% - 36px)" }}
       />
 
       {/* Error Banner if connection failed */}

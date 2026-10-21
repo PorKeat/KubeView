@@ -405,11 +405,17 @@ func (m *Manager) ExecPod(ctx context.Context, p ExecPodParams) (*ExecPodResult,
 		if len(cmd) >= 3 && (cmd[0] == "/bin/sh" || cmd[0] == "sh") {
 			cmdPayload := cmd[2]
 			fallbacks := [][]string{
-				{"sh", "-c", cmdPayload},
 				{"/bin/bash", "-c", cmdPayload},
 				{"bash", "-c", cmdPayload},
+				{"/bin/ash", "-c", cmdPayload},
+				{"ash", "-c", cmdPayload},
+				{"sh", "-c", cmdPayload},
+				strings.Fields(cmdPayload), // Direct binary execution for distroless
 			}
 			for _, fb := range fallbacks {
+				if len(fb) == 0 {
+					continue
+				}
 				fbRes, fbErr := executeInContainer(ctx, client, execConfig, p.Namespace, p.PodName, containerName, fb)
 				if fbErr == nil && !strings.Contains(fbRes.Stderr, "not found") {
 					return fbRes, nil

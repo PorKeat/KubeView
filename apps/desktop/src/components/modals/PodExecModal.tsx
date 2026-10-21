@@ -46,9 +46,9 @@ const QUICK_COMMANDS = [
 ];
 
 export function PodExecModal() {
-  const { execModalPod, closeExecModal, execPod, pods, currentContext } = useClusterStore();
+  const { execModalPod, closeExecModal, execPod, pods, currentContext, openLogsModal } = useClusterStore();
   const [selectedContainer, setSelectedContainer] = React.useState<string>("");
-  const [shell, setShell] = React.useState<string>("/bin/sh");
+  const [shell, setShell] = React.useState<string>("auto");
   const [execMode, setExecMode] = React.useState<"interactive" | "history">("interactive");
   const [quickCmdToInsert, setQuickCmdToInsert] = React.useState<string>("");
   const [inputCommand, setInputCommand] = React.useState<string>("");
@@ -351,6 +351,17 @@ export function PodExecModal() {
               shell={shell}
               onShellChange={setShell}
               quickCommand={quickCmdToInsert}
+              onSwitchToRunner={() => setExecMode("history")}
+              onOpenLogs={() => {
+                if (execModalPod) {
+                  openLogsModal({
+                    name: execModalPod.name,
+                    namespace: execModalPod.namespace,
+                    container: selectedContainer || execModalPod.container || "",
+                  });
+                  closeExecModal();
+                }
+              }}
             />
           </div>
         ) : (
