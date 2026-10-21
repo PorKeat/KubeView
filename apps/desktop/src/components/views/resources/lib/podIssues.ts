@@ -20,12 +20,23 @@ export interface PodIssueInfo {
 export function getPodIssue(pod: PodSummary): PodIssueInfo | null {
   const status = pod.status;
 
+  const [readyCount, totalCount] = pod.ready
+    ? pod.ready.split("/").map(Number)
+    : [1, 1];
+
+  // Golden Rule: If a pod is in "Running" phase and all its containers are Ready (e.g. 1/1, 2/2),
+  // it is actively healthy and serving traffic. Historical past restarts do NOT make it currently failing.
+  if (status === "Running" && totalCount > 0 && readyCount === totalCount) {
+    return null;
+  }
+
   // 1. OOMKilled (Out of Memory - Exit 137)
   const oomContainer = pod.containers?.find(
     (c) =>
-      c.stateReason === "OOMKilled" ||
-      c.lastTerminatedReason === "OOMKilled" ||
-      c.exitCode === 137
+      (!c.ready || c.state !== "Running") &&
+      (c.stateReason === "OOMKilled" ||
+        (c.state === "Terminated" && (c.lastTerminatedReason === "OOMKilled" || c.exitCode === 137)) ||
+        (c.waitingReason === "CrashLoopBackOff" && c.lastTerminatedReason === "OOMKilled"))
   );
   if (status === "OOMKilled" || oomContainer) {
     const cName = oomContainer?.name || pod.containers?.[0]?.name || "primary";
@@ -45,9 +56,10 @@ export function getPodIssue(pod: PodSummary): PodIssueInfo | null {
   // 2. CrashLoopBackOff / App Startup Crash
   const crashContainer = pod.containers?.find(
     (c) =>
-      c.stateReason === "CrashLoopBackOff" ||
-      c.waitingReason === "CrashLoopBackOff" ||
-      (c.lastTerminatedReason === "Error" && c.exitCode && c.exitCode !== 0)
+      (!c.ready || c.state !== "Running") &&
+      (c.stateReason === "CrashLoopBackOff" ||
+        c.waitingReason === "CrashLoopBackOff" ||
+        (c.state === "Terminated" && c.lastTerminatedReason === "Error" && c.exitCode && c.exitCode !== 0))
   );
   if (status === "CrashLoopBackOff" || crashContainer) {
     const cName = crashContainer?.name || pod.containers?.[0]?.name || "primary";
@@ -73,10 +85,11 @@ export function getPodIssue(pod: PodSummary): PodIssueInfo | null {
   // 3. Image pull failure (Missing image tag, authorization, or private registry credentials)
   const imagePullContainer = pod.containers?.find(
     (c) =>
-      c.stateReason === "ImagePullBackOff" ||
-      c.stateReason === "ErrImagePull" ||
-      c.waitingReason === "ImagePullBackOff" ||
-      c.waitingReason === "ErrImagePull"
+      (!c.ready || c.state !== "Running") &&
+      (c.stateReason === "ImagePullBackOff" ||
+        c.stateReason === "ErrImagePull" ||
+        c.waitingReason === "ImagePullBackOff" ||
+        c.waitingReason === "ErrImagePull")
   );
   if (
     status === "ImagePullBackOff" ||
@@ -104,10 +117,11 @@ export function getPodIssue(pod: PodSummary): PodIssueInfo | null {
   // 4. Container Configuration / Secret / ConfigMap missing
   const configContainer = pod.containers?.find(
     (c) =>
-      c.stateReason === "CreateContainerConfigError" ||
-      c.stateReason === "CreateContainerError" ||
-      c.waitingReason === "CreateContainerConfigError" ||
-      c.waitingReason === "CreateContainerError"
+      (!c.ready || c.state !== "Running") &&
+      (c.stateReason === "CreateContainerConfigError" ||
+        c.stateReason === "CreateContainerError" ||
+        c.waitingReason === "CreateContainerConfigError" ||
+        c.waitingReason === "CreateContainerError")
   );
   if (
     [
@@ -135,16 +149,16 @@ export function getPodIssue(pod: PodSummary): PodIssueInfo | null {
   }
 
   // 5. Generic Runtime Failure states (Error, Failed, ContainerCannotRun)
+  const failedContainer = pod.containers?.find(
+    (c) =>
+      (!c.ready || c.state !== "Running") &&
+      ((c.state === "Terminated" && c.exitCode && c.exitCode !== 0) ||
+        c.stateReason === "Error")
+  );
   if (
     ["Error", "Failed", "ContainerCannotRun"].includes(status) ||
-    pod.containers?.some((c) => c.state === "Terminated" && c.exitCode && c.exitCode !== 0) ||
-    pod.containers?.some((c) => c.stateReason === "Error")
+    failedContainer
   ) {
-    const failedContainer = pod.containers?.find(
-      (c) =>
-        (c.state === "Terminated" && c.exitCode && c.exitCode !== 0) ||
-        c.stateReason === "Error"
-    );
     const ec = failedContainer?.exitCode;
     return {
       type: "failed",
@@ -162,12 +176,8 @@ export function getPodIssue(pod: PodSummary): PodIssueInfo | null {
   }
 
   // 6. Container not ready while Running (Readiness / Liveness Probe Failure)
-  // CRITICAL: Applies ONLY to workloads in the "Running" phase.
-  // Pending, ContainerCreating, or PodInitializing workloads are still starting up and NOT probe failing!
+  // CRITICAL: Applies ONLY to workloads in the "Running" phase where containers are unready.
   if (status === "Running") {
-    const [readyCount, totalCount] = pod.ready
-      ? pod.ready.split("/").map(Number)
-      : [1, 1];
     if (totalCount > 0 && readyCount < totalCount) {
       const unreadyContainer = pod.containers?.find((c) => !c.ready);
       const cName = unreadyContainer?.name || pod.containers?.[0]?.name || "application";
@@ -261,10 +271,13 @@ export function getPodPendingInfo(pod: PodSummary): PodPendingInfo | null {
 
 /**
  * Evaluates whether a pod should be classified under "Failing".
- * Covers explicit failing statuses, critical active issues, and unready workloads (e.g. 0/1 ready containers).
+ * Covers explicit failing statuses, active critical container errors,
+ * and unready workloads in Running phase (e.g. 0/1 ready containers).
+ * Pods that are Running with all containers Ready (e.g. 1/1) are NOT failing,
+ * even if they have historical restarts.
  */
 export function isPodFailing(pod: PodSummary): boolean {
-  // Explicit failing statuses
+  // 1. Explicit failing statuses
   const failingStatuses = [
     "CrashLoopBackOff",
     "ImagePullBackOff",
@@ -280,44 +293,68 @@ export function isPodFailing(pod: PodSummary): boolean {
   ];
   if (failingStatuses.includes(pod.status)) return true;
 
-  // Unready in Running state: if 0 of N containers are ready, pod cannot serve traffic and is failing
+  // 2. Golden rule: if Pod is Running and all containers are Ready (e.g. 1/1, 2/2),
+  // it is actively healthy and serving traffic. It is NOT failing.
   const [readyCount, totalCount] = pod.ready
     ? pod.ready.split("/").map(Number)
     : [1, 1];
+  if (pod.status === "Running" && totalCount > 0 && readyCount === totalCount) {
+    return false;
+  }
+
+  // 3. Unready in Running state: if 0 of N containers are ready (e.g. 0/1),
+  // pod cannot serve any traffic and is failing (broken probe, crash, or hung startup).
   if (pod.status === "Running" && totalCount > 0 && readyCount === 0) {
     return true;
   }
 
-  // Check if any container is in an error, waiting, or crashed state
-  if (
-    pod.containers?.some(
-      (c) =>
-        (c.stateReason &&
-          [
-            "CrashLoopBackOff",
-            "ImagePullBackOff",
-            "ErrImagePull",
-            "OOMKilled",
-            "CreateContainerConfigError",
-            "CreateContainerError",
-            "Error",
-          ].includes(c.stateReason)) ||
-        (c.waitingReason &&
-          [
-            "CrashLoopBackOff",
-            "ImagePullBackOff",
-            "ErrImagePull",
-            "CreateContainerConfigError",
-            "CreateContainerError",
-          ].includes(c.waitingReason)) ||
-        (c.lastTerminatedReason === "Error" && c.exitCode && c.exitCode !== 0) ||
-        (c.lastTerminatedReason === "OOMKilled")
-    )
-  ) {
+  // 4. Check if any container is in an active error or crash state right now
+  const hasActiveContainerFailure = pod.containers?.some((c) => {
+    // If container is currently ready and running, it is NOT failing
+    if (c.ready && c.state === "Running") return false;
+
+    if (
+      c.stateReason &&
+      [
+        "CrashLoopBackOff",
+        "ImagePullBackOff",
+        "ErrImagePull",
+        "OOMKilled",
+        "CreateContainerConfigError",
+        "CreateContainerError",
+        "Error",
+        "ContainerCannotRun",
+      ].includes(c.stateReason)
+    ) {
+      return true;
+    }
+
+    if (
+      c.waitingReason &&
+      [
+        "CrashLoopBackOff",
+        "ImagePullBackOff",
+        "ErrImagePull",
+        "CreateContainerConfigError",
+        "CreateContainerError",
+        "ContainerCannotRun",
+      ].includes(c.waitingReason)
+    ) {
+      return true;
+    }
+
+    if (c.state === "Terminated" && c.exitCode && c.exitCode !== 0) {
+      return true;
+    }
+
+    return false;
+  });
+
+  if (hasActiveContainerFailure) {
     return true;
   }
 
-  // Any pod diagnosed with critical issue severity (excluding normal pending workloads)
+  // 5. Any pod diagnosed with active critical issue severity (excluding normal pending workloads)
   if (
     !["Pending", "ContainerCreating", "PodInitializing"].includes(pod.status)
   ) {
@@ -327,7 +364,7 @@ export function isPodFailing(pod: PodSummary): boolean {
     }
   }
 
-  // Any non-standard status that is neither Running, Completed, Pending, nor Succeeded
+  // 6. Any non-standard unknown/abnormal status
   if (
     ![
       "Running",
