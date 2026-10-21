@@ -16,6 +16,7 @@ import {
   ChevronDown,
   ChevronRight,
   AlertTriangle,
+  Terminal,
 } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
@@ -28,9 +29,14 @@ export interface InspectorPodOverviewProps {
   podData: PodSummary | undefined;
 }
 
-export function InspectorPodOverview({ currentResource, podData }: InspectorPodOverviewProps) {
+export function InspectorPodOverview({
+  currentResource,
+  podData,
+}: InspectorPodOverviewProps) {
   const [labelFilter, setLabelFilter] = React.useState("");
-  const [labelViewMode, setLabelViewMode] = React.useState<"chips" | "table">("chips");
+  const [labelViewMode, setLabelViewMode] = React.useState<"chips" | "table">(
+    "chips",
+  );
   const [showAnnotations, setShowAnnotations] = React.useState(false);
 
   // Filtered labels
@@ -69,7 +75,9 @@ export function InspectorPodOverview({ currentResource, podData }: InspectorPodO
             <Layers className="w-3.5 h-3.5 text-[#F08A42]" /> Resource Metadata
           </span>
           <span className="text-[10px] font-mono text-[var(--muted)]">
-            {podData?.creationTimestamp ? new Date(podData.creationTimestamp).toLocaleString() : ""}
+            {podData?.creationTimestamp
+              ? new Date(podData.creationTimestamp).toLocaleString()
+              : ""}
           </span>
         </div>
 
@@ -98,7 +106,9 @@ export function InspectorPodOverview({ currentResource, podData }: InspectorPodO
 
           {/* Pod IP */}
           <div className="group/ip">
-            <span className="text-[var(--muted)] block text-[10px]">Pod IP</span>
+            <span className="text-[var(--muted)] block text-[10px]">
+              Pod IP
+            </span>
             <div className="flex items-center justify-between mt-0.5">
               <span className="font-mono text-[var(--foreground)] font-medium">
                 {podData?.ip || "-"}
@@ -120,7 +130,9 @@ export function InspectorPodOverview({ currentResource, podData }: InspectorPodO
 
           {/* Restarts */}
           <div>
-            <span className="text-[var(--muted)] block text-[10px]">Restarts</span>
+            <span className="text-[var(--muted)] block text-[10px]">
+              Restarts
+            </span>
             <div className="mt-0.5">
               {(podData?.restarts ?? 0) > 0 ? (
                 <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-mono font-semibold bg-amber-500/15 text-amber-600 dark:text-amber-400 border border-amber-500/30">
@@ -128,14 +140,18 @@ export function InspectorPodOverview({ currentResource, podData }: InspectorPodO
                   {podData?.restarts} restarts
                 </span>
               ) : (
-                <span className="font-mono text-[var(--foreground)] font-medium">0</span>
+                <span className="font-mono text-[var(--foreground)] font-medium">
+                  0
+                </span>
               )}
             </div>
           </div>
 
           {/* Created / Age */}
           <div>
-            <span className="text-[var(--muted)] block text-[10px]">Created / Age</span>
+            <span className="text-[var(--muted)] block text-[10px]">
+              Created / Age
+            </span>
             <div className="mt-0.5 flex items-center gap-1">
               <Clock className="w-3 h-3 text-[var(--muted)]" />
               <span className="font-mono text-[var(--foreground)] font-medium">
@@ -147,7 +163,9 @@ export function InspectorPodOverview({ currentResource, podData }: InspectorPodO
           {/* QoS Class */}
           {podData?.qosClass && (
             <div>
-              <span className="text-[var(--muted)] block text-[10px]">QoS Class</span>
+              <span className="text-[var(--muted)] block text-[10px]">
+                QoS Class
+              </span>
               <div className="mt-0.5">
                 <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-mono font-semibold bg-black/5 dark:bg-white/5 text-[var(--foreground)] border border-[var(--border)]">
                   {podData.qosClass}
@@ -159,14 +177,19 @@ export function InspectorPodOverview({ currentResource, podData }: InspectorPodO
           {/* Controlled By Controller */}
           {controlledByStr && (
             <div className="col-span-2 pt-1 border-t border-[var(--border)]">
-              <span className="text-[var(--muted)] block text-[10px] mb-1">Controlled By</span>
+              <span className="text-[var(--muted)] block text-[10px] mb-1">
+                Controlled By
+              </span>
               <div className="flex items-center gap-2">
                 {controllerKind && (
                   <span className="px-2 py-0.5 rounded text-[10px] font-semibold bg-[#F08A42]/15 text-[#F08A42] border border-[#F08A42]/25 font-mono">
                     {controllerKind}
                   </span>
                 )}
-                <span className="font-mono text-xs font-medium text-[var(--foreground)] truncate flex-1" title={controlledByStr}>
+                <span
+                  className="font-mono text-xs font-medium text-[var(--foreground)] truncate flex-1"
+                  title={controlledByStr}
+                >
                   {controllerName}
                 </span>
                 <button
@@ -247,7 +270,9 @@ export function InspectorPodOverview({ currentResource, podData }: InspectorPodO
                   onClick={() => setLabelViewMode("chips")}
                   className={cn(
                     "p-1 rounded cursor-pointer transition-colors",
-                    labelViewMode === "chips" ? "bg-[var(--surface-active)] text-[#F08A42]" : "text-[var(--muted)] hover:text-[var(--foreground)]"
+                    labelViewMode === "chips"
+                      ? "bg-[var(--surface-active)] text-[#F08A42]"
+                      : "text-[var(--muted)] hover:text-[var(--foreground)]",
                   )}
                   title="Chips View"
                 >
@@ -257,7 +282,9 @@ export function InspectorPodOverview({ currentResource, podData }: InspectorPodO
                   onClick={() => setLabelViewMode("table")}
                   className={cn(
                     "p-1 rounded cursor-pointer transition-colors",
-                    labelViewMode === "table" ? "bg-[var(--surface-active)] text-[#F08A42]" : "text-[var(--muted)] hover:text-[var(--foreground)]"
+                    labelViewMode === "table"
+                      ? "bg-[var(--surface-active)] text-[#F08A42]"
+                      : "text-[var(--muted)] hover:text-[var(--foreground)]",
                   )}
                   title="Table View"
                 >
@@ -308,7 +335,10 @@ export function InspectorPodOverview({ currentResource, podData }: InspectorPodO
                 </thead>
                 <tbody className="divide-y divide-[var(--border)]">
                   {filteredLabels.map(([k, v]) => (
-                    <tr key={k} className="hover:bg-[var(--surface-hover)] transition-colors group">
+                    <tr
+                      key={k}
+                      className="hover:bg-[var(--surface-hover)] transition-colors group"
+                    >
                       <td className="px-2.5 py-1.5 text-[var(--foreground)] font-semibold truncate max-w-[180px]">
                         {k}
                       </td>
@@ -365,8 +395,12 @@ export function InspectorPodOverview({ currentResource, podData }: InspectorPodO
                   className="p-2 rounded-lg bg-black/[0.02] dark:bg-white/[0.02] border border-[var(--border)] flex items-start justify-between gap-2 group"
                 >
                   <div className="min-w-0 flex-1">
-                    <span className="font-semibold text-[var(--foreground)] block truncate">{k}</span>
-                    <span className="text-[var(--muted)] block truncate text-[9px] mt-0.5">{v}</span>
+                    <span className="font-semibold text-[var(--foreground)] block truncate">
+                      {k}
+                    </span>
+                    <span className="text-[var(--muted)] block truncate text-[9px] mt-0.5">
+                      {v}
+                    </span>
                   </div>
                   <button
                     onClick={() => {
@@ -385,18 +419,67 @@ export function InspectorPodOverview({ currentResource, podData }: InspectorPodO
         </div>
       )}
 
-      {/* Status Incident Warning */}
-      {currentResource.status !== "Running" && currentResource.status !== "Completed" && (
-        <div className="p-3.5 rounded-2xl bg-amber-500/10 border border-amber-500/25 space-y-1.5">
-          <div className="flex items-center gap-1.5 text-amber-500 font-semibold text-xs">
-            <AlertTriangle className="w-4 h-4 shrink-0" />
-            <span>Status: {currentResource.status}</span>
-          </div>
-          <p className="text-[11px] text-[var(--muted)] leading-relaxed">
-            Pod state is currently not in steady running phase. Open the logs or events tab for root-cause diagnosis.
-          </p>
+      {/* Quick CLI Commands */}
+      <div className="p-4 rounded-2xl bg-[var(--surface)] border border-[var(--border)] space-y-2 shadow-2xs">
+        <span className="text-[11px] font-semibold text-[var(--muted)] uppercase tracking-wider flex items-center gap-1.5">
+          <Terminal className="w-3.5 h-3.5 text-[#F08A42]" />
+          <span>Quick CLI Commands</span>
+        </span>
+        <div className="space-y-1.5 font-mono text-[11px]">
+          {[
+            {
+              label: "Logs",
+              cmd: `kubectl logs -n ${currentResource.namespace} ${currentResource.name} -f`,
+            },
+            {
+              label: "Exec",
+              cmd: `kubectl exec -it -n ${currentResource.namespace} ${currentResource.name} -- sh`,
+            },
+            {
+              label: "Describe",
+              cmd: `kubectl describe pod -n ${currentResource.namespace} ${currentResource.name}`,
+            },
+          ].map((c) => (
+            <div
+              key={c.label}
+              className="p-2 px-2.5 rounded-xl bg-black/[0.03] dark:bg-white/[0.03] border border-[var(--border)] flex items-center justify-between group"
+            >
+              <div className="truncate mr-2">
+                <span className="text-[#F08A42] font-semibold text-[10px] mr-2 uppercase tracking-wide">
+                  {c.label}:
+                </span>
+                <span className="text-[var(--foreground)]">{c.cmd}</span>
+              </div>
+              <button
+                type="button"
+                onClick={() => {
+                  navigator.clipboard.writeText(c.cmd);
+                  toast.success(`Copied: ${c.cmd}`);
+                }}
+                className="p-1 text-[var(--muted)] hover:text-[#F08A42] transition-colors cursor-pointer shrink-0"
+                title={`Copy ${c.label} command`}
+              >
+                <Copy className="w-3.5 h-3.5" />
+              </button>
+            </div>
+          ))}
         </div>
-      )}
+      </div>
+
+      {/* Status Incident Warning */}
+      {currentResource.status !== "Running" &&
+        currentResource.status !== "Completed" && (
+          <div className="p-3.5 rounded-2xl bg-amber-500/10 border border-amber-500/25 space-y-1.5">
+            <div className="flex items-center gap-1.5 text-amber-500 font-semibold text-xs">
+              <AlertTriangle className="w-4 h-4 shrink-0" />
+              <span>Status: {currentResource.status}</span>
+            </div>
+            <p className="text-[11px] text-[var(--muted)] leading-relaxed">
+              Pod state is currently not in steady running phase. Open the logs
+              or events tab for root-cause diagnosis.
+            </p>
+          </div>
+        )}
     </div>
   );
 }

@@ -56,9 +56,16 @@ export function ResourceListView({ resourceType }: ResourceListViewProps) {
 
   const [search, setSearch] = React.useState("");
   const [statusFilter, setStatusFilter] = React.useState("all");
-  const [sortField, setSortField] = React.useState<"name" | "namespace" | "status" | "age" | "restarts">("name");
+  const [density, setDensity] = React.useState<"comfortable" | "compact">(
+    "comfortable",
+  );
+  const [sortField, setSortField] = React.useState<
+    "name" | "namespace" | "status" | "age" | "restarts" | "node"
+  >("name");
   const [sortAsc, setSortAsc] = React.useState(true);
-  const [selectedItems, setSelectedItems] = React.useState<Set<string>>(new Set());
+  const [selectedItems, setSelectedItems] = React.useState<Set<string>>(
+    new Set(),
+  );
 
   // Initial fetch when mounted or when context changes
   React.useEffect(() => {
@@ -126,9 +133,25 @@ export function ResourceListView({ resourceType }: ResourceListViewProps) {
 
       // 3. Status filter
       if (statusFilter !== "all") {
-        if (statusFilter === "running" && pod.status !== "Running") return false;
-        if (statusFilter === "pending" && pod.status !== "Pending" && pod.status !== "ContainerCreating") return false;
-        if (statusFilter === "failing" && ["Running", "Completed", "Pending", "Succeeded"].includes(pod.status)) return false;
+        if (statusFilter === "running" && pod.status !== "Running")
+          return false;
+        if (
+          statusFilter === "pending" &&
+          pod.status !== "Pending" &&
+          pod.status !== "ContainerCreating"
+        )
+          return false;
+        if (
+          statusFilter === "failing" &&
+          ["Running", "Completed", "Pending", "Succeeded"].includes(pod.status)
+        )
+          return false;
+        if (
+          statusFilter === "issues" &&
+          pod.restarts === 0 &&
+          ["Running", "Completed", "Succeeded"].includes(pod.status)
+        )
+          return false;
       }
 
       // 4. Free-text search
@@ -162,6 +185,9 @@ export function ResourceListView({ resourceType }: ResourceListViewProps) {
         case "restarts":
           comparison = a.restarts - b.restarts;
           break;
+        case "node":
+          comparison = (a.nodeName || "").localeCompare(b.nodeName || "");
+          break;
         case "age":
           comparison = a.age.localeCompare(b.age);
           break;
@@ -174,7 +200,9 @@ export function ResourceListView({ resourceType }: ResourceListViewProps) {
     if (selectedItems.size === sortedItems.length && sortedItems.length > 0) {
       setSelectedItems(new Set());
     } else {
-      setSelectedItems(new Set(sortedItems.map((i) => `${i.namespace}/${i.name}`)));
+      setSelectedItems(
+        new Set(sortedItems.map((i) => `${i.namespace}/${i.name}`)),
+      );
     }
   };
 
@@ -214,6 +242,10 @@ export function ResourceListView({ resourceType }: ResourceListViewProps) {
         setAutoRefreshInterval={setAutoRefreshInterval}
         handleRefresh={handleRefresh}
         isPodsLoading={isPodsLoading}
+        density={density}
+        onToggleDensity={() =>
+          setDensity((d) => (d === "comfortable" ? "compact" : "comfortable"))
+        }
       />
 
       {/* Dynamic Namespace Activity Helper Banner */}
@@ -249,7 +281,7 @@ export function ResourceListView({ resourceType }: ResourceListViewProps) {
 
       {/* Table View Area */}
       {!hasLoadedPodsOnce || (isPodsLoading && filteredItems.length === 0) ? (
-        <TableSkeleton rows={10} columns={7} />
+        <TableSkeleton rows={10} columns={9} />
       ) : (
         <div className="flex-1 overflow-y-auto overflow-x-auto min-h-0">
           <table className="w-full text-left text-xs border-collapse">
@@ -260,7 +292,8 @@ export function ResourceListView({ resourceType }: ResourceListViewProps) {
                     onClick={toggleSelectAll}
                     className="text-[var(--muted)] hover:text-[var(--foreground)] flex items-center justify-center cursor-pointer"
                   >
-                    {selectedItems.size === sortedItems.length && sortedItems.length > 0 ? (
+                    {selectedItems.size === sortedItems.length &&
+                    sortedItems.length > 0 ? (
                       <CheckSquare className="w-3.5 h-3.5 text-[var(--accent)]" />
                     ) : selectedItems.size > 0 ? (
                       <MinusSquare className="w-3.5 h-3.5 text-[var(--accent)]" />
@@ -338,6 +371,24 @@ export function ResourceListView({ resourceType }: ResourceListViewProps) {
                     )}
                   </div>
                 </th>
+                <th
+                  onClick={() => handleSort("node")}
+                  className="py-1 px-3 cursor-pointer hover:text-[var(--foreground)] transition-colors"
+                >
+                  <div className="flex items-center gap-1">
+                    <span>Node</span>
+                    {sortField === "node" ? (
+                      sortAsc ? (
+                        <ArrowUp className="w-3 h-3 text-[var(--accent)]" />
+                      ) : (
+                        <ArrowDown className="w-3 h-3 text-[var(--accent)]" />
+                      )
+                    ) : (
+                      <ArrowUpDown className="w-3 h-3 opacity-30" />
+                    )}
+                  </div>
+                </th>
+                <th className="py-1 px-3">IP</th>
                 <th className="py-1 px-3">CPU (Req)</th>
                 <th className="py-1 px-3">Memory (Req)</th>
                 <th
@@ -365,8 +416,12 @@ export function ResourceListView({ resourceType }: ResourceListViewProps) {
                 <ResourceTableRow
                   key={`${item.namespace}/${item.name}`}
                   item={item}
-                  isSelected={selectedItems.has(`${item.namespace}/${item.name}`)}
+                  isSelected={selectedItems.has(
+                    `${item.namespace}/${item.name}`,
+                  )}
+                  density={density}
                   onToggleSelect={toggleSelectItem}
+                  onFilterNode={(node) => setPodNodeFilter(node)}
                   onRowClick={(pod) =>
                     openInspector({
                       kind: "Pod",
@@ -383,10 +438,16 @@ export function ResourceListView({ resourceType }: ResourceListViewProps) {
                     openExecModal({ name: pod.name, namespace: pod.namespace })
                   }
                   onRestartClick={(pod) =>
-                    openRestartConfirm({ name: pod.name, namespace: pod.namespace })
+                    openRestartConfirm({
+                      name: pod.name,
+                      namespace: pod.namespace,
+                    })
                   }
                   onDeleteClick={(pod) =>
-                    openDeleteConfirm({ name: pod.name, namespace: pod.namespace })
+                    openDeleteConfirm({
+                      name: pod.name,
+                      namespace: pod.namespace,
+                    })
                   }
                 />
               ))}
@@ -396,38 +457,42 @@ export function ResourceListView({ resourceType }: ResourceListViewProps) {
           {sortedItems.length === 0 && (
             <EmptyState
               variant={
-                podNodeFilter ? "empty" : search || statusFilter !== "all" ? "search" : "empty"
+                podNodeFilter
+                  ? "empty"
+                  : search || statusFilter !== "all"
+                    ? "search"
+                    : "empty"
               }
               title={
                 podNodeFilter
                   ? `No pods running on node "${podNodeFilter}"`
                   : search || statusFilter !== "all"
-                  ? `No ${resourceType.toLowerCase()} match filter "${search || statusFilter}"`
-                  : `No ${resourceType.toLowerCase()} scheduled in "${currentNamespace}"`
+                    ? `No ${resourceType.toLowerCase()} match filter "${search || statusFilter}"`
+                    : `No ${resourceType.toLowerCase()} scheduled in "${currentNamespace}"`
               }
               description={
                 podNodeFilter
                   ? `Host "${podNodeFilter}" currently has zero running workloads matching your active criteria.`
                   : search || statusFilter !== "all"
-                  ? `0 of ${
-                      currentNamespace === "all"
-                        ? pods.length
-                        : namespaceCounts[currentNamespace] || 0
-                    } ${resourceType.toLowerCase()} in ${
-                      currentNamespace === "all"
-                        ? "all namespaces"
-                        : `namespace "${currentNamespace}"`
-                    } match your active search or status criteria.`
-                  : `Namespace "${currentNamespace}" currently holds zero active workloads. ${pods.length} pods are active in other namespaces.`
+                    ? `0 of ${
+                        currentNamespace === "all"
+                          ? pods.length
+                          : namespaceCounts[currentNamespace] || 0
+                      } ${resourceType.toLowerCase()} in ${
+                        currentNamespace === "all"
+                          ? "all namespaces"
+                          : `namespace "${currentNamespace}"`
+                      } match your active search or status criteria.`
+                    : `Namespace "${currentNamespace}" currently holds zero active workloads. ${pods.length} pods are active in other namespaces.`
               }
               scopeBadge={
                 podNodeFilter
                   ? `Node: ${podNodeFilter}`
                   : search || statusFilter !== "all"
-                  ? search
-                    ? `Query: "${search}"`
-                    : `Status: ${statusFilter}`
-                  : `Namespace: ${currentNamespace}`
+                    ? search
+                      ? `Query: "${search}"`
+                      : `Status: ${statusFilter}`
+                    : `Namespace: ${currentNamespace}`
               }
               codeSnippet={
                 !search && statusFilter === "all" && !podNodeFilter
@@ -437,7 +502,10 @@ export function ResourceListView({ resourceType }: ResourceListViewProps) {
                   : undefined
               }
               suggestions={
-                !search && statusFilter === "all" && !podNodeFilter && currentNamespace !== "all"
+                !search &&
+                statusFilter === "all" &&
+                !podNodeFilter &&
+                currentNamespace !== "all"
                   ? Object.entries(namespaceCounts)
                       .filter(([ns]) => ns !== currentNamespace && ns !== "all")
                       .sort((a, b) => b[1] - a[1])
@@ -458,21 +526,21 @@ export function ResourceListView({ resourceType }: ResourceListViewProps) {
                       onClick: () => setPodNodeFilter(null),
                     }
                   : search || statusFilter !== "all"
-                  ? {
-                      label: "Clear Filters",
-                      icon: <RefreshCw className="w-3.5 h-3.5" />,
-                      onClick: () => {
-                        setSearch("");
-                        setStatusFilter("all");
-                      },
-                    }
-                  : {
-                      label: `View All Namespaces (${pods.length})`,
-                      icon: <Globe className="w-3.5 h-3.5" />,
-                      onClick: () => {
-                        setCurrentNamespace("all");
-                      },
-                    }
+                    ? {
+                        label: "Clear Filters",
+                        icon: <RefreshCw className="w-3.5 h-3.5" />,
+                        onClick: () => {
+                          setSearch("");
+                          setStatusFilter("all");
+                        },
+                      }
+                    : {
+                        label: `View All Namespaces (${pods.length})`,
+                        icon: <Globe className="w-3.5 h-3.5" />,
+                        onClick: () => {
+                          setCurrentNamespace("all");
+                        },
+                      }
               }
               secondaryAction={
                 podNodeFilter
@@ -484,23 +552,26 @@ export function ResourceListView({ resourceType }: ResourceListViewProps) {
                         setCurrentNamespace("all");
                       },
                     }
-                  : !search && statusFilter === "all" && currentNamespace !== "all"
-                  ? {
-                      label: "Search All Namespaces",
-                      icon: <Globe className="w-3.5 h-3.5" />,
-                      onClick: () => {
-                        setCurrentNamespace("all");
-                      },
-                    }
-                  : currentNamespace !== "all" && (search || statusFilter !== "all")
-                  ? {
-                      label: "Search All Namespaces",
-                      icon: <Globe className="w-3.5 h-3.5" />,
-                      onClick: () => {
-                        setCurrentNamespace("all");
-                      },
-                    }
-                  : undefined
+                  : !search &&
+                      statusFilter === "all" &&
+                      currentNamespace !== "all"
+                    ? {
+                        label: "Search All Namespaces",
+                        icon: <Globe className="w-3.5 h-3.5" />,
+                        onClick: () => {
+                          setCurrentNamespace("all");
+                        },
+                      }
+                    : currentNamespace !== "all" &&
+                        (search || statusFilter !== "all")
+                      ? {
+                          label: "Search All Namespaces",
+                          icon: <Globe className="w-3.5 h-3.5" />,
+                          onClick: () => {
+                            setCurrentNamespace("all");
+                          },
+                        }
+                      : undefined
               }
             />
           )}
@@ -510,10 +581,18 @@ export function ResourceListView({ resourceType }: ResourceListViewProps) {
       {/* Footer Status Bar */}
       <div className="h-8 border-t border-[var(--border)] px-4 flex items-center justify-between text-[11px] text-[var(--muted)] bg-[var(--surface)] shrink-0">
         <div>
-          Showing <span className="text-[var(--foreground)] font-mono">{sortedItems.length}</span>{" "}
-          of <span className="text-[var(--foreground)] font-mono">{totalPodsCount}</span> items in
-          namespace{" "}
-          <strong className="text-[var(--foreground)] font-mono">{currentNamespace}</strong>
+          Showing{" "}
+          <span className="text-[var(--foreground)] font-mono">
+            {sortedItems.length}
+          </span>{" "}
+          of{" "}
+          <span className="text-[var(--foreground)] font-mono">
+            {totalPodsCount}
+          </span>{" "}
+          items in namespace{" "}
+          <strong className="text-[var(--foreground)] font-mono">
+            {currentNamespace}
+          </strong>
         </div>
 
         <div className="flex items-center gap-2">

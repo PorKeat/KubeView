@@ -13,7 +13,7 @@ import { BentoMetricCards } from "./components/BentoMetricCards";
 import { NodeTopologySection } from "./components/NodeTopologySection";
 import { WorkloadControllersCard } from "./components/WorkloadControllersCard";
 import { WarningEventsCard } from "./components/WarningEventsCard";
-import type { NodeSummary } from "@kubeview/contracts";
+import type { NodeSummary, PodEventItem } from "@kubeview/contracts";
 
 export function ClusterOverviewView() {
   const {
@@ -32,19 +32,39 @@ export function ClusterOverviewView() {
     setCurrentNamespace,
     loadPods,
     pods,
+    autoRefreshInterval,
+    setAutoRefreshInterval,
   } = useClusterStore();
 
   const { openTab } = useTabStore();
   const [selectedNode, setSelectedNode] = React.useState<string | null>(null);
-  const [nodeViewMode, setNodeViewMode] = React.useState<"grid" | "table">("grid");
-  const [telemetryMode, setTelemetryMode] = React.useState<"usage" | "allocation">("usage");
+  const [nodeViewMode, setNodeViewMode] = React.useState<"grid" | "table">(
+    "grid",
+  );
+  const [telemetryMode, setTelemetryMode] = React.useState<
+    "usage" | "allocation"
+  >("usage");
   const [isDiagnosticsOpen, setIsDiagnosticsOpen] = React.useState(false);
 
   React.useEffect(() => {
     if (connectionStatus === "connected" || connectionStatus === "degraded") {
       loadClusterOverview(currentContext, currentNamespace);
     }
-  }, [connectionStatus, currentContext, currentNamespace]);
+  }, [connectionStatus, currentContext, currentNamespace, loadClusterOverview]);
+
+  // Periodic Auto-refresh timer for live telemetry sync
+  React.useEffect(() => {
+    if (autoRefreshInterval <= 0 || !currentContext) return;
+    const timer = setInterval(() => {
+      loadClusterOverview(currentContext, currentNamespace);
+    }, autoRefreshInterval);
+    return () => clearInterval(timer);
+  }, [
+    autoRefreshInterval,
+    currentContext,
+    currentNamespace,
+    loadClusterOverview,
+  ]);
 
   const isNamespaceScoped = currentNamespace !== "all";
 
@@ -78,7 +98,10 @@ export function ClusterOverviewView() {
     return <OfflineState />;
   }
 
-  if ((connectionStatus === "checking" && !diagnosticResult) || (isOverviewLoading && !clusterOverview)) {
+  if (
+    (connectionStatus === "checking" && !diagnosticResult) ||
+    (isOverviewLoading && !clusterOverview)
+  ) {
     return <OverviewSkeleton />;
   }
 
@@ -98,13 +121,16 @@ export function ClusterOverviewView() {
     toast.info(
       isNamespaceScoped
         ? `Showing pods in namespace '${currentNamespace}'`
-        : `Showing all ${clusterOverview?.totalPods ?? 0} pods across namespaces`
+        : `Showing all ${clusterOverview?.totalPods ?? 0} pods across namespaces`,
     );
   };
 
   const handleRefresh = async () => {
     toast.info("Refreshing cluster telemetry...");
-    await Promise.all([diagnoseContext(), loadClusterOverview(currentContext, currentNamespace)]);
+    await Promise.all([
+      diagnoseContext(),
+      loadClusterOverview(currentContext, currentNamespace),
+    ]);
     toast.success("Telemetry refreshed!");
   };
 
@@ -142,7 +168,9 @@ export function ClusterOverviewView() {
     useClusterStore.getState().setPodNodeFilter(nodeName);
     openTab({
       id: "pods",
-      title: isNamespaceScoped ? `Pods (${nodeName} · ${currentNamespace})` : `Pods (${nodeName})`,
+      title: isNamespaceScoped
+        ? `Pods (${nodeName} · ${currentNamespace})`
+        : `Pods (${nodeName})`,
       icon: "Box",
       closable: true,
     });
@@ -150,8 +178,28 @@ export function ClusterOverviewView() {
     toast.info(
       isNamespaceScoped
         ? `Filtered pods to node ${nodeName} in namespace '${currentNamespace}'`
-        : `Filtered pods view to node: ${nodeName}`
+        : `Filtered pods view to node: ${nodeName}`,
     );
+  };
+
+  const handleTriageEvent = (event: PodEventItem, targetPod?: string) => {
+    if (targetPod) {
+      const found = pods.find(
+        (p) => p.name === targetPod || p.name.includes(targetPod),
+      );
+      if (found) {
+        openInspector({
+          kind: "Pod",
+          name: found.name,
+          namespace: found.namespace,
+          status: found.status,
+          data: found as unknown as Record<string, unknown>,
+        });
+        toast.info(`Inspecting pod '${found.name}' involved in warning event`);
+        return;
+      }
+    }
+    handleBrowsePods();
   };
 
   const handleInspectWorkload = (targetNs: string) => {
@@ -187,6 +235,8 @@ export function ClusterOverviewView() {
         isNamespaceScoped={isNamespaceScoped}
         currentNamespace={currentNamespace}
         totalPodsCount={clusterOverview?.totalPods ?? scopedPods.length}
+        autoRefreshInterval={autoRefreshInterval}
+        onSetAutoRefreshInterval={setAutoRefreshInterval}
         onOpenDiagnostics={handleOpenDiagnostics}
         onBrowsePods={handleBrowsePods}
         onRefresh={handleRefresh}
@@ -256,6 +306,7 @@ export function ClusterOverviewView() {
           currentNamespace={currentNamespace}
           availableNamespacesCount={availableNamespaces.length}
           onOpenPodsView={handleBrowsePods}
+          onTriageEvent={handleTriageEvent}
         />
       </div>
 
