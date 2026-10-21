@@ -52,16 +52,28 @@ export function ResourceTableToolbar({
   onToggleDensity,
 }: ResourceTableToolbarProps) {
   const basePods = React.useMemo(() => {
+    let list =
+      currentNamespace === "all"
+        ? pods
+        : pods.filter(
+            (p) =>
+              p.namespace.toLowerCase() === currentNamespace.toLowerCase(),
+          );
+
     if (podNodeFilter) {
-      return pods.filter(
-        (p) =>
-          p.nodeName &&
-          p.nodeName.toLowerCase() === podNodeFilter.toLowerCase(),
-      );
+      list = list.filter((p) => {
+        if (!p.nodeName) return false;
+        const pNode = p.nodeName.trim().toLowerCase();
+        const fNode = podNodeFilter.trim().toLowerCase();
+        return (
+          pNode === fNode ||
+          pNode.startsWith(fNode + ".") ||
+          fNode.startsWith(pNode + ".")
+        );
+      });
     }
-    return currentNamespace === "all"
-      ? pods
-      : pods.filter((p) => p.namespace === currentNamespace);
+
+    return list;
   }, [podNodeFilter, pods, currentNamespace]);
 
   const filterPills = React.useMemo(() => {

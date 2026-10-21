@@ -58,7 +58,12 @@ export const useClusterStore = create<ClusterState>((set, get) => ({
   isPodsLoading: true,
   hasLoadedPodsOnce: false,
   podNodeFilter: null,
-  setPodNodeFilter: (nodeName) => set({ podNodeFilter: nodeName }),
+  setPodNodeFilter: (nodeName) => {
+    set({ podNodeFilter: nodeName });
+    if (get().pods.length === 0 && get().currentContext) {
+      get().loadPods();
+    }
+  },
 
   detectedSystemConfigs: [],
   isDetectingConfigs: false,
@@ -169,6 +174,7 @@ export const useClusterStore = create<ClusterState>((set, get) => ({
       hasLoadedPodsOnce: false,
       isPodsLoading: true,
       pods: [],
+      podNodeFilter: null,
     });
 
     try {
@@ -447,8 +453,8 @@ export const useClusterStore = create<ClusterState>((set, get) => ({
   setCurrentContext: (context) => set({ currentContext: context }),
   setCurrentNamespace: (namespace) => {
     set({ currentNamespace: namespace });
-    // In namespace-scoped mode, switching namespaces requires querying the newly scoped namespace
-    if (get().rbacMode === "namespace-scoped") {
+    // In namespace-scoped mode or if pods haven't loaded yet, query the scoped namespace
+    if (get().rbacMode === "namespace-scoped" || get().pods.length === 0) {
       get().loadPods(namespace);
     }
     // Refresh cluster overview dynamically for the scoped namespace

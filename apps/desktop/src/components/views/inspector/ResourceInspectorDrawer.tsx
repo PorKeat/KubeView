@@ -155,6 +155,7 @@ export function ResourceInspectorDrawer() {
   const handleFilterPodsForNode = (nodeName: string) => {
     setCurrentNamespace("all");
     setPodNodeFilter(nodeName);
+    loadPods("all");
     openTab({
       id: "pods",
       title: `Pods (${nodeName})`,
@@ -168,6 +169,7 @@ export function ResourceInspectorDrawer() {
   const handleViewAllPods = () => {
     setCurrentNamespace("all");
     setPodNodeFilter(null);
+    loadPods("all");
     openTab({
       id: "pods",
       title: "Pods",

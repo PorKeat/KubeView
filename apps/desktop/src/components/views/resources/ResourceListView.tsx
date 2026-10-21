@@ -35,6 +35,7 @@ export function ResourceListView({ resourceType }: ResourceListViewProps) {
     isPodsLoading,
     hasLoadedPodsOnce,
     totalPodsCount,
+    clusterOverview,
     loadPods,
     currentNamespace,
     currentContext,
@@ -67,12 +68,12 @@ export function ResourceListView({ resourceType }: ResourceListViewProps) {
     new Set(),
   );
 
-  // Initial fetch when mounted or when context changes
+  // Initial fetch when mounted, when context changes, or if pods are empty
   React.useEffect(() => {
-    if (currentContext) {
+    if (currentContext && (pods.length === 0 || !hasLoadedPodsOnce)) {
       loadPods();
     }
-  }, [currentContext, loadPods]);
+  }, [currentContext, pods.length, hasLoadedPodsOnce, loadPods]);
 
   // Periodic Auto-refresh timer
   React.useEffect(() => {
@@ -116,18 +117,54 @@ export function ResourceListView({ resourceType }: ResourceListViewProps) {
     return counts;
   }, [pods]);
 
+  // Scoped baseline pods for active namespace & node filter
+  const basePods = React.useMemo(() => {
+    let list =
+      currentNamespace === "all"
+        ? pods
+        : pods.filter(
+            (p) =>
+              p.namespace.toLowerCase() === currentNamespace.toLowerCase(),
+          );
+
+    if (podNodeFilter) {
+      list = list.filter((p) => {
+        if (!p.nodeName) return false;
+        const pNode = p.nodeName.trim().toLowerCase();
+        const fNode = podNodeFilter.trim().toLowerCase();
+        return (
+          pNode === fNode ||
+          pNode.startsWith(fNode + ".") ||
+          fNode.startsWith(pNode + ".")
+        );
+      });
+    }
+
+    return list;
+  }, [podNodeFilter, pods, currentNamespace]);
+
   // Filter items (client-side high speed filtering)
   const filteredItems = React.useMemo(() => {
     return pods.filter((pod) => {
       // 1. Pod Node filter
-      if (podNodeFilter && pod.nodeName) {
-        if (pod.nodeName.toLowerCase() !== podNodeFilter.toLowerCase()) {
+      if (podNodeFilter) {
+        if (!pod.nodeName) return false;
+        const pNode = pod.nodeName.trim().toLowerCase();
+        const fNode = podNodeFilter.trim().toLowerCase();
+        if (
+          pNode !== fNode &&
+          !pNode.startsWith(fNode + ".") &&
+          !fNode.startsWith(pNode + ".")
+        ) {
           return false;
         }
       }
 
       // 2. Namespace filter
-      if (currentNamespace !== "all" && pod.namespace !== currentNamespace) {
+      if (
+        currentNamespace !== "all" &&
+        pod.namespace.toLowerCase() !== currentNamespace.toLowerCase()
+      ) {
         return false;
       }
 
@@ -544,14 +581,21 @@ export function ResourceListView({ resourceType }: ResourceListViewProps) {
               }
               secondaryAction={
                 podNodeFilter
-                  ? {
-                      label: `View All Namespaces (${pods.length})`,
-                      icon: <Globe className="w-3.5 h-3.5" />,
-                      onClick: () => {
-                        setPodNodeFilter(null);
-                        setCurrentNamespace("all");
-                      },
-                    }
+                  ? currentNamespace !== "all"
+                    ? {
+                        label: `Search All Namespaces (${pods.length || totalPodsCount})`,
+                        icon: <Globe className="w-3.5 h-3.5" />,
+                        onClick: () => {
+                          setCurrentNamespace("all");
+                        },
+                      }
+                    : {
+                        label: "Reload Pods",
+                        icon: <RefreshCw className="w-3.5 h-3.5" />,
+                        onClick: () => {
+                          loadPods();
+                        },
+                      }
                   : !search &&
                       statusFilter === "all" &&
                       currentNamespace !== "all"
@@ -587,12 +631,36 @@ export function ResourceListView({ resourceType }: ResourceListViewProps) {
           </span>{" "}
           of{" "}
           <span className="text-[var(--foreground)] font-mono">
-            {totalPodsCount}
+            {podNodeFilter
+              ? basePods.length
+              : totalPodsCount > 0
+                ? totalPodsCount
+                : clusterOverview?.totalPods ?? pods.length}
           </span>{" "}
-          items in namespace{" "}
-          <strong className="text-[var(--foreground)] font-mono">
-            {currentNamespace}
-          </strong>
+          {podNodeFilter ? (
+            <>
+              pods on node{" "}
+              <strong className="text-[var(--foreground)] font-mono">
+                {podNodeFilter}
+              </strong>
+              {currentNamespace !== "all" && (
+                <>
+                  {" "}
+                  in namespace{" "}
+                  <strong className="text-[var(--foreground)] font-mono">
+                    {currentNamespace}
+                  </strong>
+                </>
+              )}
+            </>
+          ) : (
+            <>
+              items in namespace{" "}
+              <strong className="text-[var(--foreground)] font-mono">
+                {currentNamespace}
+              </strong>
+            </>
+          )}
         </div>
 
         <div className="flex items-center gap-2">

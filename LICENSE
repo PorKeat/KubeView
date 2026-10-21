@@ -1,6 +1,6 @@
 KUBEVIEW PROPRIETARY SOFTWARE LICENSE
 ==============================================================================
-Copyright (c) 2026 KubeView. All Rights Reserved.
+Copyright (c) 2026 PorKeat. All Rights Reserved.
 ==============================================================================
 
 IMPORTANT NOTICE: PLEASE READ THIS LICENSE AGREEMENT CAREFULLY.
@@ -14,7 +14,7 @@ PROPRIETARY LICENSE AGREEMENT.
 The software, source code, user interfaces, branding, APIs, contracts, Go
 engine, Rust supervisor, Next.js presentation code, documentation, and all
 associated intellectual property (collectively, the "Software") are the sole,
-exclusive, and confidential property of KubeView ("Licensor") and are protected
+exclusive, and confidential property of PorKeat ("Licensor") and are protected
 by national copyright laws, international treaty provisions, trade secret laws,
 and intellectual property statutes.
 
@@ -63,7 +63,7 @@ or usage outside the strict scope of this Agreement requires an explicit,
 written commercial licensing agreement signed by an authorized representative
 of KubeView.
 
-For licensing inquiries: legal@kubeview.dev
+For licensing inquiries: alexkgm2412@gmail.com (PorKeat)
 
 5. TERMINATION & LEGAL REMEDIES
 ------------------------------------------------------------------------------

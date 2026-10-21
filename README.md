@@ -214,6 +214,6 @@ KubeView is built for enterprise production readiness, adhering to open-source g
 
 **Proprietary & Confidential. All Rights Reserved.**
 
-Copyright © 2026 [KubeView](https://github.com/PorKeat/KubeView).
+Copyright © 2026 [PorKeat](https://github.com/PorKeat). All Rights Reserved.
 
 **Strict Policy:** You may NOT copy, fork, modify, redistribute, sublicense, create derivative works, or build on top of this software for public or commercial distribution without prior express written authorization from the copyright holder. See the [LICENSE](LICENSE) file for complete legal terms.
