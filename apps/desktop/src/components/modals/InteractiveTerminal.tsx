@@ -15,7 +15,6 @@ import {
   FileText,
   ChevronDown,
   Check,
-  Sparkles,
   Layers,
 } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
@@ -234,6 +233,13 @@ export function InteractiveTerminal({
       term.open(containerRef.current);
       termRef.current = term;
       fitAddonRef.current = fitAddon;
+
+      term.attachCustomKeyEventHandler((e) => {
+        if (e.key === "Escape") {
+          return false; // Allow Escape to propagate to modal close handlers
+        }
+        return true;
+      });
 
       // Small delay for DOM layout before fit
       setTimeout(() => {
@@ -482,11 +488,7 @@ export function InteractiveTerminal({
                   : "bg-white/[0.04] hover:bg-white/[0.08] active:bg-white/[0.1] border-white/[0.08] text-slate-300 hover:text-white"
               )}
             >
-              {activeShellOption.value === "auto" ? (
-                <Sparkles className="w-3 h-3 text-[var(--accent)] shrink-0" />
-              ) : (
-                <TerminalIcon className="w-3 h-3 text-slate-400 shrink-0" />
-              )}
+              <TerminalIcon className="w-3 h-3 text-slate-400 shrink-0" />
               <span className="font-medium">{activeShellOption.triggerLabel}</span>
               <ChevronDown
                 className={cn(
@@ -496,16 +498,16 @@ export function InteractiveTerminal({
               />
             </button>
 
-            {/* Glassy Popover Dropdown */}
+            {/* Glassy Popover Dropdown (Compact IDE Style) */}
             <AnimatePresence>
               {isShellOpen && (
                 <motion.div
-                  initial={{ opacity: 0, scale: 0.95, y: -4 }}
+                  initial={{ opacity: 0, scale: 0.96, y: -2 }}
                   animate={{ opacity: 1, scale: 1, y: 0 }}
-                  exit={{ opacity: 0, scale: 0.95, y: -4 }}
-                  transition={{ type: "spring", stiffness: 450, damping: 30, mass: 0.8 }}
+                  exit={{ opacity: 0, scale: 0.96, y: -2 }}
+                  transition={{ duration: 0.12 }}
                   style={{ transformOrigin: "top left" }}
-                  className="absolute left-0 top-full mt-1.5 z-50 w-80 rounded-xl bg-[#0c0f17]/95 border border-white/[0.12] shadow-2xl shadow-black/90 backdrop-blur-xl p-1.5 overflow-hidden font-mono select-none"
+                  className="absolute left-0 top-full mt-1 z-50 w-56 rounded-lg bg-[#0c0f17]/95 border border-white/[0.12] shadow-xl shadow-black/80 backdrop-blur-md p-1 overflow-hidden font-mono select-none"
                   role="listbox"
                   aria-label="Shell Environments"
                   onClick={(e) => e.stopPropagation()}
@@ -528,16 +530,16 @@ export function InteractiveTerminal({
                   }}
                 >
                   {/* Header Strip */}
-                  <div className="flex items-center justify-between px-2.5 py-1.5 mb-1 border-b border-white/[0.06] text-[10px]">
+                  <div className="flex items-center justify-between px-2 py-1 mb-0.5 border-b border-white/[0.06] text-[9px]">
                     <span className="font-semibold text-slate-400 uppercase tracking-wider flex items-center gap-1.5">
-                      <TerminalIcon className="w-3 h-3 text-[var(--accent)]" /> Shell Environment
+                      <TerminalIcon className="w-2.5 h-2.5 text-[var(--accent)]" /> Shell
                     </span>
-                    <span className="px-1.5 py-0.2 rounded text-[9px] font-mono bg-white/[0.06] text-slate-400 border border-white/[0.08]">
-                      {SHELL_OPTIONS.length} options
+                    <span className="px-1 py-0.2 rounded text-[8px] font-mono bg-white/[0.06] text-slate-400">
+                      {SHELL_OPTIONS.length}
                     </span>
                   </div>
 
-                  {/* Shell Options List */}
+                  {/* Shell Options List - Compact Single-Line rows */}
                   <div className="space-y-0.5">
                     {SHELL_OPTIONS.map((opt, idx) => {
                       const isSelected = opt.value === shell;
@@ -556,38 +558,39 @@ export function InteractiveTerminal({
                             setTimeout(() => termRef.current?.focus(), 50);
                           }}
                           className={cn(
-                            "w-full text-left flex items-start justify-between gap-2 px-2.5 py-2 rounded-lg transition-all text-xs cursor-pointer select-none group border outline-hidden",
+                            "w-full text-left flex items-center justify-between gap-1.5 px-2 py-1.5 rounded-md transition-colors text-xs cursor-pointer select-none group border outline-hidden",
                             isSelected
-                              ? "bg-white/[0.09] border-white/20 text-white shadow-xs"
+                              ? "bg-white/[0.1] border-white/15 text-white"
                               : isFocused
                               ? "bg-white/[0.05] border-white/10 text-slate-200"
                               : "border-transparent hover:bg-white/[0.04] text-slate-300 hover:text-white"
                           )}
                         >
-                          <div className="min-w-0 flex-1">
-                            <div className="flex items-center gap-2">
-                              {opt.value === "auto" ? (
-                                <Sparkles className="w-3 h-3 text-[var(--accent)] shrink-0" />
-                              ) : (
-                                <TerminalIcon className="w-3 h-3 text-slate-500 group-hover:text-slate-400 shrink-0" />
+                          <div className="flex items-center gap-1.5 min-w-0 flex-1">
+                            <TerminalIcon
+                              className={cn(
+                                "w-3 h-3 shrink-0",
+                                isSelected ? "text-[var(--accent)]" : "text-slate-500 group-hover:text-slate-400"
                               )}
-                              <span className={cn("text-[11px] font-semibold tracking-tight", isSelected ? "text-white" : "text-slate-200")}>
-                                {opt.label}
-                              </span>
-                              <span className={cn("px-1.5 py-0.2 rounded text-[9px] font-mono font-medium border", opt.badgeClass)}>
-                                {opt.badge}
-                              </span>
-                            </div>
-                            <p className="text-[10px] text-slate-400 leading-tight mt-1 pl-5">
-                              {opt.description}
-                            </p>
+                            />
+                            <span
+                              className={cn(
+                                "text-[11px] font-mono truncate",
+                                isSelected ? "text-white font-medium" : "text-slate-300"
+                              )}
+                            >
+                              {opt.label}
+                            </span>
                           </div>
 
-                          <div className="shrink-0 pt-0.5">
+                          <div className="flex items-center gap-1.5 shrink-0">
+                            <span className={cn("px-1 py-0.2 rounded text-[9px] font-mono border", opt.badgeClass)}>
+                              {opt.badge}
+                            </span>
                             {isSelected ? (
-                              <Check className="w-3.5 h-3.5 text-[var(--accent)]" />
+                              <Check className="w-3 h-3 text-[var(--accent)] shrink-0" />
                             ) : (
-                              <span className="w-3.5 h-3.5 block" />
+                              <span className="w-3 h-3" />
                             )}
                           </div>
                         </button>
@@ -709,7 +712,7 @@ export function InteractiveTerminal({
                 {isLaunchingDebug ? (
                   <RefreshCw className="w-3.5 h-3.5 animate-spin text-emerald-400" />
                 ) : (
-                  <Sparkles className="w-3.5 h-3.5 text-emerald-400" />
+                  <TerminalIcon className="w-3.5 h-3.5 text-emerald-400" />
                 )}
                 <span>{isLaunchingDebug ? "Attaching Debugger..." : "Launch Debug Shell"}</span>
               </button>
