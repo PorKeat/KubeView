@@ -306,19 +306,6 @@ export function WarningEventsCard({
                           pod/{detectedPod}
                         </span>
                       )}
-                      {!isNamespaceScoped && ev.involvedObjectNamespace && (
-                        <span
-                          title={`Namespace: ${ev.involvedObjectNamespace}`}
-                          className="px-1.5 py-0.5 rounded text-[9px] font-mono text-[var(--muted)] bg-black/5 dark:bg-white/5 border border-[var(--border)] truncate max-w-[100px]"
-                        >
-                          {ev.involvedObjectNamespace}
-                        </span>
-                      )}
-                      {timeInfo.isRecent && (
-                        <span className="px-1.5 py-0.2 rounded text-[9px] font-mono font-bold bg-rose-500/15 text-rose-600 dark:text-rose-400 border border-rose-500/30">
-                          JUST NOW
-                        </span>
-                      )}
                     </div>
 
                     <div
