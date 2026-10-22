@@ -49,13 +49,16 @@ export function AppSidebar() {
     clusterOverview,
     totalPodsCount,
     pods,
+    deployments,
     loadPods,
+    loadDeployments,
     setCurrentNamespace,
     setPodNodeFilter,
   } = useClusterStore();
   const [collapsedGroups, setCollapsedGroups] = React.useState<Record<string, boolean>>({});
 
   const realPodsCount = clusterOverview?.totalPods ?? (totalPodsCount > 0 ? totalPodsCount : pods.length);
+  const deploymentCount = clusterOverview?.workloads?.deployments?.total ?? deployments.length;
 
   const navigationGroups: NavGroup[] = React.useMemo(() => [
     {
@@ -74,7 +77,7 @@ export function AppSidebar() {
           badge: realPodsCount > 0 ? realPodsCount : undefined,
           badgeVariant: "accent",
         },
-        { id: "deployments", title: "Deployments", icon: Layers, badge: "Soon", badgeVariant: "soon", disabled: true },
+        { id: "deployments", title: "Deployments", icon: Layers, badge: deploymentCount > 0 ? deploymentCount : undefined, badgeVariant: "accent" },
         { id: "replicasets", title: "ReplicaSets", icon: Repeat, badge: "Soon", badgeVariant: "soon", disabled: true },
         { id: "statefulsets", title: "StatefulSets", icon: Database, badge: "Soon", badgeVariant: "soon", disabled: true },
         { id: "daemonsets", title: "DaemonSets", icon: Cpu, badge: "Soon", badgeVariant: "soon", disabled: true },
@@ -107,7 +110,7 @@ export function AppSidebar() {
         { id: "crds", title: "Custom Resources", icon: Boxes, badge: "Soon", badgeVariant: "soon", disabled: true },
       ],
     },
-  ], [realPodsCount]);
+  ], [realPodsCount, deploymentCount]);
 
   const toggleGroup = (category: string) => {
     setCollapsedGroups((prev) => ({ ...prev, [category]: !prev[category] }));
@@ -122,6 +125,11 @@ export function AppSidebar() {
       setCurrentNamespace("all");
       setPodNodeFilter(null);
       loadPods("all");
+    }
+
+    if (item.id === "deployments") {
+      setCurrentNamespace("all");
+      loadDeployments("all");
     }
 
     openTab({

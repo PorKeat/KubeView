@@ -104,14 +104,11 @@ export function CommandPalette() {
                 <span>Pods & Containers</span>
               </Command.Item>
               <Command.Item
-                disabled
-                className="flex items-center justify-between px-2.5 py-2 rounded-md opacity-40 cursor-not-allowed text-[var(--muted)]"
+                onSelect={() => navigateTo("deployments", "Deployments")}
+                className="flex items-center gap-2.5 px-2.5 py-2 rounded-md cursor-pointer hover:bg-[var(--surface-hover)] text-[var(--foreground)] transition-colors"
               >
-                <div className="flex items-center gap-2.5">
-                  <Layers className="w-4 h-4 text-blue-500 dark:text-blue-400" />
-                  <span>Deployments</span>
-                </div>
-                <span className="text-[9px] font-mono px-1.5 py-0.5 rounded bg-black/[0.04] dark:bg-white/[0.05] border border-[var(--border)]">Soon</span>
+                <Layers className="w-4 h-4 text-blue-500 dark:text-blue-400" />
+                <span>Deployments</span>
               </Command.Item>
               <Command.Item
                 disabled

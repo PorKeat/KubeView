@@ -4,6 +4,7 @@ import * as React from "react";
 import { useTabStore } from "@/stores/tabStore";
 import { ClusterOverviewView } from "./ClusterOverviewView";
 import { ResourceListView } from "./ResourceListView";
+import { DeploymentListView } from "./deployments/DeploymentListView";
 import { ErrorBoundary, NotFoundState } from "@/components/ui";
 
 export function ActiveViewRenderer() {
@@ -15,6 +16,10 @@ export function ActiveViewRenderer() {
       {(() => {
         if (activeTabId === "overview") {
           return <ClusterOverviewView />;
+        }
+
+        if (activeTabId === "deployments") {
+          return <DeploymentListView />;
         }
 
         if (!activeTab && activeTabId !== "overview") {

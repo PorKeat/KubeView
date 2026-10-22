@@ -11,6 +11,8 @@ import type {
   ImportKubeconfigResult,
   PodSummary,
   ListPodsResult,
+  DeploymentSummary,
+  ListDeploymentsResult,
   PodLogsParams,
   PodLogsResult,
   DeletePodParams,
@@ -33,6 +35,7 @@ import type { ClusterState, ClusterContextInfo, SelectedResource } from "./clust
 export * from "./clusterTypes";
 
 const inFlightPodsPromises = new Map<string, Promise<void>>();
+const inFlightDeploymentsPromises = new Map<string, Promise<void>>();
 const inFlightOverviewPromises = new Map<string, Promise<ClusterOverviewResult | null>>();
 let contextSwitchSeq = 0;
 
@@ -61,6 +64,10 @@ export const useClusterStore = create<ClusterState>((set, get) => ({
   isPodsLoading: true,
   hasLoadedPodsOnce: false,
   podNodeFilter: null,
+  deployments: [],
+  totalDeploymentsCount: 0,
+  isDeploymentsLoading: true,
+  hasLoadedDeploymentsOnce: false,
   setPodNodeFilter: (nodeName) => {
     set({ podNodeFilter: nodeName });
     if (get().pods.length === 0 && get().currentContext) {
@@ -153,6 +160,10 @@ export const useClusterStore = create<ClusterState>((set, get) => ({
           totalPodsCount: 0,
           isPodsLoading: false,
           hasLoadedPodsOnce: true,
+          deployments: [],
+          totalDeploymentsCount: 0,
+          isDeploymentsLoading: false,
+          hasLoadedDeploymentsOnce: true,
         });
       }
     } catch (err) {
@@ -165,6 +176,10 @@ export const useClusterStore = create<ClusterState>((set, get) => ({
         totalPodsCount: 0,
         isPodsLoading: false,
         hasLoadedPodsOnce: true,
+        deployments: [],
+        totalDeploymentsCount: 0,
+        isDeploymentsLoading: false,
+        hasLoadedDeploymentsOnce: true,
       });
     }
   },
@@ -179,6 +194,10 @@ export const useClusterStore = create<ClusterState>((set, get) => ({
       isPodsLoading: true,
       pods: [],
       podNodeFilter: null,
+      deployments: [],
+      totalDeploymentsCount: 0,
+      isDeploymentsLoading: true,
+      hasLoadedDeploymentsOnce: false,
     });
 
     try {
@@ -413,6 +432,64 @@ export const useClusterStore = create<ClusterState>((set, get) => ({
     return promise;
   },
 
+  loadDeployments: async (namespace?: string, contextName?: string) => {
+    const targetCtx = contextName || get().currentContext;
+    if (!targetCtx) {
+      set({ deployments: [], totalDeploymentsCount: 0, isDeploymentsLoading: false });
+      return;
+    }
+
+    const rbac = get().rbacMode;
+    const targetNs = namespace ?? get().currentNamespace;
+    const queryNs = rbac === "namespace-scoped" && targetNs !== "all" ? targetNs : "";
+    const fetchKey = `${targetCtx}::${queryNs}`;
+
+    if (inFlightDeploymentsPromises.has(fetchKey)) {
+      return inFlightDeploymentsPromises.get(fetchKey);
+    }
+
+    if (get().deployments.length === 0 && get().currentContext === targetCtx) {
+      set({ isDeploymentsLoading: true });
+    }
+
+    const promise = (async () => {
+      try {
+        const res = await invokeRpc<ListDeploymentsResult>("deployments.list", {
+          contextName: targetCtx,
+          namespace: queryNs,
+        });
+
+        if (get().currentContext === targetCtx) {
+          if (res && res.items) {
+            set({
+              deployments: res.items,
+              totalDeploymentsCount: res.totalCount ?? res.items.length,
+              isDeploymentsLoading: false,
+              hasLoadedDeploymentsOnce: true,
+            });
+          } else {
+            set({
+              deployments: [],
+              totalDeploymentsCount: 0,
+              isDeploymentsLoading: false,
+              hasLoadedDeploymentsOnce: true,
+            });
+          }
+        }
+      } catch (err) {
+        console.warn("[ClusterStore] Failed to load deployments:", err);
+        if (get().currentContext === targetCtx) {
+          set({ isDeploymentsLoading: false, hasLoadedDeploymentsOnce: true });
+        }
+      } finally {
+        inFlightDeploymentsPromises.delete(fetchKey);
+      }
+    })();
+
+    inFlightDeploymentsPromises.set(fetchKey, promise);
+    return promise;
+  },
+
   getPodLogs: async (params: PodLogsParams) => {
     const targetCtx = params.contextName || get().currentContext;
     return await invokeRpc<PodLogsResult>("pods.logs", {
@@ -628,6 +705,10 @@ export const useClusterStore = create<ClusterState>((set, get) => ({
         clusterOverview: null,
         pods: [],
         totalPodsCount: 0,
+        deployments: [],
+        totalDeploymentsCount: 0,
+        isDeploymentsLoading: false,
+        hasLoadedDeploymentsOnce: false,
       });
     } catch (err) {
       console.error("Failed to clear contexts:", err);

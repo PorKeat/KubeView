@@ -229,6 +229,49 @@ export interface PodYamlResult {
   yaml: string;
 }
 
+export interface DeploymentConditionItem {
+  type: string;
+  status: string;
+  reason?: string;
+  message?: string;
+  lastUpdateTime?: string;
+  lastTransitionTime?: string;
+}
+
+export interface DeploymentSummary {
+  name: string;
+  namespace: string;
+  status: string;
+  ready: string;
+  desiredReplicas: number;
+  readyReplicas: number;
+  updatedReplicas: number;
+  availableReplicas: number;
+  unavailableReplicas: number;
+  age: string;
+  creationTimestamp: string;
+  images: string[];
+  selector?: Record<string, string>;
+  strategy: string;
+  revision?: string;
+  paused: boolean;
+  generation: number;
+  observedGeneration: number;
+  conditions?: DeploymentConditionItem[];
+  labels?: Record<string, string>;
+  annotations?: Record<string, string>;
+}
+
+export interface ListDeploymentsParams {
+  contextName?: string;
+  namespace?: string;
+}
+
+export interface ListDeploymentsResult {
+  items: DeploymentSummary[];
+  totalCount: number;
+}
+
 export interface NodeSummary {
   name: string;
   status: string;
@@ -295,5 +338,3 @@ export interface ClusterOverviewResult {
   warningEvents: PodEventItem[];
   workloads?: WorkloadsSummary;
 }
-
-
