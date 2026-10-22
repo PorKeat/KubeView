@@ -6,6 +6,8 @@ import type {
   PodSummary,
   DeploymentSummary,
   ReplicaSetSummary,
+  DeploymentActionParams,
+  ReplicaSetActionParams,
   PodLogsParams,
   PodLogsResult,
   DeletePodParams,
@@ -41,6 +43,17 @@ export interface PodModalTarget {
   name: string;
   namespace: string;
   container?: string;
+}
+
+export type WorkloadActionType = "scale" | "restart" | "delete";
+
+export interface WorkloadActionRequest {
+  kind: "Deployment" | "ReplicaSet";
+  action: WorkloadActionType;
+  name: string;
+  namespace: string;
+  replicas?: number;
+  ownerDeployment?: string;
 }
 
 export interface ClusterState {
@@ -101,6 +114,10 @@ export interface ClusterState {
   bulkDeleteConfirmPods: { name: string; namespace: string }[] | null;
   bulkRestartConfirmPods: { name: string; namespace: string }[] | null;
 
+  workloadAction: WorkloadActionRequest | null;
+  openWorkloadAction: (action: WorkloadActionRequest) => void;
+  closeWorkloadAction: () => void;
+
   // Auto-refresh interval (0 = off, 3000, 5000, 10000, 30000)
   autoRefreshInterval: number;
   setAutoRefreshInterval: (interval: number) => void;
@@ -124,6 +141,11 @@ export interface ClusterState {
   getPodLogs: (params: PodLogsParams) => Promise<PodLogsResult>;
   deletePod: (params: DeletePodParams) => Promise<void>;
   restartPod: (params: RestartPodParams) => Promise<void>;
+  restartDeployment: (params: DeploymentActionParams) => Promise<void>;
+  scaleDeployment: (params: DeploymentActionParams) => Promise<void>;
+  deleteDeployment: (params: DeploymentActionParams) => Promise<void>;
+  scaleReplicaSet: (params: ReplicaSetActionParams) => Promise<void>;
+  deleteReplicaSet: (params: ReplicaSetActionParams) => Promise<void>;
   bulkDeletePods: (
     pods: { name: string; namespace: string }[],
     force?: boolean
@@ -133,6 +155,8 @@ export interface ClusterState {
   ) => Promise<{ succeeded: number; failed: number }>;
   execPod: (params: ExecPodParams) => Promise<ExecPodResult>;
   getPodYaml: (podName: string, namespace: string, contextName?: string) => Promise<string>;
+  getDeploymentYaml: (name: string, namespace: string, contextName?: string) => Promise<string>;
+  getReplicaSetYaml: (name: string, namespace: string, contextName?: string) => Promise<string>;
   getPodEvents: (podName: string, namespace: string, contextName?: string) => Promise<PodEventItem[]>;
 
   openLogsModal: (pod: PodModalTarget) => void;

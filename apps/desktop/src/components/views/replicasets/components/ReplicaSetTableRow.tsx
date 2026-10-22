@@ -127,8 +127,11 @@ export function ReplicaSetTableRow({
     <React.Fragment>
       <tr
         onClick={() => {
-          onRowClick?.(item);
-          setIsExpanded((prev) => !prev);
+          if (onRowClick) {
+            onRowClick(item);
+          } else {
+            setIsExpanded((prev) => !prev);
+          }
         }}
         className={cn(
           "hover:bg-[var(--surface-hover)] cursor-pointer transition-colors group h-9 text-xs",
@@ -188,12 +191,9 @@ export function ReplicaSetTableRow({
           />
         </td>
 
-        <td className="py-1 px-3 font-mono truncate">
-          <span
-            className={cn("tabular-nums text-xs", readyTone)}
-            title={`${ready} of ${desired} replicas ready`}
-          >
-            {item.ready}
+        <td className="py-1 px-3 font-mono text-[var(--foreground)] text-[11px] truncate">
+          <span className="tabular-nums" title={`${desired} desired replicas`}>
+            {desired}
           </span>
         </td>
 
@@ -209,11 +209,23 @@ export function ReplicaSetTableRow({
           </span>
         </td>
 
+        <td className="py-1 px-3 font-mono text-[11px] truncate">
+          <span
+            className={cn("tabular-nums text-xs", readyTone)}
+            title={`${ready} of ${desired} replicas ready`}
+          >
+            {ready}
+          </span>
+        </td>
+
         <td className="py-1 px-3 truncate">
           {item.ownerDeployment ? (
-            <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-mono bg-blue-500/10 text-blue-600 dark:text-blue-400 border border-blue-500/20">
+            <span
+              title={item.ownerDeployment}
+              className="inline-flex max-w-full min-w-0 items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-mono bg-blue-500/10 text-blue-600 dark:text-blue-400 border border-blue-500/20"
+            >
               <Layers className="w-2.5 h-2.5 shrink-0" />
-              <span className="truncate">{item.ownerDeployment}</span>
+              <span className="truncate max-w-[120px]">{item.ownerDeployment}</span>
             </span>
           ) : (
             <span className="text-[10px] text-[var(--muted)] font-mono italic">
@@ -348,7 +360,7 @@ export function ReplicaSetTableRow({
         <tr className="bg-[var(--surface-active)]/15 dark:bg-white/[0.012] border-b border-[var(--border)]">
           <td
             className="py-3 px-4 pl-10 pr-6"
-            colSpan={8}
+            colSpan={9}
             onClick={(event) => event.stopPropagation()}
           >
             <motion.div

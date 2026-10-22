@@ -209,6 +209,26 @@ function mockRpcFallback<T>(method: string, _params?: unknown): T {
     } as T;
   }
 
+  if (method === "deployments.yaml" || method === "replicasets.yaml") {
+    const p = _params as {
+      deploymentName?: string;
+      replicaSetName?: string;
+      namespace?: string;
+    } | undefined;
+    const name = p?.deploymentName || p?.replicaSetName || "workload";
+    const ns = p?.namespace && p.namespace !== "all" ? p.namespace : "default";
+    const kind = method === "deployments.yaml" ? "Deployment" : "ReplicaSet";
+    return {
+      yaml: `apiVersion: apps/v1
+kind: ${kind}
+metadata:
+  name: ${name}
+  namespace: ${ns}
+spec:
+  replicas: 1`,
+    } as T;
+  }
+
   if (method === "pods.yaml") {
     const p = _params as { podName?: string; namespace?: string } | undefined;
     const name = p?.podName || "workload-pod";

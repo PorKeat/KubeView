@@ -272,6 +272,20 @@ export interface ListDeploymentsResult {
   totalCount: number;
 }
 
+export interface DeploymentActionParams {
+  contextName?: string;
+  namespace: string;
+  name: string;
+  replicas?: number;
+}
+
+export interface ReplicaSetActionParams {
+  contextName?: string;
+  namespace: string;
+  name: string;
+  replicas?: number;
+}
+
 export interface ReplicaSetConditionItem {
   type: string;
   status: string;

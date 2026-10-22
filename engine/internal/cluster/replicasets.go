@@ -9,6 +9,7 @@ import (
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"sigs.k8s.io/yaml"
 )
 
 // ReplicaSetConditionItem represents a live ReplicaSet condition.
@@ -184,4 +185,75 @@ func resolveReplicaSetStatus(rs *appsv1.ReplicaSet, desired int32) string {
 		return "Degraded"
 	}
 	return "Progressing"
+}
+
+// GetReplicaSetYaml exports the live ReplicaSet manifest as YAML.
+func (m *Manager) GetReplicaSetYaml(ctx context.Context, contextName, namespace, replicaSetName string) (*PodYamlResult, error) {
+	client, _, err := m.GetClientForContext(contextName)
+	if err != nil {
+		return nil, err
+	}
+
+	replicaSet, err := client.AppsV1().ReplicaSets(namespace).Get(ctx, replicaSetName, metav1.GetOptions{})
+	if err != nil {
+		return nil, fmt.Errorf("failed to get replicaset %s: %w", replicaSetName, err)
+	}
+
+	replicaSet.TypeMeta = metav1.TypeMeta{APIVersion: "apps/v1", Kind: "ReplicaSet"}
+	replicaSet.ManagedFields = nil
+
+	data, err := yaml.Marshal(replicaSet)
+	if err != nil {
+		return nil, fmt.Errorf("failed to marshal replicaset to YAML: %w", err)
+	}
+
+	return &PodYamlResult{YAML: string(data)}, nil
+}
+
+// ReplicaSetActionParams identifies a ReplicaSet for an operational action.
+type ReplicaSetActionParams struct {
+	ContextName string `json:"contextName"`
+	Namespace   string `json:"namespace"`
+	Name        string `json:"name"`
+	Replicas    *int32 `json:"replicas,omitempty"`
+}
+
+// ScaleReplicaSet updates the desired replica count for a ReplicaSet.
+func (m *Manager) ScaleReplicaSet(ctx context.Context, p ReplicaSetActionParams) error {
+	if p.Replicas == nil {
+		return fmt.Errorf("replicas is required")
+	}
+
+	client, _, err := m.GetClientForContext(p.ContextName)
+	if err != nil {
+		return err
+	}
+
+	replicaSet, err := client.AppsV1().ReplicaSets(p.Namespace).Get(ctx, p.Name, metav1.GetOptions{})
+	if err != nil {
+		return fmt.Errorf("failed to get replicaset %s: %w", p.Name, err)
+	}
+
+	replicaSet.Spec.Replicas = p.Replicas
+	if _, err := client.AppsV1().ReplicaSets(p.Namespace).Update(ctx, replicaSet, metav1.UpdateOptions{}); err != nil {
+		return fmt.Errorf("failed to scale replicaset %s: %w", p.Name, err)
+	}
+
+	m.InvalidateOverviewCache(p.ContextName)
+	return nil
+}
+
+// DeleteReplicaSet removes a ReplicaSet.
+func (m *Manager) DeleteReplicaSet(ctx context.Context, p ReplicaSetActionParams) error {
+	client, _, err := m.GetClientForContext(p.ContextName)
+	if err != nil {
+		return err
+	}
+
+	if err := client.AppsV1().ReplicaSets(p.Namespace).Delete(ctx, p.Name, metav1.DeleteOptions{}); err != nil {
+		return fmt.Errorf("failed to delete replicaset %s: %w", p.Name, err)
+	}
+
+	m.InvalidateOverviewCache(p.ContextName)
+	return nil
 }

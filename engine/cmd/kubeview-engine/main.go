@@ -526,6 +526,168 @@ func main() {
 		return res, nil
 	})
 
+	// Method: deployments.restart
+	server.Register("deployments.restart", func(params json.RawMessage) (interface{}, *ipc.RPCError) {
+		var p cluster.DeploymentActionParams
+		if err := json.Unmarshal(params, &p); err != nil {
+			return nil, &ipc.RPCError{Code: ipc.ErrCodeInvalidParams, Message: fmt.Sprintf("Invalid params: %v", err)}
+		}
+		if p.Name == "" {
+			return nil, &ipc.RPCError{Code: ipc.ErrCodeInvalidParams, Message: "name is required"}
+		}
+		if p.ContextName == "" {
+			if listRes, err := mgr.ListContexts(); err == nil {
+				p.ContextName = listRes.CurrentContext
+			}
+		}
+		ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+		defer cancel()
+		if err := mgr.RestartDeployment(ctx, p); err != nil {
+			return nil, &ipc.RPCError{Code: ipc.ErrCodeInternalError, Message: fmt.Sprintf("Failed to restart deployment: %v", err)}
+		}
+		return map[string]interface{}{"success": true, "name": p.Name}, nil
+	})
+
+	// Method: deployments.scale
+	server.Register("deployments.scale", func(params json.RawMessage) (interface{}, *ipc.RPCError) {
+		var p cluster.DeploymentActionParams
+		if err := json.Unmarshal(params, &p); err != nil {
+			return nil, &ipc.RPCError{Code: ipc.ErrCodeInvalidParams, Message: fmt.Sprintf("Invalid params: %v", err)}
+		}
+		if p.Name == "" || p.Replicas == nil {
+			return nil, &ipc.RPCError{Code: ipc.ErrCodeInvalidParams, Message: "name and replicas are required"}
+		}
+		if p.ContextName == "" {
+			if listRes, err := mgr.ListContexts(); err == nil {
+				p.ContextName = listRes.CurrentContext
+			}
+		}
+		ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+		defer cancel()
+		if err := mgr.ScaleDeployment(ctx, p); err != nil {
+			return nil, &ipc.RPCError{Code: ipc.ErrCodeInternalError, Message: fmt.Sprintf("Failed to scale deployment: %v", err)}
+		}
+		return map[string]interface{}{"success": true, "name": p.Name, "replicas": *p.Replicas}, nil
+	})
+
+	// Method: deployments.delete
+	server.Register("deployments.delete", func(params json.RawMessage) (interface{}, *ipc.RPCError) {
+		var p cluster.DeploymentActionParams
+		if err := json.Unmarshal(params, &p); err != nil {
+			return nil, &ipc.RPCError{Code: ipc.ErrCodeInvalidParams, Message: fmt.Sprintf("Invalid params: %v", err)}
+		}
+		if p.Name == "" {
+			return nil, &ipc.RPCError{Code: ipc.ErrCodeInvalidParams, Message: "name is required"}
+		}
+		if p.ContextName == "" {
+			if listRes, err := mgr.ListContexts(); err == nil {
+				p.ContextName = listRes.CurrentContext
+			}
+		}
+		ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+		defer cancel()
+		if err := mgr.DeleteDeployment(ctx, p); err != nil {
+			return nil, &ipc.RPCError{Code: ipc.ErrCodeInternalError, Message: fmt.Sprintf("Failed to delete deployment: %v", err)}
+		}
+		return map[string]interface{}{"success": true, "name": p.Name}, nil
+	})
+
+	// Method: replicasets.scale
+	server.Register("replicasets.scale", func(params json.RawMessage) (interface{}, *ipc.RPCError) {
+		var p cluster.ReplicaSetActionParams
+		if err := json.Unmarshal(params, &p); err != nil {
+			return nil, &ipc.RPCError{Code: ipc.ErrCodeInvalidParams, Message: fmt.Sprintf("Invalid params: %v", err)}
+		}
+		if p.Name == "" || p.Replicas == nil {
+			return nil, &ipc.RPCError{Code: ipc.ErrCodeInvalidParams, Message: "name and replicas are required"}
+		}
+		if p.ContextName == "" {
+			if listRes, err := mgr.ListContexts(); err == nil {
+				p.ContextName = listRes.CurrentContext
+			}
+		}
+		ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+		defer cancel()
+		if err := mgr.ScaleReplicaSet(ctx, p); err != nil {
+			return nil, &ipc.RPCError{Code: ipc.ErrCodeInternalError, Message: fmt.Sprintf("Failed to scale replicaset: %v", err)}
+		}
+		return map[string]interface{}{"success": true, "name": p.Name, "replicas": *p.Replicas}, nil
+	})
+
+	// Method: replicasets.delete
+	server.Register("replicasets.delete", func(params json.RawMessage) (interface{}, *ipc.RPCError) {
+		var p cluster.ReplicaSetActionParams
+		if err := json.Unmarshal(params, &p); err != nil {
+			return nil, &ipc.RPCError{Code: ipc.ErrCodeInvalidParams, Message: fmt.Sprintf("Invalid params: %v", err)}
+		}
+		if p.Name == "" {
+			return nil, &ipc.RPCError{Code: ipc.ErrCodeInvalidParams, Message: "name is required"}
+		}
+		if p.ContextName == "" {
+			if listRes, err := mgr.ListContexts(); err == nil {
+				p.ContextName = listRes.CurrentContext
+			}
+		}
+		ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+		defer cancel()
+		if err := mgr.DeleteReplicaSet(ctx, p); err != nil {
+			return nil, &ipc.RPCError{Code: ipc.ErrCodeInternalError, Message: fmt.Sprintf("Failed to delete replicaset: %v", err)}
+		}
+		return map[string]interface{}{"success": true, "name": p.Name}, nil
+	})
+
+	// Method: deployments.yaml
+	server.Register("deployments.yaml", func(params json.RawMessage) (interface{}, *ipc.RPCError) {
+		var p struct {
+			ContextName    string `json:"contextName"`
+			Namespace      string `json:"namespace"`
+			DeploymentName string `json:"deploymentName"`
+		}
+		if err := json.Unmarshal(params, &p); err != nil {
+			return nil, &ipc.RPCError{Code: ipc.ErrCodeInvalidParams, Message: fmt.Sprintf("Invalid params: %v", err)}
+		}
+		if p.ContextName == "" {
+			if listRes, err := mgr.ListContexts(); err == nil {
+				p.ContextName = listRes.CurrentContext
+			}
+		}
+
+		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+		defer cancel()
+
+		res, err := mgr.GetDeploymentYaml(ctx, p.ContextName, p.Namespace, p.DeploymentName)
+		if err != nil {
+			return nil, &ipc.RPCError{Code: ipc.ErrCodeInternalError, Message: fmt.Sprintf("Failed to get deployment YAML: %v", err)}
+		}
+		return res, nil
+	})
+
+	// Method: replicasets.yaml
+	server.Register("replicasets.yaml", func(params json.RawMessage) (interface{}, *ipc.RPCError) {
+		var p struct {
+			ContextName    string `json:"contextName"`
+			Namespace      string `json:"namespace"`
+			ReplicaSetName string `json:"replicaSetName"`
+		}
+		if err := json.Unmarshal(params, &p); err != nil {
+			return nil, &ipc.RPCError{Code: ipc.ErrCodeInvalidParams, Message: fmt.Sprintf("Invalid params: %v", err)}
+		}
+		if p.ContextName == "" {
+			if listRes, err := mgr.ListContexts(); err == nil {
+				p.ContextName = listRes.CurrentContext
+			}
+		}
+
+		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+		defer cancel()
+
+		res, err := mgr.GetReplicaSetYaml(ctx, p.ContextName, p.Namespace, p.ReplicaSetName)
+		if err != nil {
+			return nil, &ipc.RPCError{Code: ipc.ErrCodeInternalError, Message: fmt.Sprintf("Failed to get replicaset YAML: %v", err)}
+		}
+		return res, nil
+	})
+
 	// Method: pods.yaml
 	server.Register("pods.yaml", func(params json.RawMessage) (interface{}, *ipc.RPCError) {
 		var p struct {
@@ -675,4 +837,3 @@ func main() {
 	}
 	server.Wait()
 }
-

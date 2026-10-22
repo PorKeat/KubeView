@@ -417,14 +417,12 @@ func (m *Manager) ExecPod(ctx context.Context, p ExecPodParams) (*ExecPodResult,
 	execConfig.Timeout = 0 // Required for SPDY / streaming connections!
 
 	res, err := executeInContainer(ctx, client, execConfig, p.Namespace, p.PodName, containerName, cmd)
-	isNoShellErr := (err == nil && res.ExitCode != 0 && (
-		strings.Contains(res.Stderr, "no such file or directory") ||
+	isNoShellErr := (err == nil && res.ExitCode != 0 && (strings.Contains(res.Stderr, "no such file or directory") ||
 		strings.Contains(res.Stderr, "not found") ||
 		strings.Contains(res.Stderr, "executable file not found") ||
 		strings.Contains(res.Stderr, "OCI runtime exec failed")))
 
-	isShellCmd := len(cmd) >= 3 && (
-		cmd[0] == "/bin/sh" || cmd[0] == "sh" ||
+	isShellCmd := len(cmd) >= 3 && (cmd[0] == "/bin/sh" || cmd[0] == "sh" ||
 		cmd[0] == "/bin/bash" || cmd[0] == "bash" ||
 		cmd[0] == "/bin/ash" || cmd[0] == "ash" ||
 		cmd[0] == "/bin/zsh" || cmd[0] == "zsh")
@@ -590,6 +588,8 @@ func (m *Manager) GetPodYaml(ctx context.Context, contextName, namespace, podNam
 	if err != nil {
 		return nil, fmt.Errorf("failed to get pod %s: %w", podName, err)
 	}
+
+	pod.TypeMeta = metav1.TypeMeta{APIVersion: "v1", Kind: "Pod"}
 
 	// Clean internal noise
 	pod.ManagedFields = nil

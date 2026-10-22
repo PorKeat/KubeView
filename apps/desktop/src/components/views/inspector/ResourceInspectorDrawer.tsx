@@ -3,7 +3,13 @@
 import * as React from "react";
 import { useClusterStore, SelectedResource } from "@/stores/clusterStore";
 import { useTabStore } from "@/stores/tabStore";
-import type { PodSummary, PodEventItem, NodeSummary } from "@kubeview/contracts";
+import type {
+  PodSummary,
+  PodEventItem,
+  NodeSummary,
+  DeploymentSummary,
+  ReplicaSetSummary,
+} from "@kubeview/contracts";
 import { toast } from "sonner";
 import { motion } from "motion/react";
 import { LayoutDashboard, Box, HeartPulse, Bell, FileCode } from "lucide-react";
@@ -16,6 +22,12 @@ import { InspectorContainersTab } from "./tabs/InspectorContainersTab";
 import { InspectorConditionsTab } from "./tabs/InspectorConditionsTab";
 import { InspectorEventsTab } from "./tabs/InspectorEventsTab";
 import { InspectorYamlTab } from "./tabs/InspectorYamlTab";
+import { InspectorWorkloadOverview } from "./tabs/InspectorWorkloadOverview";
+import {
+  InspectorWorkloadConditionsTab,
+  type WorkloadConditionLike,
+} from "./tabs/InspectorWorkloadConditionsTab";
+import { formatLabelSelector } from "@/lib/labelSelector";
 
 function synthesizePodYaml(pod: PodSummary): string {
   const lines: string[] = [
@@ -100,11 +112,15 @@ export function ResourceInspectorDrawer() {
     openRestartConfirm,
     openDeleteConfirm,
     getPodYaml,
+    getDeploymentYaml,
+    getReplicaSetYaml,
     getPodEvents,
     pods,
     loadPods,
     setCurrentNamespace,
     setPodNodeFilter,
+    setPodLabelFilter,
+    openWorkloadAction,
     openInspector,
   } = useClusterStore();
 
@@ -146,10 +162,31 @@ export function ResourceInspectorDrawer() {
 
   const currentResource = selectedResource || cachedResource;
 
-  // Distinguish between Pod and Node resources
+  // Distinguish between Pod, Deployment, ReplicaSet, and Node resources
   const isNode = currentResource?.kind === "Node";
-  const podData = !isNode ? (currentResource?.data as unknown as PodSummary | undefined) : undefined;
-  const nodeData = isNode ? (currentResource?.data as unknown as NodeSummary | undefined) : undefined;
+  const isDeployment = currentResource?.kind === "Deployment";
+  const isReplicaSet = currentResource?.kind === "ReplicaSet";
+  const isWorkload = isDeployment || isReplicaSet;
+  const podData =
+    !isNode && !isWorkload
+      ? (currentResource?.data as unknown as PodSummary | undefined)
+      : undefined;
+  const nodeData = isNode
+    ? (currentResource?.data as unknown as NodeSummary | undefined)
+    : undefined;
+  const deploymentData = isDeployment
+    ? (currentResource?.data as unknown as DeploymentSummary | undefined)
+    : undefined;
+  const replicaSetData = isReplicaSet
+    ? (currentResource?.data as unknown as ReplicaSetSummary | undefined)
+    : undefined;
+  const workloadConditions: WorkloadConditionLike[] =
+    deploymentData?.conditions ?? replicaSetData?.conditions ?? [];
+
+  // Reset to the overview tab whenever a different resource is inspected.
+  React.useEffect(() => {
+    setActiveTab("overview");
+  }, [currentResource?.kind, currentResource?.name]);
 
   // Filter pods running on the currently inspected node
   const nodePods = React.useMemo(() => {
@@ -165,7 +202,7 @@ export function ResourceInspectorDrawer() {
     }
   }, [isInspectorOpen, isNode, pods.length, loadPods]);
 
-  // Load real YAML when YAML tab is active (Pods only)
+  // Load real YAML when YAML tab is active (Pods, Deployments, ReplicaSets)
   const handleReloadYaml = React.useCallback(() => {
     if (!currentResource || isNode) return;
     setIsLoadingYaml(true);
@@ -179,7 +216,13 @@ export function ResourceInspectorDrawer() {
           pods.find((p) => p.name === currentResource.name)?.namespace ||
           "default";
 
-    getPodYaml(currentResource.name, resolvedNs)
+    const fetchManifest = isDeployment
+      ? getDeploymentYaml(currentResource.name, resolvedNs)
+      : isReplicaSet
+        ? getReplicaSetYaml(currentResource.name, resolvedNs)
+        : getPodYaml(currentResource.name, resolvedNs);
+
+    fetchManifest
       .then((yamlStr) => {
         if (yamlStr && yamlStr.trim()) {
           setLiveYaml(yamlStr);
@@ -202,7 +245,7 @@ export function ResourceInspectorDrawer() {
         }
       })
       .finally(() => setIsLoadingYaml(false));
-  }, [currentResource, isNode, podData, pods, getPodYaml]);
+  }, [currentResource, isNode, isDeployment, isReplicaSet, podData, pods, getPodYaml, getDeploymentYaml, getReplicaSetYaml]);
 
   React.useEffect(() => {
     if (isInspectorOpen && activeTab === "yaml" && !isNode) {
@@ -212,7 +255,7 @@ export function ResourceInspectorDrawer() {
 
   // Load real Events when events tab is active (Pods only)
   React.useEffect(() => {
-    if (isInspectorOpen && currentResource && activeTab === "events" && !isNode) {
+    if (isInspectorOpen && currentResource && activeTab === "events" && !isNode && !isWorkload) {
       setIsLoadingEvents(true);
       getPodEvents(currentResource.name, currentResource.namespace)
         .then((evList) => {
@@ -223,7 +266,7 @@ export function ResourceInspectorDrawer() {
         })
         .finally(() => setIsLoadingEvents(false));
     }
-  }, [isInspectorOpen, currentResource?.name, currentResource?.namespace, activeTab, getPodEvents, isNode]);
+  }, [isInspectorOpen, currentResource?.name, currentResource?.namespace, activeTab, getPodEvents, isNode, isWorkload]);
 
   // Close on Escape key
   React.useEffect(() => {
@@ -284,6 +327,77 @@ export function ResourceInspectorDrawer() {
     closeInspector();
   };
 
+  const handleViewPodsForWorkload = () => {
+    if (!currentResource || !isWorkload) return;
+    const selector = formatLabelSelector(
+      deploymentData?.selector ?? replicaSetData?.selector,
+    );
+    setCurrentNamespace(currentResource.namespace);
+    setPodNodeFilter(null);
+    setPodLabelFilter(
+      selector || null,
+      `${currentResource.kind}: ${currentResource.name}`,
+    );
+    loadPods(currentResource.namespace);
+    openTab({ id: "pods", title: "Pods", closable: true });
+    toast.info(
+      selector
+        ? `Filtered pods by ${currentResource.kind.toLowerCase()} '${currentResource.name}'`
+        : `Opened pods in namespace '${currentResource.namespace}'`,
+    );
+    closeInspector();
+  };
+
+  const handleScaleWorkload = () => {
+    if (!currentResource || !isWorkload) return;
+    openWorkloadAction({
+      kind: currentResource.kind as "Deployment" | "ReplicaSet",
+      action: "scale",
+      name: currentResource.name,
+      namespace: currentResource.namespace,
+      replicas:
+        deploymentData?.desiredReplicas ??
+        replicaSetData?.desiredReplicas ??
+        1,
+    });
+  };
+
+  const handleRestartWorkload = () => {
+    if (!currentResource || !isWorkload) return;
+    openWorkloadAction({
+      kind: currentResource.kind as "Deployment" | "ReplicaSet",
+      action: "restart",
+      name: currentResource.name,
+      namespace: currentResource.namespace,
+      ownerDeployment: replicaSetData?.ownerDeployment,
+    });
+  };
+
+  const handleDeleteWorkload = () => {
+    if (!currentResource || !isWorkload) return;
+    openWorkloadAction({
+      kind: currentResource.kind as "Deployment" | "ReplicaSet",
+      action: "delete",
+      name: currentResource.name,
+      namespace: currentResource.namespace,
+      ownerDeployment: replicaSetData?.ownerDeployment,
+    });
+  };
+
+  const inspectorTabs = isWorkload
+    ? [
+        { id: "overview" as const, label: "Overview", icon: LayoutDashboard, count: null },
+        { id: "conditions" as const, label: "Conditions", icon: HeartPulse, count: workloadConditions.length },
+        { id: "yaml" as const, label: "YAML", icon: FileCode, count: null },
+      ]
+    : [
+        { id: "overview" as const, label: "Overview", icon: LayoutDashboard, count: null },
+        { id: "containers" as const, label: "Containers", icon: Box, count: podData?.containers?.length || 0 },
+        { id: "conditions" as const, label: "Conditions", icon: HeartPulse, count: podData?.conditions?.length || 0 },
+        { id: "events" as const, label: "Events", icon: Bell, count: liveEvents.length > 0 ? liveEvents.length : null },
+        { id: "yaml" as const, label: "YAML", icon: FileCode, count: null },
+      ];
+
   return (
     <div
       className={cn(
@@ -317,8 +431,19 @@ export function ResourceInspectorDrawer() {
         <InspectorHeader
           currentResource={currentResource}
           isNode={isNode}
+          isDeployment={isDeployment}
+          isReplicaSet={isReplicaSet}
           nodeData={nodeData}
           podData={podData}
+          onViewPods={handleViewPodsForWorkload}
+          onScaleWorkload={handleScaleWorkload}
+          onRestartWorkload={
+            isDeployment ||
+            (isReplicaSet && Boolean(replicaSetData?.ownerDeployment))
+              ? handleRestartWorkload
+              : undefined
+          }
+          onDeleteWorkload={handleDeleteWorkload}
           onClose={closeInspector}
           onOpenLogsModal={openLogsModal}
           onOpenExecModal={openExecModal}
@@ -326,19 +451,11 @@ export function ResourceInspectorDrawer() {
           onOpenDeleteConfirm={openDeleteConfirm}
         />
 
-        {/* Segmented Tabs Bar (Pods Only) */}
+        {/* Segmented Tabs Bar (Pods and Workloads) */}
         {!isNode && (
           <div className="h-11 border-b border-[var(--border)] px-4 flex items-center bg-[var(--surface)] shrink-0 overflow-x-auto scrollbar-none">
             <div className="flex items-center gap-1 p-0.5 rounded-lg bg-black/[0.04] dark:bg-white/[0.05] border border-[var(--border)] text-xs select-none">
-              {(
-                [
-                  { id: "overview", label: "Overview", icon: LayoutDashboard, count: null },
-                  { id: "containers", label: "Containers", icon: Box, count: podData?.containers?.length || 0 },
-                  { id: "conditions", label: "Conditions", icon: HeartPulse, count: podData?.conditions?.length || 0 },
-                  { id: "events", label: "Events", icon: Bell, count: liveEvents.length > 0 ? liveEvents.length : null },
-                  { id: "yaml", label: "YAML", icon: FileCode, count: null },
-                ] as const
-              ).map((t) => {
+              {inspectorTabs.map((t) => {
                 const Icon = t.icon;
                 const isActive = activeTab === t.id;
                 return (
@@ -393,36 +510,66 @@ export function ResourceInspectorDrawer() {
             />
           ) : (
             <>
-              {activeTab === "overview" && (
-                <InspectorPodOverview
-                  currentResource={currentResource}
-                  podData={podData}
-                  onOpenLogsModal={openLogsModal}
-                  onOpenExecModal={openExecModal}
-                />
-              )}
+              {isWorkload ? (
+                <>
+                  {activeTab === "overview" && (
+                    <InspectorWorkloadOverview
+                      currentResource={currentResource}
+                      deployment={deploymentData}
+                      replicaSet={replicaSetData}
+                      onViewPods={handleViewPodsForWorkload}
+                      onScale={handleScaleWorkload}
+                      onRestart={
+                        isDeployment ||
+                        (isReplicaSet && Boolean(replicaSetData?.ownerDeployment))
+                          ? handleRestartWorkload
+                          : undefined
+                      }
+                      onDelete={handleDeleteWorkload}
+                    />
+                  )}
 
-              {activeTab === "containers" && (
-                <InspectorContainersTab
-                  currentResource={currentResource}
-                  podData={podData}
-                  onOpenLogsModal={openLogsModal}
-                  onOpenExecModal={openExecModal}
-                />
-              )}
+                  {activeTab === "conditions" && (
+                    <InspectorWorkloadConditionsTab
+                      conditions={workloadConditions}
+                      kind={currentResource.kind}
+                    />
+                  )}
+                </>
+              ) : (
+                <>
+                  {activeTab === "overview" && (
+                    <InspectorPodOverview
+                      currentResource={currentResource}
+                      podData={podData}
+                      onOpenLogsModal={openLogsModal}
+                      onOpenExecModal={openExecModal}
+                    />
+                  )}
 
-              {activeTab === "conditions" && (
-                <InspectorConditionsTab
-                  currentResource={currentResource}
-                  podData={podData}
-                />
-              )}
+                  {activeTab === "containers" && (
+                    <InspectorContainersTab
+                      currentResource={currentResource}
+                      podData={podData}
+                      onOpenLogsModal={openLogsModal}
+                      onOpenExecModal={openExecModal}
+                    />
+                  )}
 
-              {activeTab === "events" && (
-                <InspectorEventsTab
-                  events={liveEvents}
-                  isLoading={isLoadingEvents}
-                />
+                  {activeTab === "conditions" && (
+                    <InspectorConditionsTab
+                      currentResource={currentResource}
+                      podData={podData}
+                    />
+                  )}
+
+                  {activeTab === "events" && (
+                    <InspectorEventsTab
+                      events={liveEvents}
+                      isLoading={isLoadingEvents}
+                    />
+                  )}
+                </>
               )}
 
               {activeTab === "yaml" && (

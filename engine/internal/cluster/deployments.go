@@ -9,6 +9,7 @@ import (
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"sigs.k8s.io/yaml"
 )
 
 // DeploymentConditionItem represents a live Kubernetes deployment condition.
@@ -219,4 +220,100 @@ func resolveDeploymentStatus(d *appsv1.Deployment, desired int32) string {
 	}
 
 	return "Progressing"
+}
+
+// GetDeploymentYaml exports the live Deployment manifest as YAML.
+func (m *Manager) GetDeploymentYaml(ctx context.Context, contextName, namespace, deploymentName string) (*PodYamlResult, error) {
+	client, _, err := m.GetClientForContext(contextName)
+	if err != nil {
+		return nil, err
+	}
+
+	deployment, err := client.AppsV1().Deployments(namespace).Get(ctx, deploymentName, metav1.GetOptions{})
+	if err != nil {
+		return nil, fmt.Errorf("failed to get deployment %s: %w", deploymentName, err)
+	}
+
+	deployment.TypeMeta = metav1.TypeMeta{APIVersion: "apps/v1", Kind: "Deployment"}
+	deployment.ManagedFields = nil
+
+	data, err := yaml.Marshal(deployment)
+	if err != nil {
+		return nil, fmt.Errorf("failed to marshal deployment to YAML: %w", err)
+	}
+
+	return &PodYamlResult{YAML: string(data)}, nil
+}
+
+// DeploymentActionParams identifies a Deployment for an operational action.
+type DeploymentActionParams struct {
+	ContextName string `json:"contextName"`
+	Namespace   string `json:"namespace"`
+	Name        string `json:"name"`
+	Replicas    *int32 `json:"replicas,omitempty"`
+}
+
+// RestartDeployment triggers a rolling restart by updating the pod template annotation.
+func (m *Manager) RestartDeployment(ctx context.Context, p DeploymentActionParams) error {
+	client, _, err := m.GetClientForContext(p.ContextName)
+	if err != nil {
+		return err
+	}
+
+	deployment, err := client.AppsV1().Deployments(p.Namespace).Get(ctx, p.Name, metav1.GetOptions{})
+	if err != nil {
+		return fmt.Errorf("failed to get deployment %s: %w", p.Name, err)
+	}
+
+	if deployment.Spec.Template.Annotations == nil {
+		deployment.Spec.Template.Annotations = map[string]string{}
+	}
+	deployment.Spec.Template.Annotations["kubectl.kubernetes.io/restartedAt"] = time.Now().UTC().Format(time.RFC3339)
+
+	if _, err := client.AppsV1().Deployments(p.Namespace).Update(ctx, deployment, metav1.UpdateOptions{}); err != nil {
+		return fmt.Errorf("failed to restart deployment %s: %w", p.Name, err)
+	}
+
+	m.InvalidateOverviewCache(p.ContextName)
+	return nil
+}
+
+// ScaleDeployment updates the desired replica count for a Deployment.
+func (m *Manager) ScaleDeployment(ctx context.Context, p DeploymentActionParams) error {
+	if p.Replicas == nil {
+		return fmt.Errorf("replicas is required")
+	}
+
+	client, _, err := m.GetClientForContext(p.ContextName)
+	if err != nil {
+		return err
+	}
+
+	deployment, err := client.AppsV1().Deployments(p.Namespace).Get(ctx, p.Name, metav1.GetOptions{})
+	if err != nil {
+		return fmt.Errorf("failed to get deployment %s: %w", p.Name, err)
+	}
+
+	deployment.Spec.Replicas = p.Replicas
+	if _, err := client.AppsV1().Deployments(p.Namespace).Update(ctx, deployment, metav1.UpdateOptions{}); err != nil {
+		return fmt.Errorf("failed to scale deployment %s: %w", p.Name, err)
+	}
+
+	m.InvalidateOverviewCache(p.ContextName)
+	return nil
+}
+
+// DeleteDeployment removes a Deployment and its dependent resources.
+func (m *Manager) DeleteDeployment(ctx context.Context, p DeploymentActionParams) error {
+	client, _, err := m.GetClientForContext(p.ContextName)
+	if err != nil {
+		return err
+	}
+
+	if err := client.AppsV1().Deployments(p.Namespace).Delete(ctx, p.Name, metav1.DeleteOptions{}); err != nil {
+		return fmt.Errorf("failed to delete deployment %s: %w", p.Name, err)
+	}
+
+	m.InvalidateOverviewCache(p.ContextName)
+	return nil
 }

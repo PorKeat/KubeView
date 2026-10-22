@@ -15,6 +15,8 @@ import type {
   ListDeploymentsResult,
   ReplicaSetSummary,
   ListReplicaSetsResult,
+  DeploymentActionParams,
+  ReplicaSetActionParams,
   PodLogsParams,
   PodLogsResult,
   DeletePodParams,
@@ -97,6 +99,7 @@ export const useClusterStore = create<ClusterState>((set, get) => ({
   restartConfirmPod: null,
   bulkDeleteConfirmPods: null,
   bulkRestartConfirmPods: null,
+  workloadAction: null,
 
   autoRefreshInterval: 0,
   setAutoRefreshInterval: (interval) => set({ autoRefreshInterval: interval }),
@@ -129,6 +132,9 @@ export const useClusterStore = create<ClusterState>((set, get) => ({
   closeBulkDeleteConfirm: () => set({ bulkDeleteConfirmPods: null }),
   openBulkRestartConfirm: (pods) => set({ bulkRestartConfirmPods: pods }),
   closeBulkRestartConfirm: () => set({ bulkRestartConfirmPods: null }),
+
+  openWorkloadAction: (action) => set({ workloadAction: action }),
+  closeWorkloadAction: () => set({ workloadAction: null }),
 
   loadContexts: async () => {
     set({ isLoading: true });
@@ -221,6 +227,7 @@ export const useClusterStore = create<ClusterState>((set, get) => ({
       podNodeFilter: null,
       podLabelFilter: null,
       podLabelFilterSource: null,
+      workloadAction: null,
       deployments: [],
       totalDeploymentsCount: 0,
       isDeploymentsLoading: true,
@@ -609,6 +616,58 @@ export const useClusterStore = create<ClusterState>((set, get) => ({
     await get().loadClusterOverview();
   },
 
+  restartDeployment: async (params: DeploymentActionParams) => {
+    const targetCtx = params.contextName || get().currentContext;
+    await invokeRpc("deployments.restart", {
+      ...params,
+      contextName: targetCtx,
+    });
+    await get().loadDeployments();
+    await get().loadReplicaSets();
+    await get().loadClusterOverview();
+  },
+
+  scaleDeployment: async (params: DeploymentActionParams) => {
+    const targetCtx = params.contextName || get().currentContext;
+    await invokeRpc("deployments.scale", {
+      ...params,
+      contextName: targetCtx,
+    });
+    await get().loadDeployments();
+    await get().loadClusterOverview();
+  },
+
+  deleteDeployment: async (params: DeploymentActionParams) => {
+    const targetCtx = params.contextName || get().currentContext;
+    await invokeRpc("deployments.delete", {
+      ...params,
+      contextName: targetCtx,
+    });
+    await get().loadDeployments();
+    await get().loadReplicaSets();
+    await get().loadClusterOverview();
+  },
+
+  scaleReplicaSet: async (params: ReplicaSetActionParams) => {
+    const targetCtx = params.contextName || get().currentContext;
+    await invokeRpc("replicasets.scale", {
+      ...params,
+      contextName: targetCtx,
+    });
+    await get().loadReplicaSets();
+    await get().loadClusterOverview();
+  },
+
+  deleteReplicaSet: async (params: ReplicaSetActionParams) => {
+    const targetCtx = params.contextName || get().currentContext;
+    await invokeRpc("replicasets.delete", {
+      ...params,
+      contextName: targetCtx,
+    });
+    await get().loadReplicaSets();
+    await get().loadClusterOverview();
+  },
+
   bulkDeletePods: async (pods: { name: string; namespace: string }[], force?: boolean) => {
     const targetCtx = get().currentContext;
     let succeeded = 0;
@@ -668,6 +727,26 @@ export const useClusterStore = create<ClusterState>((set, get) => ({
       contextName: targetCtx,
       namespace,
       podName,
+    });
+    return res?.yaml || "";
+  },
+
+  getDeploymentYaml: async (name: string, namespace: string, contextName?: string) => {
+    const targetCtx = contextName || get().currentContext;
+    const res = await invokeRpc<PodYamlResult>("deployments.yaml", {
+      contextName: targetCtx,
+      namespace,
+      deploymentName: name,
+    });
+    return res?.yaml || "";
+  },
+
+  getReplicaSetYaml: async (name: string, namespace: string, contextName?: string) => {
+    const targetCtx = contextName || get().currentContext;
+    const res = await invokeRpc<PodYamlResult>("replicasets.yaml", {
+      contextName: targetCtx,
+      namespace,
+      replicaSetName: name,
     });
     return res?.yaml || "";
   },

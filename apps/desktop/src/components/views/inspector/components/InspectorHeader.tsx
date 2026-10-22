@@ -4,11 +4,14 @@ import * as React from "react";
 import {
   Server,
   Box,
+  Layers,
+  Repeat,
   Copy,
   Check,
   FileText,
   Terminal,
   RotateCw,
+  SlidersHorizontal,
   Trash2,
   X,
 } from "lucide-react";
@@ -21,8 +24,14 @@ import type { PodSummary, NodeSummary } from "@kubeview/contracts";
 export interface InspectorHeaderProps {
   currentResource: SelectedResource;
   isNode: boolean;
+  isDeployment?: boolean;
+  isReplicaSet?: boolean;
   nodeData?: NodeSummary;
   podData?: PodSummary;
+  onViewPods?: () => void;
+  onScaleWorkload?: () => void;
+  onRestartWorkload?: () => void;
+  onDeleteWorkload?: () => void;
   onClose: () => void;
   onOpenLogsModal: (pod: { name: string; namespace: string }) => void;
   onOpenExecModal: (pod: { name: string; namespace: string }) => void;
@@ -33,8 +42,14 @@ export interface InspectorHeaderProps {
 export function InspectorHeader({
   currentResource,
   isNode,
+  isDeployment = false,
+  isReplicaSet = false,
   nodeData,
   podData,
+  onViewPods,
+  onScaleWorkload,
+  onRestartWorkload,
+  onDeleteWorkload,
   onClose,
   onOpenLogsModal,
   onOpenExecModal,
@@ -55,6 +70,7 @@ export function InspectorHeader({
       case "Running":
       case "Active":
       case "Ready":
+      case "Healthy":
         return (
           <span className="inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-medium font-mono bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20 shrink-0">
             {status}
@@ -63,6 +79,8 @@ export function InspectorHeader({
       case "Pending":
       case "ContainerCreating":
       case "Terminating":
+      case "Progressing":
+      case "Paused":
         return (
           <span className="inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-medium font-mono bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/25 shrink-0">
             {status}
@@ -70,6 +88,7 @@ export function InspectorHeader({
         );
       case "Completed":
       case "Succeeded":
+      case "Scaled Down":
         return (
           <span className="inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-medium font-mono bg-black/[0.04] dark:bg-white/[0.06] text-[var(--muted)] border border-[var(--border)] shrink-0">
             {status}
@@ -88,7 +107,15 @@ export function InspectorHeader({
     <div className="h-16 border-b border-[var(--border)] px-4 flex items-center justify-between shrink-0 bg-slate-50/80 dark:bg-black/40">
       <div className="flex items-center gap-3 min-w-0 pr-2">
         <div className="p-2.5 rounded-xl bg-[var(--surface-hover)] text-[var(--foreground)] border border-[var(--border)] shrink-0">
-          {isNode ? <Server className="w-5 h-5 text-[var(--accent)]" /> : <Box className="w-5 h-5 text-[var(--accent)]" />}
+          {isNode ? (
+            <Server className="w-5 h-5 text-[var(--accent)]" />
+          ) : isDeployment ? (
+            <Layers className="w-5 h-5 text-[var(--accent)]" />
+          ) : isReplicaSet ? (
+            <Repeat className="w-5 h-5 text-[var(--accent)]" />
+          ) : (
+            <Box className="w-5 h-5 text-[var(--accent)]" />
+          )}
         </div>
         <div className="min-w-0">
           <div className="flex items-center gap-2">
@@ -152,7 +179,65 @@ export function InspectorHeader({
 
       {/* Action Controls Toolbar */}
       <div className="flex items-center gap-1 shrink-0 bg-black/5 dark:bg-white/5 p-1 rounded-xl border border-[var(--border)]">
-        {!isNode ? (
+        {isDeployment || isReplicaSet ? (
+          <>
+            <Tooltip content="View Pods">
+              <button
+                onClick={onViewPods}
+                className="p-1.5 rounded-lg hover:bg-[var(--surface-hover)] text-[var(--muted)] hover:text-[var(--foreground)] transition-colors cursor-pointer"
+                aria-label="View Pods"
+              >
+                <Box className="w-4 h-4" />
+              </button>
+            </Tooltip>
+
+            {onScaleWorkload && (
+              <Tooltip content="Scale Replicas">
+                <button
+                  onClick={onScaleWorkload}
+                  className="p-1.5 rounded-lg hover:bg-[var(--surface-hover)] text-[var(--muted)] hover:text-[var(--foreground)] transition-colors cursor-pointer"
+                  aria-label="Scale Replicas"
+                >
+                  <SlidersHorizontal className="w-4 h-4" />
+                </button>
+              </Tooltip>
+            )}
+
+            {onRestartWorkload && (
+              <Tooltip content={isReplicaSet ? "Restart Owner Deployment" : "Restart Rollout"}>
+                <button
+                  onClick={onRestartWorkload}
+                  className="p-1.5 rounded-lg hover:bg-[var(--surface-hover)] text-[var(--muted)] hover:text-[var(--foreground)] transition-colors cursor-pointer"
+                  aria-label={isReplicaSet ? "Restart Owner Deployment" : "Restart Rollout"}
+                >
+                  <RotateCw className="w-4 h-4" />
+                </button>
+              </Tooltip>
+            )}
+
+            {onDeleteWorkload && (
+              <Tooltip content="Delete Workload">
+                <button
+                  onClick={onDeleteWorkload}
+                  className="p-1.5 rounded-lg hover:bg-rose-500/15 text-[var(--muted)] hover:text-rose-500 transition-colors cursor-pointer"
+                  aria-label="Delete Workload"
+                >
+                  <Trash2 className="w-4 h-4" />
+                </button>
+              </Tooltip>
+            )}
+
+            <Tooltip content="Copy Resource Name">
+              <button
+                onClick={handleCopyTitle}
+                className="p-1.5 rounded-lg hover:bg-[var(--surface-hover)] text-[var(--muted)] hover:text-[var(--foreground)] transition-colors cursor-pointer"
+                aria-label="Copy Resource Name"
+              >
+                <Copy className="w-4 h-4" />
+              </button>
+            </Tooltip>
+          </>
+        ) : !isNode ? (
           <>
             <Tooltip content="View Real-Time Logs">
               <button

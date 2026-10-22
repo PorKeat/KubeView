@@ -136,8 +136,11 @@ export function DeploymentTableRow({
     <React.Fragment>
       <tr
         onClick={() => {
-          onRowClick?.(item);
-          setIsExpanded((prev) => !prev);
+          if (onRowClick) {
+            onRowClick(item);
+          } else {
+            setIsExpanded((prev) => !prev);
+          }
         }}
         className={cn(
           "hover:bg-[var(--surface-hover)] cursor-pointer transition-colors group",

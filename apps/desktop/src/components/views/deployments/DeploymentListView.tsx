@@ -45,6 +45,7 @@ export function DeploymentListView() {
     hasLoadedDeploymentsOnce,
     loadDeployments,
     loadPods,
+    openInspector,
     currentNamespace,
     currentContext,
     setCurrentNamespace,
@@ -523,6 +524,15 @@ export function DeploymentListView() {
                   )}
                   onToggleSelect={toggleSelectItem}
                   onViewPods={handleViewPods}
+                  onRowClick={(deployment) =>
+                    openInspector({
+                      kind: "Deployment",
+                      name: deployment.name,
+                      namespace: deployment.namespace,
+                      status: deployment.status,
+                      data: deployment as unknown as Record<string, unknown>,
+                    })
+                  }
                 />
               ))}
             </tbody>

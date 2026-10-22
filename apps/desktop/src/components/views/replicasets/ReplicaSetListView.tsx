@@ -40,6 +40,7 @@ export function ReplicaSetListView() {
     hasLoadedReplicaSetsOnce,
     loadReplicaSets,
     loadPods,
+    openInspector,
     currentNamespace,
     currentContext,
     setCurrentNamespace,
@@ -368,6 +369,8 @@ export function ReplicaSetListView() {
                     {renderSortIndicator("status")}
                   </div>
                 </th>
+                <th className="w-20 py-1 px-3">Desired</th>
+                <th className="w-20 py-1 px-3">Current</th>
                 <th
                   onClick={() => handleSort("ready")}
                   className="w-20 py-1 px-3 cursor-pointer hover:text-[var(--foreground)] transition-colors"
@@ -377,7 +380,6 @@ export function ReplicaSetListView() {
                     {renderSortIndicator("ready")}
                   </div>
                 </th>
-                <th className="w-20 py-1 px-3">Current</th>
                 <th className="w-40 py-1 px-3">Owner</th>
                 <th
                   onClick={() => handleSort("age")}
@@ -397,6 +399,15 @@ export function ReplicaSetListView() {
                   key={`${item.namespace}/${item.name}`}
                   item={item}
                   onViewPods={handleViewPods}
+                  onRowClick={(replicaSet) =>
+                    openInspector({
+                      kind: "ReplicaSet",
+                      name: replicaSet.name,
+                      namespace: replicaSet.namespace,
+                      status: replicaSet.status,
+                      data: replicaSet as unknown as Record<string, unknown>,
+                    })
+                  }
                 />
               ))}
             </tbody>
