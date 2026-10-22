@@ -19,6 +19,7 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
+import { matchesLabelSelector } from "@/lib/labelSelector";
 import { useClusterStore } from "@/stores/clusterStore";
 import type { PodSummary } from "@kubeview/contracts";
 import { TableSkeleton, EmptyState, Tooltip } from "@/components/ui";
@@ -62,13 +63,15 @@ export function ResourceListView({ resourceType }: ResourceListViewProps) {
     openKubeconfigModal,
     podNodeFilter,
     setPodNodeFilter,
+    podLabelFilter,
+    podLabelFilterSource,
+    setPodLabelFilter,
   } = useClusterStore();
 
   // Free-text search with useDeferredValue for 120Hz input responsiveness
   const [search, setSearch] = React.useState("");
   const deferredSearch = React.useDeferredValue(search);
   const [statusFilter, setStatusFilter] = React.useState("all");
-  const [labelFilter, setLabelFilter] = React.useState<string | null>(null);
   const [density, setDensity] = React.useState<"comfortable" | "compact">(
     "comfortable",
   );
@@ -90,7 +93,7 @@ export function ResourceListView({ resourceType }: ResourceListViewProps) {
     deferredSearch,
     statusFilter,
     podNodeFilter,
-    labelFilter,
+    podLabelFilter,
     currentNamespace,
     pageSize,
   ]);
@@ -187,20 +190,9 @@ export function ResourceListView({ resourceType }: ResourceListViewProps) {
         }
       }
 
-      // 1.5 Label filter
-      if (labelFilter) {
-        if (!pod.labels) return false;
-        const [filterKey, filterVal] = labelFilter.includes("=")
-          ? labelFilter.split("=")
-          : [labelFilter, undefined];
-        const actualVal = pod.labels[filterKey.trim()];
-        if (actualVal === undefined) return false;
-        if (
-          filterVal !== undefined &&
-          actualVal.trim() !== filterVal.trim()
-        ) {
-          return false;
-        }
+      // 1.5 Label filter (supports comma-separated deployment selectors)
+      if (podLabelFilter && !matchesLabelSelector(pod.labels, podLabelFilter)) {
+        return false;
       }
 
       // 2. Namespace filter
@@ -236,7 +228,7 @@ export function ResourceListView({ resourceType }: ResourceListViewProps) {
   }, [
     pods,
     podNodeFilter,
-    labelFilter,
+    podLabelFilter,
     currentNamespace,
     statusFilter,
     deferredSearch,
@@ -337,8 +329,9 @@ export function ResourceListView({ resourceType }: ResourceListViewProps) {
         resourceType={resourceType}
         podNodeFilter={podNodeFilter}
         setPodNodeFilter={setPodNodeFilter}
-        labelFilter={labelFilter}
-        setLabelFilter={setLabelFilter}
+        labelFilter={podLabelFilter}
+        labelFilterSource={podLabelFilterSource}
+        setLabelFilter={(label) => setPodLabelFilter(label, null)}
         statusFilter={statusFilter}
         setStatusFilter={setStatusFilter}
         pods={pods}
@@ -390,11 +383,13 @@ export function ResourceListView({ resourceType }: ResourceListViewProps) {
         <div className="flex-1 overflow-y-auto min-h-0 flex flex-col justify-center">
           <EmptyState
             variant={
-              (statusFilter === "failing" || statusFilter === "pending") && !search
+              (statusFilter === "failing" || statusFilter === "pending") &&
+              !search &&
+              !podLabelFilter
                 ? "healthy"
                 : podNodeFilter
                   ? "empty"
-                  : search || statusFilter !== "all"
+                  : podLabelFilter || search || statusFilter !== "all"
                     ? "search"
                     : "empty"
             }
@@ -405,6 +400,10 @@ export function ResourceListView({ resourceType }: ResourceListViewProps) {
                   ? "All Workloads Scheduled"
                   : podNodeFilter
                     ? `No pods running on node "${podNodeFilter}"`
+                    : podLabelFilter
+                      ? `No ${resourceType.toLowerCase()} match ${
+                          podLabelFilterSource ?? "label filter"
+                        }`
                     : search || statusFilter !== "all"
                       ? `No ${resourceType.toLowerCase()} match filter "${search || statusFilter}"`
                       : `No ${resourceType.toLowerCase()} scheduled in "${currentNamespace}"`
@@ -432,6 +431,16 @@ export function ResourceListView({ resourceType }: ResourceListViewProps) {
                     } have completed scheduling and initialization.`
                 : podNodeFilter
                   ? `Host "${podNodeFilter}" currently has zero running workloads matching your active criteria.`
+                : podLabelFilter
+                  ? `0 of ${
+                      currentNamespace === "all"
+                        ? pods.length
+                        : namespaceCounts[currentNamespace] || 0
+                    } ${resourceType.toLowerCase()} in ${
+                      currentNamespace === "all"
+                        ? "all namespaces"
+                        : `namespace "${currentNamespace}"`
+                    } match ${podLabelFilterSource ?? "the selected label filter"}.`
                   : search || statusFilter !== "all"
                     ? `0 of ${
                         currentNamespace === "all"
@@ -447,6 +456,8 @@ export function ResourceListView({ resourceType }: ResourceListViewProps) {
             scopeBadge={
               podNodeFilter
                 ? `Node: ${podNodeFilter}`
+                : podLabelFilter
+                  ? (podLabelFilterSource ?? `Label: ${podLabelFilter}`)
                 : search || statusFilter !== "all"
                   ? search
                     ? `Query: "${search}"`
@@ -454,7 +465,10 @@ export function ResourceListView({ resourceType }: ResourceListViewProps) {
                   : `Namespace: ${currentNamespace}`
             }
             codeSnippet={
-              !search && statusFilter === "all" && !podNodeFilter
+              !search &&
+              statusFilter === "all" &&
+              !podNodeFilter &&
+              !podLabelFilter
                 ? `kubectl run demo-app --image=nginx --namespace=${
                     currentNamespace === "all" ? "default" : currentNamespace
                   }`
@@ -464,6 +478,7 @@ export function ResourceListView({ resourceType }: ResourceListViewProps) {
               !search &&
               statusFilter === "all" &&
               !podNodeFilter &&
+              !podLabelFilter &&
               currentNamespace !== "all"
                 ? Object.entries(namespaceCounts)
                     .filter(([ns]) => ns !== currentNamespace && ns !== "all")
@@ -484,7 +499,15 @@ export function ResourceListView({ resourceType }: ResourceListViewProps) {
                     icon: <RefreshCw className="w-3.5 h-3.5" />,
                     onClick: () => setPodNodeFilter(null),
                   }
-                : (statusFilter === "failing" || statusFilter === "pending") && !search
+                : podLabelFilter
+                  ? {
+                      label: podLabelFilterSource
+                        ? `Clear ${podLabelFilterSource.split(":")[0]} Filter`
+                        : "Clear Label Filter",
+                      icon: <RefreshCw className="w-3.5 h-3.5" />,
+                      onClick: () => setPodLabelFilter(null, null),
+                    }
+                  : (statusFilter === "failing" || statusFilter === "pending") && !search
                   ? {
                       label: "View All Workloads",
                       icon: <RefreshCw className="w-3.5 h-3.5" />,
@@ -691,7 +714,7 @@ export function ResourceListView({ resourceType }: ResourceListViewProps) {
                   isPendingView={statusFilter === "pending"}
                   onToggleSelect={toggleSelectItem}
                   onFilterNode={(node) => setPodNodeFilter(node)}
-                  onFilterLabel={(label) => setLabelFilter(label)}
+                  onFilterLabel={(label) => setPodLabelFilter(label, null)}
                   onRowClick={(pod) =>
                     openInspector({
                       kind: "Pod",

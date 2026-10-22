@@ -13,6 +13,7 @@ import {
 import { motion } from "motion/react";
 import { cn } from "@/lib/utils";
 import { Tooltip } from "@/components/ui/Tooltip";
+import { matchesLabelSelector } from "@/lib/labelSelector";
 import type { PodSummary } from "@kubeview/contracts";
 import {
   isPodFailing,
@@ -27,6 +28,7 @@ export interface ResourceTableToolbarProps {
   podNodeFilter: string | null;
   setPodNodeFilter: (node: string | null) => void;
   labelFilter?: string | null;
+  labelFilterSource?: string | null;
   setLabelFilter?: (label: string | null) => void;
   statusFilter: string;
   setStatusFilter: (status: string) => void;
@@ -48,6 +50,7 @@ export function ResourceTableToolbar({
   podNodeFilter,
   setPodNodeFilter,
   labelFilter,
+  labelFilterSource,
   setLabelFilter,
   statusFilter,
   setStatusFilter,
@@ -84,21 +87,7 @@ export function ResourceTableToolbar({
     }
 
     if (labelFilter) {
-      list = list.filter((p) => {
-        if (!p.labels) return false;
-        const [filterKey, filterVal] = labelFilter.includes("=")
-          ? labelFilter.split("=")
-          : [labelFilter, undefined];
-        const actualVal = p.labels[filterKey.trim()];
-        if (actualVal === undefined) return false;
-        if (
-          filterVal !== undefined &&
-          actualVal.trim() !== filterVal.trim()
-        ) {
-          return false;
-        }
-        return true;
-      });
+      list = list.filter((p) => matchesLabelSelector(p.labels, labelFilter));
     }
 
     return list;
@@ -130,6 +119,10 @@ export function ResourceTableToolbar({
       },
     ];
   }, [basePods]);
+
+  const clearFilterLabel = labelFilterSource
+    ? `Clear ${labelFilterSource.split(":")[0]?.toLowerCase() ?? "workload"} filter`
+    : "Clear label filter";
 
   return (
     <div className="h-11 border-b border-[var(--border)] px-3 flex items-center justify-between shrink-0 glass-panel gap-3">
@@ -187,18 +180,26 @@ export function ResourceTableToolbar({
       {labelFilter && (
         <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-indigo-500/10 text-indigo-500 dark:text-indigo-400 border border-indigo-500/30 text-xs font-mono font-medium shrink-0 animate-in fade-in duration-150">
           <Tag className="w-3.5 h-3.5" aria-hidden="true" />
-          <span>
-            Label:{" "}
-            <strong className="text-[var(--foreground)] dark:text-white">
-              {labelFilter}
-            </strong>
+          <span className="truncate" title={labelFilter}>
+            {labelFilterSource ? (
+              <strong className="text-[var(--foreground)] dark:text-white">
+                {labelFilterSource}
+              </strong>
+            ) : (
+              <>
+                Label:{" "}
+                <strong className="text-[var(--foreground)] dark:text-white">
+                  {labelFilter}
+                </strong>
+              </>
+            )}
           </span>
-          <Tooltip content="Clear label filter">
+          <Tooltip content={clearFilterLabel}>
             <button
               type="button"
               onClick={() => setLabelFilter && setLabelFilter(null)}
               className="ml-1 p-0.5 hover:bg-indigo-500/20 rounded-full transition-colors cursor-pointer"
-              aria-label="Clear label filter"
+              aria-label={clearFilterLabel}
             >
               <X className="w-3 h-3" />
             </button>

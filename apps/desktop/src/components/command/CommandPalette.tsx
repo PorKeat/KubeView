@@ -5,6 +5,7 @@ import { Command } from "cmdk";
 import {
   Box,
   Layers,
+  Repeat,
   Network,
   Database,
   LayoutDashboard,
@@ -109,6 +110,13 @@ export function CommandPalette() {
               >
                 <Layers className="w-4 h-4 text-blue-500 dark:text-blue-400" />
                 <span>Deployments</span>
+              </Command.Item>
+              <Command.Item
+                onSelect={() => navigateTo("replicasets", "ReplicaSets")}
+                className="flex items-center gap-2.5 px-2.5 py-2 rounded-md cursor-pointer hover:bg-[var(--surface-hover)] text-[var(--foreground)] transition-colors"
+              >
+                <Repeat className="w-4 h-4 text-cyan-500 dark:text-cyan-400" />
+                <span>ReplicaSets</span>
               </Command.Item>
               <Command.Item
                 disabled

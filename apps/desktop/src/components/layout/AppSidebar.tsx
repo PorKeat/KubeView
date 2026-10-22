@@ -50,15 +50,19 @@ export function AppSidebar() {
     totalPodsCount,
     pods,
     deployments,
+    replicaSets,
     loadPods,
     loadDeployments,
+    loadReplicaSets,
     setCurrentNamespace,
     setPodNodeFilter,
+    setPodLabelFilter,
   } = useClusterStore();
   const [collapsedGroups, setCollapsedGroups] = React.useState<Record<string, boolean>>({});
 
   const realPodsCount = clusterOverview?.totalPods ?? (totalPodsCount > 0 ? totalPodsCount : pods.length);
   const deploymentCount = clusterOverview?.workloads?.deployments?.total ?? deployments.length;
+  const replicaSetCount = clusterOverview?.workloads?.replicaSets?.total ?? replicaSets.length;
 
   const navigationGroups: NavGroup[] = React.useMemo(() => [
     {
@@ -78,7 +82,7 @@ export function AppSidebar() {
           badgeVariant: "accent",
         },
         { id: "deployments", title: "Deployments", icon: Layers, badge: deploymentCount > 0 ? deploymentCount : undefined, badgeVariant: "accent" },
-        { id: "replicasets", title: "ReplicaSets", icon: Repeat, badge: "Soon", badgeVariant: "soon", disabled: true },
+        { id: "replicasets", title: "ReplicaSets", icon: Repeat, badge: replicaSetCount > 0 ? replicaSetCount : undefined, badgeVariant: "accent" },
         { id: "statefulsets", title: "StatefulSets", icon: Database, badge: "Soon", badgeVariant: "soon", disabled: true },
         { id: "daemonsets", title: "DaemonSets", icon: Cpu, badge: "Soon", badgeVariant: "soon", disabled: true },
         { id: "jobs", title: "Jobs & CronJobs", icon: Clock, badge: "Soon", badgeVariant: "soon", disabled: true },
@@ -110,7 +114,7 @@ export function AppSidebar() {
         { id: "crds", title: "Custom Resources", icon: Boxes, badge: "Soon", badgeVariant: "soon", disabled: true },
       ],
     },
-  ], [realPodsCount, deploymentCount]);
+  ], [realPodsCount, deploymentCount, replicaSetCount]);
 
   const toggleGroup = (category: string) => {
     setCollapsedGroups((prev) => ({ ...prev, [category]: !prev[category] }));
@@ -124,12 +128,18 @@ export function AppSidebar() {
     if (item.id === "pods") {
       setCurrentNamespace("all");
       setPodNodeFilter(null);
+      setPodLabelFilter(null, null);
       loadPods("all");
     }
 
     if (item.id === "deployments") {
       setCurrentNamespace("all");
       loadDeployments("all");
+    }
+
+    if (item.id === "replicasets") {
+      setCurrentNamespace("all");
+      loadReplicaSets("all");
     }
 
     openTab({

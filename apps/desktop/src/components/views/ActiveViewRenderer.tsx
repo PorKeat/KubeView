@@ -5,6 +5,7 @@ import { useTabStore } from "@/stores/tabStore";
 import { ClusterOverviewView } from "./ClusterOverviewView";
 import { ResourceListView } from "./ResourceListView";
 import { DeploymentListView } from "./deployments/DeploymentListView";
+import { ReplicaSetListView } from "./replicasets/ReplicaSetListView";
 import { ErrorBoundary, NotFoundState } from "@/components/ui";
 
 export function ActiveViewRenderer() {
@@ -20,6 +21,10 @@ export function ActiveViewRenderer() {
 
         if (activeTabId === "deployments") {
           return <DeploymentListView />;
+        }
+
+        if (activeTabId === "replicasets") {
+          return <ReplicaSetListView />;
         }
 
         if (!activeTab && activeTabId !== "overview") {

@@ -54,6 +54,7 @@ type WorkloadControllerHealth struct {
 
 type WorkloadsSummary struct {
 	Deployments  WorkloadControllerHealth `json:"deployments"`
+	ReplicaSets  WorkloadControllerHealth `json:"replicaSets"`
 	StatefulSets WorkloadControllerHealth `json:"statefulSets"`
 	DaemonSets   WorkloadControllerHealth `json:"daemonSets"`
 }
@@ -85,7 +86,6 @@ type ClusterOverviewResult struct {
 	WarningEvents      []PodEventItem   `json:"warningEvents"`
 	Workloads          WorkloadsSummary `json:"workloads"`
 }
-
 
 // GetClusterOverview aggregates node capacity, pod allocations, and cluster events.
 // It leverages in-memory caching (2.5s TTL) and in-flight request coalescing (singleflight)
@@ -160,12 +160,13 @@ func (m *Manager) fetchClusterOverviewRaw(ctx context.Context, contextName, targ
 		eventList  *corev1.EventList
 		metricsRaw []byte
 		depsList   *appsv1.DeploymentList
+		rssList    *appsv1.ReplicaSetList
 		stssList   *appsv1.StatefulSetList
 		dssList    *appsv1.DaemonSetList
 		wg         sync.WaitGroup
 	)
 
-	wg.Add(7)
+	wg.Add(8)
 
 	// 1. Fetch all Nodes (parallel)
 	go func() {
@@ -220,6 +221,12 @@ func (m *Manager) fetchClusterOverviewRaw(ctx context.Context, contextName, targ
 	go func() {
 		defer wg.Done()
 		dssList, _ = client.AppsV1().DaemonSets(targetNs).List(ctx, metav1.ListOptions{})
+	}()
+
+	// 8. ReplicaSets (scoped if namespace specified)
+	go func() {
+		defer wg.Done()
+		rssList, _ = client.AppsV1().ReplicaSets(targetNs).List(ctx, metav1.ListOptions{})
 	}()
 
 	wg.Wait()
@@ -598,6 +605,22 @@ func (m *Manager) fetchClusterOverviewRaw(ctx context.Context, contextName, targ
 			} else {
 				workloads.DaemonSets.Degraded++
 				workloads.DaemonSets.UnreadyList = append(workloads.DaemonSets.UnreadyList, fmt.Sprintf("%s/%s (%d/%d)", d.Namespace, d.Name, d.Status.NumberReady, desired))
+			}
+		}
+	}
+
+	if rssList != nil {
+		workloads.ReplicaSets.Total = len(rssList.Items)
+		for _, rs := range rssList.Items {
+			desired := int32(1)
+			if rs.Spec.Replicas != nil {
+				desired = *rs.Spec.Replicas
+			}
+			if desired == 0 || rs.Status.ReadyReplicas >= desired {
+				workloads.ReplicaSets.Ready++
+			} else {
+				workloads.ReplicaSets.Degraded++
+				workloads.ReplicaSets.UnreadyList = append(workloads.ReplicaSets.UnreadyList, fmt.Sprintf("%s/%s (%d/%d)", rs.Namespace, rs.Name, rs.Status.ReadyReplicas, desired))
 			}
 		}
 	}

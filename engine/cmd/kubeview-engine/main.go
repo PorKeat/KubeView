@@ -362,6 +362,32 @@ func main() {
 		return res, nil
 	})
 
+	// Method: replicasets.list
+	server.Register("replicasets.list", func(params json.RawMessage) (interface{}, *ipc.RPCError) {
+		var p cluster.ListReplicaSetsParams
+		if len(params) > 0 {
+			_ = json.Unmarshal(params, &p)
+		}
+		ctxName := p.ContextName
+		if ctxName == "" {
+			if listRes, err := mgr.ListContexts(); err == nil {
+				ctxName = listRes.CurrentContext
+			}
+		}
+
+		ctx, cancel := context.WithTimeout(context.Background(), 16*time.Second)
+		defer cancel()
+
+		res, err := mgr.ListReplicaSets(ctx, ctxName, p.Namespace)
+		if err != nil {
+			return nil, &ipc.RPCError{
+				Code:    ipc.ErrK8sConnFailed,
+				Message: fmt.Sprintf("Failed to list replicasets: %v", err),
+			}
+		}
+		return res, nil
+	})
+
 	// Method: pods.logs
 	server.Register("pods.logs", func(params json.RawMessage) (interface{}, *ipc.RPCError) {
 		var p cluster.PodLogsParams

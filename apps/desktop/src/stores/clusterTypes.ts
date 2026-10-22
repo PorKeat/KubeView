@@ -5,6 +5,7 @@ import type {
   ImportKubeconfigResult,
   PodSummary,
   DeploymentSummary,
+  ReplicaSetSummary,
   PodLogsParams,
   PodLogsResult,
   DeletePodParams,
@@ -69,12 +70,24 @@ export interface ClusterState {
   hasLoadedPodsOnce: boolean;
   podNodeFilter: string | null;
   setPodNodeFilter: (nodeName: string | null) => void;
+  podLabelFilter: string | null;
+  podLabelFilterSource: string | null;
+  setPodLabelFilter: (
+    selector: string | null,
+    source?: string | null,
+  ) => void;
 
   // Deployment workloads
   deployments: DeploymentSummary[];
   totalDeploymentsCount: number;
   isDeploymentsLoading: boolean;
   hasLoadedDeploymentsOnce: boolean;
+
+  // ReplicaSet workloads
+  replicaSets: ReplicaSetSummary[];
+  totalReplicaSetsCount: number;
+  isReplicaSetsLoading: boolean;
+  hasLoadedReplicaSetsOnce: boolean;
 
   // OS Auto-Detected Kubeconfig Contexts
   detectedSystemConfigs: DetectedContextInfo[];
@@ -107,6 +120,7 @@ export interface ClusterState {
   loadClusterOverview: (contextName?: string, namespace?: string) => Promise<ClusterOverviewResult | null>;
   loadPods: (namespace?: string, contextName?: string) => Promise<void>;
   loadDeployments: (namespace?: string, contextName?: string) => Promise<void>;
+  loadReplicaSets: (namespace?: string, contextName?: string) => Promise<void>;
   getPodLogs: (params: PodLogsParams) => Promise<PodLogsResult>;
   deletePod: (params: DeletePodParams) => Promise<void>;
   restartPod: (params: RestartPodParams) => Promise<void>;

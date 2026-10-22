@@ -166,6 +166,13 @@ function mockRpcFallback<T>(method: string, _params?: unknown): T {
     } as T;
   }
 
+  if (method === "replicasets.list") {
+    return {
+      items: [],
+      totalCount: 0,
+    } as T;
+  }
+
   if (method === "deployments.list") {
     return {
       items: [],

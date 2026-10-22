@@ -19,6 +19,7 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
+import { formatLabelSelector } from "@/lib/labelSelector";
 import { useClusterStore } from "@/stores/clusterStore";
 import { useTabStore } from "@/stores/tabStore";
 import type { DeploymentSummary } from "@kubeview/contracts";
@@ -48,6 +49,7 @@ export function DeploymentListView() {
     currentContext,
     setCurrentNamespace,
     setPodNodeFilter,
+    setPodLabelFilter,
     connectionStatus,
     openKubeconfigModal,
     autoRefreshInterval,
@@ -201,11 +203,17 @@ export function DeploymentListView() {
   };
 
   const handleViewPods = (deployment: DeploymentSummary) => {
+    const selector = formatLabelSelector(deployment.selector);
     setCurrentNamespace(deployment.namespace);
     setPodNodeFilter(null);
+    setPodLabelFilter(selector || null, `Deployment: ${deployment.name}`);
     loadPods(deployment.namespace);
     openTab({ id: "pods", title: "Pods", closable: true });
-    toast.info(`Opened pods in namespace '${deployment.namespace}'`);
+    toast.info(
+      selector
+        ? `Filtered pods by deployment '${deployment.name}'`
+        : `Opened pods in namespace '${deployment.namespace}'`,
+    );
   };
 
   const selectedDeployments = React.useMemo(

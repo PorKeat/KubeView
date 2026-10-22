@@ -272,6 +272,44 @@ export interface ListDeploymentsResult {
   totalCount: number;
 }
 
+export interface ReplicaSetConditionItem {
+  type: string;
+  status: string;
+  reason?: string;
+  message?: string;
+  lastTransitionTime?: string;
+}
+
+export interface ReplicaSetSummary {
+  name: string;
+  namespace: string;
+  status: string;
+  ready: string;
+  desiredReplicas: number;
+  currentReplicas: number;
+  readyReplicas: number;
+  availableReplicas: number;
+  age: string;
+  creationTimestamp: string;
+  images: string[];
+  selector?: Record<string, string>;
+  ownerDeployment?: string;
+  revision?: string;
+  conditions?: ReplicaSetConditionItem[];
+  labels?: Record<string, string>;
+  annotations?: Record<string, string>;
+}
+
+export interface ListReplicaSetsParams {
+  contextName?: string;
+  namespace?: string;
+}
+
+export interface ListReplicaSetsResult {
+  items: ReplicaSetSummary[];
+  totalCount: number;
+}
+
 export interface NodeSummary {
   name: string;
   status: string;
@@ -308,6 +346,7 @@ export interface WorkloadControllerHealth {
 
 export interface WorkloadsSummary {
   deployments: WorkloadControllerHealth;
+  replicaSets?: WorkloadControllerHealth;
   statefulSets: WorkloadControllerHealth;
   daemonSets: WorkloadControllerHealth;
 }
