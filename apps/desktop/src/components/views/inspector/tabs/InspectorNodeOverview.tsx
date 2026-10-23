@@ -22,12 +22,14 @@ export function InspectorNodeOverview({
   onInspectPod,
   onViewAllPods,
 }: InspectorNodeOverviewProps) {
-  const cpuNum = typeof nodeData.cpuPercent === "number"
-    ? nodeData.cpuPercent
-    : parseFloat(String(nodeData.cpuPercent)) || 0;
-  const memNum = typeof nodeData.memoryPercent === "number"
-    ? nodeData.memoryPercent
-    : parseFloat(String(nodeData.memoryPercent)) || 0;
+  const cpuNum =
+    typeof nodeData.cpuPercent === "number"
+      ? nodeData.cpuPercent
+      : parseFloat(String(nodeData.cpuPercent)) || 0;
+  const memNum =
+    typeof nodeData.memoryPercent === "number"
+      ? nodeData.memoryPercent
+      : parseFloat(String(nodeData.memoryPercent)) || 0;
   const podCap = nodeData.podCapacity || 110;
   const podNum = Math.round(((nodeData.activePods || 0) / podCap) * 100);
 
@@ -56,7 +58,7 @@ export function InspectorNodeOverview({
           "inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-mono font-medium border",
           isOk
             ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20"
-            : "bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/20"
+            : "bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/20",
         )}
       >
         {status}
@@ -73,14 +75,19 @@ export function InspectorNodeOverview({
         </span>
         <div className="grid grid-cols-2 gap-3 text-xs">
           <div>
-            <span className="text-[var(--muted)] block text-[10px] font-mono">Role</span>
+            <span className="text-[var(--muted)] block text-[10px] font-mono">
+              Role
+            </span>
             <div className="flex flex-wrap gap-1 mt-0.5">
               {(() => {
                 const rolesList = Array.isArray(nodeData.roles)
                   ? nodeData.roles
                   : typeof nodeData.roles === "string"
-                  ? (nodeData.roles as string).split(",").map((r) => r.trim()).filter(Boolean)
-                  : [];
+                    ? (nodeData.roles as string)
+                        .split(",")
+                        .map((r) => r.trim())
+                        .filter(Boolean)
+                    : [];
                 return rolesList.length > 0 ? (
                   rolesList.map((role: string) => (
                     <span
@@ -99,19 +106,25 @@ export function InspectorNodeOverview({
             </div>
           </div>
           <div>
-            <span className="text-[var(--muted)] block text-[10px] font-mono">Kubelet Version</span>
+            <span className="text-[var(--muted)] block text-[10px] font-mono">
+              Kubelet Version
+            </span>
             <span className="font-mono text-[var(--foreground)] font-medium">
               {nodeData.version || "-"}
             </span>
           </div>
           <div>
-            <span className="text-[var(--muted)] block text-[10px] font-mono">Internal IP</span>
+            <span className="text-[var(--muted)] block text-[10px] font-mono">
+              Internal IP
+            </span>
             <span className="font-mono text-[var(--foreground)] font-medium">
               {nodeData.internalIP || "-"}
             </span>
           </div>
           <div>
-            <span className="text-[var(--muted)] block text-[10px] font-mono">Architecture</span>
+            <span className="text-[var(--muted)] block text-[10px] font-mono">
+              Architecture
+            </span>
             <span className="font-mono text-[var(--foreground)] font-medium">
               {nodeData.architecture || "-"}
             </span>
@@ -137,14 +150,22 @@ export function InspectorNodeOverview({
             <div className="space-y-1.5 font-mono">
               <div className="flex items-center justify-between text-xs">
                 <span className="text-[var(--foreground)] font-medium flex items-center gap-1.5">
-                  <Cpu className="w-3.5 h-3.5 text-emerald-500" aria-hidden="true" />
+                  <Cpu
+                    className="w-3.5 h-3.5 text-emerald-500"
+                    aria-hidden="true"
+                  />
                   <span>CPU Live Usage</span>
                 </span>
                 <div className="flex items-center gap-1.5 text-[11px]">
                   <span className="text-[var(--foreground)] font-bold tabular-nums">
                     {nodeData.cpuUsage || "-"}
                   </span>
-                  <span className={cn("font-semibold text-xs ml-1 tabular-nums", getTextColor(nodeData.cpuUsagePercent ?? 0))}>
+                  <span
+                    className={cn(
+                      "font-semibold text-xs ml-1 tabular-nums",
+                      getTextColor(nodeData.cpuUsagePercent ?? 0),
+                    )}
+                  >
                     ({nodeData.cpuUsagePercent ?? 0}%)
                   </span>
                 </div>
@@ -153,9 +174,11 @@ export function InspectorNodeOverview({
                 <div
                   className={cn(
                     "h-full rounded-full transition-all duration-500 motion-reduce:transition-none",
-                    getGaugeColor(nodeData.cpuUsagePercent ?? 0)
+                    getGaugeColor(nodeData.cpuUsagePercent ?? 0),
                   )}
-                  style={{ width: `${Math.min(100, Math.max(0, nodeData.cpuUsagePercent ?? 0))}%` }}
+                  style={{
+                    width: `${Math.min(100, Math.max(0, nodeData.cpuUsagePercent ?? 0))}%`,
+                  }}
                 />
               </div>
             </div>
@@ -164,14 +187,22 @@ export function InspectorNodeOverview({
             <div className="space-y-1.5 font-mono">
               <div className="flex items-center justify-between text-xs">
                 <span className="text-[var(--foreground)] font-medium flex items-center gap-1.5">
-                  <Activity className="w-3.5 h-3.5 text-emerald-500" aria-hidden="true" />
+                  <Activity
+                    className="w-3.5 h-3.5 text-emerald-500"
+                    aria-hidden="true"
+                  />
                   <span>Memory Live Usage</span>
                 </span>
                 <div className="flex items-center gap-1.5 text-[11px]">
                   <span className="text-[var(--foreground)] font-bold tabular-nums">
                     {nodeData.memoryUsage || "-"}
                   </span>
-                  <span className={cn("font-semibold text-xs ml-1 tabular-nums", getTextColor(nodeData.memoryUsagePercent ?? 0))}>
+                  <span
+                    className={cn(
+                      "font-semibold text-xs ml-1 tabular-nums",
+                      getTextColor(nodeData.memoryUsagePercent ?? 0),
+                    )}
+                  >
                     ({nodeData.memoryUsagePercent ?? 0}%)
                   </span>
                 </div>
@@ -180,9 +211,11 @@ export function InspectorNodeOverview({
                 <div
                   className={cn(
                     "h-full rounded-full transition-all duration-500 motion-reduce:transition-none",
-                    getGaugeColor(nodeData.memoryUsagePercent ?? 0)
+                    getGaugeColor(nodeData.memoryUsagePercent ?? 0),
                   )}
-                  style={{ width: `${Math.min(100, Math.max(0, nodeData.memoryUsagePercent ?? 0))}%` }}
+                  style={{
+                    width: `${Math.min(100, Math.max(0, nodeData.memoryUsagePercent ?? 0))}%`,
+                  }}
                 />
               </div>
             </div>
@@ -199,13 +232,25 @@ export function InspectorNodeOverview({
           <div className="space-y-1.5 font-mono">
             <div className="flex items-center justify-between text-xs">
               <span className="text-[var(--foreground)] font-medium flex items-center gap-1.5">
-                <Cpu className="w-3.5 h-3.5 text-[var(--muted)]" aria-hidden="true" />
+                <Cpu
+                  className="w-3.5 h-3.5 text-[var(--muted)]"
+                  aria-hidden="true"
+                />
                 <span>CPU Requested</span>
               </span>
               <div className="flex items-center gap-1 text-[11px]">
-                <span className="text-[var(--foreground)] tabular-nums">{cleanAlloc(nodeData.cpuAllocated)}</span>
-                <span className="text-[var(--muted)]">/ {nodeData.cpuCapacity}</span>
-                <span className={cn("font-semibold text-xs ml-1.5", getTextColor(cpuNum))}>
+                <span className="text-[var(--foreground)] tabular-nums">
+                  {cleanAlloc(nodeData.cpuAllocated)}
+                </span>
+                <span className="text-[var(--muted)]">
+                  / {nodeData.cpuCapacity}
+                </span>
+                <span
+                  className={cn(
+                    "font-semibold text-xs ml-1.5",
+                    getTextColor(cpuNum),
+                  )}
+                >
                   {cpuNum}%
                 </span>
               </div>
@@ -214,7 +259,7 @@ export function InspectorNodeOverview({
               <div
                 className={cn(
                   "h-full rounded-full transition-all duration-500 motion-reduce:transition-none",
-                  getGaugeColor(cpuNum)
+                  getGaugeColor(cpuNum),
                 )}
                 style={{ width: `${Math.min(100, Math.max(0, cpuNum))}%` }}
               />
@@ -225,13 +270,25 @@ export function InspectorNodeOverview({
           <div className="space-y-1.5 font-mono">
             <div className="flex items-center justify-between text-xs">
               <span className="text-[var(--foreground)] font-medium flex items-center gap-1.5">
-                <Activity className="w-3.5 h-3.5 text-[var(--muted)]" aria-hidden="true" />
+                <Activity
+                  className="w-3.5 h-3.5 text-[var(--muted)]"
+                  aria-hidden="true"
+                />
                 <span>Memory Reserved</span>
               </span>
               <div className="flex items-center gap-1 text-[11px]">
-                <span className="text-[var(--foreground)] tabular-nums">{cleanAlloc(nodeData.memoryAllocated)}</span>
-                <span className="text-[var(--muted)]">/ {nodeData.memoryCapacity}</span>
-                <span className={cn("font-semibold text-xs ml-1.5", getTextColor(memNum))}>
+                <span className="text-[var(--foreground)] tabular-nums">
+                  {cleanAlloc(nodeData.memoryAllocated)}
+                </span>
+                <span className="text-[var(--muted)]">
+                  / {nodeData.memoryCapacity}
+                </span>
+                <span
+                  className={cn(
+                    "font-semibold text-xs ml-1.5",
+                    getTextColor(memNum),
+                  )}
+                >
                   {memNum}%
                 </span>
               </div>
@@ -240,7 +297,7 @@ export function InspectorNodeOverview({
               <div
                 className={cn(
                   "h-full rounded-full transition-all duration-500 motion-reduce:transition-none",
-                  getGaugeColor(memNum)
+                  getGaugeColor(memNum),
                 )}
                 style={{ width: `${Math.min(100, Math.max(0, memNum))}%` }}
               />
@@ -251,13 +308,23 @@ export function InspectorNodeOverview({
           <div className="space-y-1.5 font-mono">
             <div className="flex items-center justify-between text-xs">
               <span className="text-[var(--foreground)] font-medium flex items-center gap-1.5">
-                <Box className="w-3.5 h-3.5 text-[var(--muted)]" aria-hidden="true" />
+                <Box
+                  className="w-3.5 h-3.5 text-[var(--muted)]"
+                  aria-hidden="true"
+                />
                 <span>Pod Density</span>
               </span>
               <div className="flex items-center gap-1 text-[11px]">
-                <span className="text-[var(--foreground)] tabular-nums">{nodeData.activePods}</span>
+                <span className="text-[var(--foreground)] tabular-nums">
+                  {nodeData.activePods}
+                </span>
                 <span className="text-[var(--muted)]">/ {podCap}</span>
-                <span className={cn("font-semibold text-xs ml-1.5", getTextColor(podNum))}>
+                <span
+                  className={cn(
+                    "font-semibold text-xs ml-1.5",
+                    getTextColor(podNum),
+                  )}
+                >
                   {podNum}%
                 </span>
               </div>
@@ -266,7 +333,7 @@ export function InspectorNodeOverview({
               <div
                 className={cn(
                   "h-full rounded-full transition-all duration-500 motion-reduce:transition-none",
-                  getGaugeColor(podNum)
+                  getGaugeColor(podNum),
                 )}
                 style={{ width: `${Math.min(100, Math.max(0, podNum))}%` }}
               />
@@ -285,7 +352,9 @@ export function InspectorNodeOverview({
             </span>
           </div>
           <span className="px-2 py-0.5 rounded-full text-[10px] font-mono font-medium bg-[var(--surface-hover)] text-[var(--foreground)] border border-[var(--border)]">
-            {nodePods.length > 0 ? `${nodePods.length} pods` : `${nodeData.activePods} pods`}
+            {nodePods.length > 0
+              ? `${nodePods.length} pods`
+              : `${nodeData.activePods} pods`}
           </span>
         </div>
 
@@ -306,7 +375,8 @@ export function InspectorNodeOverview({
         {nodePods.length > 0 ? (
           <div className="space-y-1.5 pt-1">
             <div className="text-[10px] font-mono text-[var(--muted)]">
-              Pods on node ({Math.min(nodePods.length, 6)} of {nodePods.length}):
+              Pods on node ({Math.min(nodePods.length, 6)} of {nodePods.length}
+              ):
             </div>
             <div className="space-y-1 max-h-48 overflow-y-auto pr-1">
               {nodePods.slice(0, 6).map((pod) => (
@@ -341,7 +411,8 @@ export function InspectorNodeOverview({
           </div>
         ) : (
           <p className="text-[11px] text-[var(--muted)] font-mono">
-            {nodeData.activePods} active pods scheduled on this host. Click above to view and filter.
+            {nodeData.activePods} active pods scheduled on this host. Click
+            above to view and filter.
           </p>
         )}
       </div>

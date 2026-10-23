@@ -33,7 +33,9 @@ export function OfflineState({ className }: { className?: string }) {
 
   const [isRetrying, setIsRetrying] = React.useState(false);
 
-  const activeContextInfo = availableContexts.find((c) => c.name === currentContext);
+  const activeContextInfo = availableContexts.find(
+    (c) => c.name === currentContext,
+  );
   const serverUrl = activeContextInfo?.server || "https://127.0.0.1:6443";
   const [customEndpoint, setCustomEndpoint] = React.useState(serverUrl);
   const [isUpdatingEndpoint, setIsUpdatingEndpoint] = React.useState(false);
@@ -44,8 +46,13 @@ export function OfflineState({ className }: { className?: string }) {
     for (const ctx of availableContexts) {
       if (ctx.name !== currentContext && ctx.server) {
         try {
-          const u = ctx.server.includes("://") ? new URL(ctx.server) : new URL(`https://${ctx.server}`);
-          if (/^(\d{1,3}\.){3}\d{1,3}$/.test(u.hostname) && !u.hostname.startsWith("127.")) {
+          const u = ctx.server.includes("://")
+            ? new URL(ctx.server)
+            : new URL(`https://${ctx.server}`);
+          if (
+            /^(\d{1,3}\.){3}\d{1,3}$/.test(u.hostname) &&
+            !u.hostname.startsWith("127.")
+          ) {
             if (!ips.some((item) => item.ip === u.hostname)) {
               ips.push({ ip: u.hostname, source: ctx.name });
             }
@@ -63,7 +70,10 @@ export function OfflineState({ className }: { className?: string }) {
     setSkipTLS(false);
   }, [serverUrl]);
 
-  const handleSaveEndpoint = async (targetEndpoint?: string, forceInsecure?: boolean) => {
+  const handleSaveEndpoint = async (
+    targetEndpoint?: string,
+    forceInsecure?: boolean,
+  ) => {
     const raw = (targetEndpoint || customEndpoint).trim();
     if (!raw) return;
     const finalEndpoint = replaceEndpointHost(serverUrl, raw);
@@ -80,10 +90,13 @@ export function OfflineState({ className }: { className?: string }) {
       } else if (res?.status === "degraded") {
         toast.warning("Connected with restricted permissions.");
       } else {
-        toast.error(`Connection failed: ${res?.remediation || "Check node IP & network"}`);
+        toast.error(
+          `Connection failed: ${res?.remediation || "Check node IP & network"}`,
+        );
       }
-    } catch (err: any) {
-      toast.error(`Update failed: ${err.message || err}`);
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : String(err);
+      toast.error(`Update failed: ${message}`);
     } finally {
       setIsUpdatingEndpoint(false);
     }
@@ -108,7 +121,7 @@ export function OfflineState({ className }: { className?: string }) {
       <div
         className={cn(
           "flex-1 flex flex-col items-center justify-center p-8 select-none relative overflow-hidden",
-          className
+          className,
         )}
       >
         <div className="absolute w-96 h-96 bg-[#F08A42]/10 rounded-full blur-3xl pointer-events-none -top-24" />
@@ -126,7 +139,8 @@ export function OfflineState({ className }: { className?: string }) {
               No Kubernetes Cluster Configured
             </h2>
             <p className="text-xs text-[var(--muted)] leading-relaxed max-w-sm mx-auto">
-              Select an auto-detected context from your local kubeconfigs, browse for a file, or paste kubeconfig YAML to begin.
+              Select an auto-detected context from your local kubeconfigs,
+              browse for a file, or paste kubeconfig YAML to begin.
             </p>
           </div>
 
@@ -136,10 +150,12 @@ export function OfflineState({ className }: { className?: string }) {
                 <Sparkles className="w-4 h-4 text-[#F08A42] shrink-0" />
                 <div>
                   <span className="font-semibold text-xs text-[var(--foreground)] block">
-                    Found {detectedSystemConfigs.length} Cluster{detectedSystemConfigs.length > 1 ? "s" : ""} in ~/.kube
+                    Found {detectedSystemConfigs.length} Cluster
+                    {detectedSystemConfigs.length > 1 ? "s" : ""} in ~/.kube
                   </span>
                   <span className="text-[10px] text-[var(--muted)] font-mono">
-                    {detectedSystemConfigs[0]?.contextName} ({detectedSystemConfigs[0]?.fileName})
+                    {detectedSystemConfigs[0]?.contextName} (
+                    {detectedSystemConfigs[0]?.fileName})
                   </span>
                 </div>
               </div>
@@ -177,7 +193,7 @@ export function OfflineState({ className }: { className?: string }) {
     <div
       className={cn(
         "flex-1 flex flex-col items-center justify-center p-6 sm:p-8 select-none relative overflow-hidden",
-        className
+        className,
       )}
     >
       <div className="relative z-10 max-w-lg w-full p-6 sm:p-7 rounded-2xl bg-[var(--surface)] border border-[var(--border)] shadow-xl space-y-4 text-center">
@@ -192,14 +208,20 @@ export function OfflineState({ className }: { className?: string }) {
             Cannot Connect to {currentContext || "Cluster"}
           </h2>
           <p className="text-xs text-[var(--muted)] leading-relaxed max-w-sm mx-auto">
-            The API server at <span className="font-mono text-[var(--foreground)]">{serverUrl}</span> is unreachable.
+            The API server at{" "}
+            <span className="font-mono text-[var(--foreground)]">
+              {serverUrl}
+            </span>{" "}
+            is unreachable.
           </p>
         </div>
 
         {/* API Server Endpoint & Quick Reconnect Box */}
         <div className="p-3.5 rounded-xl bg-[var(--surface-active)]/40 border border-[var(--border)] text-left space-y-2.5">
           <div className="flex items-center justify-between text-xs">
-            <span className="font-medium text-[var(--foreground)]">API Endpoint</span>
+            <span className="font-medium text-[var(--foreground)]">
+              API Endpoint
+            </span>
             {suggestedIps.length > 0 && (
               <div className="flex items-center gap-1.5 text-[11px] text-[var(--muted)]">
                 <span>Detected:</span>
@@ -243,25 +265,28 @@ export function OfflineState({ className }: { className?: string }) {
               onChange={(e) => setSkipTLS(e.target.checked)}
               className="rounded border-[var(--border)] text-[var(--accent)] focus:ring-0 cursor-pointer accent-[var(--accent)]"
             />
-            <span className="text-[11px]">Skip TLS certificate verification</span>
+            <span className="text-[11px]">
+              Skip TLS certificate verification
+            </span>
           </label>
 
           {/* Quick Bypass button if TLS stage failed */}
-          {diagnosticResult?.stages?.tls && !diagnosticResult.stages.tls.passed && (
-            <div className="p-2 rounded-lg bg-amber-500/10 border border-amber-500/20 flex items-center justify-between gap-2">
-              <span className="text-[11px] text-amber-600 dark:text-amber-400">
-                TLS certificate mismatch
-              </span>
-              <button
-                type="button"
-                onClick={() => handleSaveEndpoint(undefined, true)}
-                disabled={isUpdatingEndpoint}
-                className="px-2 py-0.5 rounded bg-amber-500/20 hover:bg-amber-500/30 text-amber-700 dark:text-amber-300 text-[11px] font-medium cursor-pointer transition-colors whitespace-nowrap"
-              >
-                Bypass TLS
-              </button>
-            </div>
-          )}
+          {diagnosticResult?.stages?.tls &&
+            !diagnosticResult.stages.tls.passed && (
+              <div className="p-2 rounded-lg bg-amber-500/10 border border-amber-500/20 flex items-center justify-between gap-2">
+                <span className="text-[11px] text-amber-600 dark:text-amber-400">
+                  TLS certificate mismatch
+                </span>
+                <button
+                  type="button"
+                  onClick={() => handleSaveEndpoint(undefined, true)}
+                  disabled={isUpdatingEndpoint}
+                  className="px-2 py-0.5 rounded bg-amber-500/20 hover:bg-amber-500/30 text-amber-700 dark:text-amber-300 text-[11px] font-medium cursor-pointer transition-colors whitespace-nowrap"
+                >
+                  Bypass TLS
+                </button>
+              </div>
+            )}
         </div>
 
         {/* Alternative Contexts (if available) */}
@@ -297,7 +322,9 @@ export function OfflineState({ className }: { className?: string }) {
             disabled={isRetrying}
             className="flex-1 py-2 px-3 rounded-lg bg-[var(--surface-active)] hover:bg-[var(--surface-hover)] border border-[var(--border)] text-xs font-semibold text-[var(--foreground)] flex items-center justify-center gap-1.5 transition-colors cursor-pointer"
           >
-            <RotateCw className={cn("w-3.5 h-3.5", isRetrying && "animate-spin")} />
+            <RotateCw
+              className={cn("w-3.5 h-3.5", isRetrying && "animate-spin")}
+            />
             <span>Retry Connection</span>
           </button>
 

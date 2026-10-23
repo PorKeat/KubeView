@@ -99,12 +99,16 @@ export function SettingsView() {
                 Settings &amp; Preferences
               </h1>
               <p className="mt-1 max-w-2xl text-xs leading-relaxed text-[var(--muted)]">
-                Personalize KubeView for this device. Changes save automatically.
+                Personalize KubeView for this device. Changes save
+                automatically.
               </p>
             </div>
             <div className="flex shrink-0 flex-wrap items-center gap-2">
               <span className="inline-flex items-center gap-1.5 rounded-lg border border-[var(--border)] bg-[var(--surface)] px-2.5 py-1.5 text-[10px] font-medium text-[var(--muted)] shadow-2xs">
-                <ShieldCheck className="h-3.5 w-3.5 text-emerald-500" aria-hidden="true" />
+                <ShieldCheck
+                  className="h-3.5 w-3.5 text-emerald-500"
+                  aria-hidden="true"
+                />
                 Saved locally
               </span>
               <button
@@ -148,7 +152,11 @@ function AppearancePanel() {
             label="Theme"
             description="Match your environment or keep a fixed light or dark palette."
           />
-          <div className="mt-3 grid grid-cols-3 gap-2" role="group" aria-label="Theme">
+          <div
+            className="mt-3 grid grid-cols-3 gap-2"
+            role="group"
+            aria-label="Theme"
+          >
             {THEME_OPTIONS.map((option) => {
               const Icon = option.icon;
               const isActive = activeTheme === option.value;
@@ -167,7 +175,10 @@ function AppearancePanel() {
                   )}
                 >
                   {isActive && (
-                    <Check className="absolute right-2 top-2 h-3 w-3 text-[var(--accent)]" aria-hidden="true" />
+                    <Check
+                      className="absolute right-2 top-2 h-3 w-3 text-[var(--accent)]"
+                      aria-hidden="true"
+                    />
                   )}
                   <Icon className="h-5 w-5" aria-hidden="true" />
                   <span>{option.label}</span>
@@ -182,7 +193,11 @@ function AppearancePanel() {
             label="Font size"
             description="Scales text and interface spacing across every view."
           />
-          <div className="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-4" role="group" aria-label="Font size">
+          <div
+            className="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-4"
+            role="group"
+            aria-label="Font size"
+          >
             {FONT_SIZE_OPTIONS.map((option) => {
               const isActive = fontSize === option.value;
               return (
@@ -201,12 +216,21 @@ function AppearancePanel() {
                   )}
                 >
                   {isActive && (
-                    <Check className="absolute right-2 top-2 h-3 w-3 text-[var(--accent)]" aria-hidden="true" />
+                    <Check
+                      className="absolute right-2 top-2 h-3 w-3 text-[var(--accent)]"
+                      aria-hidden="true"
+                    />
                   )}
-                  <span className="font-semibold leading-none text-[var(--foreground)]" style={{ fontSize: option.previewPx }} aria-hidden="true">
+                  <span
+                    className="font-semibold leading-none text-[var(--foreground)]"
+                    style={{ fontSize: option.previewPx }}
+                    aria-hidden="true"
+                  >
                     Aa
                   </span>
-                  <span className="mt-1 text-[10px] font-medium">{option.label}</span>
+                  <span className="mt-1 text-[10px] font-medium">
+                    {option.label}
+                  </span>
                 </button>
               );
             })}
@@ -216,9 +240,14 @@ function AppearancePanel() {
 
       <div className="flex flex-col gap-3 rounded-xl border border-[var(--border)] bg-black/[0.02] p-3.5 sm:flex-row sm:items-center sm:justify-between dark:bg-white/[0.02]">
         <div className="flex min-w-0 items-start gap-3">
-          <Accessibility className="mt-0.5 h-4 w-4 shrink-0 text-[var(--muted)]" aria-hidden="true" />
+          <Accessibility
+            className="mt-0.5 h-4 w-4 shrink-0 text-[var(--muted)]"
+            aria-hidden="true"
+          />
           <div>
-            <p className="text-[11px] font-semibold text-[var(--foreground)]">Reduce motion</p>
+            <p className="text-[11px] font-semibold text-[var(--foreground)]">
+              Reduce motion
+            </p>
             <p className="mt-0.5 text-[10px] leading-relaxed text-[var(--muted)]">
               Disable animated transitions and decorative motion.
             </p>
@@ -233,7 +262,9 @@ function AppearancePanel() {
           onClick={() => setReducedMotion(!reducedMotion)}
           className={cn(
             "relative inline-flex h-6 w-11 shrink-0 items-center rounded-full border transition-colors cursor-pointer focus-visible:ring-2 focus-visible:ring-[var(--accent)] focus-visible:outline-hidden",
-            reducedMotion ? "border-[var(--accent)] bg-[var(--accent)]" : "border-[var(--border)] bg-black/10 dark:bg-white/10",
+            reducedMotion
+              ? "border-[var(--accent)] bg-[var(--accent)]"
+              : "border-[var(--border)] bg-black/10 dark:bg-white/10",
           )}
         >
           <span
@@ -270,7 +301,11 @@ function DataRefreshPanel() {
             label="Auto-refresh"
             description="Refresh the active workload, pod, or overview view on a timer. Off disables background polling."
           />
-          <div className="mt-3 grid grid-cols-3 gap-2 sm:grid-cols-5" role="group" aria-label="Auto-refresh interval">
+          <div
+            className="mt-3 grid grid-cols-3 gap-2 sm:grid-cols-5"
+            role="group"
+            aria-label="Auto-refresh interval"
+          >
             {REFRESH_OPTIONS.map((option) => {
               const isActive = autoRefreshSeconds === option.value;
               return (
@@ -299,7 +334,11 @@ function DataRefreshPanel() {
             label="Default page size"
             description="Starting number of rows in workload and pod tables. You can still override it in each table footer."
           />
-          <div className="mt-3 grid grid-cols-3 gap-2" role="group" aria-label="Default page size">
+          <div
+            className="mt-3 grid grid-cols-3 gap-2"
+            role="group"
+            aria-label="Default page size"
+          >
             {PAGE_SIZE_OPTIONS.map((option) => {
               const isActive = defaultPageSize === option.value;
               return (
@@ -325,7 +364,8 @@ function DataRefreshPanel() {
       </div>
 
       <p className="rounded-xl border border-[var(--border)]/70 bg-black/[0.02] px-3 py-2.5 text-[10px] leading-relaxed text-[var(--muted)] dark:bg-white/[0.02]">
-        Auto-refresh applies to the active view. Manual refresh and live connection diagnostics remain available in the header.
+        Auto-refresh applies to the active view. Manual refresh and live
+        connection diagnostics remain available in the header.
       </p>
     </SettingsSectionCard>
   );
@@ -371,8 +411,12 @@ function SettingsSectionCard({
           <Icon className="h-3.5 w-3.5" aria-hidden="true" />
         </span>
         <div>
-          <h2 className="text-xs font-semibold text-[var(--foreground)]">{title}</h2>
-          <p className="mt-0.5 text-[10px] leading-relaxed text-[var(--muted)]">{description}</p>
+          <h2 className="text-xs font-semibold text-[var(--foreground)]">
+            {title}
+          </h2>
+          <p className="mt-0.5 text-[10px] leading-relaxed text-[var(--muted)]">
+            {description}
+          </p>
         </div>
       </div>
       <div className="space-y-5 p-4 sm:p-5">{children}</div>
@@ -380,11 +424,21 @@ function SettingsSectionCard({
   );
 }
 
-function SettingsHeading({ label, description }: { label: string; description: string }) {
+function SettingsHeading({
+  label,
+  description,
+}: {
+  label: string;
+  description: string;
+}) {
   return (
     <div>
-      <p className="text-[11px] font-semibold text-[var(--foreground)]">{label}</p>
-      <p className="mt-0.5 text-[10px] leading-relaxed text-[var(--muted)]">{description}</p>
+      <p className="text-[11px] font-semibold text-[var(--foreground)]">
+        {label}
+      </p>
+      <p className="mt-0.5 text-[10px] leading-relaxed text-[var(--muted)]">
+        {description}
+      </p>
     </div>
   );
 }

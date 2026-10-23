@@ -77,7 +77,7 @@ export function StatusBeacon({
         current.bg,
         current.border,
         current.text,
-        className
+        className,
       )}
       {...props}
     >

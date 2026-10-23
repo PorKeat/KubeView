@@ -185,10 +185,7 @@ export interface ClusterState {
   setPodNodeFilter: (nodeName: string | null) => void;
   podLabelFilter: string | null;
   podLabelFilterSource: string | null;
-  setPodLabelFilter: (
-    selector: string | null,
-    source?: string | null,
-  ) => void;
+  setPodLabelFilter: (selector: string | null, source?: string | null) => void;
 
   // Deployment workloads
   deployments: DeploymentSummary[];
@@ -269,7 +266,10 @@ export interface ClusterState {
   switchContext: (contextName: string) => Promise<void>;
   diagnoseContext: (contextName?: string) => Promise<DiagnosticResult | null>;
   loadNamespaces: (contextName?: string) => Promise<void>;
-  loadClusterOverview: (contextName?: string, namespace?: string) => Promise<ClusterOverviewResult | null>;
+  loadClusterOverview: (
+    contextName?: string,
+    namespace?: string,
+  ) => Promise<ClusterOverviewResult | null>;
   loadPods: (namespace?: string, contextName?: string) => Promise<void>;
   loadDeployments: (namespace?: string, contextName?: string) => Promise<void>;
   loadReplicaSets: (namespace?: string, contextName?: string) => Promise<void>;
@@ -297,20 +297,52 @@ export interface ClusterState {
   triggerCronJob: (params: CronJobActionParams) => Promise<string>;
   bulkDeletePods: (
     pods: { name: string; namespace: string }[],
-    force?: boolean
+    force?: boolean,
   ) => Promise<{ succeeded: number; failed: number }>;
   bulkRestartPods: (
-    pods: { name: string; namespace: string }[]
+    pods: { name: string; namespace: string }[],
   ) => Promise<{ succeeded: number; failed: number }>;
   execPod: (params: ExecPodParams) => Promise<ExecPodResult>;
-  getPodYaml: (podName: string, namespace: string, contextName?: string) => Promise<string>;
-  getDeploymentYaml: (name: string, namespace: string, contextName?: string) => Promise<string>;
-  getReplicaSetYaml: (name: string, namespace: string, contextName?: string) => Promise<string>;
-  getStatefulSetYaml: (name: string, namespace: string, contextName?: string) => Promise<string>;
-  getDaemonSetYaml: (name: string, namespace: string, contextName?: string) => Promise<string>;
-  getJobYaml: (name: string, namespace: string, contextName?: string) => Promise<string>;
-  getCronJobYaml: (name: string, namespace: string, contextName?: string) => Promise<string>;
-  getPodEvents: (podName: string, namespace: string, contextName?: string) => Promise<PodEventItem[]>;
+  getPodYaml: (
+    podName: string,
+    namespace: string,
+    contextName?: string,
+  ) => Promise<string>;
+  getDeploymentYaml: (
+    name: string,
+    namespace: string,
+    contextName?: string,
+  ) => Promise<string>;
+  getReplicaSetYaml: (
+    name: string,
+    namespace: string,
+    contextName?: string,
+  ) => Promise<string>;
+  getStatefulSetYaml: (
+    name: string,
+    namespace: string,
+    contextName?: string,
+  ) => Promise<string>;
+  getDaemonSetYaml: (
+    name: string,
+    namespace: string,
+    contextName?: string,
+  ) => Promise<string>;
+  getJobYaml: (
+    name: string,
+    namespace: string,
+    contextName?: string,
+  ) => Promise<string>;
+  getCronJobYaml: (
+    name: string,
+    namespace: string,
+    contextName?: string,
+  ) => Promise<string>;
+  getPodEvents: (
+    podName: string,
+    namespace: string,
+    contextName?: string,
+  ) => Promise<PodEventItem[]>;
 
   openLogsModal: (pod: PodModalTarget) => void;
   closeLogsModal: () => void;
@@ -327,18 +359,28 @@ export interface ClusterState {
 
   setCurrentContext: (context: string) => void;
   setCurrentNamespace: (namespace: string) => void;
-  setConnectionStatus: (status: "connected" | "degraded" | "checking" | "offline") => void;
+  setConnectionStatus: (
+    status: "connected" | "degraded" | "checking" | "offline",
+  ) => void;
   setServerInfo: (version: string, latency: number) => void;
   openInspector: (resource: SelectedResource) => void;
   closeInspector: () => void;
   openKubeconfigModal: (tab?: "auto" | "browse" | "paste" | "manage") => void;
   closeKubeconfigModal: () => void;
   setSplashDismissed: (dismissed: boolean) => void;
-  importKubeconfig: (params: ImportKubeconfigParams) => Promise<ImportKubeconfigResult>;
+  importKubeconfig: (
+    params: ImportKubeconfigParams,
+  ) => Promise<ImportKubeconfigResult>;
   detectSystemConfigs: () => Promise<DetectedContextInfo[]>;
-  importDetectedContexts: (contexts: ImportDetectedContextItem[]) => Promise<ImportKubeconfigResult>;
+  importDetectedContexts: (
+    contexts: ImportDetectedContextItem[],
+  ) => Promise<ImportKubeconfigResult>;
   deleteContext: (contextName: string) => Promise<void>;
-  updateEndpoint: (contextName: string, newServer: string, insecure?: boolean) => Promise<void>;
+  updateEndpoint: (
+    contextName: string,
+    newServer: string,
+    insecure?: boolean,
+  ) => Promise<void>;
   clearAllContexts: () => Promise<void>;
   initEventListener: () => Promise<() => void>;
 }

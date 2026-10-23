@@ -15,6 +15,7 @@ import { useClusterStore } from "@/stores/clusterStore";
 import type { DetectedContextInfo } from "@kubeview/contracts";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
+import { Tooltip } from "@/components/ui/Tooltip";
 
 import type { DiscoveredConfigFile } from "./types";
 import { extractContexts, scanFilesFromDrop } from "./types";
@@ -42,11 +43,15 @@ export function KubeconfigModal() {
     openEndpointModal,
   } = useClusterStore();
 
-  const [activeTab, setActiveTab] = React.useState<"auto" | "browse" | "paste" | "manage">(
-    kubeconfigModalTab || "browse"
+  const [activeTab, setActiveTab] = React.useState<
+    "auto" | "browse" | "paste" | "manage"
+  >(kubeconfigModalTab || "browse");
+  const [selectedDetected, setSelectedDetected] = React.useState<Set<string>>(
+    new Set(),
   );
-  const [selectedDetected, setSelectedDetected] = React.useState<Set<string>>(new Set());
-  const [overrideEndpoints, setOverrideEndpoints] = React.useState<Record<string, string>>({});
+  const [overrideEndpoints, setOverrideEndpoints] = React.useState<
+    Record<string, string>
+  >({});
 
   // Suggest reachable IPs from already configured clusters
   const suggestedIps = React.useMemo(() => {
@@ -54,8 +59,13 @@ export function KubeconfigModal() {
     for (const ctx of availableContexts) {
       if (ctx.server) {
         try {
-          const u = ctx.server.includes("://") ? new URL(ctx.server) : new URL(`https://${ctx.server}`);
-          if (/^(\d{1,3}\.){3}\d{1,3}$/.test(u.hostname) && !u.hostname.startsWith("127.")) {
+          const u = ctx.server.includes("://")
+            ? new URL(ctx.server)
+            : new URL(`https://${ctx.server}`);
+          if (
+            /^(\d{1,3}\.){3}\d{1,3}$/.test(u.hostname) &&
+            !u.hostname.startsWith("127.")
+          ) {
             if (!ips.some((item) => item.ip === u.hostname)) {
               ips.push({ ip: u.hostname, source: ctx.name });
             }
@@ -80,7 +90,12 @@ export function KubeconfigModal() {
         }
       });
     }
-  }, [isKubeconfigModalOpen, detectSystemConfigs, availableContexts.length, kubeconfigModalTab]);
+  }, [
+    isKubeconfigModalOpen,
+    detectSystemConfigs,
+    availableContexts.length,
+    kubeconfigModalTab,
+  ]);
 
   // Sync tab with store state when opened
   React.useEffect(() => {
@@ -92,7 +107,9 @@ export function KubeconfigModal() {
   // Form states for Browse & Folder
   const fileInputRef = React.useRef<HTMLInputElement | null>(null);
   const folderInputRef = React.useRef<HTMLInputElement | null>(null);
-  const [discoveredFiles, setDiscoveredFiles] = React.useState<DiscoveredConfigFile[]>([]);
+  const [discoveredFiles, setDiscoveredFiles] = React.useState<
+    DiscoveredConfigFile[]
+  >([]);
   const [folderName, setFolderName] = React.useState<string>("");
   const [singleAliasName, setSingleAliasName] = React.useState<string>("");
   const [isDragging, setIsDragging] = React.useState(false);
@@ -106,12 +123,15 @@ export function KubeconfigModal() {
   const [isSubmitting, setIsSubmitting] = React.useState(false);
   const [errorMsg, setErrorMsg] = React.useState<string | null>(null);
 
-  const detectedPasteContexts = React.useMemo(() => extractContexts(rawYaml), [rawYaml]);
+  const detectedPasteContexts = React.useMemo(
+    () => extractContexts(rawYaml),
+    [rawYaml],
+  );
 
   // Process list of candidate files into DiscoveredConfigFile items
   const processCandidateFiles = async (
     fileItems: { file: File; path?: string }[],
-    detectedFolderName = ""
+    detectedFolderName = "",
   ) => {
     setIsReadingFiles(true);
     setErrorMsg(null);
@@ -179,7 +199,9 @@ export function KubeconfigModal() {
     setIsReadingFiles(false);
 
     if (configs.length === 0) {
-      setErrorMsg("No valid Kubeconfig files were found in the selected location.");
+      setErrorMsg(
+        "No valid Kubeconfig files were found in the selected location.",
+      );
       setDiscoveredFiles([]);
       return;
     }
@@ -203,14 +225,17 @@ export function KubeconfigModal() {
   const handleFolderSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files || []);
     if (files.length > 0) {
-      const firstPath = (files[0] as any).webkitRelativePath || files[0].name;
+      const firstFile = files[0] as File & { webkitRelativePath?: string };
+      const firstPath = firstFile.webkitRelativePath || firstFile.name;
       const folder = firstPath.split("/")[0] || "Selected Folder";
       processCandidateFiles(
-        files.map((f) => ({
-          file: f,
-          path: (f as any).webkitRelativePath || f.name,
+        files.map((file) => ({
+          file,
+          path:
+            (file as File & { webkitRelativePath?: string })
+              .webkitRelativePath || file.name,
         })),
-        folder
+        folder,
       );
     }
     e.target.value = "";
@@ -221,29 +246,35 @@ export function KubeconfigModal() {
     setIsDragging(false);
     const scanned = await scanFilesFromDrop(e.dataTransfer);
     if (scanned.length > 0) {
-      const folderCandidate = scanned[0].path.includes("/") ? scanned[0].path.split("/")[0] : "";
+      const folderCandidate = scanned[0].path.includes("/")
+        ? scanned[0].path.split("/")[0]
+        : "";
       processCandidateFiles(scanned, folderCandidate);
     }
   };
 
   const toggleFileSelection = (id: string) => {
     setDiscoveredFiles((prev) =>
-      prev.map((f) => (f.id === id ? { ...f, selected: !f.selected } : f))
+      prev.map((f) => (f.id === id ? { ...f, selected: !f.selected } : f)),
     );
   };
 
   const toggleSelectAll = (select: boolean) => {
-    setDiscoveredFiles((prev) => prev.map((f) => ({ ...f, selected: select && f.isValid })));
+    setDiscoveredFiles((prev) =>
+      prev.map((f) => ({ ...f, selected: select && f.isValid })),
+    );
   };
 
   const removeDiscoveredFile = (id: string) => {
     setDiscoveredFiles((prev) => prev.filter((f) => f.id !== id));
   };
 
-  const selectedValidFiles = discoveredFiles.filter((f) => f.selected && f.isValid);
+  const selectedValidFiles = discoveredFiles.filter(
+    (f) => f.selected && f.isValid,
+  );
   const totalSelectedContexts = selectedValidFiles.reduce(
     (sum, f) => sum + Math.max(f.contexts.length, 1),
-    0
+    0,
   );
 
   const handleImportFromFiles = async () => {
@@ -263,7 +294,7 @@ export function KubeconfigModal() {
           name: singleAliasName.trim() || single.name.replace(/\.[^/.]+$/, ""),
         });
         toast.success(
-          `Imported ${res.importedContexts.length} context(s)! Active: '${res.activeContext}'`
+          `Imported ${res.importedContexts.length} context(s)! Active: '${res.activeContext}'`,
         );
       } else {
         const payloadFiles = selectedValidFiles.map((f) => ({
@@ -276,17 +307,19 @@ export function KubeconfigModal() {
         });
 
         toast.success(
-          `Batch imported ${payloadFiles.length} configs (${res.importedContexts.length} contexts)! Active: '${res.activeContext}'`
+          `Batch imported ${payloadFiles.length} configs (${res.importedContexts.length} contexts)! Active: '${res.activeContext}'`,
         );
       }
 
       setDiscoveredFiles([]);
       setFolderName("");
       setSingleAliasName("");
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error("Import error:", err);
-      setErrorMsg(err.message || "Failed to import kubeconfig");
-      toast.error("Import failed: " + (err.message || "Invalid configuration"));
+      const message =
+        err instanceof Error ? err.message : "Invalid configuration";
+      setErrorMsg(message);
+      toast.error(`Import failed: ${message}`);
     } finally {
       setIsSubmitting(false);
     }
@@ -300,7 +333,7 @@ export function KubeconfigModal() {
 
     if (!rawYaml.includes("clusters") || !rawYaml.includes("contexts")) {
       setErrorMsg(
-        "Pasted YAML does not appear to be a valid kubeconfig (missing 'clusters' or 'contexts' section)."
+        "Pasted YAML does not appear to be a valid kubeconfig (missing 'clusters' or 'contexts' section).",
       );
       return;
     }
@@ -315,35 +348,44 @@ export function KubeconfigModal() {
       });
 
       toast.success(
-        `Successfully imported ${res.importedContexts.length} cluster context(s)! Connected to '${res.activeContext}'`
+        `Successfully imported ${res.importedContexts.length} cluster context(s)! Connected to '${res.activeContext}'`,
       );
       setRawYaml("");
       setClusterName("");
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error("Import error:", err);
-      setErrorMsg(err.message || "Failed to import kubeconfig");
-      toast.error("Import failed: " + (err.message || "Invalid configuration"));
+      const message =
+        err instanceof Error ? err.message : "Invalid configuration";
+      setErrorMsg(message);
+      toast.error(`Import failed: ${message}`);
     } finally {
       setIsSubmitting(false);
     }
   };
 
-  const handleImportDetected = async (specificContext?: DetectedContextInfo) => {
+  const handleImportDetected = async (
+    specificContext?: DetectedContextInfo,
+  ) => {
     const toImport = specificContext
       ? [
           {
             contextName: specificContext.contextName,
             filePath: specificContext.filePath,
             overrideServer:
-              overrideEndpoints[`${specificContext.filePath}::${specificContext.contextName}`],
+              overrideEndpoints[
+                `${specificContext.filePath}::${specificContext.contextName}`
+              ],
           },
         ]
       : detectedSystemConfigs
-          .filter((c) => selectedDetected.has(`${c.filePath}::${c.contextName}`))
+          .filter((c) =>
+            selectedDetected.has(`${c.filePath}::${c.contextName}`),
+          )
           .map((c) => ({
             contextName: c.contextName,
             filePath: c.filePath,
-            overrideServer: overrideEndpoints[`${c.filePath}::${c.contextName}`],
+            overrideServer:
+              overrideEndpoints[`${c.filePath}::${c.contextName}`],
           }));
 
     if (toImport.length === 0) return;
@@ -353,20 +395,24 @@ export function KubeconfigModal() {
     try {
       const res = await importDetectedContexts(toImport);
       toast.success(
-        `Successfully imported ${res.importedContexts.length} cluster context(s)! Connected to '${res.activeContext}'`
+        `Successfully imported ${res.importedContexts.length} cluster context(s)! Connected to '${res.activeContext}'`,
       );
       setSelectedDetected(new Set());
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error("Import error:", err);
-      setErrorMsg(err.message || "Failed to import detected cluster");
-      toast.error(`Import failed: ${err.message || "Unknown error"}`);
+      const message = err instanceof Error ? err.message : "Unknown error";
+      setErrorMsg(message);
+      toast.error(`Import failed: ${message}`);
     } finally {
       setIsSubmitting(false);
     }
   };
 
   return (
-    <Dialog.Root open={isKubeconfigModalOpen} onOpenChange={(open) => !open && closeKubeconfigModal()}>
+    <Dialog.Root
+      open={isKubeconfigModalOpen}
+      onOpenChange={(open) => !open && closeKubeconfigModal()}
+    >
       <Dialog.Portal>
         {/* Backdrop */}
         <Dialog.Overlay className="fixed inset-0 bg-black/55 backdrop-blur-sm z-50 animate-in fade-in duration-200" />
@@ -384,7 +430,8 @@ export function KubeconfigModal() {
                   Kubeconfig & Cluster Management
                 </Dialog.Title>
                 <Dialog.Description className="hidden sm:block text-xs text-[var(--muted)] mt-0.5">
-                  Scan system directories (~/.kube), import files, select folders, or paste YAML configurations
+                  Scan system directories (~/.kube), import files, select
+                  folders, or paste YAML configurations
                 </Dialog.Description>
               </div>
             </div>
@@ -393,14 +440,16 @@ export function KubeconfigModal() {
               <span className="hidden sm:inline-block px-2.5 py-1 text-[11px] font-mono text-[var(--muted)] rounded-lg border border-[var(--border)] bg-black/[0.02] dark:bg-white/[0.02]">
                 Esc to close
               </span>
-              <Dialog.Close asChild>
-                <button
-                  className="p-2 rounded-xl hover:bg-[var(--surface-hover)] text-[var(--muted)] hover:text-[var(--foreground)] transition-colors cursor-pointer"
-                  title="Close"
-                >
-                  <X className="w-4 h-4" />
-                </button>
-              </Dialog.Close>
+              <Tooltip content="Close dialog" shortcut="Esc">
+                <Dialog.Close asChild>
+                  <button
+                    className="p-2 rounded-xl hover:bg-[var(--surface-hover)] text-[var(--muted)] hover:text-[var(--foreground)] transition-colors cursor-pointer"
+                    aria-label="Close dialog"
+                  >
+                    <X className="w-4 h-4" aria-hidden="true" />
+                  </button>
+                </Dialog.Close>
+              </Tooltip>
             </div>
           </div>
 
@@ -415,7 +464,7 @@ export function KubeconfigModal() {
                 "flex items-center gap-2 px-3.5 py-2.5 text-xs sm:text-sm font-semibold border-b-2 rounded-t-xl transition-all cursor-pointer shrink-0",
                 activeTab === "auto"
                   ? "border-[#F08A42] text-[#F08A42] bg-[#F08A42]/5"
-                  : "border-transparent text-[var(--muted)] hover:text-[var(--foreground)] hover:bg-[var(--surface-hover)]"
+                  : "border-transparent text-[var(--muted)] hover:text-[var(--foreground)] hover:bg-[var(--surface-hover)]",
               )}
             >
               <Sparkles className="w-4 h-4" />
@@ -436,7 +485,7 @@ export function KubeconfigModal() {
                 "flex items-center gap-2 px-3.5 py-2.5 text-xs sm:text-sm font-semibold border-b-2 rounded-t-xl transition-all cursor-pointer shrink-0",
                 activeTab === "browse"
                   ? "border-[#F08A42] text-[#F08A42] bg-[#F08A42]/5"
-                  : "border-transparent text-[var(--muted)] hover:text-[var(--foreground)] hover:bg-[var(--surface-hover)]"
+                  : "border-transparent text-[var(--muted)] hover:text-[var(--foreground)] hover:bg-[var(--surface-hover)]",
               )}
             >
               <FolderOpen className="w-4 h-4" />
@@ -457,7 +506,7 @@ export function KubeconfigModal() {
                 "flex items-center gap-2 px-3.5 py-2.5 text-xs sm:text-sm font-semibold border-b-2 rounded-t-xl transition-all cursor-pointer shrink-0",
                 activeTab === "paste"
                   ? "border-[#F08A42] text-[#F08A42] bg-[#F08A42]/5"
-                  : "border-transparent text-[var(--muted)] hover:text-[var(--foreground)] hover:bg-[var(--surface-hover)]"
+                  : "border-transparent text-[var(--muted)] hover:text-[var(--foreground)] hover:bg-[var(--surface-hover)]",
               )}
             >
               <FileCode className="w-4 h-4" />
@@ -473,7 +522,7 @@ export function KubeconfigModal() {
                 "flex items-center gap-2 px-3.5 py-2.5 text-xs sm:text-sm font-semibold border-b-2 rounded-t-xl transition-all cursor-pointer shrink-0",
                 activeTab === "manage"
                   ? "border-[#F08A42] text-[#F08A42] bg-[#F08A42]/5"
-                  : "border-transparent text-[var(--muted)] hover:text-[var(--foreground)] hover:bg-[var(--surface-hover)]"
+                  : "border-transparent text-[var(--muted)] hover:text-[var(--foreground)] hover:bg-[var(--surface-hover)]",
               )}
             >
               <SlidersHorizontal className="w-4 h-4" />

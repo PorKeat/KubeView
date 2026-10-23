@@ -67,19 +67,22 @@ export function CustomSelect<T extends string | number>({
           "bg-slate-100/80 dark:bg-black/30 border border-[var(--border)]",
           "hover:bg-[var(--surface-hover)] hover:border-black/20 dark:hover:border-white/20 text-[var(--foreground)]",
           "transition-all cursor-pointer outline-hidden select-none group",
-          isOpen && "border-black/20 dark:border-white/20 ring-1 ring-[var(--accent)]/30",
-          className
+          isOpen &&
+            "border-black/20 dark:border-white/20 ring-1 ring-[var(--accent)]/30",
+          className,
         )}
       >
         <div className="flex items-center gap-1.5 truncate">
           {icon}
           {selectedOption?.icon}
-          <span className="truncate">{selectedOption?.label || placeholder}</span>
+          <span className="truncate">
+            {selectedOption?.label || placeholder}
+          </span>
         </div>
         <ChevronDown
           className={cn(
             "w-3 h-3 text-[var(--muted)] group-hover:text-[var(--foreground)] transition-transform duration-200 shrink-0",
-            isOpen && "rotate-180"
+            isOpen && "rotate-180",
           )}
         />
       </button>
@@ -101,7 +104,7 @@ export function CustomSelect<T extends string | number>({
             className={cn(
               "absolute left-0 top-full mt-1.5 p-1.5 rounded-xl bg-[var(--surface)] border border-[var(--border)] shadow-2xl shadow-black/30 dark:shadow-black/70 z-50",
               "outline-hidden select-none backdrop-blur-xl",
-              dropdownWidth
+              dropdownWidth,
             )}
           >
             <div className="max-h-60 overflow-y-auto space-y-0.5">
@@ -119,7 +122,7 @@ export function CustomSelect<T extends string | number>({
                       "w-full text-left flex items-center justify-between px-2.5 py-1.5 rounded-lg cursor-pointer outline-hidden transition-colors text-xs font-mono border",
                       isSelected
                         ? "bg-black/[0.04] dark:bg-white/[0.06] border-black/10 dark:border-white/10 text-[var(--foreground)] font-semibold shadow-xs"
-                        : "border-transparent hover:bg-black/[0.03] dark:hover:bg-white/[0.04] text-[var(--foreground)]"
+                        : "border-transparent hover:bg-black/[0.03] dark:hover:bg-white/[0.04] text-[var(--foreground)]",
                     )}
                   >
                     <div className="flex items-center gap-2 truncate">
@@ -131,7 +134,9 @@ export function CustomSelect<T extends string | number>({
                         </span>
                       )}
                     </div>
-                    {isSelected && <Check className="w-3.5 h-3.5 text-[var(--accent)] shrink-0" />}
+                    {isSelected && (
+                      <Check className="w-3.5 h-3.5 text-[var(--accent)] shrink-0" />
+                    )}
                   </button>
                 );
               })}

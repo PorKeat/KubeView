@@ -32,7 +32,9 @@ export function NodeTelemetryGraph({
   const freePods = Math.max(0, totalPods - activePods);
   const clampedCpu = Math.max(0, Math.min(100, Math.round(cpuPercent)));
   const clampedMem = Math.max(0, Math.min(100, Math.round(memoryPercent)));
-  const isNamespaceScoped = Boolean(scopedNamespace && scopedNamespace !== "all");
+  const isNamespaceScoped = Boolean(
+    scopedNamespace && scopedNamespace !== "all",
+  );
 
   return (
     <div className="space-y-3.5">
@@ -49,7 +51,9 @@ export function NodeTelemetryGraph({
             <span className="text-2xl sm:text-3xl font-bold font-mono text-[var(--foreground)] tracking-tight tabular-nums">
               {clampedCpu}
             </span>
-            <span className="text-xs sm:text-sm font-medium font-mono text-[var(--muted)]">%</span>
+            <span className="text-xs sm:text-sm font-medium font-mono text-[var(--muted)]">
+              %
+            </span>
           </div>
           <div className="text-xs font-mono text-[var(--muted)] tabular-nums truncate">
             {cpuDisplay || "0m"}
@@ -67,7 +71,9 @@ export function NodeTelemetryGraph({
             <span className="text-2xl sm:text-3xl font-bold font-mono text-[var(--foreground)] tracking-tight tabular-nums">
               {clampedMem}
             </span>
-            <span className="text-xs sm:text-sm font-medium font-mono text-[var(--muted)]">%</span>
+            <span className="text-xs sm:text-sm font-medium font-mono text-[var(--muted)]">
+              %
+            </span>
           </div>
           <div className="text-xs font-mono text-[var(--muted)] tabular-nums truncate">
             {memoryDisplay || "0Gi"}
@@ -82,7 +88,7 @@ export function NodeTelemetryGraph({
                 "text-xs font-mono tracking-wider truncate",
                 isNamespaceScoped
                   ? "text-[var(--accent)] font-semibold"
-                  : "font-medium text-[var(--muted)]"
+                  : "font-medium text-[var(--muted)]",
               )}
             >
               {isNamespaceScoped ? `Pods (${scopedNamespace})` : "Pods"}
@@ -94,7 +100,7 @@ export function NodeTelemetryGraph({
                 "text-2xl sm:text-3xl font-bold font-mono tracking-tight tabular-nums",
                 isNamespaceScoped && (scopedPodsCount ?? 0) > 0
                   ? "text-[var(--accent)]"
-                  : "text-[var(--foreground)]"
+                  : "text-[var(--foreground)]",
               )}
             >
               {isNamespaceScoped ? (scopedPodsCount ?? 0) : activePods}

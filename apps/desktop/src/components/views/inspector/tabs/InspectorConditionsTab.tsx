@@ -13,7 +13,10 @@ export interface InspectorConditionsTabProps {
 
 type PodConditionTone = "critical" | "warning" | "healthy";
 
-function getPodConditionTone(condition: { type: string; status: string }): PodConditionTone {
+function getPodConditionTone(condition: {
+  type: string;
+  status: string;
+}): PodConditionTone {
   if (condition.type === "DisruptionTarget" && condition.status === "True") {
     return "warning";
   }
@@ -29,15 +32,20 @@ const toneClasses: Record<PodConditionTone, { icon: string; badge: string }> = {
   },
   warning: {
     icon: "text-amber-500",
-    badge: "bg-amber-500/15 text-amber-700 dark:text-amber-400 border-amber-500/25",
+    badge:
+      "bg-amber-500/15 text-amber-700 dark:text-amber-400 border-amber-500/25",
   },
   healthy: {
     icon: "text-emerald-500",
-    badge: "bg-emerald-500/15 text-emerald-700 dark:text-emerald-400 border-emerald-500/25",
+    badge:
+      "bg-emerald-500/15 text-emerald-700 dark:text-emerald-400 border-emerald-500/25",
   },
 };
 
-export function InspectorConditionsTab({ currentResource, podData }: InspectorConditionsTabProps) {
+export function InspectorConditionsTab({
+  currentResource,
+  podData,
+}: InspectorConditionsTabProps) {
   const conditions = podData?.conditions ?? [];
 
   if (conditions.length === 0) {
@@ -68,7 +76,9 @@ export function InspectorConditionsTab({ currentResource, podData }: InspectorCo
           >
             <div className="space-y-1 min-w-0 flex-1">
               <div className="flex items-center gap-2">
-                <Icon className={cn("w-4 h-4 shrink-0", toneClasses[tone].icon)} />
+                <Icon
+                  className={cn("w-4 h-4 shrink-0", toneClasses[tone].icon)}
+                />
                 <span className="font-semibold text-[var(--foreground)] font-mono text-xs">
                   {condition.type}
                 </span>
@@ -85,7 +95,8 @@ export function InspectorConditionsTab({ currentResource, podData }: InspectorCo
               )}
               {condition.lastTransitionTime && (
                 <span className="text-[9px] text-[var(--muted)]/70 pl-6 block font-mono">
-                  Transitioned: {new Date(condition.lastTransitionTime).toLocaleString()}
+                  Transitioned:{" "}
+                  {new Date(condition.lastTransitionTime).toLocaleString()}
                 </span>
               )}
             </div>

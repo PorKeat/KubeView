@@ -1,18 +1,10 @@
 import type { StatefulSetSummary } from "@kubeview/contracts";
 
 export type StatefulSetStatusFilter =
-  | "all"
-  | "healthy"
-  | "progressing"
-  | "degraded"
-  | "scaleddown";
+  "all" | "healthy" | "progressing" | "degraded" | "scaleddown";
 
 export type StatefulSetBeaconVariant =
-  | "healthy"
-  | "warning"
-  | "critical"
-  | "pending"
-  | "muted";
+  "healthy" | "warning" | "critical" | "pending" | "muted";
 
 export function isStatefulSetHealthy(statefulSet: StatefulSetSummary): boolean {
   return statefulSet.status === "Healthy";
@@ -24,7 +16,9 @@ export function isStatefulSetProgressing(
   return statefulSet.status === "Progressing";
 }
 
-export function isStatefulSetDegraded(statefulSet: StatefulSetSummary): boolean {
+export function isStatefulSetDegraded(
+  statefulSet: StatefulSetSummary,
+): boolean {
   return statefulSet.status === "Degraded";
 }
 
@@ -73,8 +67,7 @@ export function getStatefulSetStatusPulse(
   statefulSet: StatefulSetSummary,
 ): boolean {
   return (
-    statefulSet.status === "Progressing" ||
-    statefulSet.status === "Degraded"
+    statefulSet.status === "Progressing" || statefulSet.status === "Degraded"
   );
 }
 

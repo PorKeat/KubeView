@@ -1,24 +1,18 @@
 import type { ReplicaSetSummary } from "@kubeview/contracts";
 
 export type ReplicaSetStatusFilter =
-  | "all"
-  | "healthy"
-  | "progressing"
-  | "degraded"
-  | "scaleddown";
+  "all" | "healthy" | "progressing" | "degraded" | "scaleddown";
 
 export type ReplicaSetBeaconVariant =
-  | "healthy"
-  | "warning"
-  | "critical"
-  | "pending"
-  | "muted";
+  "healthy" | "warning" | "critical" | "pending" | "muted";
 
 export function isReplicaSetHealthy(replicaSet: ReplicaSetSummary): boolean {
   return replicaSet.status === "Healthy";
 }
 
-export function isReplicaSetProgressing(replicaSet: ReplicaSetSummary): boolean {
+export function isReplicaSetProgressing(
+  replicaSet: ReplicaSetSummary,
+): boolean {
   return replicaSet.status === "Progressing";
 }
 
@@ -65,7 +59,9 @@ export function getReplicaSetBeaconVariant(
   }
 }
 
-export function getReplicaSetStatusPulse(replicaSet: ReplicaSetSummary): boolean {
+export function getReplicaSetStatusPulse(
+  replicaSet: ReplicaSetSummary,
+): boolean {
   return (
     replicaSet.status === "Progressing" || replicaSet.status === "Degraded"
   );

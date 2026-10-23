@@ -47,12 +47,12 @@ flowchart TD
 
 ## 2. Responsibilities by Layer
 
-| Layer | Owns | Must NOT Own |
-| :--- | :--- | :--- |
-| **Next.js / React** | UI presentation, navigation, forms, local view state, table interactions, editor rendering. | Cluster credentials, direct filesystem access, unrestricted shell execution. |
-| **Tauri / Rust** | IPC gateway, process lifecycle, supervisor, permission enforcement, native OS integration, secure key storage. | Kubernetes business logic duplicated from Go, direct Kubernetes API calls. |
-| **Go Engine** | Kubernetes clients, resource operations, informers/watches, log/PTY streams, API discovery, credential resolver. | Arbitrary frontend-controlled command execution, desktop windowing state. |
-| **Kubernetes API** | Authoritative cluster state, server-side admission, and RBAC authorization. | Desktop UI state. |
+| Layer               | Owns                                                                                                             | Must NOT Own                                                                 |
+| :------------------ | :--------------------------------------------------------------------------------------------------------------- | :--------------------------------------------------------------------------- |
+| **Next.js / React** | UI presentation, navigation, forms, local view state, table interactions, editor rendering.                      | Cluster credentials, direct filesystem access, unrestricted shell execution. |
+| **Tauri / Rust**    | IPC gateway, process lifecycle, supervisor, permission enforcement, native OS integration, secure key storage.   | Kubernetes business logic duplicated from Go, direct Kubernetes API calls.   |
+| **Go Engine**       | Kubernetes clients, resource operations, informers/watches, log/PTY streams, API discovery, credential resolver. | Arbitrary frontend-controlled command execution, desktop windowing state.    |
+| **Kubernetes API**  | Authoritative cluster state, server-side admission, and RBAC authorization.                                      | Desktop UI state.                                                            |
 
 ---
 
@@ -98,6 +98,7 @@ stateDiagram-v2
 ```
 
 ### Lifecycle Rules
+
 1. **Startup Handshake:** Upon spawning the Go process, Rust and Go perform an immediate `engine.handshake` verifying protocol compatibility (`protocolVersion: "1.0.0"`).
 2. **Standard I/O Isolation:** Engine diagnostic logs are strictly emitted to `stderr` (using `log/slog`), keeping `stdout` 100% clean for JSON-RPC message framing.
 3. **Crash Recovery:** If the Go engine exits unexpectedly, Rust restarts it with exponential backoff up to a hard limit (e.g., max 3 restarts in 60s). If the limit is reached, the UI displays a fatal engine alert.
@@ -159,7 +160,9 @@ KubeView uses **JSON-RPC 2.0 over standard I/O pipes (stdin/stdout)** with newli
 ```
 
 ### Streaming Contract (Logs, Watches, Exec)
+
 Long-running operations use explicit subscription lifecycles rather than blocking requests:
+
 - `watch.start` / `watch.stop` (Resource delta events)
 - `logs.start` / `logs.stop` (Chunked log stream)
 - `exec.start` / `exec.input` / `exec.resize` / `exec.stop` (Interactive PTY session)
@@ -202,6 +205,7 @@ sequenceDiagram
 ```
 
 ### Core Security Rules
+
 1. **Zero Credential Exposure:** Tokens, client certificates, private keys, and exec-helper secrets exist **only in Go engine memory**. They are NEVER passed to the React UI, plugins, telemetry, or logs.
 2. **Server-Side Apply & Safe Mutations:** Declarative changes use Kubernetes Server-Side Apply with field manager `kubeview`. Local YAML is validated and dry-run tested (`dryRun=All`) before mutation.
 3. **Secret Redaction:** `v1/Secret` data is masked (`********`) by default across all views and cannot be exposed through logs or IPC errors.

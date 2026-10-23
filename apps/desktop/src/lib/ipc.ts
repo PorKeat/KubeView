@@ -5,12 +5,18 @@ import type {
   DiagnosticResult,
 } from "@kubeview/contracts";
 
+const MOCK_MODE = process.env.NEXT_PUBLIC_KUBEVIEW_MOCK === "1";
+const RPC_TIMEOUT_MS = 30_000;
+
 export function isTauri(): boolean {
   if (typeof window === "undefined") return false;
   return "__TAURI_INTERNALS__" in window || "__TAURI__" in window;
 }
 
-export async function invokeRpc<T>(method: string, params?: unknown): Promise<T> {
+export async function invokeRpc<T>(
+  method: string,
+  params?: unknown,
+): Promise<T> {
   if (isTauri()) {
     try {
       const { invoke } = await import("@tauri-apps/api/core");
@@ -25,69 +31,148 @@ export async function invokeRpc<T>(method: string, params?: unknown): Promise<T>
     }
   }
 
-  // When running in browser preview (Next.js dev server), proxy to /api/rpc
+  // Browser preview: proxy to the local Next.js route. Mock data is opt-in only.
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), RPC_TIMEOUT_MS);
   let res: Response;
   try {
     res = await fetch("/api/rpc", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ method, params: params ?? null }),
+      signal: controller.signal,
     });
   } catch (err: unknown) {
-    console.warn(`[IPC] /api/rpc network error for '${method}', falling back to mock:`, err);
-    return mockRpcFallback<T>(method, params);
+    if (MOCK_MODE) {
+      console.warn(
+        `[IPC] /api/rpc unavailable for '${method}', using mock mode.`,
+      );
+      return mockRpcFallback<T>(method, params);
+    }
+    const message = err instanceof Error ? err.message : String(err);
+    throw new Error(`Unable to reach the KubeView engine: ${message}`);
+  } finally {
+    clearTimeout(timeout);
   }
 
   const data = await res.json().catch(() => null);
-  if (data?.error) {
-    console.warn(`[IPC] /api/rpc returned error for '${method}':`, data.error);
-    throw new Error(data.error.message || JSON.stringify(data.error));
+  if (!res.ok || data?.error) {
+    const error = new Error(
+      data?.error?.message ||
+        `KubeView engine request failed with HTTP ${res.status}`,
+    ) as Error & { code?: unknown };
+    error.code = data?.error?.code;
+    throw error;
   }
   if (data?.result !== undefined) {
     return data.result as T;
   }
 
-  // Fallback for offline or static environments
-  return mockRpcFallback<T>(method, params);
+  if (MOCK_MODE) {
+    return mockRpcFallback<T>(method, params);
+  }
+  throw new Error("KubeView engine returned an invalid response");
 }
 
-let cachedStreamPort: number | null = null;
+export interface StreamCredentials {
+  port: number;
+  token: string;
+}
 
-export async function getStreamPort(): Promise<number> {
-  if (cachedStreamPort) return cachedStreamPort;
-  try {
-    const res = await invokeRpc<{ streamPort?: number }>("handshake", {
+let cachedStreamCredentials: StreamCredentials | null = null;
+let browserEventSource: EventSource | null = null;
+let browserEventReconnectTimer: ReturnType<typeof setTimeout> | null = null;
+const browserEventHandlers = new Map<
+  string,
+  Set<(event: MessageEvent) => void>
+>();
+
+function bindBrowserEventHandlers(source: EventSource): void {
+  for (const [event, handlers] of browserEventHandlers) {
+    for (const handler of handlers) {
+      source.addEventListener(event, handler);
+    }
+  }
+}
+
+function scheduleBrowserEventReconnect(): void {
+  if (browserEventReconnectTimer || browserEventHandlers.size === 0) return;
+  browserEventReconnectTimer = setTimeout(() => {
+    browserEventReconnectTimer = null;
+    void getBrowserEventSource()
+      .then((source) => {
+        if (source) bindBrowserEventHandlers(source);
+      })
+      .catch(() => {
+        scheduleBrowserEventReconnect();
+      });
+  }, 2000);
+}
+
+export function resetStreamCredentials(): void {
+  cachedStreamCredentials = null;
+  if (browserEventReconnectTimer) {
+    clearTimeout(browserEventReconnectTimer);
+    browserEventReconnectTimer = null;
+  }
+  if (browserEventSource) {
+    browserEventSource.close();
+    browserEventSource = null;
+  }
+  scheduleBrowserEventReconnect();
+}
+
+export async function getStreamCredentials(): Promise<StreamCredentials> {
+  if (cachedStreamCredentials) return cachedStreamCredentials;
+  const res = await invokeRpc<{ streamPort?: number; streamToken?: string }>(
+    "handshake",
+    {
       clientVersion: "0.1.0",
       protocolVersion: "1.0.0",
       capabilities: ["stream", "exec", "logs"],
-    });
-    if (res?.streamPort) {
-      cachedStreamPort = res.streamPort;
-      return cachedStreamPort;
-    }
-  } catch (err) {
-    console.warn("[IPC] Failed to query stream port from handshake:", err);
+    },
+  );
+  if (!res?.streamPort || !res.streamToken) {
+    throw new Error(
+      "KubeView engine handshake did not return stream credentials",
+    );
   }
-  return cachedStreamPort || 54428;
+  cachedStreamCredentials = { port: res.streamPort, token: res.streamToken };
+  return cachedStreamCredentials;
 }
 
-let browserEventSource: EventSource | null = null;
+export async function getStreamPort(): Promise<number> {
+  return (await getStreamCredentials()).port;
+}
 
 async function getBrowserEventSource(): Promise<EventSource | null> {
   if (typeof window === "undefined") return null;
-  if (!browserEventSource) {
-    const port = await getStreamPort();
-    browserEventSource = new EventSource(`http://127.0.0.1:${port}/api/stream/events`);
-    browserEventSource.onerror = () => {
-      // Native EventSource auto-reconnects on error
-    };
+  if (browserEventSource) return browserEventSource;
+
+  let credentials: StreamCredentials;
+  try {
+    credentials = await getStreamCredentials();
+  } catch {
+    scheduleBrowserEventReconnect();
+    return null;
   }
-  return browserEventSource;
+
+  const source = new EventSource(
+    `http://127.0.0.1:${credentials.port}/api/stream/events?token=${encodeURIComponent(credentials.token)}`,
+  );
+  source.onerror = () => {
+    source.close();
+    if (browserEventSource === source) browserEventSource = null;
+    cachedStreamCredentials = null;
+    scheduleBrowserEventReconnect();
+  };
+  browserEventSource = source;
+  return source;
 }
 
 export async function listenNotification<T>(
   event: string,
-  handler: (payload: T) => void
+  handler: (payload: T) => void,
 ): Promise<() => void> {
   const safeEvent = event.replace(/\./g, ":");
 
@@ -104,21 +189,31 @@ export async function listenNotification<T>(
   }
 
   // Web / Browser mode: listen via Server-Sent Events (SSE) directly from engine
-  const es = await getBrowserEventSource();
-  if (!es) return () => {};
-
-  const listener = (e: MessageEvent) => {
+  const listener = (event: MessageEvent) => {
     try {
-      const data = JSON.parse(e.data);
+      const data = JSON.parse(event.data);
       handler(data);
     } catch {
-      handler(e.data as unknown as T);
+      handler(event.data as unknown as T);
     }
   };
 
-  es.addEventListener(safeEvent, listener);
+  let handlers = browserEventHandlers.get(safeEvent);
+  if (!handlers) {
+    handlers = new Set();
+    browserEventHandlers.set(safeEvent, handlers);
+  }
+  handlers.add(listener);
+
+  const es = await getBrowserEventSource();
+  es?.addEventListener(safeEvent, listener);
+
   return () => {
-    es.removeEventListener(safeEvent, listener);
+    handlers?.delete(listener);
+    if (handlers && handlers.size === 0) {
+      browserEventHandlers.delete(safeEvent);
+    }
+    es?.removeEventListener(safeEvent, listener);
   };
 }
 
@@ -149,7 +244,10 @@ function mockRpcFallback<T>(method: string, _params?: unknown): T {
     } as T;
   }
 
-  if (method === "clusters.importKubeconfig" || method === "clusters.importDetected") {
+  if (
+    method === "clusters.importKubeconfig" ||
+    method === "clusters.importDetected"
+  ) {
     return {
       success: true,
       importedContexts: [],
@@ -210,11 +308,13 @@ function mockRpcFallback<T>(method: string, _params?: unknown): T {
   }
 
   if (method === "deployments.yaml" || method === "replicasets.yaml") {
-    const p = _params as {
-      deploymentName?: string;
-      replicaSetName?: string;
-      namespace?: string;
-    } | undefined;
+    const p = _params as
+      | {
+          deploymentName?: string;
+          replicaSetName?: string;
+          namespace?: string;
+        }
+      | undefined;
     const name = p?.deploymentName || p?.replicaSetName || "workload";
     const ns = p?.namespace && p.namespace !== "all" ? p.namespace : "default";
     const kind = method === "deployments.yaml" ? "Deployment" : "ReplicaSet";

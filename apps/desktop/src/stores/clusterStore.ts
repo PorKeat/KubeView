@@ -46,20 +46,38 @@ import type {
   ImportDetectedContextsParams,
   PodChangeEvent,
 } from "@kubeview/contracts";
-import { invokeRpc, listenNotification } from "@/lib/ipc";
-import type { ClusterState, ClusterContextInfo, SelectedResource } from "./clusterTypes";
+import {
+  invokeRpc,
+  listenNotification,
+  resetStreamCredentials,
+} from "@/lib/ipc";
+import type {
+  ClusterState,
+  ClusterContextInfo,
+  SelectedResource,
+} from "./clusterTypes";
 
 export * from "./clusterTypes";
 
-const inFlightPodsPromises = new Map<string, Promise<void>>();
-const inFlightDeploymentsPromises = new Map<string, Promise<void>>();
-const inFlightReplicaSetsPromises = new Map<string, Promise<void>>();
-const inFlightStatefulSetsPromises = new Map<string, Promise<void>>();
-const inFlightDaemonSetsPromises = new Map<string, Promise<void>>();
-const inFlightJobsPromises = new Map<string, Promise<void>>();
-const inFlightCronJobsPromises = new Map<string, Promise<void>>();
-const inFlightOverviewPromises = new Map<string, Promise<ClusterOverviewResult | null>>();
+const inFlightResourcePromises = new Map<string, Promise<void>>();
+const inFlightOverviewPromises = new Map<
+  string,
+  Promise<ClusterOverviewResult | null>
+>();
 let contextSwitchSeq = 0;
+
+function resolveQueryNamespace(
+  state: Pick<ClusterState, "rbacMode" | "availableContexts">,
+  contextName: string,
+  namespace: string,
+): string {
+  if (state.rbacMode !== "namespace-scoped") return "";
+  if (namespace !== "all") return namespace;
+  return (
+    state.availableContexts.find((context) => context.name === contextName)
+      ?.namespace || "default"
+  );
+}
 
 export const useClusterStore = create<ClusterState>((set, get) => ({
   currentContext: "",
@@ -189,6 +207,9 @@ export const useClusterStore = create<ClusterState>((set, get) => ({
       };
       try {
         if (action.kind === "ReplicaSet") {
+          if (action.action !== "delete") {
+            throw new Error("Bulk restart is not supported for ReplicaSets");
+          }
           await invokeRpc("replicasets.delete", params);
         } else if (action.kind === "StatefulSet") {
           await invokeRpc(
@@ -204,8 +225,10 @@ export const useClusterStore = create<ClusterState>((set, get) => ({
               : "daemonsets.delete",
             params,
           );
-        } else {
+        } else if (action.kind === "Job") {
           await invokeRpc("jobs.delete", params);
+        } else {
+          throw new Error("Unsupported bulk action kind");
         }
         succeeded += 1;
       } catch (error) {
@@ -239,16 +262,18 @@ export const useClusterStore = create<ClusterState>((set, get) => ({
     try {
       const res = await invokeRpc<ListContextsResult>("clusters.listContexts");
       if (res && res.contexts && res.contexts.length > 0) {
-        const contexts: ClusterContextInfo[] = res.contexts.map((c: ContextSummary) => ({
-          name: c.name,
-          cluster: c.cluster,
-          server: c.server,
-          provider: c.provider,
-          status: c.name === res.currentContext ? "checking" : "offline",
-          latencyMs: 0,
-          namespace: c.namespace,
-          authType: c.authType,
-        }));
+        const contexts: ClusterContextInfo[] = res.contexts.map(
+          (c: ContextSummary) => ({
+            name: c.name,
+            cluster: c.cluster,
+            server: c.server,
+            provider: c.provider,
+            status: c.name === res.currentContext ? "checking" : "offline",
+            latencyMs: 0,
+            namespace: c.namespace,
+            authType: c.authType,
+          }),
+        );
 
         set({
           availableContexts: contexts,
@@ -392,11 +417,15 @@ export const useClusterStore = create<ClusterState>((set, get) => ({
     });
 
     try {
-      const res = await invokeRpc<SwitchContextResult>("clusters.switchContext", {
-        contextName,
-      });
+      const res = await invokeRpc<SwitchContextResult>(
+        "clusters.switchContext",
+        {
+          contextName,
+        },
+      );
 
-      if (seq !== contextSwitchSeq || get().currentContext !== contextName) return;
+      if (seq !== contextSwitchSeq || get().currentContext !== contextName)
+        return;
 
       if (res && res.status === "ready") {
         set((state) => ({
@@ -407,16 +436,20 @@ export const useClusterStore = create<ClusterState>((set, get) => ({
         }));
 
         await get().diagnoseContext(contextName);
-        if (seq !== contextSwitchSeq || get().currentContext !== contextName) return;
-        await get().loadNamespaces(contextName);
-        if (seq !== contextSwitchSeq || get().currentContext !== contextName) return;
-        await get().loadClusterOverview(contextName);
-        if (seq !== contextSwitchSeq || get().currentContext !== contextName) return;
-        await get().loadPods(get().currentNamespace, contextName);
+        if (seq !== contextSwitchSeq || get().currentContext !== contextName)
+          return;
+        await Promise.all([
+          get().loadNamespaces(contextName),
+          get().loadClusterOverview(contextName),
+          get().loadPods(get().currentNamespace, contextName),
+        ]);
       }
     } catch (err) {
       if (seq !== contextSwitchSeq) return;
-      console.error(`[ClusterStore] Failed to switch to context '${contextName}':`, err);
+      console.error(
+        `[ClusterStore] Failed to switch to context '${contextName}':`,
+        err,
+      );
       set({ connectionStatus: "offline" });
     }
   },
@@ -439,8 +472,8 @@ export const useClusterStore = create<ClusterState>((set, get) => ({
           diag.status === "connected"
             ? "connected"
             : diag.status === "degraded"
-            ? "degraded"
-            : "offline";
+              ? "degraded"
+              : "offline";
 
         const isClusterAdmin =
           diag.stages?.rbac?.details?.clusterAdmin !== false;
@@ -448,17 +481,21 @@ export const useClusterStore = create<ClusterState>((set, get) => ({
         set((state) => {
           const isActive = state.currentContext === target;
           const apiLatency =
-            diag.stages?.tls?.passed && typeof diag.stages.tls.latencyMs === "number" && diag.stages.tls.latencyMs > 0
+            diag.stages?.tls?.passed &&
+            typeof diag.stages.tls.latencyMs === "number" &&
+            diag.stages.tls.latencyMs > 0
               ? diag.stages.tls.latencyMs
-              : diag.stages?.network?.passed && typeof diag.stages.network.latencyMs === "number" && diag.stages.network.latencyMs > 0
-              ? diag.stages.network.latencyMs
-              : diag.latencyMs || 0;
+              : diag.stages?.network?.passed &&
+                  typeof diag.stages.network.latencyMs === "number" &&
+                  diag.stages.network.latencyMs > 0
+                ? diag.stages.network.latencyMs
+                : diag.latencyMs || 0;
 
           return {
             availableContexts: state.availableContexts.map((c) =>
               c.name === target
                 ? { ...c, status: newStatus, latencyMs: apiLatency }
-                : c
+                : c,
             ),
             ...(isActive
               ? {
@@ -466,7 +503,9 @@ export const useClusterStore = create<ClusterState>((set, get) => ({
                   connectionStatus: newStatus,
                   serverVersion: diag.serverVersion || "Unavailable",
                   latencyMs: apiLatency,
-                  rbacMode: isClusterAdmin ? "cluster-admin" : "namespace-scoped",
+                  rbacMode: isClusterAdmin
+                    ? "cluster-admin"
+                    : "namespace-scoped",
                 }
               : {}),
           };
@@ -489,9 +528,12 @@ export const useClusterStore = create<ClusterState>((set, get) => ({
     if (!target) return;
 
     try {
-      const res = await invokeRpc<ListNamespacesResult>("clusters.listNamespaces", {
-        contextName: target,
-      });
+      const res = await invokeRpc<ListNamespacesResult>(
+        "clusters.listNamespaces",
+        {
+          contextName: target,
+        },
+      );
 
       if (res && res.namespaces && res.namespaces.length > 0) {
         const combined = Array.from(new Set(["all", ...res.namespaces]));
@@ -509,7 +551,8 @@ export const useClusterStore = create<ClusterState>((set, get) => ({
       return null;
     }
 
-    const targetNs = namespace !== undefined ? namespace : get().currentNamespace;
+    const targetNs =
+      namespace !== undefined ? namespace : get().currentNamespace;
     const queryNs = targetNs === "all" ? "" : targetNs;
     const fetchKey = `${target}::${queryNs}`;
 
@@ -524,10 +567,13 @@ export const useClusterStore = create<ClusterState>((set, get) => ({
       }
 
       try {
-        const res = await invokeRpc<ClusterOverviewResult>("clusters.overview", {
-          contextName: target,
-          namespace: queryNs,
-        });
+        const res = await invokeRpc<ClusterOverviewResult>(
+          "clusters.overview",
+          {
+            contextName: target,
+            namespace: queryNs,
+          },
+        );
 
         if (res) {
           // Verify context and namespace haven't changed while request was in-flight
@@ -550,7 +596,7 @@ export const useClusterStore = create<ClusterState>((set, get) => ({
       } catch (err) {
         console.warn(
           "[ClusterStore] Failed to load cluster overview (preserving existing telemetry):",
-          err
+          err,
         );
         // Stale-while-revalidate: Preserve existing clusterOverview so dashboard does not flicker to empty state
         if (get().currentContext === target && get().isOverviewLoading) {
@@ -573,14 +619,13 @@ export const useClusterStore = create<ClusterState>((set, get) => ({
       return;
     }
 
-    const rbac = get().rbacMode;
     const targetNs = namespace ?? get().currentNamespace;
-    const queryNs = rbac === "namespace-scoped" && targetNs !== "all" ? targetNs : "";
-    const fetchKey = `${targetCtx}::${queryNs}`;
+    const queryNs = resolveQueryNamespace(get(), targetCtx, targetNs);
+    const fetchKey = `pods::${targetCtx}::${queryNs}`;
 
     // Deduplicate in-flight requests for the same context & namespace
-    if (inFlightPodsPromises.has(fetchKey)) {
-      return inFlightPodsPromises.get(fetchKey);
+    if (inFlightResourcePromises.has(fetchKey)) {
+      return inFlightResourcePromises.get(fetchKey);
     }
 
     const currentPods = get().pods;
@@ -606,7 +651,12 @@ export const useClusterStore = create<ClusterState>((set, get) => ({
               hasLoadedPodsOnce: true,
             });
           } else {
-            set({ pods: [], totalPodsCount: 0, isPodsLoading: false, hasLoadedPodsOnce: true });
+            set({
+              pods: [],
+              totalPodsCount: 0,
+              isPodsLoading: false,
+              hasLoadedPodsOnce: true,
+            });
           }
         }
       } catch (err) {
@@ -615,28 +665,31 @@ export const useClusterStore = create<ClusterState>((set, get) => ({
           set({ isPodsLoading: false, hasLoadedPodsOnce: true });
         }
       } finally {
-        inFlightPodsPromises.delete(fetchKey);
+        inFlightResourcePromises.delete(fetchKey);
       }
     })();
 
-    inFlightPodsPromises.set(fetchKey, promise);
+    inFlightResourcePromises.set(fetchKey, promise);
     return promise;
   },
 
   loadDeployments: async (namespace?: string, contextName?: string) => {
     const targetCtx = contextName || get().currentContext;
     if (!targetCtx) {
-      set({ deployments: [], totalDeploymentsCount: 0, isDeploymentsLoading: false });
+      set({
+        deployments: [],
+        totalDeploymentsCount: 0,
+        isDeploymentsLoading: false,
+      });
       return;
     }
 
-    const rbac = get().rbacMode;
     const targetNs = namespace ?? get().currentNamespace;
-    const queryNs = rbac === "namespace-scoped" && targetNs !== "all" ? targetNs : "";
-    const fetchKey = `${targetCtx}::${queryNs}`;
+    const queryNs = resolveQueryNamespace(get(), targetCtx, targetNs);
+    const fetchKey = `deployments::${targetCtx}::${queryNs}`;
 
-    if (inFlightDeploymentsPromises.has(fetchKey)) {
-      return inFlightDeploymentsPromises.get(fetchKey);
+    if (inFlightResourcePromises.has(fetchKey)) {
+      return inFlightResourcePromises.get(fetchKey);
     }
 
     if (get().deployments.length === 0 && get().currentContext === targetCtx) {
@@ -673,28 +726,31 @@ export const useClusterStore = create<ClusterState>((set, get) => ({
           set({ isDeploymentsLoading: false, hasLoadedDeploymentsOnce: true });
         }
       } finally {
-        inFlightDeploymentsPromises.delete(fetchKey);
+        inFlightResourcePromises.delete(fetchKey);
       }
     })();
 
-    inFlightDeploymentsPromises.set(fetchKey, promise);
+    inFlightResourcePromises.set(fetchKey, promise);
     return promise;
   },
 
   loadReplicaSets: async (namespace?: string, contextName?: string) => {
     const targetCtx = contextName || get().currentContext;
     if (!targetCtx) {
-      set({ replicaSets: [], totalReplicaSetsCount: 0, isReplicaSetsLoading: false });
+      set({
+        replicaSets: [],
+        totalReplicaSetsCount: 0,
+        isReplicaSetsLoading: false,
+      });
       return;
     }
 
-    const rbac = get().rbacMode;
     const targetNs = namespace ?? get().currentNamespace;
-    const queryNs = rbac === "namespace-scoped" && targetNs !== "all" ? targetNs : "";
-    const fetchKey = `${targetCtx}::${queryNs}`;
+    const queryNs = resolveQueryNamespace(get(), targetCtx, targetNs);
+    const fetchKey = `replicasets::${targetCtx}::${queryNs}`;
 
-    if (inFlightReplicaSetsPromises.has(fetchKey)) {
-      return inFlightReplicaSetsPromises.get(fetchKey);
+    if (inFlightResourcePromises.has(fetchKey)) {
+      return inFlightResourcePromises.get(fetchKey);
     }
 
     if (get().replicaSets.length === 0 && get().currentContext === targetCtx) {
@@ -731,28 +787,31 @@ export const useClusterStore = create<ClusterState>((set, get) => ({
           set({ isReplicaSetsLoading: false, hasLoadedReplicaSetsOnce: true });
         }
       } finally {
-        inFlightReplicaSetsPromises.delete(fetchKey);
+        inFlightResourcePromises.delete(fetchKey);
       }
     })();
 
-    inFlightReplicaSetsPromises.set(fetchKey, promise);
+    inFlightResourcePromises.set(fetchKey, promise);
     return promise;
   },
 
   loadStatefulSets: async (namespace?: string, contextName?: string) => {
     const targetCtx = contextName || get().currentContext;
     if (!targetCtx) {
-      set({ statefulSets: [], totalStatefulSetsCount: 0, isStatefulSetsLoading: false });
+      set({
+        statefulSets: [],
+        totalStatefulSetsCount: 0,
+        isStatefulSetsLoading: false,
+      });
       return;
     }
 
-    const rbac = get().rbacMode;
     const targetNs = namespace ?? get().currentNamespace;
-    const queryNs = rbac === "namespace-scoped" && targetNs !== "all" ? targetNs : "";
-    const fetchKey = `${targetCtx}::${queryNs}`;
+    const queryNs = resolveQueryNamespace(get(), targetCtx, targetNs);
+    const fetchKey = `statefulsets::${targetCtx}::${queryNs}`;
 
-    if (inFlightStatefulSetsPromises.has(fetchKey)) {
-      return inFlightStatefulSetsPromises.get(fetchKey);
+    if (inFlightResourcePromises.has(fetchKey)) {
+      return inFlightResourcePromises.get(fetchKey);
     }
 
     if (get().statefulSets.length === 0 && get().currentContext === targetCtx) {
@@ -761,10 +820,13 @@ export const useClusterStore = create<ClusterState>((set, get) => ({
 
     const promise = (async () => {
       try {
-        const res = await invokeRpc<ListStatefulSetsResult>("statefulsets.list", {
-          contextName: targetCtx,
-          namespace: queryNs,
-        });
+        const res = await invokeRpc<ListStatefulSetsResult>(
+          "statefulsets.list",
+          {
+            contextName: targetCtx,
+            namespace: queryNs,
+          },
+        );
 
         if (get().currentContext === targetCtx) {
           if (res && res.items) {
@@ -786,31 +848,37 @@ export const useClusterStore = create<ClusterState>((set, get) => ({
       } catch (err) {
         console.warn("[ClusterStore] Failed to load stateful sets:", err);
         if (get().currentContext === targetCtx) {
-          set({ isStatefulSetsLoading: false, hasLoadedStatefulSetsOnce: true });
+          set({
+            isStatefulSetsLoading: false,
+            hasLoadedStatefulSetsOnce: true,
+          });
         }
       } finally {
-        inFlightStatefulSetsPromises.delete(fetchKey);
+        inFlightResourcePromises.delete(fetchKey);
       }
     })();
 
-    inFlightStatefulSetsPromises.set(fetchKey, promise);
+    inFlightResourcePromises.set(fetchKey, promise);
     return promise;
   },
 
   loadDaemonSets: async (namespace?: string, contextName?: string) => {
     const targetCtx = contextName || get().currentContext;
     if (!targetCtx) {
-      set({ daemonSets: [], totalDaemonSetsCount: 0, isDaemonSetsLoading: false });
+      set({
+        daemonSets: [],
+        totalDaemonSetsCount: 0,
+        isDaemonSetsLoading: false,
+      });
       return;
     }
 
-    const rbac = get().rbacMode;
     const targetNs = namespace ?? get().currentNamespace;
-    const queryNs = rbac === "namespace-scoped" && targetNs !== "all" ? targetNs : "";
-    const fetchKey = `${targetCtx}::${queryNs}`;
+    const queryNs = resolveQueryNamespace(get(), targetCtx, targetNs);
+    const fetchKey = `daemonsets::${targetCtx}::${queryNs}`;
 
-    if (inFlightDaemonSetsPromises.has(fetchKey)) {
-      return inFlightDaemonSetsPromises.get(fetchKey);
+    if (inFlightResourcePromises.has(fetchKey)) {
+      return inFlightResourcePromises.get(fetchKey);
     }
 
     if (get().daemonSets.length === 0 && get().currentContext === targetCtx) {
@@ -847,11 +915,11 @@ export const useClusterStore = create<ClusterState>((set, get) => ({
           set({ isDaemonSetsLoading: false, hasLoadedDaemonSetsOnce: true });
         }
       } finally {
-        inFlightDaemonSetsPromises.delete(fetchKey);
+        inFlightResourcePromises.delete(fetchKey);
       }
     })();
 
-    inFlightDaemonSetsPromises.set(fetchKey, promise);
+    inFlightResourcePromises.set(fetchKey, promise);
     return promise;
   },
 
@@ -862,13 +930,12 @@ export const useClusterStore = create<ClusterState>((set, get) => ({
       return;
     }
 
-    const rbac = get().rbacMode;
     const targetNs = namespace ?? get().currentNamespace;
-    const queryNs = rbac === "namespace-scoped" && targetNs !== "all" ? targetNs : "";
-    const fetchKey = `${targetCtx}::${queryNs}`;
+    const queryNs = resolveQueryNamespace(get(), targetCtx, targetNs);
+    const fetchKey = `jobs::${targetCtx}::${queryNs}`;
 
-    if (inFlightJobsPromises.has(fetchKey)) {
-      return inFlightJobsPromises.get(fetchKey);
+    if (inFlightResourcePromises.has(fetchKey)) {
+      return inFlightResourcePromises.get(fetchKey);
     }
 
     if (get().jobs.length === 0 && get().currentContext === targetCtx) {
@@ -905,11 +972,11 @@ export const useClusterStore = create<ClusterState>((set, get) => ({
           set({ isJobsLoading: false, hasLoadedJobsOnce: true });
         }
       } finally {
-        inFlightJobsPromises.delete(fetchKey);
+        inFlightResourcePromises.delete(fetchKey);
       }
     })();
 
-    inFlightJobsPromises.set(fetchKey, promise);
+    inFlightResourcePromises.set(fetchKey, promise);
     return promise;
   },
 
@@ -920,13 +987,12 @@ export const useClusterStore = create<ClusterState>((set, get) => ({
       return;
     }
 
-    const rbac = get().rbacMode;
     const targetNs = namespace ?? get().currentNamespace;
-    const queryNs = rbac === "namespace-scoped" && targetNs !== "all" ? targetNs : "";
-    const fetchKey = `${targetCtx}::${queryNs}`;
+    const queryNs = resolveQueryNamespace(get(), targetCtx, targetNs);
+    const fetchKey = `cronjobs::${targetCtx}::${queryNs}`;
 
-    if (inFlightCronJobsPromises.has(fetchKey)) {
-      return inFlightCronJobsPromises.get(fetchKey);
+    if (inFlightResourcePromises.has(fetchKey)) {
+      return inFlightResourcePromises.get(fetchKey);
     }
 
     if (get().cronJobs.length === 0 && get().currentContext === targetCtx) {
@@ -963,11 +1029,11 @@ export const useClusterStore = create<ClusterState>((set, get) => ({
           set({ isCronJobsLoading: false, hasLoadedCronJobsOnce: true });
         }
       } finally {
-        inFlightCronJobsPromises.delete(fetchKey);
+        inFlightResourcePromises.delete(fetchKey);
       }
     })();
 
-    inFlightCronJobsPromises.set(fetchKey, promise);
+    inFlightResourcePromises.set(fetchKey, promise);
     return promise;
   },
 
@@ -1088,7 +1154,10 @@ export const useClusterStore = create<ClusterState>((set, get) => ({
 
   restartDaemonSet: async (params: DaemonSetActionParams) => {
     const targetCtx = params.contextName || get().currentContext;
-    await invokeRpc("daemonsets.restart", { ...params, contextName: targetCtx });
+    await invokeRpc("daemonsets.restart", {
+      ...params,
+      contextName: targetCtx,
+    });
     await get().loadDaemonSets();
     await get().loadPods();
     await get().loadClusterOverview();
@@ -1144,7 +1213,10 @@ export const useClusterStore = create<ClusterState>((set, get) => ({
     return res?.jobName || "";
   },
 
-  bulkDeletePods: async (pods: { name: string; namespace: string }[], force?: boolean) => {
+  bulkDeletePods: async (
+    pods: { name: string; namespace: string }[],
+    force?: boolean,
+  ) => {
     const targetCtx = get().currentContext;
     let succeeded = 0;
     let failed = 0;
@@ -1197,7 +1269,11 @@ export const useClusterStore = create<ClusterState>((set, get) => ({
     });
   },
 
-  getPodYaml: async (podName: string, namespace: string, contextName?: string) => {
+  getPodYaml: async (
+    podName: string,
+    namespace: string,
+    contextName?: string,
+  ) => {
     const targetCtx = contextName || get().currentContext;
     const res = await invokeRpc<PodYamlResult>("pods.yaml", {
       contextName: targetCtx,
@@ -1207,7 +1283,11 @@ export const useClusterStore = create<ClusterState>((set, get) => ({
     return res?.yaml || "";
   },
 
-  getDeploymentYaml: async (name: string, namespace: string, contextName?: string) => {
+  getDeploymentYaml: async (
+    name: string,
+    namespace: string,
+    contextName?: string,
+  ) => {
     const targetCtx = contextName || get().currentContext;
     const res = await invokeRpc<PodYamlResult>("deployments.yaml", {
       contextName: targetCtx,
@@ -1217,7 +1297,11 @@ export const useClusterStore = create<ClusterState>((set, get) => ({
     return res?.yaml || "";
   },
 
-  getReplicaSetYaml: async (name: string, namespace: string, contextName?: string) => {
+  getReplicaSetYaml: async (
+    name: string,
+    namespace: string,
+    contextName?: string,
+  ) => {
     const targetCtx = contextName || get().currentContext;
     const res = await invokeRpc<PodYamlResult>("replicasets.yaml", {
       contextName: targetCtx,
@@ -1227,7 +1311,11 @@ export const useClusterStore = create<ClusterState>((set, get) => ({
     return res?.yaml || "";
   },
 
-  getStatefulSetYaml: async (name: string, namespace: string, contextName?: string) => {
+  getStatefulSetYaml: async (
+    name: string,
+    namespace: string,
+    contextName?: string,
+  ) => {
     const targetCtx = contextName || get().currentContext;
     const res = await invokeRpc<PodYamlResult>("statefulsets.yaml", {
       contextName: targetCtx,
@@ -1237,7 +1325,11 @@ export const useClusterStore = create<ClusterState>((set, get) => ({
     return res?.yaml || "";
   },
 
-  getDaemonSetYaml: async (name: string, namespace: string, contextName?: string) => {
+  getDaemonSetYaml: async (
+    name: string,
+    namespace: string,
+    contextName?: string,
+  ) => {
     const targetCtx = contextName || get().currentContext;
     const res = await invokeRpc<PodYamlResult>("daemonsets.yaml", {
       contextName: targetCtx,
@@ -1257,7 +1349,11 @@ export const useClusterStore = create<ClusterState>((set, get) => ({
     return res?.yaml || "";
   },
 
-  getCronJobYaml: async (name: string, namespace: string, contextName?: string) => {
+  getCronJobYaml: async (
+    name: string,
+    namespace: string,
+    contextName?: string,
+  ) => {
     const targetCtx = contextName || get().currentContext;
     const res = await invokeRpc<PodYamlResult>("cronjobs.yaml", {
       contextName: targetCtx,
@@ -1267,7 +1363,11 @@ export const useClusterStore = create<ClusterState>((set, get) => ({
     return res?.yaml || "";
   },
 
-  getPodEvents: async (podName: string, namespace: string, contextName?: string) => {
+  getPodEvents: async (
+    podName: string,
+    namespace: string,
+    contextName?: string,
+  ) => {
     const targetCtx = contextName || get().currentContext;
     const res = await invokeRpc<PodEventsResult>("pods.events", {
       contextName: targetCtx,
@@ -1288,8 +1388,10 @@ export const useClusterStore = create<ClusterState>((set, get) => ({
     get().loadClusterOverview(get().currentContext, namespace);
   },
   setConnectionStatus: (status) => set({ connectionStatus: status }),
-  setServerInfo: (version, latency) => set({ serverVersion: version, latencyMs: latency }),
-  openInspector: (resource) => set({ selectedResource: resource, isInspectorOpen: true }),
+  setServerInfo: (version, latency) =>
+    set({ serverVersion: version, latencyMs: latency }),
+  openInspector: (resource) =>
+    set({ selectedResource: resource, isInspectorOpen: true }),
   closeInspector: () => set({ selectedResource: null, isInspectorOpen: false }),
 
   openKubeconfigModal: (tab = "browse") =>
@@ -1300,7 +1402,10 @@ export const useClusterStore = create<ClusterState>((set, get) => ({
   importKubeconfig: async (params: ImportKubeconfigParams) => {
     set({ isLoading: true });
     try {
-      const res = await invokeRpc<ImportKubeconfigResult>("clusters.importKubeconfig", params);
+      const res = await invokeRpc<ImportKubeconfigResult>(
+        "clusters.importKubeconfig",
+        params,
+      );
       if (res && res.success) {
         await get().loadContexts();
         if (res.activeContext) {
@@ -1320,7 +1425,9 @@ export const useClusterStore = create<ClusterState>((set, get) => ({
   detectSystemConfigs: async () => {
     set({ isDetectingConfigs: true });
     try {
-      const res = await invokeRpc<DetectSystemConfigsResult>("clusters.detectSystemConfigs");
+      const res = await invokeRpc<DetectSystemConfigsResult>(
+        "clusters.detectSystemConfigs",
+      );
       const list = res?.contexts || [];
       set({ detectedSystemConfigs: list, isDetectingConfigs: false });
       return list;
@@ -1334,7 +1441,10 @@ export const useClusterStore = create<ClusterState>((set, get) => ({
   importDetectedContexts: async (contexts: ImportDetectedContextItem[]) => {
     set({ isLoading: true });
     try {
-      const res = await invokeRpc<ImportKubeconfigResult>("clusters.importDetected", { contexts });
+      const res = await invokeRpc<ImportKubeconfigResult>(
+        "clusters.importDetected",
+        { contexts },
+      );
       if (res && res.success) {
         await get().loadContexts();
         await get().detectSystemConfigs();
@@ -1358,20 +1468,32 @@ export const useClusterStore = create<ClusterState>((set, get) => ({
       await get().loadContexts();
     } catch (err) {
       console.error("Failed to delete context:", err);
+      toast.error(
+        `Failed to delete context: ${err instanceof Error ? err.message : String(err)}`,
+      );
     }
   },
 
-  updateEndpoint: async (contextName: string, newServer: string, insecure?: boolean) => {
+  updateEndpoint: async (
+    contextName: string,
+    newServer: string,
+    insecure?: boolean,
+  ) => {
     try {
-      await invokeRpc("clusters.updateEndpoint", { contextName, newServer, insecure });
+      await invokeRpc("clusters.updateEndpoint", {
+        contextName,
+        newServer,
+        insecure,
+      });
       toast.success(`Updated endpoint for '${contextName}' to ${newServer}`);
       await get().loadContexts();
       if (get().currentContext === contextName) {
         await get().diagnoseContext();
       }
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error("Failed to update endpoint:", err);
-      toast.error(`Failed to update endpoint: ${err.message || err}`);
+      const message = err instanceof Error ? err.message : String(err);
+      toast.error(`Failed to update endpoint: ${message}`);
       throw err;
     }
   },
@@ -1420,6 +1542,9 @@ export const useClusterStore = create<ClusterState>((set, get) => ({
       });
     } catch (err) {
       console.error("Failed to clear contexts:", err);
+      toast.error(
+        `Failed to clear contexts: ${err instanceof Error ? err.message : String(err)}`,
+      );
     }
   },
 
@@ -1428,18 +1553,33 @@ export const useClusterStore = create<ClusterState>((set, get) => ({
       "clusters:contextsChanged",
       (res) => {
         console.log("[ClusterStore] Kubeconfig contexts changed on disk:", res);
+        const previousContext = get().currentContext;
         if (res && res.contexts && res.contexts.length > 0) {
-          const contexts: ClusterContextInfo[] = res.contexts.map((c: ContextSummary) => ({
-            name: c.name,
-            cluster: c.cluster,
-            server: c.server,
-            provider: c.provider,
-            status: c.name === get().currentContext ? get().connectionStatus : "offline",
-            latencyMs: 0,
-            namespace: c.namespace,
-            authType: c.authType,
-          }));
-          set({ availableContexts: contexts });
+          const contexts: ClusterContextInfo[] = res.contexts.map(
+            (c: ContextSummary) => ({
+              name: c.name,
+              cluster: c.cluster,
+              server: c.server,
+              provider: c.provider,
+              status:
+                c.name === previousContext ? get().connectionStatus : "offline",
+              latencyMs: 0,
+              namespace: c.namespace,
+              authType: c.authType,
+            }),
+          );
+          const activeContext =
+            contexts.find((context) => context.name === previousContext)
+              ?.name ??
+            contexts.find((context) => context.name === res.currentContext)
+              ?.name ??
+            contexts[0].name;
+          set({ availableContexts: contexts, configPath: res.configPath });
+          if (activeContext !== previousContext) {
+            void get().switchContext(activeContext);
+          } else {
+            set({ currentContext: activeContext });
+          }
         } else {
           set({
             availableContexts: [],
@@ -1448,14 +1588,64 @@ export const useClusterStore = create<ClusterState>((set, get) => ({
             serverVersion: "No cluster connected",
             latencyMs: 0,
             clusterOverview: null,
+            diagnosticResult: null,
+            availableNamespaces: ["all", "default"],
+            currentNamespace: "all",
             pods: [],
             totalPodsCount: 0,
           });
         }
-      }
+      },
     );
 
-    // Real-Time K8s Pod Watcher stream
+    const unlistenEngineRestart = await listenNotification<unknown>(
+      "engine:restarted",
+      () => {
+        resetStreamCredentials();
+        void get().loadContexts();
+      },
+    );
+
+    // Real-Time K8s Pod Watcher stream, batched to avoid render churn.
+    let pendingPodEvents: PodChangeEvent[] = [];
+    let podFlushTimer: ReturnType<typeof setTimeout> | null = null;
+
+    const flushPodEvents = () => {
+      podFlushTimer = null;
+      if (pendingPodEvents.length === 0) return;
+      const events = pendingPodEvents;
+      pendingPodEvents = [];
+
+      const activeContext = get().currentContext;
+      const activeNamespace = get().currentNamespace;
+      const namespaceScoped = get().rbacMode === "namespace-scoped";
+      const podMap = new Map(
+        get().pods.map((pod) => [`${pod.namespace}/${pod.name}`, pod]),
+      );
+      let delta = 0;
+      for (const event of events) {
+        if (event.context && event.context !== activeContext) continue;
+        if (
+          namespaceScoped &&
+          activeNamespace !== "all" &&
+          event.pod.namespace !== activeNamespace
+        ) {
+          continue;
+        }
+        const key = `${event.pod.namespace}/${event.pod.name}`;
+        if (event.type === "DELETED") {
+          if (podMap.delete(key)) delta -= 1;
+        } else {
+          if (!podMap.has(key)) delta += 1;
+          podMap.set(key, event.pod);
+        }
+      }
+      set({
+        pods: Array.from(podMap.values()),
+        totalPodsCount: Math.max(0, get().totalPodsCount + delta),
+      });
+    };
+
     const unlistenPods = await listenNotification<PodChangeEvent>(
       "pods:changed",
       (event) => {
@@ -1464,8 +1654,6 @@ export const useClusterStore = create<ClusterState>((set, get) => ({
         if (event.context && event.context !== get().currentContext) {
           return;
         }
-
-        const currentPods = get().pods;
         if (get().rbacMode === "namespace-scoped") {
           const targetNs = get().currentNamespace;
           if (targetNs !== "all" && event.pod.namespace !== targetNs) {
@@ -1473,27 +1661,11 @@ export const useClusterStore = create<ClusterState>((set, get) => ({
           }
         }
 
-        if (event.type === "DELETED") {
-          const next = currentPods.filter(
-            (p) => !(p.name === event.pod.name && p.namespace === event.pod.namespace)
-          );
-          set({ pods: next, totalPodsCount: Math.max(0, get().totalPodsCount - 1) });
-        } else {
-          const idx = currentPods.findIndex(
-            (p) => p.name === event.pod.name && p.namespace === event.pod.namespace
-          );
-          if (idx >= 0) {
-            const next = [...currentPods];
-            next[idx] = event.pod;
-            set({ pods: next });
-          } else {
-            set({
-              pods: [event.pod, ...currentPods],
-              totalPodsCount: get().totalPodsCount + 1,
-            });
-          }
+        pendingPodEvents.push(event);
+        if (!podFlushTimer) {
+          podFlushTimer = setTimeout(flushPodEvents, 100);
         }
-      }
+      },
     );
 
     // Real-Time Cluster Overview & Workloads stream with trailing debounce (350ms)
@@ -1501,13 +1673,17 @@ export const useClusterStore = create<ClusterState>((set, get) => ({
     const unlistenOverview = await listenNotification<{ context: string }>(
       "clusters:overviewChanged",
       (payload) => {
-        if (!payload || !payload.context || payload.context === get().currentContext) {
+        if (
+          !payload ||
+          !payload.context ||
+          payload.context === get().currentContext
+        ) {
           if (overviewDebounceTimer) clearTimeout(overviewDebounceTimer);
           overviewDebounceTimer = setTimeout(() => {
             get().loadClusterOverview();
           }, 350);
         }
-      }
+      },
     );
 
     // Real-Time Warning Events Stream
@@ -1515,6 +1691,17 @@ export const useClusterStore = create<ClusterState>((set, get) => ({
       "events:warning",
       (item) => {
         if (!item) return;
+        if (item.context && item.context !== get().currentContext) return;
+        if (get().rbacMode === "namespace-scoped") {
+          const targetNs = get().currentNamespace;
+          if (
+            targetNs !== "all" &&
+            item.involvedObjectNamespace &&
+            item.involvedObjectNamespace !== targetNs
+          ) {
+            return;
+          }
+        }
         const ov = get().clusterOverview;
         if (ov) {
           const existing = ov.warningEvents || [];
@@ -1523,17 +1710,23 @@ export const useClusterStore = create<ClusterState>((set, get) => ({
               ...ov,
               warningEvents: [
                 item,
-                ...existing.filter((e) => e.message !== item.message),
+                ...existing.filter(
+                  (e) =>
+                    e.message !== item.message ||
+                    e.involvedObjectNamespace !== item.involvedObjectNamespace,
+                ),
               ].slice(0, 15),
             },
           });
         }
-      }
+      },
     );
 
     return () => {
       if (overviewDebounceTimer) clearTimeout(overviewDebounceTimer);
+      if (podFlushTimer) clearTimeout(podFlushTimer);
       unlistenContexts();
+      unlistenEngineRestart();
       unlistenPods();
       unlistenOverview();
       unlistenEvents();

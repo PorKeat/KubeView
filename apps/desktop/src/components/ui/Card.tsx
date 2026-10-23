@@ -11,7 +11,7 @@ const Card = React.forwardRef<
     ref={ref}
     className={cn(
       "rounded-xl border border-[var(--border)] bg-[var(--surface)] text-[var(--foreground)]",
-      className
+      className,
     )}
     {...props}
   />
@@ -36,7 +36,10 @@ const CardTitle = React.forwardRef<
 >(({ className, ...props }, ref) => (
   <h3
     ref={ref}
-    className={cn("text-sm font-semibold tracking-tight text-[var(--foreground)]", className)}
+    className={cn(
+      "text-sm font-semibold tracking-tight text-[var(--foreground)]",
+      className,
+    )}
     {...props}
   />
 ));
@@ -74,4 +77,11 @@ const CardFooter = React.forwardRef<
 ));
 CardFooter.displayName = "CardFooter";
 
-export { Card, CardHeader, CardFooter, CardTitle, CardDescription, CardContent };
+export {
+  Card,
+  CardHeader,
+  CardFooter,
+  CardTitle,
+  CardDescription,
+  CardContent,
+};

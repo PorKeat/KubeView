@@ -20,7 +20,9 @@ import type { DiscoveredConfigFile } from "../types";
 export interface BrowseFilesTabProps {
   detectedSystemConfigs: DetectedContextInfo[];
   discoveredFiles: DiscoveredConfigFile[];
-  setDiscoveredFiles: React.Dispatch<React.SetStateAction<DiscoveredConfigFile[]>>;
+  setDiscoveredFiles: React.Dispatch<
+    React.SetStateAction<DiscoveredConfigFile[]>
+  >;
   singleAliasName: string;
   setSingleAliasName: (val: string) => void;
   folderName: string;
@@ -72,7 +74,10 @@ export function BrowseFilesTab({
                 Auto-Detected System Cluster Configs Found!
               </span>
               <span className="text-[11px] text-[var(--muted)]">
-                Found {detectedSystemConfigs.filter((c) => !c.isImported).length} cluster context(s) in your standard OS paths (e.g. <code>~/.kube/kubeconfig</code>).
+                Found{" "}
+                {detectedSystemConfigs.filter((c) => !c.isImported).length}{" "}
+                cluster context(s) in your standard OS paths (e.g.{" "}
+                <code>~/.kube/kubeconfig</code>).
               </span>
             </div>
           </div>
@@ -98,7 +103,10 @@ export function BrowseFilesTab({
         ref={folderInputRef}
         onChange={handleFolderSelect}
         multiple
-        {...({ webkitdirectory: "", directory: "" } as any)}
+        {...({
+          webkitdirectory: "",
+          directory: "",
+        } as unknown as React.InputHTMLAttributes<HTMLInputElement>)}
         className="hidden"
       />
 
@@ -114,7 +122,7 @@ export function BrowseFilesTab({
           "border-2 border-dashed rounded-2xl p-6 flex flex-col items-center justify-center text-center transition-all relative overflow-hidden",
           isDragging
             ? "border-[#F08A42] bg-[#F08A42]/8 scale-[0.99]"
-            : "border-[var(--border)] hover:border-[#F08A42]/60 hover:bg-black/[0.015] dark:hover:bg-white/[0.015]"
+            : "border-[var(--border)] hover:border-[#F08A42]/60 hover:bg-black/[0.015] dark:hover:bg-white/[0.015]",
         )}
       >
         <div className="w-12 h-12 rounded-2xl bg-[#F08A42]/10 border border-[#F08A42]/20 flex items-center justify-center text-[#F08A42] mb-3">
@@ -125,8 +133,9 @@ export function BrowseFilesTab({
           Drag & Drop Kubeconfigs or Pick from Disk
         </h4>
         <p className="text-xs text-[var(--muted)] max-w-md mb-4">
-          Drop individual files or an entire folder containing multiple kubeconfig files.
-          All valid configurations are auto-discovered and indexed.
+          Drop individual files or an entire folder containing multiple
+          kubeconfig files. All valid configurations are auto-discovered and
+          indexed.
         </p>
 
         {/* Dual Action Selection Buttons */}
@@ -235,10 +244,16 @@ export function BrowseFilesTab({
             <div className="flex items-center gap-2">
               <button
                 type="button"
-                onClick={() => toggleSelectAll(selectedValidFiles.length !== discoveredFiles.length)}
+                onClick={() =>
+                  toggleSelectAll(
+                    selectedValidFiles.length !== discoveredFiles.length,
+                  )
+                }
                 className="text-[11px] text-[#F08A42] hover:underline font-medium cursor-pointer"
               >
-                {selectedValidFiles.length === discoveredFiles.length ? "Deselect All" : "Select All"}
+                {selectedValidFiles.length === discoveredFiles.length
+                  ? "Deselect All"
+                  : "Select All"}
               </button>
               <button
                 type="button"
@@ -261,8 +276,8 @@ export function BrowseFilesTab({
                   !file.isValid
                     ? "opacity-50 bg-black/[0.01] border-[var(--border)] cursor-not-allowed"
                     : file.selected
-                    ? "bg-[#F08A42]/8 border-[#F08A42]/40"
-                    : "bg-black/[0.02] dark:bg-white/[0.02] border-[var(--border)] hover:border-black/20 dark:hover:border-white/20"
+                      ? "bg-[#F08A42]/8 border-[#F08A42]/40"
+                      : "bg-black/[0.02] dark:bg-white/[0.02] border-[var(--border)] hover:border-black/20 dark:hover:border-white/20",
                 )}
               >
                 <div className="flex items-center gap-3 min-w-0 pr-2">
@@ -332,9 +347,14 @@ export function BrowseFilesTab({
         <Shield className="w-4 h-4 text-blue-500 shrink-0 mt-0.5" />
         <span>
           Discovered configurations are safely copied to your isolated{" "}
-          <code className="font-mono text-[var(--foreground)]">~/.kube/kubeview_*.yaml</code>{" "}
+          <code className="font-mono text-[var(--foreground)]">
+            ~/.kube/kubeview_*.yaml
+          </code>{" "}
           storage. Your system default{" "}
-          <code className="font-mono text-[var(--foreground)]">~/.kube/config</code> is never overwritten.
+          <code className="font-mono text-[var(--foreground)]">
+            ~/.kube/config
+          </code>{" "}
+          is never overwritten.
         </span>
       </div>
     </div>

@@ -3,6 +3,7 @@
 import * as React from "react";
 import { X } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { Tooltip } from "@/components/ui/Tooltip";
 
 export interface BulkWorkloadToolbarAction {
   id: string;
@@ -64,16 +65,17 @@ export function BulkWorkloadToolbar({
             </button>
           );
         })}
-        <button
-          type="button"
-          onClick={onClear}
-          data-testid="bulk-clear-selection"
-          className="rounded-lg p-1 text-[var(--muted)] transition-colors hover:bg-black/5 hover:text-[var(--foreground)] cursor-pointer dark:hover:bg-white/5"
-          title="Clear selection"
-          aria-label="Clear selection"
-        >
-          <X className="h-3.5 w-3.5" aria-hidden="true" />
-        </button>
+        <Tooltip content="Clear selection">
+          <button
+            type="button"
+            onClick={onClear}
+            data-testid="bulk-clear-selection"
+            className="rounded-lg p-1 text-[var(--muted)] transition-colors hover:bg-black/5 hover:text-[var(--foreground)] cursor-pointer dark:hover:bg-white/5"
+            aria-label="Clear selection"
+          >
+            <X className="h-3.5 w-3.5" aria-hidden="true" />
+          </button>
+        </Tooltip>
       </div>
     </div>
   );

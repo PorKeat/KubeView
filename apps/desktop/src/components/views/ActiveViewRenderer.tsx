@@ -57,7 +57,11 @@ export function ActiveViewRenderer() {
           );
         }
 
-        return <ResourceListView resourceType={activeTab ? activeTab.title : activeTabId} />;
+        return (
+          <ResourceListView
+            resourceType={activeTab ? activeTab.title : activeTabId}
+          />
+        );
       })()}
     </ErrorBoundary>
   );

@@ -35,8 +35,10 @@ export function getPodIssue(pod: PodSummary): PodIssueInfo | null {
     (c) =>
       (!c.ready || c.state !== "Running") &&
       (c.stateReason === "OOMKilled" ||
-        (c.state === "Terminated" && (c.lastTerminatedReason === "OOMKilled" || c.exitCode === 137)) ||
-        (c.waitingReason === "CrashLoopBackOff" && c.lastTerminatedReason === "OOMKilled"))
+        (c.state === "Terminated" &&
+          (c.lastTerminatedReason === "OOMKilled" || c.exitCode === 137)) ||
+        (c.waitingReason === "CrashLoopBackOff" &&
+          c.lastTerminatedReason === "OOMKilled")),
   );
   if (status === "OOMKilled" || oomContainer) {
     const cName = oomContainer?.name || pod.containers?.[0]?.name || "primary";
@@ -59,10 +61,14 @@ export function getPodIssue(pod: PodSummary): PodIssueInfo | null {
       (!c.ready || c.state !== "Running") &&
       (c.stateReason === "CrashLoopBackOff" ||
         c.waitingReason === "CrashLoopBackOff" ||
-        (c.state === "Terminated" && c.lastTerminatedReason === "Error" && c.exitCode && c.exitCode !== 0))
+        (c.state === "Terminated" &&
+          c.lastTerminatedReason === "Error" &&
+          c.exitCode &&
+          c.exitCode !== 0)),
   );
   if (status === "CrashLoopBackOff" || crashContainer) {
-    const cName = crashContainer?.name || pod.containers?.[0]?.name || "primary";
+    const cName =
+      crashContainer?.name || pod.containers?.[0]?.name || "primary";
     const ec = crashContainer?.exitCode ?? 1;
     const msg =
       crashContainer?.waitingMessage ||
@@ -89,14 +95,15 @@ export function getPodIssue(pod: PodSummary): PodIssueInfo | null {
       (c.stateReason === "ImagePullBackOff" ||
         c.stateReason === "ErrImagePull" ||
         c.waitingReason === "ImagePullBackOff" ||
-        c.waitingReason === "ErrImagePull")
+        c.waitingReason === "ErrImagePull"),
   );
   if (
     status === "ImagePullBackOff" ||
     status === "ErrImagePull" ||
     imagePullContainer
   ) {
-    const cName = imagePullContainer?.name || pod.containers?.[0]?.name || "primary";
+    const cName =
+      imagePullContainer?.name || pod.containers?.[0]?.name || "primary";
     const imgName = imagePullContainer?.image || "container image";
     const msg =
       imagePullContainer?.waitingMessage ||
@@ -121,7 +128,7 @@ export function getPodIssue(pod: PodSummary): PodIssueInfo | null {
       (c.stateReason === "CreateContainerConfigError" ||
         c.stateReason === "CreateContainerError" ||
         c.waitingReason === "CreateContainerConfigError" ||
-        c.waitingReason === "CreateContainerError")
+        c.waitingReason === "CreateContainerError"),
   );
   if (
     [
@@ -131,7 +138,8 @@ export function getPodIssue(pod: PodSummary): PodIssueInfo | null {
     ].includes(status) ||
     configContainer
   ) {
-    const cName = configContainer?.name || pod.containers?.[0]?.name || "primary";
+    const cName =
+      configContainer?.name || pod.containers?.[0]?.name || "primary";
     const msg =
       configContainer?.waitingMessage ||
       "Failed to initialize container runtime due to missing ConfigMap or Secret keys.";
@@ -153,7 +161,7 @@ export function getPodIssue(pod: PodSummary): PodIssueInfo | null {
     (c) =>
       (!c.ready || c.state !== "Running") &&
       ((c.state === "Terminated" && c.exitCode && c.exitCode !== 0) ||
-        c.stateReason === "Error")
+        c.stateReason === "Error"),
   );
   if (
     ["Error", "Failed", "ContainerCannotRun"].includes(status) ||
@@ -180,9 +188,10 @@ export function getPodIssue(pod: PodSummary): PodIssueInfo | null {
   if (status === "Running") {
     if (totalCount > 0 && readyCount < totalCount) {
       const unreadyContainer = pod.containers?.find((c) => !c.ready);
-      const cName = unreadyContainer?.name || pod.containers?.[0]?.name || "application";
+      const cName =
+        unreadyContainer?.name || pod.containers?.[0]?.name || "application";
       const readyCondition = pod.conditions?.find(
-        (c) => c.type === "ContainersReady" || c.type === "Ready"
+        (c) => c.type === "ContainersReady" || c.type === "Ready",
       );
       const msg =
         readyCondition?.message ||
@@ -242,7 +251,9 @@ export function getPodPendingInfo(pod: PodSummary): PodPendingInfo | null {
   }
 
   if (pod.status === "PodInitializing") {
-    const initContainer = pod.containers?.find((c) => c.name.startsWith("init-"));
+    const initContainer = pod.containers?.find((c) =>
+      c.name.startsWith("init-"),
+    );
     const cName = initContainer?.name || pod.containers?.[0]?.name;
     return {
       title: "Pod Initializing",
@@ -254,7 +265,9 @@ export function getPodPendingInfo(pod: PodSummary): PodPendingInfo | null {
   }
 
   if (pod.status === "Pending") {
-    const scheduledCondition = pod.conditions?.find((c) => c.type === "PodScheduled");
+    const scheduledCondition = pod.conditions?.find(
+      (c) => c.type === "PodScheduled",
+    );
     const msg =
       scheduledCondition?.message ||
       `Pod is queued in the Kubernetes scheduler and waiting to be placed onto an available cluster node.`;

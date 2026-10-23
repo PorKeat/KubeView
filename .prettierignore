@@ -1,0 +1,12 @@
+node_modules
+.next
+out
+dist
+build
+target
+src-tauri/target
+engine/bin
+graphify-out
+pnpm-lock.yaml
+*.min.js
+src-tauri/gen

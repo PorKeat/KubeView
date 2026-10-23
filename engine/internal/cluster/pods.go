@@ -165,6 +165,7 @@ type LaunchDebugContainerResult struct {
 }
 
 type PodEventItem struct {
+	Context                 string `json:"context,omitempty"`
 	Type                    string `json:"type"`
 	Reason                  string `json:"reason"`
 	Message                 string `json:"message"`

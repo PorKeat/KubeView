@@ -6,7 +6,9 @@
 export function isInternalEndpoint(serverUrl: string): boolean {
   if (!serverUrl) return false;
   try {
-    const url = serverUrl.includes("://") ? new URL(serverUrl) : new URL(`https://${serverUrl}`);
+    const url = serverUrl.includes("://")
+      ? new URL(serverUrl)
+      : new URL(`https://${serverUrl}`);
     const host = url.hostname.toLowerCase();
     return (
       host.endsWith(".local") ||
@@ -31,7 +33,10 @@ export function isInternalEndpoint(serverUrl: string): boolean {
  * Replaces the hostname in serverUrl with newHostOrIp, preserving scheme and port.
  * e.g. ("https://lb.kubesphere.local:6443", "10.1.16.11") -> "https://10.1.16.11:6443"
  */
-export function replaceEndpointHost(serverUrl: string, newHostOrIp: string): string {
+export function replaceEndpointHost(
+  serverUrl: string,
+  newHostOrIp: string,
+): string {
   const trimmed = newHostOrIp.trim();
   if (!trimmed) return serverUrl;
 
@@ -39,7 +44,9 @@ export function replaceEndpointHost(serverUrl: string, newHostOrIp: string): str
   let fallbackPort = "6443";
   let fallbackProtocol = "https:";
   try {
-    const origUrl = serverUrl.includes("://") ? new URL(serverUrl) : new URL(`https://${serverUrl}`);
+    const origUrl = serverUrl.includes("://")
+      ? new URL(serverUrl)
+      : new URL(`https://${serverUrl}`);
     if (origUrl.port) fallbackPort = origUrl.port;
     if (origUrl.protocol) fallbackProtocol = origUrl.protocol;
   } catch {}

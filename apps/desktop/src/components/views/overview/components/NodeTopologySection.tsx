@@ -54,7 +54,8 @@ export function NodeTopologySection({
           </span>
           <span className="text-xs text-[var(--muted)] font-mono hidden md:inline">
             {readyNodesCount} of {nodes.length} Ready
-            {isNamespaceScoped && ` / ${nodesHostingCount} hosting ${currentNamespace}`}
+            {isNamespaceScoped &&
+              ` / ${nodesHostingCount} hosting ${currentNamespace}`}
           </span>
         </div>
 
@@ -74,7 +75,7 @@ export function NodeTopologySection({
                 "relative z-10 px-2.5 py-1 rounded-md flex items-center gap-1.5 transition-colors duration-150 cursor-pointer focus-visible:ring-2 focus-visible:ring-[var(--accent)] focus-visible:outline-hidden",
                 nodeViewMode === "grid"
                   ? "text-[var(--foreground)] font-semibold"
-                  : "text-[var(--muted)] hover:text-[var(--foreground)]"
+                  : "text-[var(--muted)] hover:text-[var(--foreground)]",
               )}
               title="Matrix Grid View"
             >
@@ -97,7 +98,7 @@ export function NodeTopologySection({
                 "relative z-10 px-2.5 py-1 rounded-md flex items-center gap-1.5 transition-colors duration-150 cursor-pointer focus-visible:ring-2 focus-visible:ring-[var(--accent)] focus-visible:outline-hidden",
                 nodeViewMode === "table"
                   ? "text-[var(--foreground)] font-semibold"
-                  : "text-[var(--muted)] hover:text-[var(--foreground)]"
+                  : "text-[var(--muted)] hover:text-[var(--foreground)]",
               )}
               title="Telemetry Table View"
             >

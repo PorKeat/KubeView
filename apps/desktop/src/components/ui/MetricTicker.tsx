@@ -36,7 +36,10 @@ export function MetricTicker({
 
   return (
     <motion.span
-      className={cn("font-mono tabular-nums tracking-tight select-none", className)}
+      className={cn(
+        "font-mono tabular-nums tracking-tight select-none",
+        className,
+      )}
     >
       {display}
     </motion.span>

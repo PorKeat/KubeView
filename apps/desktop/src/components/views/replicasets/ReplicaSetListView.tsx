@@ -1,5 +1,7 @@
 "use client";
 
+import { sortableHeaderProps } from "@/lib/sortableHeader";
+
 import * as React from "react";
 import { motion } from "motion/react";
 import {
@@ -149,8 +151,10 @@ export function ReplicaSetListView() {
           comparison = a.status.localeCompare(b.status);
           break;
         case "ready": {
-          const ratioA = a.desiredReplicas === 0 ? 1 : a.readyReplicas / a.desiredReplicas;
-          const ratioB = b.desiredReplicas === 0 ? 1 : b.readyReplicas / b.desiredReplicas;
+          const ratioA =
+            a.desiredReplicas === 0 ? 1 : a.readyReplicas / a.desiredReplicas;
+          const ratioB =
+            b.desiredReplicas === 0 ? 1 : b.readyReplicas / b.desiredReplicas;
           comparison = ratioA - ratioB;
           break;
         }
@@ -172,7 +176,11 @@ export function ReplicaSetListView() {
     return sortedItems.slice(start, start + pageSize);
   }, [sortedItems, safeCurrentPage, pageSize]);
 
-  const selection = useWorkloadSelection(replicaSets, paginatedItems, getReplicaSetKey);
+  const selection = useWorkloadSelection(
+    replicaSets,
+    paginatedItems,
+    getReplicaSetKey,
+  );
 
   const openBulkDelete = () => {
     if (selection.selectedObjects.length === 0) return;
@@ -388,15 +396,26 @@ export function ReplicaSetListView() {
             <thead className="sticky top-0 bg-[var(--surface)] z-10 border-b border-[var(--border)] select-none">
               <tr className="text-[11px] font-semibold text-[var(--muted)] uppercase tracking-wider h-8">
                 <th className="w-8 px-2 text-center">
-                  <Tooltip content={selection.isPageAllSelected ? "Deselect all on page" : "Select all on page"}>
+                  <Tooltip
+                    content={
+                      selection.isPageAllSelected
+                        ? "Deselect all on page"
+                        : "Select all on page"
+                    }
+                  >
                     <button
                       onClick={selection.toggleSelectAll}
                       className="text-[var(--muted)] hover:text-[var(--foreground)] flex items-center justify-center cursor-pointer"
-                      aria-label={selection.isPageAllSelected ? "Deselect all on page" : "Select all on page"}
+                      aria-label={
+                        selection.isPageAllSelected
+                          ? "Deselect all on page"
+                          : "Select all on page"
+                      }
                     >
                       {selection.isPageAllSelected ? (
                         <CheckSquare className="w-3.5 h-3.5 text-[var(--accent)]" />
-                      ) : selection.isPageSomeSelected || selection.selectedItems.size > 0 ? (
+                      ) : selection.isPageSomeSelected ||
+                        selection.selectedItems.size > 0 ? (
                         <MinusSquare className="w-3.5 h-3.5 text-[var(--accent)]" />
                       ) : (
                         <Square className="w-3.5 h-3.5" />
@@ -406,7 +425,12 @@ export function ReplicaSetListView() {
                 </th>
 
                 <th
-                  onClick={() => handleSort("name")}
+                  {...sortableHeaderProps({
+                    field: "name",
+                    activeField: sortField,
+                    ascending: sortAsc,
+                    onSort: handleSort,
+                  })}
                   className="w-48 sm:w-56 md:w-64 py-1 px-3 cursor-pointer hover:text-[var(--foreground)] transition-colors min-w-0"
                 >
                   <div className="flex items-center gap-1">
@@ -415,7 +439,12 @@ export function ReplicaSetListView() {
                   </div>
                 </th>
                 <th
-                  onClick={() => handleSort("namespace")}
+                  {...sortableHeaderProps({
+                    field: "namespace",
+                    activeField: sortField,
+                    ascending: sortAsc,
+                    onSort: handleSort,
+                  })}
                   className="w-24 sm:w-28 py-1 px-3 cursor-pointer hover:text-[var(--foreground)] transition-colors"
                 >
                   <div className="flex items-center gap-1">
@@ -424,7 +453,12 @@ export function ReplicaSetListView() {
                   </div>
                 </th>
                 <th
-                  onClick={() => handleSort("status")}
+                  {...sortableHeaderProps({
+                    field: "status",
+                    activeField: sortField,
+                    ascending: sortAsc,
+                    onSort: handleSort,
+                  })}
                   className="w-28 py-1 px-3 cursor-pointer hover:text-[var(--foreground)] transition-colors"
                 >
                   <div className="flex items-center gap-1">
@@ -435,7 +469,12 @@ export function ReplicaSetListView() {
                 <th className="w-20 py-1 px-3">Desired</th>
                 <th className="w-20 py-1 px-3">Current</th>
                 <th
-                  onClick={() => handleSort("ready")}
+                  {...sortableHeaderProps({
+                    field: "ready",
+                    activeField: sortField,
+                    ascending: sortAsc,
+                    onSort: handleSort,
+                  })}
                   className="w-20 py-1 px-3 cursor-pointer hover:text-[var(--foreground)] transition-colors"
                 >
                   <div className="flex items-center gap-1">
@@ -445,7 +484,12 @@ export function ReplicaSetListView() {
                 </th>
                 <th className="w-40 py-1 px-3">Owner</th>
                 <th
-                  onClick={() => handleSort("age")}
+                  {...sortableHeaderProps({
+                    field: "age",
+                    activeField: sortField,
+                    ascending: sortAsc,
+                    onSort: handleSort,
+                  })}
                   className="w-14 sm:w-16 py-1 px-3 cursor-pointer hover:text-[var(--foreground)] transition-colors"
                 >
                   <div className="flex items-center gap-1">
@@ -453,7 +497,10 @@ export function ReplicaSetListView() {
                     {renderSortIndicator("age")}
                   </div>
                 </th>
-                <th className="w-9 py-1 px-2 text-right" aria-label="Actions"></th>
+                <th
+                  className="w-9 py-1 px-2 text-right"
+                  aria-label="Actions"
+                ></th>
               </tr>
             </thead>
             <tbody className="divide-y divide-[var(--border)]">
@@ -461,7 +508,9 @@ export function ReplicaSetListView() {
                 <ReplicaSetTableRow
                   key={`${item.namespace}/${item.name}`}
                   item={item}
-                  isSelected={selection.selectedItems.has(getReplicaSetKey(item))}
+                  isSelected={selection.selectedItems.has(
+                    getReplicaSetKey(item),
+                  )}
                   onToggleSelect={selection.toggleSelectItem}
                   onViewPods={handleViewPods}
                   onRowClick={(replicaSet) =>
@@ -533,7 +582,9 @@ export function ReplicaSetListView() {
                 return (
                   <button
                     key={size}
-                    type="button" aria-pressed={isSelected} data-testid={`page-size-${size}`}
+                    type="button"
+                    aria-pressed={isSelected}
+                    data-testid={`page-size-${size}`}
                     onClick={() => {
                       setPageSize(size);
                       setCurrentPage(1);
@@ -549,10 +600,17 @@ export function ReplicaSetListView() {
                       <motion.span
                         layoutId="replicaSetPageSizeIndicator"
                         className="absolute inset-0 rounded-md bg-[var(--surface-active)] dark:bg-white/10 shadow-xs border border-[var(--border)]/60"
-                        transition={{ type: "spring", stiffness: 450, damping: 32, mass: 0.8 }}
+                        transition={{
+                          type: "spring",
+                          stiffness: 450,
+                          damping: 32,
+                          mass: 0.8,
+                        }}
                       />
                     )}
-                    <span className="relative z-10">{size === 0 ? "All" : size}</span>
+                    <span className="relative z-10">
+                      {size === 0 ? "All" : size}
+                    </span>
                   </button>
                 );
               })}
@@ -592,12 +650,17 @@ export function ReplicaSetListView() {
                   </motion.button>
                 </Tooltip>
 
-                <Tooltip content="Previous page" disabled={safeCurrentPage <= 1}>
+                <Tooltip
+                  content="Previous page"
+                  disabled={safeCurrentPage <= 1}
+                >
                   <motion.button
                     whileHover={{ scale: 1.05 }}
                     whileTap={{ scale: 0.92 }}
                     disabled={safeCurrentPage <= 1}
-                    onClick={() => setCurrentPage((page) => Math.max(1, page - 1))}
+                    onClick={() =>
+                      setCurrentPage((page) => Math.max(1, page - 1))
+                    }
                     className="w-6.5 h-6.5 inline-flex items-center justify-center rounded-md border border-[var(--border)]/80 bg-[var(--surface)] hover:bg-[var(--surface-hover)] text-[var(--muted)] hover:text-[var(--foreground)] disabled:opacity-25 disabled:pointer-events-none transition-colors cursor-pointer"
                     aria-label="Previous page"
                   >
@@ -605,12 +668,17 @@ export function ReplicaSetListView() {
                   </motion.button>
                 </Tooltip>
 
-                <Tooltip content="Next page" disabled={safeCurrentPage >= totalPages}>
+                <Tooltip
+                  content="Next page"
+                  disabled={safeCurrentPage >= totalPages}
+                >
                   <motion.button
                     whileHover={{ scale: 1.05 }}
                     whileTap={{ scale: 0.92 }}
                     disabled={safeCurrentPage >= totalPages}
-                    onClick={() => setCurrentPage((page) => Math.min(totalPages, page + 1))}
+                    onClick={() =>
+                      setCurrentPage((page) => Math.min(totalPages, page + 1))
+                    }
                     className="w-6.5 h-6.5 inline-flex items-center justify-center rounded-md border border-[var(--border)]/80 bg-[var(--surface)] hover:bg-[var(--surface-hover)] text-[var(--muted)] hover:text-[var(--foreground)] disabled:opacity-25 disabled:pointer-events-none transition-colors cursor-pointer"
                     aria-label="Next page"
                   >
@@ -618,7 +686,10 @@ export function ReplicaSetListView() {
                   </motion.button>
                 </Tooltip>
 
-                <Tooltip content="Last page" disabled={safeCurrentPage >= totalPages}>
+                <Tooltip
+                  content="Last page"
+                  disabled={safeCurrentPage >= totalPages}
+                >
                   <motion.button
                     whileHover={{ scale: 1.05 }}
                     whileTap={{ scale: 0.92 }}

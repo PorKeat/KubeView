@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import { GeistMono } from "geist/font/mono";
 import { ThemeProvider } from "@/components/providers/ThemeProvider";
-import { QueryProvider } from "@/components/providers/QueryProvider";
+import { TooltipProvider } from "@/components/ui/Tooltip";
 import { Toaster } from "sonner";
 import "./globals.css";
 
@@ -26,7 +26,11 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" suppressHydrationWarning className={`${inter.variable} ${GeistMono.variable}`}>
+    <html
+      lang="en"
+      suppressHydrationWarning
+      className={`${inter.variable} ${GeistMono.variable}`}
+    >
       <head>
         <script
           dangerouslySetInnerHTML={{
@@ -49,12 +53,20 @@ export default function RootLayout({
           }}
         />
       </head>
-      <body suppressHydrationWarning className="h-screen w-screen font-sans antialiased overflow-hidden select-none">
-        <ThemeProvider attribute="class" defaultTheme="dark" enableSystem disableTransitionOnChange>
-          <QueryProvider>
+      <body
+        suppressHydrationWarning
+        className="h-screen w-screen font-sans antialiased overflow-hidden select-none"
+      >
+        <ThemeProvider
+          attribute="class"
+          defaultTheme="dark"
+          enableSystem
+          disableTransitionOnChange
+        >
+          <TooltipProvider delayDuration={200} skipDelayDuration={150}>
             {children}
             <Toaster position="bottom-right" richColors closeButton />
-          </QueryProvider>
+          </TooltipProvider>
         </ThemeProvider>
       </body>
     </html>

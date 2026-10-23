@@ -110,7 +110,12 @@ export function TableSkeleton({
  */
 export function OverviewSkeleton({ className }: { className?: string }) {
   return (
-    <div className={cn("p-3 sm:p-5 space-y-5 select-none animate-in fade-in duration-300", className)}>
+    <div
+      className={cn(
+        "p-3 sm:p-5 space-y-5 select-none animate-in fade-in duration-300",
+        className,
+      )}
+    >
       {/* 1. Hero Banner Skeleton */}
       <div className="p-5 rounded-2xl glass-panel border border-[var(--border)] relative overflow-hidden">
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
@@ -170,7 +175,10 @@ export function OverviewSkeleton({ className }: { className?: string }) {
 
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
           {Array.from({ length: 3 }).map((_, i) => (
-            <div key={i} className="p-3.5 rounded-xl border border-[var(--border)] bg-black/[0.03] dark:bg-black/30 space-y-3">
+            <div
+              key={i}
+              className="p-3.5 rounded-xl border border-[var(--border)] bg-black/[0.03] dark:bg-black/30 space-y-3"
+            >
               <div className="flex justify-between items-center">
                 <div className="flex items-center gap-2">
                   <SkeletonCircle size={8} />
@@ -199,7 +207,10 @@ export function OverviewSkeleton({ className }: { className?: string }) {
           </div>
           <div className="grid grid-cols-1 gap-2.5 sm:grid-cols-2">
             {Array.from({ length: 4 }).map((_, i) => (
-              <div key={i} className="p-3 rounded-lg border border-[var(--border)] bg-black/[0.03] dark:bg-black/20 space-y-2">
+              <div
+                key={i}
+                className="p-3 rounded-lg border border-[var(--border)] bg-black/[0.03] dark:bg-black/20 space-y-2"
+              >
                 <div className="flex justify-between items-center">
                   <Skeleton className="h-3 w-24 rounded" />
                   <Skeleton className="h-4 w-12 rounded-full" />
@@ -217,7 +228,10 @@ export function OverviewSkeleton({ className }: { className?: string }) {
           </div>
           <div className="space-y-2">
             {Array.from({ length: 3 }).map((_, i) => (
-              <div key={i} className="p-2.5 rounded-lg border border-[var(--border)] bg-black/[0.02] dark:bg-white/[0.01] space-y-1.5">
+              <div
+                key={i}
+                className="p-2.5 rounded-lg border border-[var(--border)] bg-black/[0.02] dark:bg-white/[0.01] space-y-1.5"
+              >
                 <div className="flex justify-between">
                   <Skeleton className="h-3 w-20 rounded" />
                   <Skeleton className="h-2.5 w-10 rounded" />
@@ -304,7 +318,12 @@ export function CardSkeleton({
   className?: string;
 }) {
   return (
-    <div className={cn("p-4 rounded-xl glass-card border border-[var(--border)] space-y-3", className)}>
+    <div
+      className={cn(
+        "p-4 rounded-xl glass-card border border-[var(--border)] space-y-3",
+        className,
+      )}
+    >
       <div className="flex items-center justify-between">
         <Skeleton className="h-4 w-32 rounded" />
         <SkeletonCircle size={16} />

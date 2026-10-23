@@ -1,5 +1,7 @@
 "use client";
 
+import { sortableHeaderProps } from "@/lib/sortableHeader";
+
 import * as React from "react";
 import { motion } from "motion/react";
 import {
@@ -105,7 +107,10 @@ export function ResourceListView({ resourceType }: ResourceListViewProps) {
 
   // Initial fetch when mounted, when context changes, or if pods have not loaded yet
   React.useEffect(() => {
-    if (currentContext && (!hasLoadedPodsOnce || useClusterStore.getState().pods.length === 0)) {
+    if (
+      currentContext &&
+      (!hasLoadedPodsOnce || useClusterStore.getState().pods.length === 0)
+    ) {
       loadPods();
     }
   }, [currentContext, hasLoadedPodsOnce, loadPods]);
@@ -158,8 +163,7 @@ export function ResourceListView({ resourceType }: ResourceListViewProps) {
       currentNamespace === "all"
         ? pods
         : pods.filter(
-            (p) =>
-              p.namespace.toLowerCase() === currentNamespace.toLowerCase(),
+            (p) => p.namespace.toLowerCase() === currentNamespace.toLowerCase(),
           );
 
     if (podNodeFilter) {
@@ -210,12 +214,9 @@ export function ResourceListView({ resourceType }: ResourceListViewProps) {
 
       // 3. Status filter
       if (statusFilter !== "all") {
-        if (statusFilter === "running" && !isPodRunning(pod))
-          return false;
-        if (statusFilter === "pending" && !isPodPending(pod))
-          return false;
-        if (statusFilter === "failing" && !isPodFailing(pod))
-          return false;
+        if (statusFilter === "running" && !isPodRunning(pod)) return false;
+        if (statusFilter === "pending" && !isPodPending(pod)) return false;
+        if (statusFilter === "failing" && !isPodFailing(pod)) return false;
       }
 
       // 4. Free-text search (debounced via useDeferredValue for 120 FPS typing)
@@ -409,9 +410,9 @@ export function ResourceListView({ resourceType }: ResourceListViewProps) {
                       ? `No ${resourceType.toLowerCase()} match ${
                           podLabelFilterSource ?? "label filter"
                         }`
-                    : search || statusFilter !== "all"
-                      ? `No ${resourceType.toLowerCase()} match filter "${search || statusFilter}"`
-                      : `No ${resourceType.toLowerCase()} scheduled in "${currentNamespace}"`
+                      : search || statusFilter !== "all"
+                        ? `No ${resourceType.toLowerCase()} match filter "${search || statusFilter}"`
+                        : `No ${resourceType.toLowerCase()} scheduled in "${currentNamespace}"`
             }
             description={
               statusFilter === "failing" && !search
@@ -434,40 +435,40 @@ export function ResourceListView({ resourceType }: ResourceListViewProps) {
                         ? "all cluster namespaces"
                         : `namespace "${currentNamespace}"`
                     } have completed scheduling and initialization.`
-                : podNodeFilter
-                  ? `Host "${podNodeFilter}" currently has zero running workloads matching your active criteria.`
-                : podLabelFilter
-                  ? `0 of ${
-                      currentNamespace === "all"
-                        ? pods.length
-                        : namespaceCounts[currentNamespace] || 0
-                    } ${resourceType.toLowerCase()} in ${
-                      currentNamespace === "all"
-                        ? "all namespaces"
-                        : `namespace "${currentNamespace}"`
-                    } match ${podLabelFilterSource ?? "the selected label filter"}.`
-                  : search || statusFilter !== "all"
-                    ? `0 of ${
-                        currentNamespace === "all"
-                          ? pods.length
-                          : namespaceCounts[currentNamespace] || 0
-                      } ${resourceType.toLowerCase()} in ${
-                        currentNamespace === "all"
-                          ? "all namespaces"
-                          : `namespace "${currentNamespace}"`
-                      } match your active search or status criteria.`
-                    : `Namespace "${currentNamespace}" currently holds zero active workloads. ${pods.length} pods are active in other namespaces.`
+                  : podNodeFilter
+                    ? `Host "${podNodeFilter}" currently has zero running workloads matching your active criteria.`
+                    : podLabelFilter
+                      ? `0 of ${
+                          currentNamespace === "all"
+                            ? pods.length
+                            : namespaceCounts[currentNamespace] || 0
+                        } ${resourceType.toLowerCase()} in ${
+                          currentNamespace === "all"
+                            ? "all namespaces"
+                            : `namespace "${currentNamespace}"`
+                        } match ${podLabelFilterSource ?? "the selected label filter"}.`
+                      : search || statusFilter !== "all"
+                        ? `0 of ${
+                            currentNamespace === "all"
+                              ? pods.length
+                              : namespaceCounts[currentNamespace] || 0
+                          } ${resourceType.toLowerCase()} in ${
+                            currentNamespace === "all"
+                              ? "all namespaces"
+                              : `namespace "${currentNamespace}"`
+                          } match your active search or status criteria.`
+                        : `Namespace "${currentNamespace}" currently holds zero active workloads. ${pods.length} pods are active in other namespaces.`
             }
             scopeBadge={
               podNodeFilter
                 ? `Node: ${podNodeFilter}`
                 : podLabelFilter
                   ? (podLabelFilterSource ?? `Label: ${podLabelFilter}`)
-                : search || statusFilter !== "all"
-                  ? search
-                    ? `Query: "${search}"`
-                    : `Status: ${statusFilter}`
-                  : `Namespace: ${currentNamespace}`
+                  : search || statusFilter !== "all"
+                    ? search
+                      ? `Query: "${search}"`
+                      : `Status: ${statusFilter}`
+                    : `Namespace: ${currentNamespace}`
             }
             codeSnippet={
               !search &&
@@ -512,28 +513,30 @@ export function ResourceListView({ resourceType }: ResourceListViewProps) {
                       icon: <RefreshCw className="w-3.5 h-3.5" />,
                       onClick: () => setPodLabelFilter(null, null),
                     }
-                  : (statusFilter === "failing" || statusFilter === "pending") && !search
-                  ? {
-                      label: "View All Workloads",
-                      icon: <RefreshCw className="w-3.5 h-3.5" />,
-                      onClick: () => setStatusFilter("all"),
-                    }
-                  : search || statusFilter !== "all"
+                  : (statusFilter === "failing" ||
+                        statusFilter === "pending") &&
+                      !search
                     ? {
-                        label: "Clear Filters",
+                        label: "View All Workloads",
                         icon: <RefreshCw className="w-3.5 h-3.5" />,
-                        onClick: () => {
-                          setSearch("");
-                          setStatusFilter("all");
-                        },
+                        onClick: () => setStatusFilter("all"),
                       }
-                    : {
-                        label: `View All Namespaces (${pods.length})`,
-                        icon: <Globe className="w-3.5 h-3.5" />,
-                        onClick: () => {
-                          setCurrentNamespace("all");
-                        },
-                      }
+                    : search || statusFilter !== "all"
+                      ? {
+                          label: "Clear Filters",
+                          icon: <RefreshCw className="w-3.5 h-3.5" />,
+                          onClick: () => {
+                            setSearch("");
+                            setStatusFilter("all");
+                          },
+                        }
+                      : {
+                          label: `View All Namespaces (${pods.length})`,
+                          icon: <Globe className="w-3.5 h-3.5" />,
+                          onClick: () => {
+                            setCurrentNamespace("all");
+                          },
+                        }
             }
             secondaryAction={
               podNodeFilter
@@ -581,11 +584,21 @@ export function ResourceListView({ resourceType }: ResourceListViewProps) {
             <thead className="sticky top-0 bg-[var(--surface)] z-10 border-b border-[var(--border)] select-none">
               <tr className="text-[11px] font-semibold text-[var(--muted)] uppercase tracking-wider h-8">
                 <th className="w-8 px-2 text-center">
-                  <Tooltip content={isPageAllSelected ? "Deselect all on page" : "Select all on page"}>
+                  <Tooltip
+                    content={
+                      isPageAllSelected
+                        ? "Deselect all on page"
+                        : "Select all on page"
+                    }
+                  >
                     <button
                       onClick={toggleSelectAll}
                       className="text-[var(--muted)] hover:text-[var(--foreground)] flex items-center justify-center cursor-pointer"
-                      aria-label={isPageAllSelected ? "Deselect all on page" : "Select all on page"}
+                      aria-label={
+                        isPageAllSelected
+                          ? "Deselect all on page"
+                          : "Select all on page"
+                      }
                     >
                       {isPageAllSelected ? (
                         <CheckSquare className="w-3.5 h-3.5 text-[var(--accent)]" />
@@ -598,7 +611,12 @@ export function ResourceListView({ resourceType }: ResourceListViewProps) {
                   </Tooltip>
                 </th>
                 <th
-                  onClick={() => handleSort("name")}
+                  {...sortableHeaderProps({
+                    field: "name",
+                    activeField: sortField,
+                    ascending: sortAsc,
+                    onSort: handleSort,
+                  })}
                   className="w-48 sm:w-56 md:w-64 py-1 px-3 cursor-pointer hover:text-[var(--foreground)] transition-colors min-w-0"
                 >
                   <div className="flex items-center gap-1">
@@ -615,7 +633,12 @@ export function ResourceListView({ resourceType }: ResourceListViewProps) {
                   </div>
                 </th>
                 <th
-                  onClick={() => handleSort("namespace")}
+                  {...sortableHeaderProps({
+                    field: "namespace",
+                    activeField: sortField,
+                    ascending: sortAsc,
+                    onSort: handleSort,
+                  })}
                   className="w-24 sm:w-28 py-1 px-3 cursor-pointer hover:text-[var(--foreground)] transition-colors"
                 >
                   <div className="flex items-center gap-1">
@@ -632,7 +655,12 @@ export function ResourceListView({ resourceType }: ResourceListViewProps) {
                   </div>
                 </th>
                 <th
-                  onClick={() => handleSort("status")}
+                  {...sortableHeaderProps({
+                    field: "status",
+                    activeField: sortField,
+                    ascending: sortAsc,
+                    onSort: handleSort,
+                  })}
                   className="w-24 py-1 px-3 cursor-pointer hover:text-[var(--foreground)] transition-colors"
                 >
                   <div className="flex items-center gap-1">
@@ -650,7 +678,12 @@ export function ResourceListView({ resourceType }: ResourceListViewProps) {
                 </th>
                 <th className="w-16 sm:w-20 py-1 px-3">Ready</th>
                 <th
-                  onClick={() => handleSort("restarts")}
+                  {...sortableHeaderProps({
+                    field: "restarts",
+                    activeField: sortField,
+                    ascending: sortAsc,
+                    onSort: handleSort,
+                  })}
                   className="w-24 sm:w-28 py-1 px-3 cursor-pointer hover:text-[var(--foreground)] transition-colors"
                 >
                   <div className="flex items-center gap-1">
@@ -667,7 +700,12 @@ export function ResourceListView({ resourceType }: ResourceListViewProps) {
                   </div>
                 </th>
                 <th
-                  onClick={() => handleSort("node")}
+                  {...sortableHeaderProps({
+                    field: "node",
+                    activeField: sortField,
+                    ascending: sortAsc,
+                    onSort: handleSort,
+                  })}
                   className="w-28 sm:w-36 py-1 px-3 cursor-pointer hover:text-[var(--foreground)] transition-colors"
                 >
                   <div className="flex items-center gap-1">
@@ -687,7 +725,12 @@ export function ResourceListView({ resourceType }: ResourceListViewProps) {
                 <th className="w-16 sm:w-20 py-1 px-3">CPU</th>
                 <th className="w-20 sm:w-24 py-1 px-3">Memory</th>
                 <th
-                  onClick={() => handleSort("age")}
+                  {...sortableHeaderProps({
+                    field: "age",
+                    activeField: sortField,
+                    ascending: sortAsc,
+                    onSort: handleSort,
+                  })}
                   className="w-14 sm:w-16 py-1 px-3 cursor-pointer hover:text-[var(--foreground)] transition-colors"
                 >
                   <div className="flex items-center gap-1">
@@ -703,7 +746,10 @@ export function ResourceListView({ resourceType }: ResourceListViewProps) {
                     )}
                   </div>
                 </th>
-                <th className="w-9 py-1 px-2 text-right" aria-label="Actions"></th>
+                <th
+                  className="w-9 py-1 px-2 text-right"
+                  aria-label="Actions"
+                ></th>
               </tr>
             </thead>
             <tbody className="divide-y divide-[var(--border)]">
@@ -804,7 +850,8 @@ export function ResourceListView({ resourceType }: ResourceListViewProps) {
           {sortedItems.length !==
             (podNodeFilter ? basePods.length : pods.length) && (
             <span className="text-[10px] text-[var(--muted)] opacity-70">
-              (filtered from {podNodeFilter ? basePods.length : pods.length} total)
+              (filtered from {podNodeFilter ? basePods.length : pods.length}{" "}
+              total)
             </span>
           )}
         </div>
@@ -821,7 +868,9 @@ export function ResourceListView({ resourceType }: ResourceListViewProps) {
                 return (
                   <button
                     key={size}
-                    type="button" aria-pressed={isSelected} data-testid={`page-size-${size}`}
+                    type="button"
+                    aria-pressed={isSelected}
+                    data-testid={`page-size-${size}`}
                     onClick={() => {
                       setPageSize(size);
                       setCurrentPage(1);
@@ -845,7 +894,9 @@ export function ResourceListView({ resourceType }: ResourceListViewProps) {
                         }}
                       />
                     )}
-                    <span className="relative z-10">{size === 0 ? "All" : size}</span>
+                    <span className="relative z-10">
+                      {size === 0 ? "All" : size}
+                    </span>
                   </button>
                 );
               })}
@@ -886,7 +937,10 @@ export function ResourceListView({ resourceType }: ResourceListViewProps) {
                   </motion.button>
                 </Tooltip>
 
-                <Tooltip content="Previous page" disabled={safeCurrentPage <= 1}>
+                <Tooltip
+                  content="Previous page"
+                  disabled={safeCurrentPage <= 1}
+                >
                   <motion.button
                     whileHover={{ scale: 1.05 }}
                     whileTap={{ scale: 0.92 }}
@@ -899,12 +953,17 @@ export function ResourceListView({ resourceType }: ResourceListViewProps) {
                   </motion.button>
                 </Tooltip>
 
-                <Tooltip content="Next page" disabled={safeCurrentPage >= totalPages}>
+                <Tooltip
+                  content="Next page"
+                  disabled={safeCurrentPage >= totalPages}
+                >
                   <motion.button
                     whileHover={{ scale: 1.05 }}
                     whileTap={{ scale: 0.92 }}
                     disabled={safeCurrentPage >= totalPages}
-                    onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+                    onClick={() =>
+                      setCurrentPage((p) => Math.min(totalPages, p + 1))
+                    }
                     className="w-6.5 h-6.5 inline-flex items-center justify-center rounded-md border border-[var(--border)]/80 bg-[var(--surface)] hover:bg-[var(--surface-hover)] text-[var(--muted)] hover:text-[var(--foreground)] disabled:opacity-25 disabled:pointer-events-none transition-colors cursor-pointer"
                     aria-label="Next page"
                   >
@@ -912,7 +971,10 @@ export function ResourceListView({ resourceType }: ResourceListViewProps) {
                   </motion.button>
                 </Tooltip>
 
-                <Tooltip content="Last page" disabled={safeCurrentPage >= totalPages}>
+                <Tooltip
+                  content="Last page"
+                  disabled={safeCurrentPage >= totalPages}
+                >
                   <motion.button
                     whileHover={{ scale: 1.05 }}
                     whileTap={{ scale: 0.92 }}

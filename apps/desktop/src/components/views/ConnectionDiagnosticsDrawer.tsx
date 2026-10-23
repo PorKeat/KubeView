@@ -118,14 +118,16 @@ export function ConnectionDiagnosticsDrawer({
       aria-labelledby="diagnostics-drawer-title"
       className={cn(
         "fixed inset-0 z-50 overflow-hidden select-none transition-all duration-200 motion-reduce:transition-none",
-        isMounted ? "pointer-events-auto" : "pointer-events-none"
+        isMounted ? "pointer-events-auto" : "pointer-events-none",
       )}
     >
       {/* Backdrop / Dim Overlay with smooth fade */}
       <div
         className={cn(
           "fixed inset-0 bg-black/40 dark:bg-black/60 backdrop-blur-[2px] transition-opacity motion-reduce:transition-none cursor-pointer",
-          isMounted ? "opacity-100 duration-250 ease-out" : "opacity-0 duration-200 ease-in"
+          isMounted
+            ? "opacity-100 duration-250 ease-out"
+            : "opacity-0 duration-200 ease-in",
         )}
         onClick={onClose}
         aria-hidden="true"
@@ -138,7 +140,7 @@ export function ConnectionDiagnosticsDrawer({
           "transform transition-transform motion-reduce:transition-none motion-reduce:transform-none",
           isMounted
             ? "translate-x-0 duration-250 ease-[cubic-bezier(0.16,1,0.3,1)]"
-            : "translate-x-full duration-200 ease-in"
+            : "translate-x-full duration-200 ease-in",
         )}
       >
         {/* Header */}
@@ -157,7 +159,9 @@ export function ConnectionDiagnosticsDrawer({
               <div className="flex items-center gap-2 text-xs text-[var(--muted)] font-mono mt-0.5 truncate">
                 <span className="truncate">{currentContext || "default"}</span>
                 <span>&bull;</span>
-                <span className="tabular-nums">K8s {serverVersion || "Unknown"}</span>
+                <span className="tabular-nums">
+                  K8s {serverVersion || "Unknown"}
+                </span>
               </div>
             </div>
           </div>
@@ -182,7 +186,7 @@ export function ConnectionDiagnosticsDrawer({
               "p-4 rounded-xl border flex items-start gap-3.5",
               allPassed
                 ? "bg-emerald-500/10 border-emerald-500/25 text-emerald-950 dark:text-emerald-200"
-                : "bg-amber-500/10 border-amber-500/25 text-amber-950 dark:text-amber-200"
+                : "bg-amber-500/10 border-amber-500/25 text-amber-950 dark:text-amber-200",
             )}
           >
             {allPassed ? (
@@ -222,7 +226,10 @@ export function ConnectionDiagnosticsDrawer({
                       1. Network & TCP Handshake
                     </div>
                     <div className="text-[11px] text-[var(--muted)] font-mono">
-                      Target Socket: {netStage?.details?.host ? String(netStage.details.host) : "Host IP:6443"}
+                      Target Socket:{" "}
+                      {netStage?.details?.host
+                        ? String(netStage.details.host)
+                        : "Host IP:6443"}
                     </div>
                   </div>
                 </div>
@@ -267,7 +274,7 @@ export function ConnectionDiagnosticsDrawer({
                       "text-xs font-mono font-medium px-2 py-0.5 rounded border",
                       authStage?.passed
                         ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20"
-                        : "bg-rose-500/10 text-rose-600 dark:text-rose-400 border-rose-500/20"
+                        : "bg-rose-500/10 text-rose-600 dark:text-rose-400 border-rose-500/20",
                     )}
                   >
                     {authStage?.passed ? "Authorized" : "Failed"}
@@ -303,17 +310,18 @@ export function ConnectionDiagnosticsDrawer({
                 </div>
 
                 <div className="flex items-center gap-2 shrink-0">
-                  {typeof tlsStage?.latencyMs === "number" && tlsStage.latencyMs > 0 && (
-                    <span className="text-xs font-mono font-medium px-2 py-0.5 rounded bg-[var(--surface)] border border-[var(--border)] tabular-nums text-[var(--foreground)]">
-                      {tlsStage.latencyMs}ms
-                    </span>
-                  )}
+                  {typeof tlsStage?.latencyMs === "number" &&
+                    tlsStage.latencyMs > 0 && (
+                      <span className="text-xs font-mono font-medium px-2 py-0.5 rounded bg-[var(--surface)] border border-[var(--border)] tabular-nums text-[var(--foreground)]">
+                        {tlsStage.latencyMs}ms
+                      </span>
+                    )}
                   <span
                     className={cn(
                       "text-xs font-mono font-medium px-2 py-0.5 rounded border",
                       tlsStage?.passed
                         ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20"
-                        : "bg-rose-500/10 text-rose-600 dark:text-rose-400 border-rose-500/20"
+                        : "bg-rose-500/10 text-rose-600 dark:text-rose-400 border-rose-500/20",
                     )}
                   >
                     {tlsStage?.passed ? "Verified" : "Untrusted"}
@@ -349,20 +357,23 @@ export function ConnectionDiagnosticsDrawer({
                 </div>
 
                 <div className="flex items-center gap-2 shrink-0">
-                  {typeof rbacStage?.latencyMs === "number" && rbacStage.latencyMs > 0 && (
-                    <span className="text-xs font-mono font-medium px-2 py-0.5 rounded bg-[var(--surface)] border border-[var(--border)] tabular-nums text-[var(--foreground)]">
-                      {rbacStage.latencyMs}ms
-                    </span>
-                  )}
+                  {typeof rbacStage?.latencyMs === "number" &&
+                    rbacStage.latencyMs > 0 && (
+                      <span className="text-xs font-mono font-medium px-2 py-0.5 rounded bg-[var(--surface)] border border-[var(--border)] tabular-nums text-[var(--foreground)]">
+                        {rbacStage.latencyMs}ms
+                      </span>
+                    )}
                   <span
                     className={cn(
                       "text-xs font-mono font-medium px-2 py-0.5 rounded border",
                       rbacStage?.details?.clusterAdmin !== false
                         ? "bg-sky-500/10 text-sky-600 dark:text-sky-400 border-sky-500/20"
-                        : "bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/20"
+                        : "bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/20",
                     )}
                   >
-                    {rbacStage?.details?.clusterAdmin !== false ? "ClusterAdmin" : "Scoped"}
+                    {rbacStage?.details?.clusterAdmin !== false
+                      ? "ClusterAdmin"
+                      : "Scoped"}
                   </span>
                   {rbacStage?.passed ? (
                     <CheckCircle2 className="w-4 h-4 text-emerald-500 shrink-0" />
@@ -385,8 +396,9 @@ export function ConnectionDiagnosticsDrawer({
               <span>Zero-Telemetry & Host Isolation Guaranteed</span>
             </div>
             <p className="text-[11px] text-[var(--muted)] leading-relaxed">
-              KubeView executes directly via a local Go binary engine (`k8s.io/client-go`).
-              Authentication credentials never leave your local machine or pass through external proxies.
+              KubeView executes directly via a local Go binary engine
+              (`k8s.io/client-go`). Authentication credentials never leave your
+              local machine or pass through external proxies.
             </p>
           </div>
 
@@ -398,10 +410,16 @@ export function ConnectionDiagnosticsDrawer({
               className="w-full px-3.5 py-2.5 bg-[var(--surface-hover)]/40 hover:bg-[var(--surface-hover)] flex items-center justify-between text-xs font-mono text-[var(--foreground)] transition-colors cursor-pointer"
             >
               <span className="flex items-center gap-2">
-                {showRawJson ? <ChevronDown className="w-3.5 h-3.5" /> : <ChevronRight className="w-3.5 h-3.5" />}
+                {showRawJson ? (
+                  <ChevronDown className="w-3.5 h-3.5" />
+                ) : (
+                  <ChevronRight className="w-3.5 h-3.5" />
+                )}
                 <span>Inspect Raw Diagnostic JSON</span>
               </span>
-              <span className="text-[11px] text-[var(--muted)]">JSON-RPC 2.0</span>
+              <span className="text-[11px] text-[var(--muted)]">
+                JSON-RPC 2.0
+              </span>
             </button>
             {showRawJson && (
               <div className="p-3 bg-black/40 text-[11px] font-mono text-[var(--foreground)] overflow-x-auto max-h-56">
@@ -418,7 +436,11 @@ export function ConnectionDiagnosticsDrawer({
             onClick={handleCopyJson}
             className="px-3 py-1.5 rounded-lg border border-[var(--border)] bg-[var(--surface)] hover:bg-[var(--surface-hover)] text-xs font-mono text-[var(--foreground)] flex items-center gap-1.5 cursor-pointer transition-colors"
           >
-            {copied ? <Check className="w-3.5 h-3.5 text-emerald-500" /> : <Copy className="w-3.5 h-3.5 text-[var(--muted)]" />}
+            {copied ? (
+              <Check className="w-3.5 h-3.5 text-emerald-500" />
+            ) : (
+              <Copy className="w-3.5 h-3.5 text-[var(--muted)]" />
+            )}
             <span>{copied ? "Copied" : "Copy JSON"}</span>
           </button>
 
@@ -429,7 +451,9 @@ export function ConnectionDiagnosticsDrawer({
               disabled={isReRunning}
               className="px-3.5 py-1.5 rounded-lg bg-[var(--accent)] text-white hover:opacity-90 disabled:opacity-50 text-xs font-medium flex items-center gap-1.5 cursor-pointer transition-opacity"
             >
-              <RotateCw className={cn("w-3.5 h-3.5", isReRunning && "animate-spin")} />
+              <RotateCw
+                className={cn("w-3.5 h-3.5", isReRunning && "animate-spin")}
+              />
               <span>{isReRunning ? "Probing..." : "Re-run Diagnostics"}</span>
             </button>
           </div>

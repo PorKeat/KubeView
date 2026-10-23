@@ -1,5 +1,7 @@
 "use client";
 
+import { sortableHeaderProps } from "@/lib/sortableHeader";
+
 import * as React from "react";
 import { motion } from "motion/react";
 import {
@@ -466,7 +468,12 @@ export function DeploymentListView() {
                   </Tooltip>
                 </th>
                 <th
-                  onClick={() => handleSort("name")}
+                  {...sortableHeaderProps({
+                    field: "name",
+                    activeField: sortField,
+                    ascending: sortAsc,
+                    onSort: handleSort,
+                  })}
                   className="w-48 sm:w-56 md:w-64 py-1 px-3 cursor-pointer hover:text-[var(--foreground)] transition-colors min-w-0"
                 >
                   <div className="flex items-center gap-1">
@@ -475,7 +482,12 @@ export function DeploymentListView() {
                   </div>
                 </th>
                 <th
-                  onClick={() => handleSort("namespace")}
+                  {...sortableHeaderProps({
+                    field: "namespace",
+                    activeField: sortField,
+                    ascending: sortAsc,
+                    onSort: handleSort,
+                  })}
                   className="w-24 sm:w-28 py-1 px-3 cursor-pointer hover:text-[var(--foreground)] transition-colors"
                 >
                   <div className="flex items-center gap-1">
@@ -484,7 +496,12 @@ export function DeploymentListView() {
                   </div>
                 </th>
                 <th
-                  onClick={() => handleSort("status")}
+                  {...sortableHeaderProps({
+                    field: "status",
+                    activeField: sortField,
+                    ascending: sortAsc,
+                    onSort: handleSort,
+                  })}
                   className="w-28 py-1 px-3 cursor-pointer hover:text-[var(--foreground)] transition-colors"
                 >
                   <div className="flex items-center gap-1">
@@ -493,7 +510,12 @@ export function DeploymentListView() {
                   </div>
                 </th>
                 <th
-                  onClick={() => handleSort("ready")}
+                  {...sortableHeaderProps({
+                    field: "ready",
+                    activeField: sortField,
+                    ascending: sortAsc,
+                    onSort: handleSort,
+                  })}
                   className="w-20 py-1 px-3 cursor-pointer hover:text-[var(--foreground)] transition-colors"
                 >
                   <div className="flex items-center gap-1">
@@ -505,7 +527,12 @@ export function DeploymentListView() {
                 <th className="w-24 py-1 px-3">Available</th>
                 <th className="w-28 py-1 px-3">Strategy</th>
                 <th
-                  onClick={() => handleSort("age")}
+                  {...sortableHeaderProps({
+                    field: "age",
+                    activeField: sortField,
+                    ascending: sortAsc,
+                    onSort: handleSort,
+                  })}
                   className="w-14 sm:w-16 py-1 px-3 cursor-pointer hover:text-[var(--foreground)] transition-colors"
                 >
                   <div className="flex items-center gap-1">
@@ -598,7 +625,9 @@ export function DeploymentListView() {
                 return (
                   <button
                     key={size}
-                    type="button" aria-pressed={isSelected} data-testid={`page-size-${size}`}
+                    type="button"
+                    aria-pressed={isSelected}
+                    data-testid={`page-size-${size}`}
                     onClick={() => {
                       setPageSize(size);
                       setCurrentPage(1);

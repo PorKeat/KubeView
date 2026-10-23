@@ -18,6 +18,7 @@ import { useClusterStore } from "@/stores/clusterStore";
 import { isInternalEndpoint, replaceEndpointHost } from "@/lib/endpointUtils";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
+import { Tooltip } from "@/components/ui/Tooltip";
 
 export function EndpointEditModal() {
   const {
@@ -54,9 +55,14 @@ export function EndpointEditModal() {
     for (const ctx of availableContexts) {
       if (ctx.name !== endpointModalContextName && ctx.server) {
         try {
-          const u = ctx.server.includes("://") ? new URL(ctx.server) : new URL(`https://${ctx.server}`);
+          const u = ctx.server.includes("://")
+            ? new URL(ctx.server)
+            : new URL(`https://${ctx.server}`);
           // Check if hostname looks like an IPv4
-          if (/^(\d{1,3}\.){3}\d{1,3}$/.test(u.hostname) && !u.hostname.startsWith("127.")) {
+          if (
+            /^(\d{1,3}\.){3}\d{1,3}$/.test(u.hostname) &&
+            !u.hostname.startsWith("127.")
+          ) {
             if (!ips.some((item) => item.ip === u.hostname)) {
               ips.push({ ip: u.hostname, source: ctx.name });
             }
@@ -108,15 +114,18 @@ export function EndpointEditModal() {
   };
 
   return (
-    <Dialog.Root open={isEndpointModalOpen} onOpenChange={(open) => !open && closeEndpointModal()}>
+    <Dialog.Root
+      open={isEndpointModalOpen}
+      onOpenChange={(open) => !open && closeEndpointModal()}
+    >
       <Dialog.Portal>
         <Dialog.Overlay className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 animate-in fade-in duration-200" />
         <Dialog.Content
           aria-describedby="endpoint-modal-description"
-          className="fixed left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-[calc(100%-2rem)] max-w-lg max-h-[90dvh] overflow-y-auto p-4 sm:p-6 bg-[var(--surface-elevated)] border border-[var(--border)] rounded-2xl shadow-2xl z-50 animate-in fade-in zoom-in-95 duration-200 outline-none select-none"
+          className="fixed left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 flex w-[calc(100%-2rem)] max-w-lg max-h-[90dvh] flex-col overflow-hidden rounded-2xl border border-[var(--border)] bg-[var(--surface-elevated)] shadow-2xl z-50 animate-in fade-in zoom-in-95 duration-200 outline-none select-none"
         >
           {/* Header */}
-          <div className="flex items-start justify-between pb-4 border-b border-[var(--border)]">
+          <div className="flex shrink-0 items-start justify-between border-b border-[var(--border)] px-4 pb-4 pt-4 sm:px-6 sm:pt-6">
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 rounded-xl bg-[var(--accent)]/10 border border-[var(--accent)]/20 flex items-center justify-center text-[var(--accent)]">
                 <Server className="w-5 h-5" />
@@ -138,15 +147,21 @@ export function EndpointEditModal() {
               </div>
             </div>
 
-            <button
-              onClick={closeEndpointModal}
-              className="p-1.5 rounded-lg hover:bg-black/5 dark:hover:bg-white/5 text-[var(--muted)] hover:text-[var(--foreground)] transition-colors cursor-pointer"
-            >
-              <X className="w-4 h-4" />
-            </button>
+            <Tooltip content="Close dialog" shortcut="Esc">
+              <button
+                onClick={closeEndpointModal}
+                className="p-1.5 rounded-lg hover:bg-black/5 dark:hover:bg-white/5 text-[var(--muted)] hover:text-[var(--foreground)] transition-colors cursor-pointer"
+                aria-label="Close endpoint dialog"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </Tooltip>
           </div>
 
-          <div id="endpoint-modal-description" className="space-y-4 py-4">
+          <div
+            id="endpoint-modal-description"
+            className="flex-1 min-h-0 space-y-4 overflow-y-auto px-4 py-4 sm:px-6"
+          >
             {/* Informational Guidance Note */}
             {isInternal ? (
               <div className="p-3.5 rounded-xl bg-amber-500/10 border border-amber-500/25 space-y-1.5">
@@ -155,15 +170,21 @@ export function EndpointEditModal() {
                   <span>Internal Domain Requires Node IP Address</span>
                 </div>
                 <p className="text-[11px] text-[var(--muted)] leading-relaxed">
-                  Installers (like KubeKey or KubeSphere) assign internal hostnames like{" "}
-                  <code className="text-[var(--foreground)] font-mono font-bold">{currentHost}</code>.
-                  Your computer cannot resolve this without adding the control-plane node&apos;s physical IP.
+                  Installers (like KubeKey or KubeSphere) assign internal
+                  hostnames like{" "}
+                  <code className="text-[var(--foreground)] font-mono font-bold">
+                    {currentHost}
+                  </code>
+                  . Your computer cannot resolve this without adding the
+                  control-plane node&apos;s physical IP.
                 </p>
               </div>
             ) : (
               <div className="p-3 rounded-xl bg-black/[0.02] dark:bg-white/[0.02] border border-[var(--border)] text-xs text-[var(--muted)] flex items-center gap-2">
                 <Info className="w-4 h-4 text-[var(--accent)] shrink-0" />
-                <span>Update the API server address or proxy port for this cluster.</span>
+                <span>
+                  Update the API server address or proxy port for this cluster.
+                </span>
               </div>
             )}
 
@@ -184,7 +205,9 @@ export function EndpointEditModal() {
                       title={`From: ${sug.source}`}
                     >
                       <span>Use {sug.ip}</span>
-                      <span className="text-[10px] text-[var(--muted)] font-sans">({sug.source})</span>
+                      <span className="text-[10px] text-[var(--muted)] font-sans">
+                        ({sug.source})
+                      </span>
                     </button>
                   ))}
                 </div>
@@ -211,7 +234,9 @@ export function EndpointEditModal() {
               {/* Resolved Target Display */}
               <div className="flex items-center justify-between text-[11px] pt-1">
                 <span className="text-[var(--muted)]">Resulting Target:</span>
-                <span className="font-mono text-[var(--accent)] font-semibold">{resolvedServer}</span>
+                <span className="font-mono text-[var(--accent)] font-semibold">
+                  {resolvedServer}
+                </span>
               </div>
 
               {/* Skip TLS Verify Toggle */}
@@ -224,7 +249,11 @@ export function EndpointEditModal() {
                   className="rounded border-[var(--border)] text-[var(--accent)] focus:ring-0 focus:ring-offset-0 cursor-pointer accent-[var(--accent)]"
                 />
                 <span className="text-[11px] text-[var(--muted)]">
-                  Skip TLS certificate verification (<code className="font-mono text-[10px] text-[var(--accent)]">insecure-skip-tls-verify</code>)
+                  Skip TLS certificate verification (
+                  <code className="font-mono text-[10px] text-[var(--accent)]">
+                    insecure-skip-tls-verify
+                  </code>
+                  )
                 </span>
               </label>
             </div>
@@ -242,7 +271,11 @@ export function EndpointEditModal() {
                     onClick={handleCopyHosts}
                     className="flex items-center gap-1 text-[10px] text-[var(--accent)] hover:underline cursor-pointer"
                   >
-                    {copiedHosts ? <Check className="w-3 h-3 text-emerald-400" /> : <Copy className="w-3 h-3" />}
+                    {copiedHosts ? (
+                      <Check className="w-3 h-3 text-emerald-400" />
+                    ) : (
+                      <Copy className="w-3 h-3" />
+                    )}
                     <span>{copiedHosts ? "Copied" : "Copy command"}</span>
                   </button>
                 </div>
@@ -254,7 +287,7 @@ export function EndpointEditModal() {
           </div>
 
           {/* Footer Controls */}
-          <div className="flex items-center justify-between gap-2.5 pt-3 border-t border-[var(--border)]">
+          <div className="flex shrink-0 items-center justify-between gap-2.5 border-t border-[var(--border)] px-4 py-3 sm:px-6">
             <button
               type="button"
               onClick={async () => {
@@ -284,10 +317,16 @@ export function EndpointEditModal() {
                 type="button"
                 data-testid="endpoint-modal-save"
                 onClick={() => handleSave(true)}
-                disabled={isSaving || resolvedServer === endpointModalCurrentServer}
+                disabled={
+                  isSaving || resolvedServer === endpointModalCurrentServer
+                }
                 className="px-4 py-2 rounded-xl text-xs font-semibold bg-[var(--accent)] hover:bg-[var(--accent-hover)] disabled:opacity-50 text-white shadow-md transition-all cursor-pointer flex items-center gap-1.5"
               >
-                {isSaving ? <RotateCw className="w-3.5 h-3.5 animate-spin" /> : <Check className="w-3.5 h-3.5" />}
+                {isSaving ? (
+                  <RotateCw className="w-3.5 h-3.5 animate-spin" />
+                ) : (
+                  <Check className="w-3.5 h-3.5" />
+                )}
                 <span>Save & Connect</span>
               </button>
             </div>

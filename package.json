@@ -15,15 +15,18 @@
     "build": "pnpm build:contracts && pnpm build:engine && pnpm --filter @kubeview/desktop build",
     "lint": "pnpm --recursive lint",
     "format": "prettier --write \"**/*.{ts,tsx,js,jsx,json,md,css}\"",
-    "test": "pnpm --recursive test",
+    "test": "pnpm build:contracts && go -C engine test ./...",
     "test:e2e": "pnpm --filter @kubeview/desktop test:e2e",
     "test:e2e:ui": "pnpm --filter @kubeview/desktop test:e2e:ui",
     "tauri:dev": "cargo tauri dev",
-    "tauri:build": "cargo tauri build"
+    "tauri:build": "cargo tauri build",
+    "format:check": "prettier --check \"**/*.{ts,tsx,js,jsx,json,md,css,yml,yaml}\"",
+    "hooks:install": "lefthook install"
   },
   "devDependencies": {
     "@tauri-apps/cli": "^2.12.3",
     "prettier": "^3.5.3",
-    "typescript": "^5.8.2"
+    "typescript": "^5.8.2",
+    "lefthook": "^1.11.0"
   }
 }

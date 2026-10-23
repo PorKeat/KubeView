@@ -32,7 +32,8 @@ import { toast } from "sonner";
 import { Logo } from "@/components/brand/Logo";
 
 export function CommandPalette() {
-  const { commandPaletteOpen, setCommandPaletteOpen, toggleSidebar } = useLayoutStore();
+  const { commandPaletteOpen, setCommandPaletteOpen, toggleSidebar } =
+    useLayoutStore();
   const { openTab } = useTabStore();
   const { resolvedTheme, setTheme } = useTheme();
   const {
@@ -104,7 +105,10 @@ export function CommandPalette() {
             </Command.Empty>
 
             {/* Quick Navigation */}
-            <Command.Group heading="Navigation" className="text-[10px] font-semibold text-[var(--muted)] px-2 py-1 uppercase tracking-wider">
+            <Command.Group
+              heading="Navigation"
+              className="text-[10px] font-semibold text-[var(--muted)] px-2 py-1 uppercase tracking-wider"
+            >
               <Command.Item
                 onSelect={() => navigateTo("overview", "Cluster Overview")}
                 className="flex items-center gap-2.5 px-2.5 py-2 rounded-md cursor-pointer hover:bg-[var(--surface-hover)] text-[var(--foreground)] transition-colors"
@@ -162,7 +166,9 @@ export function CommandPalette() {
                   <Network className="w-4 h-4 text-purple-500 dark:text-purple-400" />
                   <span>Services & Networking</span>
                 </div>
-                <span className="text-[9px] font-mono px-1.5 py-0.5 rounded bg-black/[0.04] dark:bg-white/[0.05] border border-[var(--border)]">Soon</span>
+                <span className="text-[9px] font-mono px-1.5 py-0.5 rounded bg-black/[0.04] dark:bg-white/[0.05] border border-[var(--border)]">
+                  Soon
+                </span>
               </Command.Item>
               <Command.Item
                 disabled
@@ -172,7 +178,9 @@ export function CommandPalette() {
                   <FileCode className="w-4 h-4 text-amber-500 dark:text-amber-400" />
                   <span>ConfigMaps</span>
                 </div>
-                <span className="text-[9px] font-mono px-1.5 py-0.5 rounded bg-black/[0.04] dark:bg-white/[0.05] border border-[var(--border)]">Soon</span>
+                <span className="text-[9px] font-mono px-1.5 py-0.5 rounded bg-black/[0.04] dark:bg-white/[0.05] border border-[var(--border)]">
+                  Soon
+                </span>
               </Command.Item>
               <Command.Item
                 disabled
@@ -182,12 +190,17 @@ export function CommandPalette() {
                   <FolderLock className="w-4 h-4 text-rose-500 dark:text-rose-400" />
                   <span>Secrets (Redacted)</span>
                 </div>
-                <span className="text-[9px] font-mono px-1.5 py-0.5 rounded bg-black/[0.04] dark:bg-white/[0.05] border border-[var(--border)]">Soon</span>
+                <span className="text-[9px] font-mono px-1.5 py-0.5 rounded bg-black/[0.04] dark:bg-white/[0.05] border border-[var(--border)]">
+                  Soon
+                </span>
               </Command.Item>
             </Command.Group>
 
             {/* Clusters & Contexts */}
-            <Command.Group heading="Clusters & Contexts" className="text-[10px] font-semibold text-[var(--muted)] px-2 py-1 uppercase tracking-wider">
+            <Command.Group
+              heading="Clusters & Contexts"
+              className="text-[10px] font-semibold text-[var(--muted)] px-2 py-1 uppercase tracking-wider"
+            >
               <Command.Item
                 onSelect={() => {
                   openKubeconfigModal("browse");
@@ -197,9 +210,13 @@ export function CommandPalette() {
               >
                 <div className="flex items-center gap-2.5">
                   <Server className="w-4 h-4 text-[#F08A42]" />
-                  <span className="font-medium">+ Import Kubeconfig File...</span>
+                  <span className="font-medium">
+                    + Import Kubeconfig File...
+                  </span>
                 </div>
-                <span className="text-[9px] font-mono px-1.5 py-0.5 rounded bg-[#F08A42]/10 text-[#F08A42]">Add</span>
+                <span className="text-[9px] font-mono px-1.5 py-0.5 rounded bg-[#F08A42]/10 text-[#F08A42]">
+                  Add
+                </span>
               </Command.Item>
 
               <Command.Item
@@ -211,9 +228,13 @@ export function CommandPalette() {
               >
                 <div className="flex items-center gap-2.5">
                   <FileCode className="w-4 h-4 text-[#F08A42]" />
-                  <span className="font-medium">+ Paste Kubeconfig YAML...</span>
+                  <span className="font-medium">
+                    + Paste Kubeconfig YAML...
+                  </span>
                 </div>
-                <span className="text-[9px] font-mono px-1.5 py-0.5 rounded bg-[#F08A42]/10 text-[#F08A42]">YAML</span>
+                <span className="text-[9px] font-mono px-1.5 py-0.5 rounded bg-[#F08A42]/10 text-[#F08A42]">
+                  YAML
+                </span>
               </Command.Item>
 
               <Command.Item
@@ -227,7 +248,9 @@ export function CommandPalette() {
                   <Layers className="w-4 h-4 text-[var(--muted)]" />
                   <span>Manage Configured Clusters...</span>
                 </div>
-                <span className="text-[10px] text-[var(--muted)] font-mono">{availableContexts.length} clusters</span>
+                <span className="text-[10px] text-[var(--muted)] font-mono">
+                  {availableContexts.length} clusters
+                </span>
               </Command.Item>
 
               {availableContexts.map((ctx) => (
@@ -244,13 +267,18 @@ export function CommandPalette() {
                     <Server className="w-4 h-4 text-[var(--muted)]" />
                     <span className="font-mono">{ctx.name}</span>
                   </div>
-                  <span className="text-[10px] text-[var(--muted)] font-mono">{ctx.latencyMs}ms</span>
+                  <span className="text-[10px] text-[var(--muted)] font-mono">
+                    {ctx.latencyMs}ms
+                  </span>
                 </Command.Item>
               ))}
             </Command.Group>
 
             {/* Namespaces */}
-            <Command.Group heading="Switch Namespace" className="text-[10px] font-semibold text-[var(--muted)] px-2 py-1 uppercase tracking-wider">
+            <Command.Group
+              heading="Switch Namespace"
+              className="text-[10px] font-semibold text-[var(--muted)] px-2 py-1 uppercase tracking-wider"
+            >
               {availableNamespaces.map((ns) => (
                 <Command.Item
                   key={ns}
@@ -268,10 +296,15 @@ export function CommandPalette() {
             </Command.Group>
 
             {/* Diagnostics & Operations */}
-            <Command.Group heading="Diagnostics & Actions" className="text-[10px] font-semibold text-[var(--muted)] px-2 py-1 uppercase tracking-wider">
+            <Command.Group
+              heading="Diagnostics & Actions"
+              className="text-[10px] font-semibold text-[var(--muted)] px-2 py-1 uppercase tracking-wider"
+            >
               <Command.Item
                 onSelect={() => {
-                  toast.success("Running 4-stage automated connection diagnostics...");
+                  toast.success(
+                    "Running 4-stage automated connection diagnostics...",
+                  );
                   setCommandPaletteOpen(false);
                 }}
                 className="flex items-center gap-2.5 px-2.5 py-2 rounded-md cursor-pointer hover:bg-[var(--surface-hover)] text-[var(--foreground)] transition-colors"
@@ -301,7 +334,11 @@ export function CommandPalette() {
                 }}
                 className="flex items-center gap-2.5 px-2.5 py-2 rounded-md cursor-pointer hover:bg-[var(--surface-hover)] text-[var(--foreground)] transition-colors"
               >
-                {resolvedTheme === "dark" ? <Sun className="w-4 h-4 text-amber-400" /> : <Moon className="w-4 h-4 text-blue-400" />}
+                {resolvedTheme === "dark" ? (
+                  <Sun className="w-4 h-4 text-amber-400" />
+                ) : (
+                  <Moon className="w-4 h-4 text-blue-400" />
+                )}
                 <span>Toggle Dark / Light Theme</span>
               </Command.Item>
               <Command.Item
@@ -327,9 +364,15 @@ export function CommandPalette() {
           {/* Footer Hints */}
           <div className="h-8 border-t border-[var(--border)] px-3 flex items-center justify-between text-[10px] text-[var(--muted)] bg-[var(--surface)]">
             <div className="flex items-center gap-3">
-              <span><kbd className="font-mono">↑↓</kbd> navigate</span>
-              <span><kbd className="font-mono">↵</kbd> select</span>
-              <span><kbd className="font-mono">esc</kbd> close</span>
+              <span>
+                <kbd className="font-mono">↑↓</kbd> navigate
+              </span>
+              <span>
+                <kbd className="font-mono">↵</kbd> select
+              </span>
+              <span>
+                <kbd className="font-mono">esc</kbd> close
+              </span>
             </div>
             <div className="flex items-center gap-1 font-mono">
               <span>KubeView IDE</span>

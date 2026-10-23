@@ -86,13 +86,17 @@ function synthesizePodYaml(pod: PodSummary): string {
         lines.push("    resources:");
         if (c.resources.requests) {
           lines.push("      requests:");
-          if (c.resources.requests.cpu) lines.push(`        cpu: ${c.resources.requests.cpu}`);
-          if (c.resources.requests.memory) lines.push(`        memory: ${c.resources.requests.memory}`);
+          if (c.resources.requests.cpu)
+            lines.push(`        cpu: ${c.resources.requests.cpu}`);
+          if (c.resources.requests.memory)
+            lines.push(`        memory: ${c.resources.requests.memory}`);
         }
         if (c.resources.limits) {
           lines.push("      limits:");
-          if (c.resources.limits.cpu) lines.push(`        cpu: ${c.resources.limits.cpu}`);
-          if (c.resources.limits.memory) lines.push(`        memory: ${c.resources.limits.memory}`);
+          if (c.resources.limits.cpu)
+            lines.push(`        cpu: ${c.resources.limits.cpu}`);
+          if (c.resources.limits.memory)
+            lines.push(`        memory: ${c.resources.limits.memory}`);
         }
       }
     }
@@ -141,7 +145,9 @@ export function ResourceInspectorDrawer() {
 
   const { openTab } = useTabStore();
 
-  const [activeTab, setActiveTab] = React.useState<"overview" | "containers" | "conditions" | "events" | "yaml">("overview");
+  const [activeTab, setActiveTab] = React.useState<
+    "overview" | "containers" | "conditions" | "events" | "yaml"
+  >("overview");
   const [copiedYaml, setCopiedYaml] = React.useState(false);
   const [liveYaml, setLiveYaml] = React.useState<string>("");
   const [liveEvents, setLiveEvents] = React.useState<PodEventItem[]>([]);
@@ -151,7 +157,8 @@ export function ResourceInspectorDrawer() {
   // Smooth slide transition state
   const [isRendered, setIsRendered] = React.useState(isInspectorOpen);
   const [isMounted, setIsMounted] = React.useState(false);
-  const [cachedResource, setCachedResource] = React.useState<SelectedResource | null>(selectedResource);
+  const [cachedResource, setCachedResource] =
+    React.useState<SelectedResource | null>(selectedResource);
 
   React.useEffect(() => {
     if (selectedResource) {
@@ -185,7 +192,13 @@ export function ResourceInspectorDrawer() {
   const isDaemonSet = currentResource?.kind === "DaemonSet";
   const isJob = currentResource?.kind === "Job";
   const isCronJob = currentResource?.kind === "CronJob";
-  const isWorkload = isDeployment || isReplicaSet || isStatefulSet || isDaemonSet || isJob || isCronJob;
+  const isWorkload =
+    isDeployment ||
+    isReplicaSet ||
+    isStatefulSet ||
+    isDaemonSet ||
+    isJob ||
+    isCronJob;
   const podData =
     !isNode && !isWorkload
       ? (currentResource?.data as unknown as PodSummary | undefined)
@@ -228,7 +241,9 @@ export function ResourceInspectorDrawer() {
   const nodePods = React.useMemo(() => {
     if (!isNode || !nodeData?.name) return [];
     const targetNode = nodeData.name.toLowerCase();
-    return pods.filter((p) => p.nodeName && p.nodeName.toLowerCase() === targetNode);
+    return pods.filter(
+      (p) => p.nodeName && p.nodeName.toLowerCase() === targetNode,
+    );
   }, [isNode, nodeData?.name, pods]);
 
   // If inspecting a node and pods list is empty, fetch cluster-wide pods
@@ -273,7 +288,9 @@ export function ResourceInspectorDrawer() {
         } else if (podData) {
           setLiveYaml(synthesizePodYaml(podData));
         } else {
-          setLiveYaml("# No YAML returned from cluster.\n# Click 'Refresh' to try again.");
+          setLiveYaml(
+            "# No YAML returned from cluster.\n# Click 'Refresh' to try again.",
+          );
         }
       })
       .catch((err) => {
@@ -289,17 +306,48 @@ export function ResourceInspectorDrawer() {
         }
       })
       .finally(() => setIsLoadingYaml(false));
-  }, [currentResource, isNode, isDeployment, isReplicaSet, isStatefulSet, isDaemonSet, isJob, isCronJob, podData, pods, getPodYaml, getDeploymentYaml, getReplicaSetYaml, getStatefulSetYaml, getDaemonSetYaml, getJobYaml, getCronJobYaml]);
+  }, [
+    currentResource,
+    isNode,
+    isDeployment,
+    isReplicaSet,
+    isStatefulSet,
+    isDaemonSet,
+    isJob,
+    isCronJob,
+    podData,
+    pods,
+    getPodYaml,
+    getDeploymentYaml,
+    getReplicaSetYaml,
+    getStatefulSetYaml,
+    getDaemonSetYaml,
+    getJobYaml,
+    getCronJobYaml,
+  ]);
 
   React.useEffect(() => {
     if (isInspectorOpen && activeTab === "yaml" && !isNode) {
       handleReloadYaml();
     }
-  }, [isInspectorOpen, currentResource?.name, currentResource?.namespace, activeTab, isNode, handleReloadYaml]);
+  }, [
+    isInspectorOpen,
+    currentResource?.name,
+    currentResource?.namespace,
+    activeTab,
+    isNode,
+    handleReloadYaml,
+  ]);
 
   // Load real Events when events tab is active (Pods only)
   React.useEffect(() => {
-    if (isInspectorOpen && currentResource && activeTab === "events" && !isNode && !isWorkload) {
+    if (
+      isInspectorOpen &&
+      currentResource &&
+      activeTab === "events" &&
+      !isNode &&
+      !isWorkload
+    ) {
       setIsLoadingEvents(true);
       getPodEvents(currentResource.name, currentResource.namespace)
         .then((evList) => {
@@ -310,7 +358,15 @@ export function ResourceInspectorDrawer() {
         })
         .finally(() => setIsLoadingEvents(false));
     }
-  }, [isInspectorOpen, currentResource?.name, currentResource?.namespace, activeTab, getPodEvents, isNode, isWorkload]);
+  }, [
+    isInspectorOpen,
+    currentResource?.name,
+    currentResource?.namespace,
+    activeTab,
+    getPodEvents,
+    isNode,
+    isWorkload,
+  ]);
 
   // Close on Escape key, but only when no modal or palette above the drawer
   // owns the keystroke. Child overlays should dismiss independently.
@@ -321,16 +377,16 @@ export function ResourceInspectorDrawer() {
       const clusterState = useClusterStore.getState();
       const childOverlayOpen = Boolean(
         clusterState.workloadAction ||
-          clusterState.bulkWorkloadAction ||
-          clusterState.logsModalPod ||
-          clusterState.execModalPod ||
-          clusterState.deleteConfirmPod ||
-          clusterState.restartConfirmPod ||
-          clusterState.bulkDeleteConfirmPods?.length ||
-          clusterState.bulkRestartConfirmPods?.length ||
-          clusterState.isEndpointModalOpen ||
-          clusterState.isKubeconfigModalOpen ||
-          useLayoutStore.getState().commandPaletteOpen,
+        clusterState.bulkWorkloadAction ||
+        clusterState.logsModalPod ||
+        clusterState.execModalPod ||
+        clusterState.deleteConfirmPod ||
+        clusterState.restartConfirmPod ||
+        clusterState.bulkDeleteConfirmPods?.length ||
+        clusterState.bulkRestartConfirmPods?.length ||
+        clusterState.isEndpointModalOpen ||
+        clusterState.isKubeconfigModalOpen ||
+        useLayoutStore.getState().commandPaletteOpen,
       );
 
       if (!childOverlayOpen) {
@@ -610,21 +666,54 @@ export function ResourceInspectorDrawer() {
     });
   };
 
-  const hasWorkloadConditions = isDeployment || isReplicaSet || isStatefulSet || isDaemonSet || isJob;
+  const hasWorkloadConditions =
+    isDeployment || isReplicaSet || isStatefulSet || isDaemonSet || isJob;
   const workloadInspectorTabs = [
-    { id: "overview" as const, label: "Overview", icon: LayoutDashboard, count: null },
+    {
+      id: "overview" as const,
+      label: "Overview",
+      icon: LayoutDashboard,
+      count: null,
+    },
     ...(hasWorkloadConditions
-      ? [{ id: "conditions" as const, label: "Conditions", icon: HeartPulse, count: workloadConditions.length }]
+      ? [
+          {
+            id: "conditions" as const,
+            label: "Conditions",
+            icon: HeartPulse,
+            count: workloadConditions.length,
+          },
+        ]
       : []),
     { id: "yaml" as const, label: "YAML", icon: FileCode, count: null },
   ];
   const inspectorTabs = isWorkload
     ? workloadInspectorTabs
     : [
-        { id: "overview" as const, label: "Overview", icon: LayoutDashboard, count: null },
-        { id: "containers" as const, label: "Containers", icon: Box, count: podData?.containers?.length || 0 },
-        { id: "conditions" as const, label: "Conditions", icon: HeartPulse, count: podData?.conditions?.length || 0 },
-        { id: "events" as const, label: "Events", icon: Bell, count: liveEvents.length > 0 ? liveEvents.length : null },
+        {
+          id: "overview" as const,
+          label: "Overview",
+          icon: LayoutDashboard,
+          count: null,
+        },
+        {
+          id: "containers" as const,
+          label: "Containers",
+          icon: Box,
+          count: podData?.containers?.length || 0,
+        },
+        {
+          id: "conditions" as const,
+          label: "Conditions",
+          icon: HeartPulse,
+          count: podData?.conditions?.length || 0,
+        },
+        {
+          id: "events" as const,
+          label: "Events",
+          icon: Bell,
+          count: liveEvents.length > 0 ? liveEvents.length : null,
+        },
         { id: "yaml" as const, label: "YAML", icon: FileCode, count: null },
       ];
 
@@ -632,7 +721,7 @@ export function ResourceInspectorDrawer() {
     <div
       className={cn(
         "fixed inset-0 z-40 overflow-hidden transition-all duration-200 motion-reduce:transition-none",
-        isMounted ? "pointer-events-auto" : "pointer-events-none"
+        isMounted ? "pointer-events-auto" : "pointer-events-none",
       )}
     >
       {/* Modal Backdrop / Dim Overlay */}
@@ -641,7 +730,9 @@ export function ResourceInspectorDrawer() {
         onClick={closeInspector}
         className={cn(
           "fixed inset-0 bg-black/40 dark:bg-black/60 backdrop-blur-[2px] transition-opacity motion-reduce:transition-none cursor-pointer",
-          isMounted ? "opacity-100 duration-250 ease-out" : "opacity-0 duration-200 ease-in"
+          isMounted
+            ? "opacity-100 duration-250 ease-out"
+            : "opacity-0 duration-200 ease-in",
         )}
         aria-hidden="true"
       />
@@ -654,7 +745,7 @@ export function ResourceInspectorDrawer() {
           "transform transition-transform motion-reduce:transition-none motion-reduce:transform-none",
           isMounted
             ? "translate-x-0 duration-250 ease-[cubic-bezier(0.16,1,0.3,1)]"
-            : "translate-x-full duration-200 ease-in"
+            : "translate-x-full duration-200 ease-in",
         )}
       >
         {/* Top Header */}
@@ -682,7 +773,9 @@ export function ResourceInspectorDrawer() {
               : undefined
           }
           onDeleteWorkload={handleDeleteWorkload}
-          onToggleCronJobSuspend={isCronJob ? handleToggleCronJobSuspend : undefined}
+          onToggleCronJobSuspend={
+            isCronJob ? handleToggleCronJobSuspend : undefined
+          }
           onTriggerCronJob={isCronJob ? handleTriggerCronJob : undefined}
           cronJobSuspended={cronJobData?.suspend ?? false}
           onClose={closeInspector}
@@ -708,17 +801,28 @@ export function ResourceInspectorDrawer() {
                       "relative px-2.5 py-1 text-xs rounded-md capitalize transition-colors font-medium cursor-pointer flex items-center gap-1.5 outline-hidden focus-visible:ring-1 focus-visible:ring-[var(--accent)]",
                       isActive
                         ? "text-[var(--foreground)] font-semibold"
-                        : "text-[var(--muted)] hover:text-[var(--foreground)]"
+                        : "text-[var(--muted)] hover:text-[var(--foreground)]",
                     )}
                   >
                     {isActive && (
                       <motion.div
                         layoutId="inspector-active-tab-indicator"
-                        transition={{ type: "spring", stiffness: 450, damping: 35 }}
+                        transition={{
+                          type: "spring",
+                          stiffness: 450,
+                          damping: 35,
+                        }}
                         className="absolute inset-0 rounded-md bg-[var(--surface-elevated)] dark:bg-white/10 shadow-xs border border-[var(--border)] -z-10 motion-reduce:transition-none"
                       />
                     )}
-                    <Icon className={cn("w-3.5 h-3.5 transition-colors", isActive ? "text-[var(--accent)]" : "text-[var(--muted)]")} />
+                    <Icon
+                      className={cn(
+                        "w-3.5 h-3.5 transition-colors",
+                        isActive
+                          ? "text-[var(--accent)]"
+                          : "text-[var(--muted)]",
+                      )}
+                    />
                     <span>{t.label}</span>
                     {t.count !== null && (
                       <span
@@ -726,7 +830,7 @@ export function ResourceInspectorDrawer() {
                           "px-1.5 py-0.2 rounded-full text-[9px] font-mono tabular-nums transition-colors",
                           isActive
                             ? "bg-[var(--accent)]/15 text-[var(--accent)] font-bold"
-                            : "bg-black/5 dark:bg-white/5 text-[var(--muted)]"
+                            : "bg-black/5 dark:bg-white/5 text-[var(--muted)]",
                         )}
                       >
                         {t.count}

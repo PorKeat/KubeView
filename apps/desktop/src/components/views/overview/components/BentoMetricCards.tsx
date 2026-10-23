@@ -37,29 +37,29 @@ export function BentoMetricCards({
 }: BentoMetricCardsProps) {
   // CPU metrics
   const cpuPercent = isNamespaceScoped
-    ? clusterOverview?.cpuPercent ?? 0
+    ? (clusterOverview?.cpuPercent ?? 0)
     : effectiveMode === "usage"
-    ? clusterOverview?.cpuUsagePercent ?? 0
-    : clusterOverview?.cpuPercent ?? 0;
+      ? (clusterOverview?.cpuUsagePercent ?? 0)
+      : (clusterOverview?.cpuPercent ?? 0);
 
   const cpuCoresDisplay = isNamespaceScoped
     ? `${clusterOverview?.allocatedCpuCores ?? 0} Cores`
     : effectiveMode === "usage"
-    ? `${clusterOverview?.usedCpuCores ?? 0} Cores`
-    : `${clusterOverview?.allocatedCpuCores ?? 0} Cores`;
+      ? `${clusterOverview?.usedCpuCores ?? 0} Cores`
+      : `${clusterOverview?.allocatedCpuCores ?? 0} Cores`;
 
   // Memory metrics
   const memoryPercent = isNamespaceScoped
-    ? clusterOverview?.memoryPercent ?? 0
+    ? (clusterOverview?.memoryPercent ?? 0)
     : effectiveMode === "usage"
-    ? clusterOverview?.memoryUsagePercent ?? 0
-    : clusterOverview?.memoryPercent ?? 0;
+      ? (clusterOverview?.memoryUsagePercent ?? 0)
+      : (clusterOverview?.memoryPercent ?? 0);
 
   const memoryDisplay = isNamespaceScoped
     ? `${clusterOverview?.allocatedMemoryGiB ?? 0} GiB`
     : effectiveMode === "usage"
-    ? `${clusterOverview?.usedMemoryGiB ?? 0} GiB`
-    : `${clusterOverview?.allocatedMemoryGiB ?? 0} GiB`;
+      ? `${clusterOverview?.usedMemoryGiB ?? 0} GiB`
+      : `${clusterOverview?.allocatedMemoryGiB ?? 0} GiB`;
 
   // Pod density metrics
   const podCount = clusterOverview?.totalPods ?? scopedPodsCount;
@@ -69,19 +69,27 @@ export function BentoMetricCards({
   // Node metrics
   const readyNodes = clusterOverview?.readyNodes ?? 0;
   const totalNodes = clusterOverview?.totalNodes ?? 0;
-  const nodePercent = totalNodes > 0 ? Math.round((readyNodes / totalNodes) * 100) : 100;
+  const nodePercent =
+    totalNodes > 0 ? Math.round((readyNodes / totalNodes) * 100) : 100;
 
   return (
     <div className="rounded-xl border border-[var(--border)] bg-[var(--surface)] shadow-xs overflow-hidden select-none">
       {/* 1. Cockpit Ribbon Header & Telemetry Mode Switcher */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 px-3.5 py-2 border-b border-[var(--border)]/70 bg-[var(--surface-hover)]/25">
         <div className="flex items-center gap-2">
-          <Activity className="w-3.5 h-3.5 text-[var(--accent)]" aria-hidden="true" />
+          <Activity
+            className="w-3.5 h-3.5 text-[var(--accent)]"
+            aria-hidden="true"
+          />
           <span className="text-xs font-semibold text-[var(--foreground)] tracking-tight">
-            {isNamespaceScoped ? `Telemetry (${currentNamespace})` : "Cluster Telemetry"}
+            {isNamespaceScoped
+              ? `Telemetry (${currentNamespace})`
+              : "Cluster Telemetry"}
           </span>
           <span className="text-[11px] font-mono text-[var(--muted)] hidden sm:inline">
-            {effectiveMode === "usage" ? "Live consumption metrics" : "Capacity commitments"}
+            {effectiveMode === "usage"
+              ? "Live consumption metrics"
+              : "Capacity commitments"}
           </span>
         </div>
 
@@ -99,7 +107,7 @@ export function BentoMetricCards({
                 "relative z-10 px-2.5 py-0.5 rounded-md flex items-center gap-1.5 transition-colors duration-150 cursor-pointer focus-visible:ring-2 focus-visible:ring-[var(--accent)] focus-visible:outline-hidden",
                 effectiveMode === "usage"
                   ? "text-[var(--foreground)] font-semibold"
-                  : "text-[var(--muted)] hover:text-[var(--foreground)]"
+                  : "text-[var(--muted)] hover:text-[var(--foreground)]",
               )}
               title="Live CPU & Memory consumption from metrics-server"
             >
@@ -121,7 +129,7 @@ export function BentoMetricCards({
                 "relative z-10 px-2.5 py-0.5 rounded-md flex items-center gap-1.5 transition-colors duration-150 cursor-pointer focus-visible:ring-2 focus-visible:ring-[var(--accent)] focus-visible:outline-hidden",
                 effectiveMode === "allocation"
                   ? "text-[var(--foreground)] font-semibold"
-                  : "text-[var(--muted)] hover:text-[var(--foreground)]"
+                  : "text-[var(--muted)] hover:text-[var(--foreground)]",
               )}
               title="Scheduled pod resource requests & capacity commitments"
             >
@@ -144,7 +152,9 @@ export function BentoMetricCards({
         {/* Segment 1: CPU */}
         <div className="p-3 sm:p-3.5 flex flex-col justify-between space-y-2">
           <div className="flex items-center justify-between text-[11px]">
-            <span className="font-semibold text-[var(--muted)] tracking-tight">CPU</span>
+            <span className="font-semibold text-[var(--muted)] tracking-tight">
+              CPU
+            </span>
             <span className="font-mono text-[10px] text-[var(--muted)] tabular-nums">
               {clusterOverview?.totalCpuCores ?? 0} Cores
             </span>
@@ -169,8 +179,8 @@ export function BentoMetricCards({
                   cpuPercent > 85
                     ? "bg-rose-500"
                     : cpuPercent > 70
-                    ? "bg-amber-500"
-                    : "bg-emerald-500 dark:bg-emerald-400"
+                      ? "bg-amber-500"
+                      : "bg-emerald-500 dark:bg-emerald-400",
                 )}
                 style={{ width: `${Math.min(100, cpuPercent)}%` }}
               />
@@ -182,8 +192,8 @@ export function BentoMetricCards({
               {isNamespaceScoped
                 ? `Scope: ${currentNamespace}`
                 : effectiveMode === "usage" && hasMetrics
-                ? `Alloc: ${clusterOverview?.allocatedCpuCores ?? 0} Cores`
-                : `Cap: ${clusterOverview?.totalCpuCores ?? 0} Cores`}
+                  ? `Alloc: ${clusterOverview?.allocatedCpuCores ?? 0} Cores`
+                  : `Cap: ${clusterOverview?.totalCpuCores ?? 0} Cores`}
             </span>
             <span
               className={cn(
@@ -191,19 +201,19 @@ export function BentoMetricCards({
                 isNamespaceScoped
                   ? "text-[var(--accent)]"
                   : cpuPercent > 85
-                  ? "text-rose-500 dark:text-rose-400"
-                  : cpuPercent > 70
-                  ? "text-amber-500 dark:text-amber-400"
-                  : "text-emerald-600 dark:text-emerald-400"
+                    ? "text-rose-500 dark:text-rose-400"
+                    : cpuPercent > 70
+                      ? "text-amber-500 dark:text-amber-400"
+                      : "text-emerald-600 dark:text-emerald-400",
               )}
             >
               {isNamespaceScoped
                 ? `${scopedPodsCount} Pods`
                 : cpuPercent > 85
-                ? "Critical"
-                : cpuPercent > 70
-                ? "High Load"
-                : "Healthy"}
+                  ? "Critical"
+                  : cpuPercent > 70
+                    ? "High Load"
+                    : "Healthy"}
             </span>
           </div>
         </div>
@@ -211,7 +221,9 @@ export function BentoMetricCards({
         {/* Segment 2: Memory */}
         <div className="p-3 sm:p-3.5 flex flex-col justify-between space-y-2">
           <div className="flex items-center justify-between text-[11px]">
-            <span className="font-semibold text-[var(--muted)] tracking-tight">Memory</span>
+            <span className="font-semibold text-[var(--muted)] tracking-tight">
+              Memory
+            </span>
             <span className="font-mono text-[10px] text-[var(--muted)] tabular-nums">
               {clusterOverview?.totalMemoryGiB ?? 0} GiB
             </span>
@@ -236,8 +248,8 @@ export function BentoMetricCards({
                   memoryPercent > 85
                     ? "bg-rose-500"
                     : memoryPercent > 70
-                    ? "bg-amber-500"
-                    : "bg-emerald-500 dark:bg-emerald-400"
+                      ? "bg-amber-500"
+                      : "bg-emerald-500 dark:bg-emerald-400",
                 )}
                 style={{ width: `${Math.min(100, memoryPercent)}%` }}
               />
@@ -249,8 +261,8 @@ export function BentoMetricCards({
               {isNamespaceScoped
                 ? `Fleet: ${(clusterOverview?.memoryPercent ?? 0).toFixed(1)}%`
                 : effectiveMode === "usage" && hasMetrics
-                ? `Alloc: ${clusterOverview?.allocatedMemoryGiB ?? 0} GiB`
-                : `Cap: ${clusterOverview?.totalMemoryGiB ?? 0} GiB`}
+                  ? `Alloc: ${clusterOverview?.allocatedMemoryGiB ?? 0} GiB`
+                  : `Cap: ${clusterOverview?.totalMemoryGiB ?? 0} GiB`}
             </span>
             <span
               className={cn(
@@ -258,19 +270,19 @@ export function BentoMetricCards({
                 isNamespaceScoped
                   ? "text-[var(--accent)]"
                   : memoryPercent > 85
-                  ? "text-rose-500 dark:text-rose-400"
-                  : memoryPercent > 70
-                  ? "text-amber-500 dark:text-amber-400"
-                  : "text-emerald-600 dark:text-emerald-400"
+                    ? "text-rose-500 dark:text-rose-400"
+                    : memoryPercent > 70
+                      ? "text-amber-500 dark:text-amber-400"
+                      : "text-emerald-600 dark:text-emerald-400",
               )}
             >
               {isNamespaceScoped
                 ? `${(clusterOverview?.memoryPercent ?? 0).toFixed(1)}% Fleet`
                 : memoryPercent > 85
-                ? "Critical"
-                : memoryPercent > 70
-                ? "High Load"
-                : "Optimal"}
+                  ? "Critical"
+                  : memoryPercent > 70
+                    ? "High Load"
+                    : "Optimal"}
             </span>
           </div>
         </div>
@@ -290,7 +302,9 @@ export function BentoMetricCards({
           className="group p-3 sm:p-3.5 flex flex-col justify-between space-y-2 hover:bg-[var(--surface-hover)]/40 transition-colors cursor-pointer focus-visible:ring-2 focus-visible:ring-[var(--accent)] focus-visible:outline-hidden"
         >
           <div className="flex items-center justify-between text-[11px]">
-            <span className="font-semibold text-[var(--muted)] tracking-tight">Pods</span>
+            <span className="font-semibold text-[var(--muted)] tracking-tight">
+              Pods
+            </span>
             <span className="font-mono text-[10px] text-[var(--muted)] tabular-nums">
               {podCap} Max
             </span>
@@ -314,8 +328,8 @@ export function BentoMetricCards({
                   podPercent > 85
                     ? "bg-rose-500"
                     : podPercent > 70
-                    ? "bg-amber-500"
-                    : "bg-emerald-500 dark:bg-emerald-400"
+                      ? "bg-amber-500"
+                      : "bg-emerald-500 dark:bg-emerald-400",
                 )}
                 style={{ width: `${Math.min(100, podPercent)}%` }}
               />
@@ -328,8 +342,10 @@ export function BentoMetricCards({
                 {clusterOverview?.runningPods ?? scopedPodsCount}
               </strong>{" "}
               Running
-              {Boolean(clusterOverview?.pendingPods) && `, ${clusterOverview?.pendingPods} Pnd`}
-              {Boolean(clusterOverview?.failedPods) && `, ${clusterOverview?.failedPods} Fail`}
+              {Boolean(clusterOverview?.pendingPods) &&
+                `, ${clusterOverview?.pendingPods} Pnd`}
+              {Boolean(clusterOverview?.failedPods) &&
+                `, ${clusterOverview?.failedPods} Fail`}
             </span>
             <span className="text-[var(--accent)] font-medium flex items-center gap-0.5 group-hover:translate-x-0.5 transition-transform">
               <span>View</span>
@@ -353,7 +369,9 @@ export function BentoMetricCards({
           className="group p-3 sm:p-3.5 flex flex-col justify-between space-y-2 hover:bg-[var(--surface-hover)]/40 transition-colors cursor-pointer focus-visible:ring-2 focus-visible:ring-[var(--accent)] focus-visible:outline-hidden"
         >
           <div className="flex items-center justify-between text-[11px]">
-            <span className="font-semibold text-[var(--muted)] tracking-tight">Nodes</span>
+            <span className="font-semibold text-[var(--muted)] tracking-tight">
+              Nodes
+            </span>
             <span className="font-mono text-[10px] text-[var(--muted)] tabular-nums">
               {totalNodes} Total
             </span>
@@ -377,16 +395,19 @@ export function BentoMetricCards({
                   isNamespaceScoped
                     ? "bg-[var(--accent)]"
                     : totalNodes > 0 && readyNodes === totalNodes
-                    ? "bg-emerald-500 dark:bg-emerald-400"
-                    : "bg-amber-500"
+                      ? "bg-emerald-500 dark:bg-emerald-400"
+                      : "bg-amber-500",
                 )}
                 style={{
                   width: `${
                     isNamespaceScoped
-                      ? Math.min(100, (nodesHostingCount * 100) / (totalNodes || 1))
+                      ? Math.min(
+                          100,
+                          (nodesHostingCount * 100) / (totalNodes || 1),
+                        )
                       : totalNodes > 0
-                      ? Math.min(100, (readyNodes * 100) / totalNodes)
-                      : 100
+                        ? Math.min(100, (readyNodes * 100) / totalNodes)
+                        : 100
                   }%`,
                 }}
               />
@@ -395,7 +416,9 @@ export function BentoMetricCards({
 
           <div className="pt-1.5 flex items-center justify-between text-[10px] font-mono text-[var(--muted)]">
             <span className="tabular-nums truncate">
-              {isNamespaceScoped ? `Scope: ${currentNamespace}` : `${availableNamespacesCount} Namespaces`}
+              {isNamespaceScoped
+                ? `Scope: ${currentNamespace}`
+                : `${availableNamespacesCount} Namespaces`}
             </span>
             <span className="text-[var(--accent)] font-medium flex items-center gap-0.5 group-hover:translate-x-0.5 transition-transform">
               <span>Inspect</span>

@@ -17,9 +17,12 @@ export function NamespaceSelectorDropdown({
   variant = "header",
   className,
 }: NamespaceSelectorDropdownProps) {
-  const { currentNamespace, availableNamespaces, setCurrentNamespace, pods } = useClusterStore();
+  const { currentNamespace, availableNamespaces, setCurrentNamespace, pods } =
+    useClusterStore();
   const [search, setSearch] = React.useState("");
-  const [filterCategory, setFilterCategory] = React.useState<"all" | "workloads" | "system">("all");
+  const [filterCategory, setFilterCategory] = React.useState<
+    "all" | "workloads" | "system"
+  >("all");
   const [isOpen, setIsOpen] = React.useState(false);
   const dropdownRef = React.useRef<HTMLDivElement>(null);
 
@@ -74,7 +77,11 @@ export function NamespaceSelectorDropdown({
   const filteredNamespaces = React.useMemo(() => {
     return availableNamespaces.filter((ns) => {
       // Category filter
-      if (filterCategory === "workloads" && ns !== "all" && isSystemNamespace(ns)) {
+      if (
+        filterCategory === "workloads" &&
+        ns !== "all" &&
+        isSystemNamespace(ns)
+      ) {
         return false;
       }
       if (filterCategory === "system" && !isSystemNamespace(ns)) {
@@ -87,13 +94,15 @@ export function NamespaceSelectorDropdown({
   }, [availableNamespaces, search, filterCategory]);
 
   const workloadCount = React.useMemo(
-    () => availableNamespaces.filter((ns) => ns !== "all" && !isSystemNamespace(ns)).length,
-    [availableNamespaces]
+    () =>
+      availableNamespaces.filter((ns) => ns !== "all" && !isSystemNamespace(ns))
+        .length,
+    [availableNamespaces],
   );
 
   const systemCount = React.useMemo(
     () => availableNamespaces.filter((ns) => isSystemNamespace(ns)).length,
-    [availableNamespaces]
+    [availableNamespaces],
   );
 
   return (
@@ -111,13 +120,20 @@ export function NamespaceSelectorDropdown({
             "px-2.5 py-1.5 rounded-lg bg-slate-100/90 dark:bg-black/40 border border-[var(--border)] hover:border-black/20 dark:hover:border-white/20 text-[var(--foreground)] shrink-0",
           variant === "unified" &&
             "px-2.5 py-1.5 rounded-md hover:bg-black/[0.05] dark:hover:bg-white/[0.06] text-[var(--foreground)]",
-          isOpen && variant !== "unified" && "border-black/20 dark:border-white/20 ring-1 ring-[var(--accent)]/30",
-          isOpen && variant === "unified" && "bg-black/[0.08] dark:bg-white/[0.1]",
-          className
+          isOpen &&
+            variant !== "unified" &&
+            "border-black/20 dark:border-white/20 ring-1 ring-[var(--accent)]/30",
+          isOpen &&
+            variant === "unified" &&
+            "bg-black/[0.08] dark:bg-white/[0.1]",
+          className,
         )}
         title={`Filter by Namespace (Current: ${currentNamespace})`}
       >
-        <Layers className="w-3.5 h-3.5 text-[var(--muted)] group-hover:text-[var(--foreground)] transition-colors shrink-0" aria-hidden="true" />
+        <Layers
+          className="w-3.5 h-3.5 text-[var(--muted)] group-hover:text-[var(--foreground)] transition-colors shrink-0"
+          aria-hidden="true"
+        />
         <span className="text-[11px] text-[var(--muted)] uppercase font-semibold tracking-wider">
           ns:
         </span>
@@ -127,7 +143,7 @@ export function NamespaceSelectorDropdown({
         <ChevronDown
           className={cn(
             "w-3 h-3 text-[var(--muted)] group-hover:text-[var(--foreground)] transition-transform duration-200 shrink-0",
-            isOpen && "rotate-180"
+            isOpen && "rotate-180",
           )}
           aria-hidden="true"
         />
@@ -153,7 +169,10 @@ export function NamespaceSelectorDropdown({
             <div className="px-2 pt-1 pb-2 border-b border-[var(--border)]">
               <div className="flex items-center justify-between mb-2">
                 <span className="text-xs font-semibold text-[var(--foreground)] tracking-tight flex items-center gap-1.5">
-                  <Layers className="w-3.5 h-3.5 text-[var(--muted)]" aria-hidden="true" />
+                  <Layers
+                    className="w-3.5 h-3.5 text-[var(--muted)]"
+                    aria-hidden="true"
+                  />
                   <span>Namespaces</span>
                 </span>
                 <span className="text-[11px] text-[var(--muted)] font-mono tabular-nums">
@@ -163,7 +182,10 @@ export function NamespaceSelectorDropdown({
 
               {/* Search Input */}
               <div className="relative">
-                <Search className="w-3.5 h-3.5 absolute left-2.5 top-1/2 -translate-y-1/2 text-[var(--muted)]" aria-hidden="true" />
+                <Search
+                  className="w-3.5 h-3.5 absolute left-2.5 top-1/2 -translate-y-1/2 text-[var(--muted)]"
+                  aria-hidden="true"
+                />
                 <input
                   type="text"
                   autoFocus
@@ -189,7 +211,11 @@ export function NamespaceSelectorDropdown({
               </div>
 
               {/* Category Filter Pills (Quiet elevated buttons, zero fluorescent orange) */}
-              <div className="flex items-center gap-1 mt-2 pt-1" role="group" aria-label="Filter namespace categories">
+              <div
+                className="flex items-center gap-1 mt-2 pt-1"
+                role="group"
+                aria-label="Filter namespace categories"
+              >
                 <button
                   type="button"
                   onClick={() => setFilterCategory("all")}
@@ -197,7 +223,7 @@ export function NamespaceSelectorDropdown({
                     "px-2 py-0.5 rounded-md text-[11px] font-medium transition-all cursor-pointer font-mono outline-hidden focus-visible:ring-1 focus-visible:ring-[var(--accent)] border",
                     filterCategory === "all"
                       ? "bg-black/[0.08] dark:bg-white/[0.1] text-[var(--foreground)] font-semibold border-black/10 dark:border-white/15 shadow-xs"
-                      : "border-transparent text-[var(--muted)] hover:text-[var(--foreground)] hover:bg-black/5 dark:hover:bg-white/5"
+                      : "border-transparent text-[var(--muted)] hover:text-[var(--foreground)] hover:bg-black/5 dark:hover:bg-white/5",
                   )}
                 >
                   All ({availableNamespaces.length})
@@ -209,7 +235,7 @@ export function NamespaceSelectorDropdown({
                     "px-2 py-0.5 rounded-md text-[11px] font-medium transition-all cursor-pointer font-mono outline-hidden focus-visible:ring-1 focus-visible:ring-[var(--accent)] border",
                     filterCategory === "workloads"
                       ? "bg-black/[0.08] dark:bg-white/[0.1] text-[var(--foreground)] font-semibold border-black/10 dark:border-white/15 shadow-xs"
-                      : "border-transparent text-[var(--muted)] hover:text-[var(--foreground)] hover:bg-black/5 dark:hover:bg-white/5"
+                      : "border-transparent text-[var(--muted)] hover:text-[var(--foreground)] hover:bg-black/5 dark:hover:bg-white/5",
                   )}
                 >
                   Apps ({workloadCount})
@@ -221,7 +247,7 @@ export function NamespaceSelectorDropdown({
                     "px-2 py-0.5 rounded-md text-[11px] font-medium transition-all cursor-pointer font-mono outline-hidden focus-visible:ring-1 focus-visible:ring-[var(--accent)] border",
                     filterCategory === "system"
                       ? "bg-black/[0.08] dark:bg-white/[0.1] text-[var(--foreground)] font-semibold border-black/10 dark:border-white/15 shadow-xs"
-                      : "border-transparent text-[var(--muted)] hover:text-[var(--foreground)] hover:bg-black/5 dark:hover:bg-white/5"
+                      : "border-transparent text-[var(--muted)] hover:text-[var(--foreground)] hover:bg-black/5 dark:hover:bg-white/5",
                   )}
                 >
                   System ({systemCount})
@@ -230,7 +256,11 @@ export function NamespaceSelectorDropdown({
             </div>
 
             {/* Namespaces List */}
-            <div className="max-h-60 overflow-y-auto p-1 space-y-0.5 mt-1" role="menu" aria-label="Available Namespaces">
+            <div
+              className="max-h-60 overflow-y-auto p-1 space-y-0.5 mt-1"
+              role="menu"
+              aria-label="Available Namespaces"
+            >
               {filteredNamespaces.map((ns) => {
                 const isSelected = ns === currentNamespace;
                 const isSystem = isSystemNamespace(ns);
@@ -244,14 +274,16 @@ export function NamespaceSelectorDropdown({
                     data-testid="namespace-item"
                     onClick={() => {
                       setCurrentNamespace(ns);
-                      toast.info(`Switched to namespace: ${isAll ? "All Namespaces" : ns}`);
+                      toast.info(
+                        `Switched to namespace: ${isAll ? "All Namespaces" : ns}`,
+                      );
                       setIsOpen(false);
                     }}
                     className={cn(
                       "w-full text-left flex items-center justify-between px-2.5 py-1.5 rounded-lg cursor-pointer outline-hidden transition-all text-xs font-mono border",
                       isSelected
                         ? "bg-black/[0.04] dark:bg-white/[0.06] border-black/10 dark:border-white/10 text-[var(--foreground)] font-semibold shadow-xs"
-                        : "border-transparent hover:bg-black/[0.03] dark:hover:bg-white/[0.04] hover:border-[var(--border)] text-[var(--foreground)]"
+                        : "border-transparent hover:bg-black/[0.03] dark:hover:bg-white/[0.04] hover:border-[var(--border)] text-[var(--foreground)]",
                     )}
                   >
                     <div className="flex items-center gap-2 min-w-0">
@@ -267,14 +299,16 @@ export function NamespaceSelectorDropdown({
 
                     <div className="flex items-center gap-1.5 shrink-0 ml-2">
                       <span className="text-[10px] text-[var(--muted)] font-mono tabular-nums px-1.5 py-0.2 rounded bg-black/[0.03] dark:bg-white/[0.04] border border-[var(--border)]">
-                        {isAll ? pods.length : (namespaceCounts[ns] || 0)}
+                        {isAll ? pods.length : namespaceCounts[ns] || 0}
                       </span>
                       {isSystem && !isAll && (
                         <span className="px-1.5 py-0.2 text-[10px] rounded font-mono bg-black/5 dark:bg-white/5 text-[var(--muted)] border border-[var(--border)]">
                           sys
                         </span>
                       )}
-                      {isSelected && <Check className="w-3.5 h-3.5 text-[var(--accent)] shrink-0" />}
+                      {isSelected && (
+                        <Check className="w-3.5 h-3.5 text-[var(--accent)] shrink-0" />
+                      )}
                     </div>
                   </button>
                 );
@@ -301,7 +335,9 @@ export function NamespaceSelectorDropdown({
 
             {/* Footer Info */}
             <div className="px-2.5 py-1.5 mt-1 border-t border-[var(--border)] flex items-center justify-between text-[11px] text-[var(--muted)] font-mono tabular-nums">
-              <span>Active: {currentNamespace === "all" ? "All" : currentNamespace}</span>
+              <span>
+                Active: {currentNamespace === "all" ? "All" : currentNamespace}
+              </span>
               <span>{filteredNamespaces.length} shown</span>
             </div>
           </motion.div>

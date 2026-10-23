@@ -36,23 +36,23 @@ export function NotFoundState({
   const { openTab } = useTabStore();
   const { currentNamespace, setCurrentNamespace } = useClusterStore();
 
-  const displayTitle = title || (
-    resourceName
+  const displayTitle =
+    title ||
+    (resourceName
       ? `${resourceKind} "${resourceName}" Not Found`
-      : `${resourceKind} Not Found`
-  );
+      : `${resourceKind} Not Found`);
 
-  const displayMessage = message || (
-    searchQuery
+  const displayMessage =
+    message ||
+    (searchQuery
       ? `No ${resourceKind.toLowerCase()} matching "${searchQuery}" was found in namespace "${currentNamespace}".`
-      : `The requested ${resourceKind.toLowerCase()} does not exist in the active cluster context or may have been deleted.`
-  );
+      : `The requested ${resourceKind.toLowerCase()} does not exist in the active cluster context or may have been deleted.`);
 
   return (
     <div
       className={cn(
         "flex-1 flex flex-col items-center justify-center p-8 select-none relative overflow-hidden",
-        className
+        className,
       )}
     >
       {/* Ambient Cyber Grid & Glow */}
@@ -98,7 +98,13 @@ export function NotFoundState({
           </div>
           <div className="flex items-center gap-2">
             <span className="text-emerald-500 dark:text-emerald-400">•</span>
-            <span>Check namespace filter (current: <strong className="text-[var(--foreground)]">{currentNamespace}</strong>)</span>
+            <span>
+              Check namespace filter (current:{" "}
+              <strong className="text-[var(--foreground)]">
+                {currentNamespace}
+              </strong>
+              )
+            </span>
           </div>
           <div className="flex items-center gap-2">
             <span className="text-blue-500 dark:text-blue-400">•</span>
@@ -133,7 +139,13 @@ export function NotFoundState({
           )}
 
           <button
-            onClick={() => openTab({ id: "overview", title: "Cluster Overview", closable: false })}
+            onClick={() =>
+              openTab({
+                id: "overview",
+                title: "Cluster Overview",
+                closable: false,
+              })
+            }
             className="px-3.5 py-2 rounded-lg bg-black/[0.04] dark:bg-white/[0.06] hover:bg-black/[0.08] dark:hover:bg-white/[0.1] text-xs font-medium text-[var(--foreground)] border border-[var(--border)] transition-all cursor-pointer flex items-center gap-1.5"
           >
             <ArrowLeft className="w-3.5 h-3.5 text-[var(--muted)]" />
@@ -141,7 +153,9 @@ export function NotFoundState({
           </button>
 
           <button
-            onClick={() => openTab({ id: "pods", title: "Pods", closable: true })}
+            onClick={() =>
+              openTab({ id: "pods", title: "Pods", closable: true })
+            }
             className="px-3.5 py-2 rounded-lg bg-black/[0.04] dark:bg-white/[0.06] hover:bg-black/[0.08] dark:hover:bg-white/[0.1] text-xs font-medium text-[var(--foreground)] border border-[var(--border)] transition-all cursor-pointer flex items-center gap-1.5"
           >
             <Box className="w-3.5 h-3.5 text-[var(--accent)]" />

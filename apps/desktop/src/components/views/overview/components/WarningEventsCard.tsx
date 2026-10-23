@@ -1,12 +1,7 @@
 "use client";
 
 import * as React from "react";
-import {
-  AlertTriangle,
-  CheckCircle2,
-  ChevronRight,
-  Clock,
-} from "lucide-react";
+import { AlertTriangle, CheckCircle2, ChevronRight, Clock } from "lucide-react";
 import { SpotlightCard } from "@/components/ui";
 import { cn } from "@/lib/utils";
 import type { PodEventItem } from "@kubeview/contracts";
@@ -178,7 +173,7 @@ export function WarningEventsCard({
                   "px-2 py-0.5 rounded-md transition-colors cursor-pointer",
                   timeRange === "1h"
                     ? "bg-[var(--surface)] text-[var(--foreground)] font-semibold shadow-xs"
-                    : "text-[var(--muted)] hover:text-[var(--foreground)]"
+                    : "text-[var(--muted)] hover:text-[var(--foreground)]",
                 )}
                 title="Show events from past 1 hour"
               >
@@ -191,7 +186,7 @@ export function WarningEventsCard({
                   "px-2 py-0.5 rounded-md transition-colors cursor-pointer",
                   timeRange === "24h"
                     ? "bg-[var(--surface)] text-[var(--foreground)] font-semibold shadow-xs"
-                    : "text-[var(--muted)] hover:text-[var(--foreground)]"
+                    : "text-[var(--muted)] hover:text-[var(--foreground)]",
                 )}
                 title="Show events from past 24 hours (Default)"
               >
@@ -204,7 +199,7 @@ export function WarningEventsCard({
                   "px-2 py-0.5 rounded-md transition-colors cursor-pointer",
                   timeRange === "all"
                     ? "bg-[var(--surface)] text-[var(--foreground)] font-semibold shadow-xs"
-                    : "text-[var(--muted)] hover:text-[var(--foreground)]"
+                    : "text-[var(--muted)] hover:text-[var(--foreground)]",
                 )}
                 title="Show all recorded cluster events"
               >
@@ -217,7 +212,7 @@ export function WarningEventsCard({
                 "px-2.5 py-0.5 rounded-full text-xs font-mono font-semibold tabular-nums border",
                 filteredAndSortedEvents.length > 0
                   ? "bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/20"
-                  : "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20"
+                  : "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20",
               )}
             >
               {filteredAndSortedEvents.length} Active
@@ -296,7 +291,7 @@ export function WarningEventsCard({
                           "font-mono font-semibold text-xs tracking-tight shrink-0",
                           isSevere
                             ? "text-rose-500 dark:text-rose-400"
-                            : "text-amber-500 dark:text-amber-400"
+                            : "text-amber-500 dark:text-amber-400",
                         )}
                       >
                         {ev.reason}
@@ -322,7 +317,10 @@ export function WarningEventsCard({
                         <div className="overflow-hidden">
                           <span className="inline-flex items-center gap-0.5 text-xs font-semibold text-[var(--accent)] pl-2 opacity-0 group-hover/ev:opacity-100 translate-x-1.5 group-hover/ev:translate-x-0 transition-all duration-200 ease-out whitespace-nowrap motion-reduce:translate-x-0">
                             <span>Inspect</span>
-                            <ChevronRight className="w-3.5 h-3.5 shrink-0" aria-hidden="true" />
+                            <ChevronRight
+                              className="w-3.5 h-3.5 shrink-0"
+                              aria-hidden="true"
+                            />
                           </span>
                         </div>
                       </div>
@@ -349,7 +347,7 @@ export function WarningEventsCard({
                           "tabular-nums font-semibold",
                           isSevere
                             ? "text-rose-600/90 dark:text-rose-400/90"
-                            : "text-amber-600/90 dark:text-amber-400/90"
+                            : "text-amber-600/90 dark:text-amber-400/90",
                         )}
                       >
                         Occurred {ev.count} times

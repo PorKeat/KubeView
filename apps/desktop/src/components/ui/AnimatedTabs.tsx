@@ -40,7 +40,7 @@ export function AnimatedTabs<T extends string = string>({
       className={cn(
         "relative flex items-center p-1 rounded-xl bg-[var(--surface)] border border-[var(--border)] text-xs select-none",
         size === "sm" ? "h-8" : "h-9",
-        className
+        className,
       )}
     >
       {tabs.map((tab) => {
@@ -65,7 +65,8 @@ export function AnimatedTabs<T extends string = string>({
                 onChange(next.id);
               } else if (e.key === "ArrowLeft") {
                 e.preventDefault();
-                const prev = tabs[(currentIndex - 1 + tabs.length) % tabs.length];
+                const prev =
+                  tabs[(currentIndex - 1 + tabs.length) % tabs.length];
                 onChange(prev.id);
               }
             }}
@@ -74,7 +75,7 @@ export function AnimatedTabs<T extends string = string>({
               size === "sm" ? "h-6 text-[11px]" : "h-7 text-xs",
               isActive
                 ? "text-[var(--foreground)] font-semibold"
-                : "text-[var(--muted)] hover:text-[var(--foreground)]"
+                : "text-[var(--muted)] hover:text-[var(--foreground)]",
             )}
           >
             {/* Sliding Pill Indicator */}
@@ -89,7 +90,7 @@ export function AnimatedTabs<T extends string = string>({
                 className={cn(
                   "absolute inset-0 rounded-lg bg-[var(--surface-active)] shadow-xs border border-[var(--border)]/80 -z-10",
                   "motion-reduce:transition-none",
-                  pillClassName
+                  pillClassName,
                 )}
               />
             )}
@@ -99,7 +100,7 @@ export function AnimatedTabs<T extends string = string>({
                 className={cn(
                   "shrink-0 transition-colors",
                   size === "sm" ? "w-3 h-3" : "w-3.5 h-3.5",
-                  isActive ? "text-[var(--accent)]" : "text-[var(--muted)]"
+                  isActive ? "text-[var(--accent)]" : "text-[var(--muted)]",
                 )}
                 aria-hidden="true"
               />
@@ -114,8 +115,8 @@ export function AnimatedTabs<T extends string = string>({
                   tab.badgeVariant === "warning"
                     ? "bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20"
                     : tab.badgeVariant === "accent"
-                    ? "bg-[var(--accent)]/10 text-[var(--accent)] border border-[var(--accent)]/20"
-                    : "bg-black/[0.05] dark:bg-white/[0.08] text-[var(--muted)]"
+                      ? "bg-[var(--accent)]/10 text-[var(--accent)] border border-[var(--accent)]/20"
+                      : "bg-black/[0.05] dark:bg-white/[0.08] text-[var(--muted)]",
                 )}
               >
                 {tab.badge}

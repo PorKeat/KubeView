@@ -96,14 +96,21 @@ export function InteractiveSparkline({
     }));
   }, [secondaryData, width, height, maxVal]);
 
-  const primaryCurve = React.useMemo(() => createSmoothBezierPath(primaryCoords), [primaryCoords]);
+  const primaryCurve = React.useMemo(
+    () => createSmoothBezierPath(primaryCoords),
+    [primaryCoords],
+  );
   const secondaryCurve = React.useMemo(
-    () => (secondaryCoords.length ? createSmoothBezierPath(secondaryCoords) : ""),
-    [secondaryCoords]
+    () =>
+      secondaryCoords.length ? createSmoothBezierPath(secondaryCoords) : "",
+    [secondaryCoords],
   );
 
   const lastPrimary = primaryCoords[primaryCoords.length - 1] || { x: 0, y: 0 };
-  const lastSecondary = secondaryCoords[secondaryCoords.length - 1] || { x: 0, y: 0 };
+  const lastSecondary = secondaryCoords[secondaryCoords.length - 1] || {
+    x: 0,
+    y: 0,
+  };
 
   const primaryArea = React.useMemo(() => {
     if (!primaryCoords.length) return "";
@@ -125,7 +132,9 @@ export function InteractiveSparkline({
 
   const activeIdx = hoverIndex !== null ? hoverIndex : data.length - 1;
   const activePrimaryVal = data[activeIdx] ?? 0;
-  const activeSecondaryVal = secondaryData ? secondaryData[activeIdx] ?? 0 : null;
+  const activeSecondaryVal = secondaryData
+    ? (secondaryData[activeIdx] ?? 0)
+    : null;
   const activeX = primaryCoords[activeIdx]?.x ?? lastPrimary.x;
 
   return (
@@ -133,7 +142,10 @@ export function InteractiveSparkline({
       ref={containerRef}
       onMouseMove={handleMouseMove}
       onMouseLeave={handleMouseLeave}
-      className={cn("relative w-full select-none cursor-crosshair group/sparkline", className)}
+      className={cn(
+        "relative w-full select-none cursor-crosshair group/sparkline",
+        className,
+      )}
     >
       <svg
         viewBox={`0 0 ${width} ${height}`}
@@ -142,13 +154,21 @@ export function InteractiveSparkline({
       >
         <defs>
           <linearGradient id={`grad-prim-${uid}`} x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0%" stopColor={areaGradientFrom || color} stopOpacity="0.22" />
+            <stop
+              offset="0%"
+              stopColor={areaGradientFrom || color}
+              stopOpacity="0.22"
+            />
             <stop offset="100%" stopColor={areaGradientTo} stopOpacity="0.0" />
           </linearGradient>
           {secondaryData && (
             <linearGradient id={`grad-sec-${uid}`} x1="0" y1="0" x2="0" y2="1">
               <stop offset="0%" stopColor={secondaryColor} stopOpacity="0.16" />
-              <stop offset="100%" stopColor={areaGradientTo} stopOpacity="0.0" />
+              <stop
+                offset="100%"
+                stopColor={areaGradientTo}
+                stopOpacity="0.0"
+              />
             </linearGradient>
           )}
         </defs>
@@ -248,7 +268,7 @@ export function InteractiveSparkline({
                 "font-mono select-none fill-current",
                 isLive
                   ? "text-emerald-600 dark:text-emerald-400 font-semibold"
-                  : "text-[var(--muted)]/70"
+                  : "text-[var(--muted)]/70",
               )}
             >
               {lbl}
@@ -261,14 +281,22 @@ export function InteractiveSparkline({
       {hoverIndex !== null && (
         <div
           className="pointer-events-none absolute -top-8 px-2 py-0.5 rounded-md bg-[var(--surface-elevated)] border border-[var(--border)] text-[10px] font-mono shadow-md text-[var(--foreground)] flex items-center gap-2 -translate-x-1/2 z-30"
-          style={{ left: `${Math.max(30, Math.min(width - 30, (activeX / (width - 24)) * 100))}%` }}
+          style={{
+            left: `${Math.max(30, Math.min(width - 30, (activeX / (width - 24)) * 100))}%`,
+          }}
         >
-          <span className="flex items-center gap-1 font-semibold" style={{ color }}>
+          <span
+            className="flex items-center gap-1 font-semibold"
+            style={{ color }}
+          >
             {metricName}: {activePrimaryVal}
             {unit}
           </span>
           {activeSecondaryVal !== null && (
-            <span className="flex items-center gap-1 font-semibold" style={{ color: secondaryColor }}>
+            <span
+              className="flex items-center gap-1 font-semibold"
+              style={{ color: secondaryColor }}
+            >
               {secondaryMetricName}: {activeSecondaryVal}
               {secondaryUnit}
             </span>
@@ -284,7 +312,7 @@ function secondaryAreaCurve(
   lastPt: { x: number; y: number },
   top: number,
   h: number,
-  uid: string
+  uid: string,
 ) {
   if (!coords.length) return null;
   const path = `${createSmoothBezierPath(coords)} L ${lastPt.x.toFixed(1)} ${(top + h).toFixed(1)} L 0 ${(top + h).toFixed(1)} Z`;

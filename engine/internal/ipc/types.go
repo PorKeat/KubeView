@@ -17,14 +17,14 @@ const (
 
 // KubeView specific error code strings
 const (
-	ErrEngineUnavailable  = "ENGINE_UNAVAILABLE"
-	ErrPayloadTooLarge    = "PAYLOAD_TOO_LARGE"
-	ErrTimeout            = "TIMEOUT"
-	ErrK8sUnauthorized    = "K8S_UNAUTHORIZED"
-	ErrK8sForbidden       = "K8S_FORBIDDEN"
-	ErrK8sNotFound        = "K8S_NOT_FOUND"
-	ErrK8sConnFailed      = "K8S_CONNECTION_FAILED"
-	ErrExecPluginFailed   = "EXEC_PLUGIN_FAILED"
+	ErrEngineUnavailable = "ENGINE_UNAVAILABLE"
+	ErrPayloadTooLarge   = "PAYLOAD_TOO_LARGE"
+	ErrTimeout           = "TIMEOUT"
+	ErrK8sUnauthorized   = "K8S_UNAUTHORIZED"
+	ErrK8sForbidden      = "K8S_FORBIDDEN"
+	ErrK8sNotFound       = "K8S_NOT_FOUND"
+	ErrK8sConnFailed     = "K8S_CONNECTION_FAILED"
+	ErrExecPluginFailed  = "EXEC_PLUGIN_FAILED"
 )
 
 // Request is a standard JSON-RPC 2.0 request envelope
@@ -72,4 +72,5 @@ type HandshakeResult struct {
 	Status               string   `json:"status"` // "ready" | "degraded"
 	SupportedAPIVersions []string `json:"supportedApiVersions"`
 	StreamPort           int      `json:"streamPort,omitempty"`
+	StreamToken          string   `json:"streamToken,omitempty"`
 }

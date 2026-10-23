@@ -92,13 +92,7 @@ export function InspectorWorkloadOverview({
         data.age,
       ]
     : isReplicaSet
-      ? [
-          data.name,
-          desired,
-          replicaSet!.currentReplicas,
-          ready,
-          data.age,
-        ]
+      ? [data.name, desired, replicaSet!.currentReplicas, ready, data.age]
       : [
           data.name,
           `${ready}/${desired}`,
@@ -117,7 +111,11 @@ export function InspectorWorkloadOverview({
               Workload Health
             </span>
             <div className="flex flex-wrap items-center gap-2">
-              <StatusBeacon variant={statusVariant} label={data.status} size="sm" />
+              <StatusBeacon
+                variant={statusVariant}
+                label={data.status}
+                size="sm"
+              />
               <span className="text-[11px] text-[var(--muted)] font-mono">
                 {healthSummary}
               </span>
@@ -152,8 +150,9 @@ export function InspectorWorkloadOverview({
             Replicas are managed by Deployment{" "}
             <strong className="text-[var(--foreground)] font-mono">
               {replicaSet!.ownerDeployment}
-            </strong>. Scaling this ReplicaSet directly may be reconciled back
-            by the Deployment controller.
+            </strong>
+            . Scaling this ReplicaSet directly may be reconciled back by the
+            Deployment controller.
           </div>
         )}
 
@@ -183,17 +182,25 @@ export function InspectorWorkloadOverview({
               <ReplicaTile
                 label="Up-to-date"
                 value={deployment!.updatedReplicas}
-                tone={deployment!.updatedReplicas < desired ? "warning" : "healthy"}
+                tone={
+                  deployment!.updatedReplicas < desired ? "warning" : "healthy"
+                }
               />
               <ReplicaTile
                 label="Available"
                 value={deployment!.availableReplicas}
-                tone={deployment!.availableReplicas < desired ? "warning" : "healthy"}
+                tone={
+                  deployment!.availableReplicas < desired
+                    ? "warning"
+                    : "healthy"
+                }
               />
               <ReplicaTile
                 label="Unavailable"
                 value={deployment!.unavailableReplicas}
-                tone={deployment!.unavailableReplicas > 0 ? "critical" : "muted"}
+                tone={
+                  deployment!.unavailableReplicas > 0 ? "critical" : "muted"
+                }
               />
             </>
           ) : isReplicaSet ? (
@@ -201,7 +208,11 @@ export function InspectorWorkloadOverview({
               <ReplicaTile
                 label="Current"
                 value={replicaSet!.currentReplicas}
-                tone={replicaSet!.currentReplicas !== desired ? "warning" : "healthy"}
+                tone={
+                  replicaSet!.currentReplicas !== desired
+                    ? "warning"
+                    : "healthy"
+                }
               />
               <ReplicaTile
                 label="Ready"
@@ -211,7 +222,11 @@ export function InspectorWorkloadOverview({
               <ReplicaTile
                 label="Available"
                 value={replicaSet!.availableReplicas}
-                tone={replicaSet!.availableReplicas < desired ? "warning" : "healthy"}
+                tone={
+                  replicaSet!.availableReplicas < desired
+                    ? "warning"
+                    : "healthy"
+                }
               />
             </>
           ) : (
@@ -219,7 +234,11 @@ export function InspectorWorkloadOverview({
               <ReplicaTile
                 label="Current"
                 value={statefulSet!.currentReplicas}
-                tone={statefulSet!.currentReplicas !== desired ? "warning" : "healthy"}
+                tone={
+                  statefulSet!.currentReplicas !== desired
+                    ? "warning"
+                    : "healthy"
+                }
               />
               <ReplicaTile
                 label="Ready"
@@ -229,12 +248,18 @@ export function InspectorWorkloadOverview({
               <ReplicaTile
                 label="Updated"
                 value={statefulSet!.updatedReplicas}
-                tone={statefulSet!.updatedReplicas < desired ? "warning" : "healthy"}
+                tone={
+                  statefulSet!.updatedReplicas < desired ? "warning" : "healthy"
+                }
               />
               <ReplicaTile
                 label="Available"
                 value={statefulSet!.availableReplicas}
-                tone={statefulSet!.availableReplicas < desired ? "warning" : "healthy"}
+                tone={
+                  statefulSet!.availableReplicas < desired
+                    ? "warning"
+                    : "healthy"
+                }
               />
             </>
           )}
@@ -243,14 +268,18 @@ export function InspectorWorkloadOverview({
         <div className="rounded-xl border border-[var(--border)]/70 overflow-hidden">
           <div className="grid grid-cols-5 gap-1 bg-black/[0.03] dark:bg-white/[0.03] px-2.5 py-1 text-[9px] uppercase tracking-wider text-[var(--muted)] font-semibold">
             {summaryColumns.map((column) => (
-              <span key={column} className="truncate">{column}</span>
+              <span key={column} className="truncate">
+                {column}
+              </span>
             ))}
           </div>
           <div className="grid grid-cols-5 gap-1 px-2.5 py-1.5 font-mono text-[10px] text-[var(--foreground)]">
             {summaryValues.map((value, index) => (
               <span
                 key={`${value}-${index}`}
-                className={index === 0 ? "truncate pr-2" : "tabular-nums truncate"}
+                className={
+                  index === 0 ? "truncate pr-2" : "tabular-nums truncate"
+                }
                 title={String(value)}
               >
                 {value}
@@ -282,7 +311,10 @@ export function InspectorWorkloadOverview({
               value={replicaSet!.ownerDeployment || "standalone"}
             />
           ) : (
-            <MetaItem label="Service" value={statefulSet!.serviceName || "none"} />
+            <MetaItem
+              label="Service"
+              value={statefulSet!.serviceName || "none"}
+            />
           )}
           <MetaItem
             label="Revision"
@@ -327,7 +359,10 @@ export function InspectorWorkloadOverview({
                 label="Update Strategy"
                 value={statefulSet!.updateStrategy}
               />
-              <MetaItem label="Partition" value={String(statefulSet!.partition)} />
+              <MetaItem
+                label="Partition"
+                value={String(statefulSet!.partition)}
+              />
               <MetaItem
                 label="Max Unavailable"
                 value={statefulSet!.maxUnavailable || "-"}
@@ -373,8 +408,10 @@ export function InspectorWorkloadOverview({
                 value={statefulSet!.persistentVolumeClaimRetentionWhenScaled}
               />
             </div>
-            {(statefulSet!.persistentVolumeClaimRetentionWhenDeleted === "Delete" ||
-              statefulSet!.persistentVolumeClaimRetentionWhenScaled === "Delete") && (
+            {(statefulSet!.persistentVolumeClaimRetentionWhenDeleted ===
+              "Delete" ||
+              statefulSet!.persistentVolumeClaimRetentionWhenScaled ===
+                "Delete") && (
               <div className="p-2.5 rounded-xl border border-amber-500/20 bg-amber-500/5 text-[11px] leading-relaxed text-amber-700 dark:text-amber-400">
                 PVC retention policy deletes persistent volume claims when this
                 StatefulSet is deleted or scaled down.

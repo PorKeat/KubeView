@@ -13,7 +13,10 @@ import { NamespaceScopeBanner } from "./components/NamespaceScopeBanner";
 import { BentoMetricCards } from "./components/BentoMetricCards";
 import { NodeTopologySection } from "./components/NodeTopologySection";
 import { WorkloadControllersCard } from "./components/WorkloadControllersCard";
-import { WarningEventsCard, extractPodName } from "./components/WarningEventsCard";
+import {
+  WarningEventsCard,
+  extractPodName,
+} from "./components/WarningEventsCard";
 import type { NodeSummary, PodEventItem } from "@kubeview/contracts";
 
 export function ClusterOverviewView() {
@@ -56,7 +59,13 @@ export function ClusterOverviewView() {
         loadPods();
       }
     }
-  }, [connectionStatus, currentContext, currentNamespace, loadClusterOverview, loadPods]);
+  }, [
+    connectionStatus,
+    currentContext,
+    currentNamespace,
+    loadClusterOverview,
+    loadPods,
+  ]);
 
   // Periodic Auto-refresh timer for live telemetry sync
   React.useEffect(() => {
@@ -226,7 +235,9 @@ export function ClusterOverviewView() {
       if (targetNs && targetNs !== currentNamespace && targetNs !== "all") {
         setCurrentNamespace(targetNs);
       }
-      await loadPods(targetNs || (isNamespaceScoped ? currentNamespace : "all"));
+      await loadPods(
+        targetNs || (isNamespaceScoped ? currentNamespace : "all"),
+      );
       const latestPods = useClusterStore.getState().pods;
       const latestFound =
         latestPods.find(
@@ -379,7 +390,8 @@ export function ClusterOverviewView() {
       />
 
       {/* 4. Adaptive Layout: Workload Controllers & Incident Journal */}
-      {clusterOverview?.warningEvents && clusterOverview.warningEvents.length > 0 ? (
+      {clusterOverview?.warningEvents &&
+      clusterOverview.warningEvents.length > 0 ? (
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-5 items-stretch">
           <WorkloadControllersCard
             workloads={clusterOverview?.workloads}
@@ -391,7 +403,10 @@ export function ClusterOverviewView() {
             onInspectDaemonSets={handleInspectDaemonSets}
           />
 
-          <div id="cluster-warning-events-card" className="h-full flex flex-col">
+          <div
+            id="cluster-warning-events-card"
+            className="h-full flex flex-col"
+          >
             <WarningEventsCard
               warningEvents={clusterOverview?.warningEvents}
               isNamespaceScoped={isNamespaceScoped}
@@ -411,7 +426,9 @@ export function ClusterOverviewView() {
                 <CheckCircle2 className="w-3.5 h-3.5" aria-hidden="true" />
               </div>
               <div className="flex items-center gap-2 flex-wrap">
-                <span className="font-semibold text-[var(--foreground)]">Cluster Health:</span>
+                <span className="font-semibold text-[var(--foreground)]">
+                  Cluster Health:
+                </span>
                 <span className="font-mono text-emerald-600 dark:text-emerald-400 font-medium">
                   0 Active Warnings
                 </span>

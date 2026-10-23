@@ -15,11 +15,7 @@ import { cn } from "@/lib/utils";
 import { Tooltip } from "@/components/ui/Tooltip";
 import { matchesLabelSelector } from "@/lib/labelSelector";
 import type { PodSummary } from "@kubeview/contracts";
-import {
-  isPodFailing,
-  isPodRunning,
-  isPodPending,
-} from "../lib/podIssues";
+import { isPodFailing, isPodRunning, isPodPending } from "../lib/podIssues";
 
 export interface ResourceTableToolbarProps {
   search: string;
@@ -69,8 +65,7 @@ export function ResourceTableToolbar({
       currentNamespace === "all"
         ? pods
         : pods.filter(
-            (p) =>
-              p.namespace.toLowerCase() === currentNamespace.toLowerCase(),
+            (p) => p.namespace.toLowerCase() === currentNamespace.toLowerCase(),
           );
 
     if (podNodeFilter) {
@@ -239,8 +234,12 @@ export function ResourceTableToolbar({
               <span
                 className={cn(
                   "text-[10px] font-mono tabular-nums",
-                  pill.hasWarning && pill.count > 0 && "text-rose-500 font-semibold",
-                  pill.hasPending && pill.count > 0 && "text-amber-500 font-medium",
+                  pill.hasWarning &&
+                    pill.count > 0 &&
+                    "text-rose-500 font-semibold",
+                  pill.hasPending &&
+                    pill.count > 0 &&
+                    "text-amber-500 font-medium",
                   !pill.hasWarning && !pill.hasPending && "text-[var(--muted)]",
                 )}
               >

@@ -12,8 +12,16 @@ import type { SelectedResource } from "@/stores/clusterStore";
 export interface InspectorContainersTabProps {
   currentResource: SelectedResource;
   podData: PodSummary | undefined;
-  onOpenLogsModal: (pod: { name: string; namespace: string; container: string }) => void;
-  onOpenExecModal: (pod: { name: string; namespace: string; container: string }) => void;
+  onOpenLogsModal: (pod: {
+    name: string;
+    namespace: string;
+    container: string;
+  }) => void;
+  onOpenExecModal: (pod: {
+    name: string;
+    namespace: string;
+    container: string;
+  }) => void;
 }
 
 export function InspectorContainersTab({
@@ -25,7 +33,11 @@ export function InspectorContainersTab({
   const containers = podData?.containers || [];
 
   if (containers.length === 0) {
-    return <div className="p-8 text-center text-[var(--muted)]">No container details available</div>;
+    return (
+      <div className="p-8 text-center text-[var(--muted)]">
+        No container details available
+      </div>
+    );
   }
 
   return (
@@ -38,7 +50,9 @@ export function InspectorContainersTab({
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
               <Box className="w-4 h-4 text-[#F08A42]" />
-              <span className="font-semibold text-[var(--foreground)] font-mono text-xs">{c.name}</span>
+              <span className="font-semibold text-[var(--foreground)] font-mono text-xs">
+                {c.name}
+              </span>
             </div>
             <div className="flex items-center gap-2">
               <span
@@ -46,7 +60,7 @@ export function InspectorContainersTab({
                   "inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-medium font-mono border",
                   c.ready
                     ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20"
-                    : "bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/25"
+                    : "bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/25",
                 )}
               >
                 {c.ready ? "Ready" : "Not Ready"}
@@ -61,7 +75,10 @@ export function InspectorContainersTab({
             <div className="flex items-center justify-between group/img">
               <span className="text-[var(--muted)]">Image:</span>
               <div className="flex items-center gap-1.5 max-w-[70%]">
-                <span className="text-[var(--foreground)] truncate font-mono text-[10px]" title={c.image}>
+                <span
+                  className="text-[var(--foreground)] truncate font-mono text-[10px]"
+                  title={c.image}
+                >
                   {c.image}
                 </span>
                 <Tooltip content="Copy Image name">
@@ -82,13 +99,21 @@ export function InspectorContainersTab({
             {c.stateReason && (
               <div className="flex items-center justify-between">
                 <span className="text-[var(--muted)]">State Reason:</span>
-                <span className="text-amber-500 font-medium">{c.stateReason}</span>
+                <span className="text-amber-500 font-medium">
+                  {c.stateReason}
+                </span>
               </div>
             )}
 
             <div className="flex items-center justify-between">
               <span className="text-[var(--muted)]">Restarts:</span>
-              <span className={cn(c.restartCount > 0 ? "text-amber-500 font-bold" : "text-[var(--foreground)]")}>
+              <span
+                className={cn(
+                  c.restartCount > 0
+                    ? "text-amber-500 font-bold"
+                    : "text-[var(--foreground)]",
+                )}
+              >
                 {c.restartCount}
               </span>
             </div>
@@ -97,7 +122,9 @@ export function InspectorContainersTab({
           {/* Ports */}
           {c.ports && c.ports.length > 0 && (
             <div className="space-y-1">
-              <span className="text-[10px] text-[var(--muted)] font-mono block">Exposed Ports:</span>
+              <span className="text-[10px] text-[var(--muted)] font-mono block">
+                Exposed Ports:
+              </span>
               <div className="flex items-center gap-1.5 flex-wrap">
                 {c.ports.map((p, idx) => (
                   <span
@@ -117,15 +144,21 @@ export function InspectorContainersTab({
           {c.resources && (c.resources.requests || c.resources.limits) && (
             <div className="grid grid-cols-2 gap-2 text-[10px] font-mono p-2.5 rounded-xl border border-[var(--border)] bg-black/[0.01] dark:bg-white/[0.01]">
               <div>
-                <span className="text-[var(--muted)] block text-[9px]">Requests:</span>
+                <span className="text-[var(--muted)] block text-[9px]">
+                  Requests:
+                </span>
                 <span className="text-[var(--foreground)] font-semibold">
-                  CPU: {c.resources.requests?.cpu || "-"}, Mem: {c.resources.requests?.memory || "-"}
+                  CPU: {c.resources.requests?.cpu || "-"}, Mem:{" "}
+                  {c.resources.requests?.memory || "-"}
                 </span>
               </div>
               <div>
-                <span className="text-[var(--muted)] block text-[9px]">Limits:</span>
+                <span className="text-[var(--muted)] block text-[9px]">
+                  Limits:
+                </span>
                 <span className="text-[var(--foreground)] font-semibold">
-                  CPU: {c.resources.limits?.cpu || "-"}, Mem: {c.resources.limits?.memory || "-"}
+                  CPU: {c.resources.limits?.cpu || "-"}, Mem:{" "}
+                  {c.resources.limits?.memory || "-"}
                 </span>
               </div>
             </div>
@@ -140,11 +173,23 @@ export function InspectorContainersTab({
               </div>
               <div className="space-y-1 max-h-28 overflow-y-auto font-mono text-[10px]">
                 {c.volumeMounts.map((vm, idx) => (
-                  <div key={idx} className="flex items-center justify-between text-[var(--muted)] hover:text-[var(--foreground)] gap-2">
-                    <span className="truncate max-w-[160px]" title={vm.name}>{vm.name}</span>
-                    <span className="text-[var(--foreground)] truncate max-w-[180px] select-all text-right font-medium" title={vm.mountPath}>
+                  <div
+                    key={idx}
+                    className="flex items-center justify-between text-[var(--muted)] hover:text-[var(--foreground)] gap-2"
+                  >
+                    <span className="truncate max-w-[160px]" title={vm.name}>
+                      {vm.name}
+                    </span>
+                    <span
+                      className="text-[var(--foreground)] truncate max-w-[180px] select-all text-right font-medium"
+                      title={vm.mountPath}
+                    >
                       {vm.mountPath}
-                      {vm.readOnly && <span className="ml-1 text-[9px] text-amber-500 font-normal">(ro)</span>}
+                      {vm.readOnly && (
+                        <span className="ml-1 text-[9px] text-amber-500 font-normal">
+                          (ro)
+                        </span>
+                      )}
                     </span>
                   </div>
                 ))}

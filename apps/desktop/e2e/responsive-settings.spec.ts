@@ -32,9 +32,9 @@ test.describe("KubeView Responsive Shell", () => {
     await page.screenshot({
       path: testInfo.outputPath("mobile-header.png"),
     });
-    await expect(
-      page.locator('[aria-label^="Pod density:"]'),
-    ).toBeVisible({ timeout: 15000 });
+    await expect(page.locator('[aria-label^="Pod density:"]')).toBeVisible({
+      timeout: 15000,
+    });
     await page.screenshot({
       path: testInfo.outputPath("mobile-overview-live.png"),
     });
@@ -53,7 +53,9 @@ test.describe("KubeView Responsive Shell", () => {
     await page.keyboard.press("Escape");
     await expect(sidebar).not.toBeVisible();
 
-    await page.getByRole("button", { name: "Search resources", exact: true }).click();
+    await page
+      .getByRole("button", { name: "Search resources", exact: true })
+      .click();
     const commandInput = page.getByPlaceholder(/Type a command/);
     await expect(commandInput).toBeVisible();
     const paletteOverflow = await page.evaluate(() => {
@@ -74,18 +76,22 @@ test.describe("KubeView Responsive Shell", () => {
     const deploymentFilter = page.getByPlaceholder(/Filter deployments/i);
     await expect(deploymentFilter).toBeVisible({ timeout: 15000 });
 
-    const tableScroll = await page.locator("table").first().evaluate((table) => {
-      const wrapper = table.parentElement as HTMLElement;
-      return {
-        scrollWidth: wrapper.scrollWidth,
-        clientWidth: wrapper.clientWidth,
-      };
-    });
+    const tableScroll = await page
+      .locator("table")
+      .first()
+      .evaluate((table) => {
+        const wrapper = table.parentElement as HTMLElement;
+        return {
+          scrollWidth: wrapper.scrollWidth,
+          clientWidth: wrapper.clientWidth,
+        };
+      });
     expect(tableScroll.scrollWidth).toBeGreaterThan(tableScroll.clientWidth);
 
     const pageOverflow = await page.evaluate(
       () =>
-        document.documentElement.scrollWidth - document.documentElement.clientWidth,
+        document.documentElement.scrollWidth -
+        document.documentElement.clientWidth,
     );
     expect(pageOverflow).toBeLessThanOrEqual(1);
 
@@ -94,7 +100,9 @@ test.describe("KubeView Responsive Shell", () => {
     });
   });
 
-  test("every workload table stays scrollable at phone width", async ({ page }) => {
+  test("every workload table stays scrollable at phone width", async ({
+    page,
+  }) => {
     await openApp(page);
     const workloadPages = [
       { id: "pods", placeholder: /Filter pods/i },
@@ -256,7 +264,9 @@ test.describe("KubeView Responsive Shell", () => {
 
     await page.getByTestId("nav-back").click();
     await expect(page.getByTestId("settings-view")).not.toBeVisible();
-    await expect(page.getByRole("tab", { name: /Cluster Overview tab/i })).toBeVisible();
+    await expect(
+      page.getByRole("tab", { name: /Cluster Overview tab/i }),
+    ).toBeVisible();
   });
 
   test("mobile header remains usable at extra-large font", async ({
@@ -275,7 +285,9 @@ test.describe("KubeView Responsive Shell", () => {
     });
   });
 
-  test("mobile inspector header stays usable at 390px", async ({ page }, testInfo) => {
+  test("mobile inspector header stays usable at 390px", async ({
+    page,
+  }, testInfo) => {
     await openApp(page);
     await page.getByRole("button", { name: "Open navigation" }).click();
     await page.getByTestId("nav-item-deployments").click();
@@ -286,7 +298,10 @@ test.describe("KubeView Responsive Shell", () => {
     const drawer = page.getByTestId("resource-inspector-drawer");
     await expect(drawer).toBeVisible({ timeout: 10000 });
     await page.waitForTimeout(350);
-    await expectNoHorizontalOverflow(page, '[data-testid="resource-inspector-drawer"]');
+    await expectNoHorizontalOverflow(
+      page,
+      '[data-testid="resource-inspector-drawer"]',
+    );
     await expect(page.getByTestId("inspector-close-btn")).toBeVisible();
     await page.screenshot({
       path: testInfo.outputPath("mobile-inspector.png"),
@@ -367,7 +382,6 @@ test.describe("KubeView Desktop Shell", () => {
     });
   });
 });
-
 
 test.describe("KubeView Compact Desktop", () => {
   test.use({ viewport: { width: 1024, height: 768 } });

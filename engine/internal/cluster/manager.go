@@ -6,6 +6,7 @@ import (
 	"net/url"
 	"os"
 	"path/filepath"
+	"sort"
 	"strings"
 	"sync"
 	"time"
@@ -267,6 +268,8 @@ func (m *Manager) ListContexts() (*ListContextsResult, error) {
 		})
 	}
 
+	sort.Slice(summaries, func(i, j int) bool { return summaries[i].Name < summaries[j].Name })
+
 	return &ListContextsResult{
 		CurrentContext: m.currentContext,
 		Contexts:       summaries,
@@ -417,15 +420,25 @@ func (m *Manager) ListNamespaces(ctx context.Context, contextName string) ([]str
 		return nil, err
 	}
 
-	nsList, err := client.CoreV1().Namespaces().List(ctx, metav1.ListOptions{Limit: 200})
-	if err != nil {
-		return nil, fmt.Errorf("failed to list namespaces: %w", err)
-	}
-
 	var names []string
-	for _, item := range nsList.Items {
-		names = append(names, item.Name)
+	continueToken := ""
+	for {
+		nsList, err := client.CoreV1().Namespaces().List(ctx, metav1.ListOptions{
+			Limit:    200,
+			Continue: continueToken,
+		})
+		if err != nil {
+			return nil, fmt.Errorf("failed to list namespaces: %w", err)
+		}
+		for _, item := range nsList.Items {
+			names = append(names, item.Name)
+		}
+		continueToken = nsList.Continue
+		if continueToken == "" {
+			break
+		}
 	}
+	sort.Strings(names)
 
 	return names, nil
 }
@@ -650,34 +663,48 @@ func (m *Manager) DeleteContext(contextName string) error {
 		return err
 	}
 
+	found := false
 	entries, err := os.ReadDir(dir)
-	if err == nil {
-		for _, entry := range entries {
-			if entry.IsDir() || strings.HasPrefix(entry.Name(), ".") {
-				continue
-			}
-			filePath := filepath.Join(dir, entry.Name())
-			cfg, err := clientcmd.LoadFromFile(filePath)
-			if err != nil || cfg == nil {
-				continue
-			}
+	if err != nil {
+		if os.IsNotExist(err) {
+			return fmt.Errorf("context '%s' not found", contextName)
+		}
+		return err
+	}
 
-			removed := false
-			for cName := range cfg.Contexts {
-				if cName == contextName || strings.EqualFold(cName, contextName) {
-					delete(cfg.Contexts, cName)
-					removed = true
-				}
-			}
+	for _, entry := range entries {
+		if entry.IsDir() || strings.HasPrefix(entry.Name(), ".") {
+			continue
+		}
+		filePath := filepath.Join(dir, entry.Name())
+		cfg, err := clientcmd.LoadFromFile(filePath)
+		if err != nil || cfg == nil {
+			continue
+		}
 
-			if removed {
-				if len(cfg.Contexts) == 0 {
-					_ = os.Remove(filePath)
-				} else {
-					_ = clientcmd.WriteToFile(*cfg, filePath)
-				}
+		removed := false
+		for cName := range cfg.Contexts {
+			if cName == contextName || strings.EqualFold(cName, contextName) {
+				delete(cfg.Contexts, cName)
+				removed = true
 			}
 		}
+
+		if !removed {
+			continue
+		}
+		found = true
+		if len(cfg.Contexts) == 0 {
+			if err := os.Remove(filePath); err != nil && !os.IsNotExist(err) {
+				return fmt.Errorf("failed to remove kubeconfig '%s': %w", filePath, err)
+			}
+		} else if err := clientcmd.WriteToFile(*cfg, filePath); err != nil {
+			return fmt.Errorf("failed to write kubeconfig '%s': %w", filePath, err)
+		}
+	}
+
+	if !found {
+		return fmt.Errorf("context '%s' not found", contextName)
 	}
 
 	return m.ReloadConfig()
@@ -691,11 +718,15 @@ func (m *Manager) ClearAllContexts() error {
 	}
 
 	entries, err := os.ReadDir(dir)
-	if err == nil {
-		for _, entry := range entries {
-			if !entry.IsDir() {
-				_ = os.Remove(filepath.Join(dir, entry.Name()))
-			}
+	if err != nil && !os.IsNotExist(err) {
+		return err
+	}
+	for _, entry := range entries {
+		if entry.IsDir() {
+			continue
+		}
+		if err := os.Remove(filepath.Join(dir, entry.Name())); err != nil && !os.IsNotExist(err) {
+			return fmt.Errorf("failed to remove '%s': %w", entry.Name(), err)
 		}
 	}
 
@@ -738,7 +769,7 @@ func (m *Manager) UpdateEndpoint(contextName, newServerUrl string, insecure ...b
 		return err
 	}
 
-	updatedCount := 0
+	found := false
 	for _, entry := range entries {
 		if entry.IsDir() || strings.HasPrefix(entry.Name(), ".") {
 			continue
@@ -770,17 +801,14 @@ func (m *Manager) UpdateEndpoint(contextName, newServerUrl string, insecure ...b
 		}
 
 		if matched {
-			if updatedCount > 0 {
-				// Remove redundant duplicate file for the EXACT same context
-				_ = os.Remove(filePath)
-			} else {
-				_ = clientcmd.WriteToFile(*cfg, filePath)
-				updatedCount++
+			found = true
+			if err := clientcmd.WriteToFile(*cfg, filePath); err != nil {
+				return fmt.Errorf("failed to write kubeconfig '%s': %w", filePath, err)
 			}
 		}
 	}
 
-	if updatedCount == 0 {
+	if !found {
 		m.mu.Lock()
 		if m.rawConfig != nil {
 			for cName, ctxObj := range m.rawConfig.Contexts {
@@ -796,6 +824,7 @@ func (m *Manager) UpdateEndpoint(contextName, newServerUrl string, insecure ...b
 								clObj.InsecureSkipTLSVerify = false
 							}
 						}
+						found = true
 					}
 				}
 			}
@@ -803,6 +832,10 @@ func (m *Manager) UpdateEndpoint(contextName, newServerUrl string, insecure ...b
 		m.mu.Unlock()
 	}
 
+	if !found {
+		return fmt.Errorf("context '%s' not found", contextName)
+	}
+
+	m.InvalidateOverviewCache(contextName)
 	return m.ReloadConfig()
 }
-

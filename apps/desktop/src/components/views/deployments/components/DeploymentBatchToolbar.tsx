@@ -2,6 +2,7 @@
 
 import * as React from "react";
 import { Box, Copy, X } from "lucide-react";
+import { Tooltip } from "@/components/ui/Tooltip";
 
 export interface DeploymentBatchToolbarProps {
   selectedItemsCount: number;
@@ -44,14 +45,15 @@ export function DeploymentBatchToolbar({
           <Copy className="w-3.5 h-3.5 text-cyan-500" />
           <span>Copy Restart Commands</span>
         </button>
-        <button
-          onClick={onClearSelection}
-          className="p-1 rounded text-[var(--muted)] hover:text-[var(--foreground)] cursor-pointer"
-          title="Clear Selection"
-          aria-label="Clear selection"
-        >
-          <X className="w-3.5 h-3.5" />
-        </button>
+        <Tooltip content="Clear selection">
+          <button
+            onClick={onClearSelection}
+            className="p-1 rounded text-[var(--muted)] hover:text-[var(--foreground)] cursor-pointer"
+            aria-label="Clear selection"
+          >
+            <X className="w-3.5 h-3.5" />
+          </button>
+        </Tooltip>
       </div>
     </div>
   );

@@ -7,6 +7,7 @@ import (
 	"io"
 	"log"
 	"os"
+	"runtime/debug"
 	"sync"
 )
 
@@ -21,6 +22,8 @@ type Server struct {
 	handlers map[string]HandlerFunc
 	mu       sync.Mutex
 	stopCh   chan struct{}
+	stopOnce sync.Once
+	sem      chan struct{}
 	wg       sync.WaitGroup
 }
 
@@ -38,6 +41,7 @@ func NewServer(r io.Reader, w io.Writer) *Server {
 		logger:   log.New(os.Stderr, "[kubeview-engine] ", log.LstdFlags|log.Lmicroseconds),
 		handlers: make(map[string]HandlerFunc),
 		stopCh:   make(chan struct{}),
+		sem:      make(chan struct{}, 64),
 	}
 }
 
@@ -108,8 +112,10 @@ func (s *Server) Run() error {
 		lineCopy := make([]byte, len(line))
 		copy(lineCopy, line)
 		s.wg.Add(1)
+		s.sem <- struct{}{}
 		go func(l []byte) {
 			defer s.wg.Done()
+			defer func() { <-s.sem }()
 			s.handleLine(l)
 		}(lineCopy)
 	}
@@ -122,11 +128,20 @@ func (s *Server) Wait() {
 
 // Stop terminates the server read loop
 func (s *Server) Stop() {
-	close(s.stopCh)
+	s.stopOnce.Do(func() { close(s.stopCh) })
 }
 
 func (s *Server) handleLine(line []byte) {
 	var req Request
+	var reqID interface{}
+	defer func() {
+		if rec := recover(); rec != nil {
+			s.Log("panic in RPC handler: %v\n%s", rec, debug.Stack())
+			if reqID != nil {
+				s.sendError(reqID, &RPCError{Code: ErrCodeInternalError, Message: "Internal engine error"})
+			}
+		}
+	}()
 	if err := json.Unmarshal(line, &req); err != nil {
 		s.sendError(nil, &RPCError{
 			Code:    ErrCodeParseError,
@@ -134,6 +149,8 @@ func (s *Server) handleLine(line []byte) {
 		})
 		return
 	}
+
+	reqID = req.ID
 
 	if req.JSONRPC != "2.0" || req.Method == "" {
 		s.sendError(req.ID, &RPCError{

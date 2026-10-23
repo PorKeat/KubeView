@@ -4,7 +4,9 @@ import * as React from "react";
 import { cn } from "@/lib/utils";
 import { TelemetryPoint } from "../types";
 
-export function smoothPointsToSvgPath(points: { x: number; y: number }[]): string {
+export function smoothPointsToSvgPath(
+  points: { x: number; y: number }[],
+): string {
   if (points.length === 0) return "";
   if (points.length === 1) return `M ${points[0].x} ${points[0].y}`;
 
@@ -34,7 +36,7 @@ export function generateNodeTelemetrySeries(
   plotLeft: number,
   plotRight: number,
   plotTop: number,
-  plotBottom: number
+  plotBottom: number,
 ) {
   let hash = 0;
   for (let i = 0; i < seedStr.length; i++) {
@@ -68,8 +70,14 @@ export function generateNodeTelemetrySeries(
       const isBurst = i % 5 === 2 || i % 7 === 3;
       const burstFactor = isBurst ? 1.45 + r1 * 0.8 : 0.65 + r1 * 0.45;
 
-      const ptCpu = Math.max(0.5, Math.min(100, Math.round(cpuLive * burstFactor * 10) / 10));
-      const ptRam = Math.max(1, Math.min(100, Math.round((ramLive + (r2 - 0.5) * 4) * 10) / 10));
+      const ptCpu = Math.max(
+        0.5,
+        Math.min(100, Math.round(cpuLive * burstFactor * 10) / 10),
+      );
+      const ptRam = Math.max(
+        1,
+        Math.min(100, Math.round((ramLive + (r2 - 0.5) * 4) * 10) / 10),
+      );
 
       rawPoints.push({ cpu: ptCpu, ram: ptRam, timeLabel });
     }
@@ -95,7 +103,8 @@ export function generateNodeTelemetrySeries(
       cpuRaw: i === numPoints - 1 ? cpuDisplay : `${Math.round(pt.cpu * 75)}m`,
       cpuY,
       ramPercent: pt.ram,
-      ramRaw: i === numPoints - 1 ? ramDisplay : `${(pt.ram * 0.14).toFixed(1)}Gi`,
+      ramRaw:
+        i === numPoints - 1 ? ramDisplay : `${(pt.ram * 0.14).toFixed(1)}Gi`,
       ramY,
     };
   });
@@ -162,15 +171,37 @@ export function PrecisionTelemetryChart({
       plotLeft,
       plotRight,
       plotTop,
-      plotBottom
+      plotBottom,
     );
-  }, [nodeName, cpuPercent, cpuDisplay, memoryPercent, memoryDisplay, plotLeft, plotRight, plotTop, plotBottom]);
+  }, [
+    nodeName,
+    cpuPercent,
+    cpuDisplay,
+    memoryPercent,
+    memoryDisplay,
+    plotLeft,
+    plotRight,
+    plotTop,
+    plotBottom,
+  ]);
 
-  const cpuPoints = React.useMemo(() => points.map((p) => ({ x: p.x, y: p.cpuY })), [points]);
-  const ramPoints = React.useMemo(() => points.map((p) => ({ x: p.x, y: p.ramY })), [points]);
+  const cpuPoints = React.useMemo(
+    () => points.map((p) => ({ x: p.x, y: p.cpuY })),
+    [points],
+  );
+  const ramPoints = React.useMemo(
+    () => points.map((p) => ({ x: p.x, y: p.ramY })),
+    [points],
+  );
 
-  const cpuLine = React.useMemo(() => smoothPointsToSvgPath(cpuPoints), [cpuPoints]);
-  const ramLine = React.useMemo(() => smoothPointsToSvgPath(ramPoints), [ramPoints]);
+  const cpuLine = React.useMemo(
+    () => smoothPointsToSvgPath(cpuPoints),
+    [cpuPoints],
+  );
+  const ramLine = React.useMemo(
+    () => smoothPointsToSvgPath(ramPoints),
+    [ramPoints],
+  );
 
   const cpuArea = `${cpuLine} L ${plotRight} ${plotBottom} L ${plotLeft} ${plotBottom} Z`;
   const ramArea = `${ramLine} L ${plotRight} ${plotBottom} L ${plotLeft} ${plotBottom} Z`;
@@ -187,7 +218,10 @@ export function PrecisionTelemetryChart({
     const mouseX = ((e.clientX - rect.left) / rect.width) * width;
     const clampedX = Math.max(plotLeft, Math.min(plotRight, mouseX));
     const ratio = (clampedX - plotLeft) / (plotRight - plotLeft);
-    const idx = Math.min(points.length - 1, Math.max(0, Math.round(ratio * (points.length - 1))));
+    const idx = Math.min(
+      points.length - 1,
+      Math.max(0, Math.round(ratio * (points.length - 1))),
+    );
     setHoveredIdx(idx);
   };
 
@@ -242,7 +276,11 @@ export function PrecisionTelemetryChart({
                   stroke="currentColor"
                   strokeWidth="1"
                   strokeDasharray={tick === 0 ? undefined : "2,2"}
-                  className={tick === 0 ? "text-black/15 dark:text-white/15" : "text-black/[0.06] dark:text-white/[0.06]"}
+                  className={
+                    tick === 0
+                      ? "text-black/15 dark:text-white/15"
+                      : "text-black/[0.06] dark:text-white/[0.06]"
+                  }
                 />
                 <text
                   x={plotLeft - 4}
@@ -332,7 +370,7 @@ export function PrecisionTelemetryChart({
           <div
             className={cn(
               "absolute z-30 pointer-events-none bg-[#161a22] dark:bg-[#161a22] border border-white/15 rounded-md px-2.5 py-1.5 shadow-2xl text-xs font-mono space-y-1 backdrop-blur-md transition-all duration-75",
-              hoveredPoint.x > width * 0.6 ? "-translate-x-full mr-2" : "ml-2"
+              hoveredPoint.x > width * 0.6 ? "-translate-x-full mr-2" : "ml-2",
             )}
             style={{
               left: `${(hoveredPoint.x / width) * 100}%`,
@@ -341,7 +379,9 @@ export function PrecisionTelemetryChart({
           >
             <div className="text-[10px] text-[var(--muted)] font-medium border-b border-white/10 pb-0.5 flex items-center justify-between gap-3">
               <span>Time: {hoveredPoint.timeLabel}</span>
-              <span className="text-emerald-400 font-bold">{hoveredPoint.cpuPercent}%</span>
+              <span className="text-emerald-400 font-bold">
+                {hoveredPoint.cpuPercent}%
+              </span>
             </div>
             <div className="flex items-center justify-between gap-3 text-[11px]">
               <span className="text-[var(--muted)]">CPU</span>
@@ -364,11 +404,15 @@ export function PrecisionTelemetryChart({
         <div className="flex items-center gap-3">
           <div className="flex items-center gap-1.5">
             <span className="w-3 h-0.5 bg-emerald-400 rounded-full shrink-0" />
-            <span className="hover:text-[var(--foreground)] transition-colors">CPU</span>
+            <span className="hover:text-[var(--foreground)] transition-colors">
+              CPU
+            </span>
           </div>
           <div className="flex items-center gap-1.5">
             <span className="w-3 h-0.5 bg-sky-400 rounded-full shrink-0" />
-            <span className="hover:text-[var(--foreground)] transition-colors">RAM</span>
+            <span className="hover:text-[var(--foreground)] transition-colors">
+              RAM
+            </span>
           </div>
         </div>
 

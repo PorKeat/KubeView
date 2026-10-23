@@ -37,7 +37,9 @@ export function StatusBar() {
   const warningCount = warningEvents.length;
 
   const copyVersion = () => {
-    navigator.clipboard.writeText(`Kubernetes ${serverVersion} (${currentContext})`);
+    navigator.clipboard.writeText(
+      `Kubernetes ${serverVersion} (${currentContext})`,
+    );
     setCopied(true);
     toast.success("Cluster details copied");
     setTimeout(() => setCopied(false), 2000);
@@ -139,14 +141,26 @@ export function StatusBar() {
               <span
                 className={cn(
                   "animate-ping absolute inline-flex h-full w-full rounded-full opacity-75",
-                  status.beacon
+                  status.beacon,
                 )}
               />
             )}
-            <span className={cn("relative inline-flex rounded-full h-2 w-2", status.beacon)} />
+            <span
+              className={cn(
+                "relative inline-flex rounded-full h-2 w-2",
+                status.beacon,
+              )}
+            />
           </span>
-          <span className={cn("font-medium", status.color)}>{status.label}</span>
-          <span className={cn("text-[10px] font-mono tabular-nums opacity-80", latencyColor)}>
+          <span className={cn("font-medium", status.color)}>
+            {status.label}
+          </span>
+          <span
+            className={cn(
+              "text-[10px] font-mono tabular-nums opacity-80",
+              latencyColor,
+            )}
+          >
             ({latencyDisplay})
           </span>
         </button>
@@ -240,12 +254,16 @@ export function StatusBar() {
             title={`${warningCount} Active Warning Events • Click to review in Overview`}
           >
             <AlertTriangle className="w-3 h-3 text-amber-500 shrink-0" />
-            <span className="tabular-nums font-medium text-[10px]">{warningCount} active</span>
+            <span className="tabular-nums font-medium text-[10px]">
+              {warningCount} active
+            </span>
           </button>
         ) : (
           <button
             type="button"
-            onClick={() => toast.info("All cluster workloads healthy — 0 active warnings")}
+            onClick={() =>
+              toast.info("All cluster workloads healthy — 0 active warnings")
+            }
             className="flex items-center gap-1.5 px-1.5 py-0.5 rounded text-[var(--muted)] hover:text-[var(--foreground)] hover:bg-black/[0.04] dark:hover:bg-white/[0.06] transition-colors cursor-pointer focus-visible:outline-hidden"
             title="0 active warnings — Cluster healthy"
           >

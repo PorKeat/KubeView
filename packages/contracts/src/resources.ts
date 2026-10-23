@@ -210,6 +210,7 @@ export interface ExecPodResult {
 }
 
 export interface PodEventItem {
+  context?: string;
   type: string;
   reason: string;
   message: string;

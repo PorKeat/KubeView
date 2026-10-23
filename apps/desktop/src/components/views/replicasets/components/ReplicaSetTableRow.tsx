@@ -2,7 +2,9 @@
 
 import * as React from "react";
 import { motion, AnimatePresence } from "motion/react";
-import { CheckSquare, Square,
+import {
+  CheckSquare,
+  Square,
   Copy,
   Check,
   ChevronRight,
@@ -170,7 +172,10 @@ export function ReplicaSetTableRow({
           isExpanded && "bg-[var(--surface-hover)]/70",
         )}
       >
-                <td className="px-2 text-center" onClick={(event) => event.stopPropagation()}>
+        <td
+          className="px-2 text-center"
+          onClick={(event) => event.stopPropagation()}
+        >
           <button
             type="button"
             onClick={() => onToggleSelect(itemKey)}
@@ -184,9 +189,11 @@ export function ReplicaSetTableRow({
             )}
           </button>
         </td>
-<td className="py-1 px-3 font-medium font-mono text-[var(--foreground)] truncate">
+        <td className="py-1 px-3 font-medium font-mono text-[var(--foreground)] truncate">
           <div className="flex items-center gap-1 min-w-0">
-            <Tooltip content={isExpanded ? "Collapse details" : "Expand details"}>
+            <Tooltip
+              content={isExpanded ? "Collapse details" : "Expand details"}
+            >
               <button
                 type="button"
                 onClick={(event) => {
@@ -271,7 +278,9 @@ export function ReplicaSetTableRow({
               className="inline-flex max-w-full min-w-0 items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-mono bg-blue-500/10 text-blue-600 dark:text-blue-400 border border-blue-500/20"
             >
               <Layers className="w-2.5 h-2.5 shrink-0" />
-              <span className="truncate max-w-[120px]">{item.ownerDeployment}</span>
+              <span className="truncate max-w-[120px]">
+                {item.ownerDeployment}
+              </span>
             </span>
           ) : (
             <span className="text-[10px] text-[var(--muted)] font-mono italic">
@@ -284,9 +293,19 @@ export function ReplicaSetTableRow({
           {item.age}
         </td>
 
-        <td className="py-1 px-2 text-right" onClick={(event) => event.stopPropagation()}>
-          <div className="relative inline-flex items-center justify-end" ref={actionMenuRef}>
-            <Tooltip content="Actions menu" disabled={showActionMenu} side="left">
+        <td
+          className="py-1 px-2 text-right"
+          onClick={(event) => event.stopPropagation()}
+        >
+          <div
+            className="relative inline-flex items-center justify-end"
+            ref={actionMenuRef}
+          >
+            <Tooltip
+              content="Actions menu"
+              disabled={showActionMenu}
+              side="left"
+            >
               <button
                 ref={actionButtonRef}
                 type="button"
@@ -309,7 +328,12 @@ export function ReplicaSetTableRow({
                   initial={{ opacity: 0, scale: 0.95, y: openUpwards ? 4 : -4 }}
                   animate={{ opacity: 1, scale: 1, y: 0 }}
                   exit={{ opacity: 0, scale: 0.95, y: openUpwards ? 4 : -4 }}
-                  transition={{ type: "spring", stiffness: 450, damping: 30, mass: 0.8 }}
+                  transition={{
+                    type: "spring",
+                    stiffness: 450,
+                    damping: 30,
+                    mass: 0.8,
+                  }}
                   onClick={(event) => event.stopPropagation()}
                   className={cn(
                     "absolute z-50 w-72 p-1.5 rounded-xl bg-[var(--surface)] border border-[var(--border)] shadow-2xl backdrop-blur-md text-left",
@@ -382,7 +406,8 @@ export function ReplicaSetTableRow({
                       <ChevronRight
                         className={cn(
                           "w-3.5 h-3.5 text-[var(--muted)] transition-transform duration-150",
-                          showKubectlSubmenu && "rotate-90 text-[var(--accent)]",
+                          showKubectlSubmenu &&
+                            "rotate-90 text-[var(--accent)]",
                         )}
                       />
                     </button>
@@ -396,7 +421,10 @@ export function ReplicaSetTableRow({
                               key={command.label}
                               type="button"
                               onClick={() =>
-                                handleCopyKubectl(command.command, command.label)
+                                handleCopyKubectl(
+                                  command.command,
+                                  command.label,
+                                )
                               }
                               className="w-full text-left p-1.5 rounded-md hover:bg-black/5 dark:hover:bg-white/[0.06] transition-colors cursor-pointer group/kcmd flex items-center justify-between gap-2"
                             >
@@ -517,7 +545,11 @@ export function ReplicaSetTableRow({
                               {condition.type}
                             </span>
                             <StatusBeacon
-                              variant={condition.status === "True" ? "critical" : "healthy"}
+                              variant={
+                                condition.status === "True"
+                                  ? "critical"
+                                  : "healthy"
+                              }
                               label={condition.status}
                               size="xs"
                             />

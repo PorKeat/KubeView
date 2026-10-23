@@ -49,7 +49,9 @@ export function NodeTelemetryTable({
             {nodes.map((n) => {
               const isSelected = selectedNode === n.name;
               const isNodeReady = n.status === "Ready";
-              const scopedNodePods = nodeScopedPodCounts[n.name] ?? (isNamespaceScoped ? 0 : n.activePods);
+              const scopedNodePods =
+                nodeScopedPodCounts[n.name] ??
+                (isNamespaceScoped ? 0 : n.activePods);
 
               return (
                 <tr
@@ -64,11 +66,13 @@ export function NodeTelemetryTable({
                   }}
                   className={cn(
                     "hover:bg-[var(--surface-hover)] transition-colors duration-150 motion-reduce:transition-none cursor-pointer focus-visible:ring-2 focus-visible:ring-[var(--accent)] focus-visible:outline-hidden",
-                    isSelected && "bg-[var(--surface-hover)] font-semibold"
+                    isSelected && "bg-[var(--surface-hover)] font-semibold",
                   )}
                 >
                   <td className="py-3 px-3.5">
-                    <span className="font-bold text-[var(--foreground)]">{n.name}</span>
+                    <span className="font-bold text-[var(--foreground)]">
+                      {n.name}
+                    </span>
                   </td>
                   <td className="py-3 px-3">
                     <span
@@ -76,7 +80,7 @@ export function NodeTelemetryTable({
                         "px-2 py-0.5 rounded-md text-[11px] font-medium font-mono",
                         isNodeReady
                           ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20"
-                          : "bg-rose-500/10 text-rose-600 dark:text-rose-400 border border-rose-500/20"
+                          : "bg-rose-500/10 text-rose-600 dark:text-rose-400 border border-rose-500/20",
                       )}
                     >
                       {n.status}
@@ -85,10 +89,14 @@ export function NodeTelemetryTable({
                   <td className="py-3 px-3 text-[var(--muted)]">
                     {n.roles.join(", ") || "worker"}
                   </td>
-                  <td className="py-3 px-3 text-[var(--foreground)]">{n.internalIP}</td>
+                  <td className="py-3 px-3 text-[var(--foreground)]">
+                    {n.internalIP}
+                  </td>
                   <td className="py-3 px-3 text-right">
                     <span className="tabular-nums font-semibold text-emerald-600 dark:text-emerald-400">
-                      {n.cpuUsage ? `${n.cpuUsage} (${n.cpuUsagePercent ?? 0}%)` : "-"}
+                      {n.cpuUsage
+                        ? `${n.cpuUsage} (${n.cpuUsagePercent ?? 0}%)`
+                        : "-"}
                     </span>
                   </td>
                   <td className="py-3 px-3 text-right">
@@ -98,7 +106,9 @@ export function NodeTelemetryTable({
                   </td>
                   <td className="py-3 px-3 text-right">
                     <span className="tabular-nums font-semibold text-emerald-600 dark:text-emerald-400">
-                      {n.memoryUsage ? `${n.memoryUsage} (${n.memoryUsagePercent ?? 0}%)` : "-"}
+                      {n.memoryUsage
+                        ? `${n.memoryUsage} (${n.memoryUsagePercent ?? 0}%)`
+                        : "-"}
                     </span>
                   </td>
                   <td className="py-3 px-3 text-right">
@@ -118,10 +128,19 @@ export function NodeTelemetryTable({
                     >
                       {isNamespaceScoped ? (
                         <span>
-                          <strong className={cn(scopedNodePods > 0 ? "text-[var(--accent)] font-bold" : "text-[var(--muted)]")}>
+                          <strong
+                            className={cn(
+                              scopedNodePods > 0
+                                ? "text-[var(--accent)] font-bold"
+                                : "text-[var(--muted)]",
+                            )}
+                          >
                             {scopedNodePods}
                           </strong>
-                          <span className="text-[var(--muted)] font-normal"> / {n.activePods}</span>
+                          <span className="text-[var(--muted)] font-normal">
+                            {" "}
+                            / {n.activePods}
+                          </span>
                         </span>
                       ) : (
                         `${n.activePods} / ${n.podCapacity}`

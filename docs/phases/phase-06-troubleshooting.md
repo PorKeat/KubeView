@@ -7,6 +7,7 @@
 ## 1. Functional Scope
 
 ### 1.1 High-Performance Live Log Streamer
+
 - Real-time log streaming from Kubernetes API via the Go engine through local IPC with zero UI lag.
 - **Multi-Container Support:** Stream from a specific container or merge logs from all containers in a multi-container pod with color-coded container prefixes.
 - **Previous Container Logs:** View logs from previous terminated or crashed container instances (`previous: true`) for debugging crash loops.
@@ -16,12 +17,14 @@
 - **Exporting:** Download complete log file or copy selected lines directly to clipboard.
 
 ### 1.2 Container Exec Interactive Terminal (`xterm.js`)
+
 - Built-in full terminal powered by `xterm.js` with WebGL addon for hardware acceleration.
 - SPDY/WebSocket PTY multiplexing in Go engine supporting terminal resize events (`SIGWINCH`), colors, cursor control, and copy/paste shortcuts.
 - Automatic shell detection: probes `/bin/bash`, fallback to `/bin/sh`, with support for custom binaries.
 - Multi-session support: open multiple terminal sessions across different containers simultaneously.
 
 ### 1.3 One-Click Triage Workbench (Core Differentiator)
+
 When an engineer encounters an unhealthy pod (e.g. `CrashLoopBackOff`, `OOMKilled`, `ImagePullBackOff`, `Pending`), a single click opens the **Troubleshooting Workbench**, which synthesizes:
 
 1. **Failure State Summary:**
@@ -44,6 +47,7 @@ When an engineer encounters an unhealthy pod (e.g. `CrashLoopBackOff`, `OOMKille
    - Quick breadcrumbs to parent ReplicaSet, Deployment/StatefulSet, Node, and connected Service endpoints.
 
 ### 1.4 Troubleshooting Bundle Export
+
 - One-click "Export Incident Bundle" button.
 - Packages pod `kubectl describe` text, recent events, previous termination logs, and current live logs into a single downloadable `.zip` or markdown report for incident post-mortems.
 
@@ -96,5 +100,5 @@ graph TD
 
 1. **High Log Throughput:** Handles log burst rates of 25,000 lines/second without browser freezing or memory leaks.
 2. **Terminal Responsiveness:** Keystrokes appear instantly (<30ms round-trip latency to local/remote clusters).
-3. **Automated Root Cause:** An `OOMKilled` pod automatically displays a highlighted badge: *"Container was terminated due to exceeding its memory limit (Exit Code 137). Current limit: 256Mi."*
+3. **Automated Root Cause:** An `OOMKilled` pod automatically displays a highlighted badge: _"Container was terminated due to exceeding its memory limit (Exit Code 137). Current limit: 256Mi."_
 4. **Export Completeness:** Exported troubleshooting bundle contains all logs, events, and YAML descriptors needed to debug an outage asynchronously.

@@ -18,6 +18,7 @@ import {
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { useTabStore } from "@/stores/tabStore";
+import { Tooltip } from "@/components/ui/Tooltip";
 
 interface ErrorStateProps {
   title?: string;
@@ -62,10 +63,11 @@ export function ErrorState({
         message,
         details: formattedDetails,
         timestamp: new Date().toISOString(),
-        userAgent: typeof window !== "undefined" ? window.navigator.userAgent : "SSR",
+        userAgent:
+          typeof window !== "undefined" ? window.navigator.userAgent : "SSR",
       },
       null,
-      2
+      2,
     );
     navigator.clipboard.writeText(errorDump);
     setCopied(true);
@@ -91,7 +93,7 @@ export function ErrorState({
       <div
         className={cn(
           "p-3.5 rounded-xl border border-[var(--border)] bg-[var(--surface)] shadow-xs flex items-center justify-between gap-4 select-none",
-          className
+          className,
         )}
       >
         <div className="flex items-center gap-3 min-w-0">
@@ -100,12 +102,16 @@ export function ErrorState({
           </div>
           <div className="min-w-0">
             <div className="flex items-center gap-2">
-              <span className="text-xs font-semibold text-[var(--foreground)] truncate">{title}</span>
+              <span className="text-xs font-semibold text-[var(--foreground)] truncate">
+                {title}
+              </span>
               <span className="px-1.5 py-0.5 rounded text-[9px] font-mono bg-rose-500/10 text-rose-600 dark:text-rose-400 border border-rose-500/20 shrink-0">
                 {code}
               </span>
             </div>
-            <p className="text-[11px] text-[var(--muted)] line-clamp-1">{message}</p>
+            <p className="text-[11px] text-[var(--muted)] line-clamp-1">
+              {message}
+            </p>
           </div>
         </div>
 
@@ -116,7 +122,9 @@ export function ErrorState({
               disabled={isRetrying}
               className="px-2.5 py-1 rounded-md text-xs font-medium bg-[var(--surface-hover)] hover:bg-black/[0.06] dark:hover:bg-white/[0.08] text-[var(--foreground)] border border-[var(--border)] flex items-center gap-1.5 transition-all cursor-pointer active:scale-[0.98]"
             >
-              <RotateCw className={cn("w-3 h-3", isRetrying && "animate-spin")} />
+              <RotateCw
+                className={cn("w-3 h-3", isRetrying && "animate-spin")}
+              />
               <span>Retry</span>
             </button>
           )}
@@ -129,7 +137,7 @@ export function ErrorState({
     <div
       className={cn(
         "flex-1 flex flex-col items-center justify-center p-8 select-none relative overflow-hidden",
-        className
+        className,
       )}
     >
       <div className="w-full max-w-md p-6 sm:p-7 rounded-2xl bg-[var(--surface)] border border-[var(--border)] shadow-xl shadow-black/5 dark:shadow-black/30 space-y-5 text-center animate-in fade-in duration-200">
@@ -159,7 +167,9 @@ export function ErrorState({
               disabled={isRetrying}
               className="px-3.5 py-2 rounded-lg bg-[var(--foreground)] text-[var(--background)] hover:opacity-90 text-xs font-medium transition-all cursor-pointer flex items-center gap-2 shadow-xs active:scale-[0.98] disabled:opacity-50"
             >
-              <RotateCw className={cn("w-3.5 h-3.5", isRetrying && "animate-spin")} />
+              <RotateCw
+                className={cn("w-3.5 h-3.5", isRetrying && "animate-spin")}
+              />
               <span>Retry Request</span>
             </button>
           )}
@@ -173,7 +183,13 @@ export function ErrorState({
             </button>
           ) : (
             <button
-              onClick={() => openTab({ id: "overview", title: "Cluster Overview", closable: false })}
+              onClick={() =>
+                openTab({
+                  id: "overview",
+                  title: "Cluster Overview",
+                  closable: false,
+                })
+              }
               className="px-3.5 py-2 rounded-lg bg-[var(--surface-hover)] hover:bg-black/[0.06] dark:hover:bg-white/[0.08] text-xs font-medium text-[var(--foreground)] border border-[var(--border)] transition-all cursor-pointer flex items-center gap-1.5 active:scale-[0.98]"
             >
               <ArrowLeft className="w-3.5 h-3.5 text-[var(--muted)]" />
@@ -181,18 +197,21 @@ export function ErrorState({
             </button>
           )}
 
-          <button
-            onClick={handleCopy}
-            className="p-2 rounded-lg bg-[var(--surface-hover)] hover:bg-black/[0.06] dark:hover:bg-white/[0.08] text-[var(--muted)] hover:text-[var(--foreground)] border border-[var(--border)] transition-all cursor-pointer active:scale-[0.98]"
-            title={copied ? "Copied diagnostic report" : "Copy diagnostic report"}
-            aria-label="Copy diagnostic report"
+          <Tooltip
+            content={copied ? "Copied to clipboard" : "Copy diagnostic report"}
           >
-            {copied ? (
-              <Check className="w-3.5 h-3.5 text-emerald-500 dark:text-emerald-400" />
-            ) : (
-              <Copy className="w-3.5 h-3.5" />
-            )}
-          </button>
+            <button
+              onClick={handleCopy}
+              className="p-2 rounded-lg bg-[var(--surface-hover)] hover:bg-black/[0.06] dark:hover:bg-white/[0.08] text-[var(--muted)] hover:text-[var(--foreground)] border border-[var(--border)] transition-all cursor-pointer active:scale-[0.98]"
+              aria-label="Copy diagnostic report"
+            >
+              {copied ? (
+                <Check className="w-3.5 h-3.5 text-emerald-500 dark:text-emerald-400" />
+              ) : (
+                <Copy className="w-3.5 h-3.5" />
+              )}
+            </button>
+          </Tooltip>
         </div>
 
         {/* Technical Diagnostics Accordion */}
@@ -246,7 +265,7 @@ export function ErrorBanner({
     <div
       className={cn(
         "px-4 py-2 bg-rose-500/10 border-b border-rose-500/20 text-xs text-rose-600 dark:text-rose-300 flex items-center justify-between gap-3 select-none",
-        className
+        className,
       )}
     >
       <div className="flex items-center gap-2 truncate">
@@ -264,13 +283,15 @@ export function ErrorBanner({
           </button>
         )}
         {onDismiss && (
-          <button
-            onClick={onDismiss}
-            className="p-0.5 rounded hover:bg-rose-500/20 text-rose-500 dark:text-rose-400 hover:text-[var(--foreground)] cursor-pointer"
-            title="Dismiss notice"
-          >
-            <X className="w-3.5 h-3.5" />
-          </button>
+          <Tooltip content="Dismiss notice">
+            <button
+              onClick={onDismiss}
+              className="p-0.5 rounded hover:bg-rose-500/20 text-rose-500 dark:text-rose-400 hover:text-[var(--foreground)] cursor-pointer"
+              aria-label="Dismiss notice"
+            >
+              <X className="w-3.5 h-3.5" />
+            </button>
+          </Tooltip>
         )}
       </div>
     </div>
@@ -291,7 +312,10 @@ interface ErrorBoundaryState {
   error: Error | null;
 }
 
-export class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoundaryState> {
+export class ErrorBoundary extends React.Component<
+  ErrorBoundaryProps,
+  ErrorBoundaryState
+> {
   constructor(props: ErrorBoundaryProps) {
     super(props);
     this.state = { hasError: false, error: null };

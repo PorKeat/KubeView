@@ -52,3 +52,23 @@ func TestIPCMethodNotFound(t *testing.T) {
 		t.Fatalf("Expected method not found error, got: %s", outputStr)
 	}
 }
+
+func TestIPCPanicRecovery(t *testing.T) {
+	in := bytes.NewBufferString(`{"jsonrpc":"2.0","id":7,"method":"panic.method"}` + "\n")
+	var out bytes.Buffer
+
+	server := NewServer(in, &out)
+	server.Register("panic.method", func(json.RawMessage) (interface{}, *RPCError) {
+		panic("boom")
+	})
+	_ = server.Run()
+	server.Wait()
+
+	outputStr := out.String()
+	if !strings.Contains(outputStr, `"code":-32603`) {
+		t.Fatalf("Expected internal error code after panic, got: %s", outputStr)
+	}
+	if !strings.Contains(outputStr, `"id":7`) {
+		t.Fatalf("Expected request id 7 in panic response, got: %s", outputStr)
+	}
+}

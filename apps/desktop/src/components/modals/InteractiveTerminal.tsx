@@ -4,7 +4,7 @@ import * as React from "react";
 import { Terminal } from "@xterm/xterm";
 import { FitAddon } from "@xterm/addon-fit";
 import "@xterm/xterm/css/xterm.css";
-import { getStreamPort } from "@/lib/ipc";
+import { getStreamCredentials, resetStreamCredentials } from "@/lib/ipc";
 import {
   RefreshCw,
   Terminal as TerminalIcon,
@@ -135,7 +135,10 @@ export function InteractiveTerminal({
   React.useEffect(() => {
     if (!isShellOpen) return;
     const handleClickOutside = (e: MouseEvent) => {
-      if (shellMenuRef.current && !shellMenuRef.current.contains(e.target as Node)) {
+      if (
+        shellMenuRef.current &&
+        !shellMenuRef.current.contains(e.target as Node)
+      ) {
         setIsShellOpen(false);
       }
     };
@@ -198,7 +201,8 @@ export function InteractiveTerminal({
         cursorWidth: 2,
         fontSize: 13,
         lineHeight: 1.25,
-        fontFamily: "'Geist Mono', 'JetBrains Mono', 'Fira Code', 'Menlo', monospace",
+        fontFamily:
+          "'Geist Mono', 'JetBrains Mono', 'Fira Code', 'Menlo', monospace",
         theme: {
           background: "#080a0f",
           foreground: "#f1f5f9",
@@ -249,13 +253,18 @@ export function InteractiveTerminal({
         }
       }, 50);
 
-      term.writeln("\x1b[38;2;148;163;184m[KubeView Engine] Connecting WebSocket PTY bridge to " + podName + "...\x1b[0m");
+      term.writeln(
+        "\x1b[38;2;148;163;184m[KubeView Engine] Connecting WebSocket PTY bridge to " +
+          podName +
+          "...\x1b[0m",
+      );
 
       try {
-        const port = await getStreamPort();
+        const { port, token } = await getStreamCredentials();
         if (isCancelled) return;
 
         const wsUrl = new URL(`ws://127.0.0.1:${port}/api/stream/exec`);
+        wsUrl.searchParams.set("token", token);
         if (contextName) wsUrl.searchParams.set("context", contextName);
         wsUrl.searchParams.set("namespace", namespace);
         wsUrl.searchParams.set("pod", podName);
@@ -322,17 +331,23 @@ export function InteractiveTerminal({
         };
 
         ws.onerror = (err) => {
+          resetStreamCredentials();
           console.warn("[InteractiveTerminal] WebSocket error:", err);
           if (!isCancelled) {
             setConnectionStatus("error");
-            setErrorMsg("WebSocket connection failed or container rejected exec stream.");
+            setErrorMsg(
+              "WebSocket connection failed or container rejected exec stream.",
+            );
           }
         };
 
         ws.onclose = () => {
+          resetStreamCredentials();
           if (!isCancelled) {
             setConnectionStatus("disconnected");
-            term?.writeln("\r\n\x1b[38;2;245;158;11m[KubeView] Interactive session terminated.\x1b[0m\r\n");
+            term?.writeln(
+              "\r\n\x1b[38;2;245;158;11m[KubeView] Interactive session terminated.\x1b[0m\r\n",
+            );
           }
         };
 
@@ -354,7 +369,7 @@ export function InteractiveTerminal({
                   type: "resize",
                   cols: term.cols,
                   rows: term.rows,
-                })
+                }),
               );
             }
           } catch {
@@ -365,11 +380,15 @@ export function InteractiveTerminal({
         if (containerRef.current) {
           resizeObserver.observe(containerRef.current);
         }
-      } catch (err: any) {
+      } catch (err: unknown) {
         console.error("[InteractiveTerminal] Failed to initialize:", err);
         if (!isCancelled) {
           setConnectionStatus("error");
-          setErrorMsg(err.message || "Failed to launch streaming terminal");
+          setErrorMsg(
+            err instanceof Error
+              ? err.message
+              : "Failed to launch streaming terminal",
+          );
         }
       }
     };
@@ -444,7 +463,9 @@ export function InteractiveTerminal({
               aria-label="Select container shell environment"
               onClick={() => {
                 setIsShellOpen((prev) => !prev);
-                const currentIdx = SHELL_OPTIONS.findIndex((o) => o.value === shell);
+                const currentIdx = SHELL_OPTIONS.findIndex(
+                  (o) => o.value === shell,
+                );
                 setFocusedShellIndex(currentIdx >= 0 ? currentIdx : 0);
               }}
               onKeyDown={(e) => {
@@ -452,7 +473,9 @@ export function InteractiveTerminal({
                   e.preventDefault();
                   if (!isShellOpen) {
                     setIsShellOpen(true);
-                    const currentIdx = SHELL_OPTIONS.findIndex((o) => o.value === shell);
+                    const currentIdx = SHELL_OPTIONS.findIndex(
+                      (o) => o.value === shell,
+                    );
                     setFocusedShellIndex(currentIdx >= 0 ? currentIdx : 0);
                   }
                 }
@@ -461,15 +484,17 @@ export function InteractiveTerminal({
                 "h-6 px-2 text-[11px] font-mono rounded-md border flex items-center gap-1.5 transition-all cursor-pointer select-none outline-hidden focus-visible:ring-1 focus-visible:ring-[var(--accent)]",
                 isShellOpen
                   ? "bg-white/[0.1] border-white/20 text-white shadow-xs"
-                  : "bg-white/[0.04] hover:bg-white/[0.08] active:bg-white/[0.1] border-white/[0.08] text-slate-300 hover:text-white"
+                  : "bg-white/[0.04] hover:bg-white/[0.08] active:bg-white/[0.1] border-white/[0.08] text-slate-300 hover:text-white",
               )}
             >
               <TerminalIcon className="w-3 h-3 text-slate-400 shrink-0" />
-              <span className="font-medium">{activeShellOption.triggerLabel}</span>
+              <span className="font-medium">
+                {activeShellOption.triggerLabel}
+              </span>
               <ChevronDown
                 className={cn(
                   "w-3 h-3 text-slate-400 transition-transform duration-200 shrink-0",
-                  isShellOpen && "rotate-180 text-white"
+                  isShellOpen && "rotate-180 text-white",
                 )}
               />
             </button>
@@ -490,10 +515,16 @@ export function InteractiveTerminal({
                   onKeyDown={(e) => {
                     if (e.key === "ArrowDown") {
                       e.preventDefault();
-                      setFocusedShellIndex((prev) => (prev + 1) % SHELL_OPTIONS.length);
+                      setFocusedShellIndex(
+                        (prev) => (prev + 1) % SHELL_OPTIONS.length,
+                      );
                     } else if (e.key === "ArrowUp") {
                       e.preventDefault();
-                      setFocusedShellIndex((prev) => (prev - 1 + SHELL_OPTIONS.length) % SHELL_OPTIONS.length);
+                      setFocusedShellIndex(
+                        (prev) =>
+                          (prev - 1 + SHELL_OPTIONS.length) %
+                          SHELL_OPTIONS.length,
+                      );
                     } else if (e.key === "Enter" && focusedShellIndex >= 0) {
                       e.preventDefault();
                       const target = SHELL_OPTIONS[focusedShellIndex];
@@ -508,7 +539,8 @@ export function InteractiveTerminal({
                   {/* Header Strip */}
                   <div className="flex items-center justify-between px-2 py-1 mb-0.5 border-b border-white/[0.06] text-[9px]">
                     <span className="font-semibold text-slate-400 uppercase tracking-wider flex items-center gap-1.5">
-                      <TerminalIcon className="w-2.5 h-2.5 text-[var(--accent)]" /> Shell
+                      <TerminalIcon className="w-2.5 h-2.5 text-[var(--accent)]" />{" "}
+                      Shell
                     </span>
                     <span className="px-1 py-0.2 rounded text-[8px] font-mono bg-white/[0.06] text-slate-400">
                       {SHELL_OPTIONS.length}
@@ -538,21 +570,25 @@ export function InteractiveTerminal({
                             isSelected
                               ? "bg-white/[0.1] border-white/15 text-white"
                               : isFocused
-                              ? "bg-white/[0.05] border-white/10 text-slate-200"
-                              : "border-transparent hover:bg-white/[0.04] text-slate-300 hover:text-white"
+                                ? "bg-white/[0.05] border-white/10 text-slate-200"
+                                : "border-transparent hover:bg-white/[0.04] text-slate-300 hover:text-white",
                           )}
                         >
                           <div className="flex items-center gap-1.5 min-w-0 flex-1">
                             <TerminalIcon
                               className={cn(
                                 "w-3 h-3 shrink-0",
-                                isSelected ? "text-[var(--accent)]" : "text-slate-500 group-hover:text-slate-400"
+                                isSelected
+                                  ? "text-[var(--accent)]"
+                                  : "text-slate-500 group-hover:text-slate-400",
                               )}
                             />
                             <span
                               className={cn(
                                 "text-[11px] font-mono truncate",
-                                isSelected ? "text-white font-medium" : "text-slate-300"
+                                isSelected
+                                  ? "text-white font-medium"
+                                  : "text-slate-300",
                               )}
                             >
                               {opt.label}
@@ -560,7 +596,12 @@ export function InteractiveTerminal({
                           </div>
 
                           <div className="flex items-center gap-1.5 shrink-0">
-                            <span className={cn("px-1 py-0.2 rounded text-[9px] font-mono border", opt.badgeClass)}>
+                            <span
+                              className={cn(
+                                "px-1 py-0.2 rounded text-[9px] font-mono border",
+                                opt.badgeClass,
+                              )}
+                            >
                               {opt.badge}
                             </span>
                             {isSelected ? (
@@ -644,11 +685,31 @@ export function InteractiveTerminal({
               <ShieldAlert className="w-4 h-4 text-amber-500 shrink-0 mt-0.5" />
               <div className="min-w-0">
                 <div className="flex items-center gap-2">
-                  <span className="text-xs font-semibold text-amber-500">Distroless Image Detected</span>
-                  <span className="text-[10px] px-1.5 py-0.2 rounded bg-amber-500/15 text-amber-400 font-mono font-medium">No Shell (/bin/sh)</span>
+                  <span className="text-xs font-semibold text-amber-500">
+                    Distroless Image Detected
+                  </span>
+                  <span className="text-[10px] px-1.5 py-0.2 rounded bg-amber-500/15 text-amber-400 font-mono font-medium">
+                    No Shell (/bin/sh)
+                  </span>
                 </div>
                 <p className="text-[11px] text-[var(--muted)] mt-0.5">
-                  Container <span className="font-mono text-slate-200 font-medium">{containerName || podName}</span> is a minimal security image without a shell binary (<code className="text-[10px] font-mono px-1 py-0.2 rounded bg-white/[0.06]">/bin/sh</code>, <code className="text-[10px] font-mono px-1 py-0.2 rounded bg-white/[0.06]">/bin/bash</code>, <code className="text-[10px] font-mono px-1 py-0.2 rounded bg-white/[0.06]">/bin/ash</code>).
+                  Container{" "}
+                  <span className="font-mono text-slate-200 font-medium">
+                    {containerName || podName}
+                  </span>{" "}
+                  is a minimal security image without a shell binary (
+                  <code className="text-[10px] font-mono px-1 py-0.2 rounded bg-white/[0.06]">
+                    /bin/sh
+                  </code>
+                  ,{" "}
+                  <code className="text-[10px] font-mono px-1 py-0.2 rounded bg-white/[0.06]">
+                    /bin/bash
+                  </code>
+                  ,{" "}
+                  <code className="text-[10px] font-mono px-1 py-0.2 rounded bg-white/[0.06]">
+                    /bin/ash
+                  </code>
+                  ).
                 </p>
               </div>
             </div>
@@ -690,24 +751,27 @@ export function InteractiveTerminal({
           </div>
 
           {/* Alternative Container Quick Switch */}
-          {containerList && containerList.filter((c) => c !== (containerName || "main")).length > 0 && (
-            <div className="pt-2 border-t border-amber-500/15 flex flex-wrap items-center gap-2">
-              <span className="text-[11px] text-amber-300 font-mono flex items-center gap-1">
-                <Layers className="w-3 h-3 text-amber-400" /> Other containers with shell available in this pod:
-              </span>
-              {containerList
-                .filter((c) => c !== (containerName || "main"))
-                .map((otherC) => (
-                  <button
-                    key={otherC}
-                    onClick={() => onSelectContainer?.(otherC)}
-                    className="px-2.5 py-1 rounded-md bg-amber-500/20 hover:bg-amber-500/30 border border-amber-500/35 text-amber-200 text-xs font-mono font-medium cursor-pointer flex items-center gap-1.5 transition-colors shadow-xs"
-                  >
-                    <span>Switch to: {otherC}</span>
-                  </button>
-                ))}
-            </div>
-          )}
+          {containerList &&
+            containerList.filter((c) => c !== (containerName || "main"))
+              .length > 0 && (
+              <div className="pt-2 border-t border-amber-500/15 flex flex-wrap items-center gap-2">
+                <span className="text-[11px] text-amber-300 font-mono flex items-center gap-1">
+                  <Layers className="w-3 h-3 text-amber-400" /> Other containers
+                  with shell available in this pod:
+                </span>
+                {containerList
+                  .filter((c) => c !== (containerName || "main"))
+                  .map((otherC) => (
+                    <button
+                      key={otherC}
+                      onClick={() => onSelectContainer?.(otherC)}
+                      className="px-2.5 py-1 rounded-md bg-amber-500/20 hover:bg-amber-500/30 border border-amber-500/35 text-amber-200 text-xs font-mono font-medium cursor-pointer flex items-center gap-1.5 transition-colors shadow-xs"
+                    >
+                      <span>Switch to: {otherC}</span>
+                    </button>
+                  ))}
+              </div>
+            )}
         </div>
       )}
 
@@ -716,7 +780,9 @@ export function InteractiveTerminal({
         ref={containerRef}
         onClick={() => termRef.current?.focus()}
         className="flex-1 w-full h-full p-2 overflow-hidden cursor-text"
-        style={{ height: isDistroless ? "calc(100% - 100px)" : "calc(100% - 36px)" }}
+        style={{
+          height: isDistroless ? "calc(100% - 100px)" : "calc(100% - 36px)",
+        }}
       />
 
       {/* Error Banner if connection failed */}
@@ -724,7 +790,10 @@ export function InteractiveTerminal({
         <div className="absolute inset-x-4 bottom-4 p-3 rounded-lg bg-rose-500/15 border border-rose-500/30 backdrop-blur-md flex items-center justify-between text-xs text-rose-300 animate-in fade-in duration-200">
           <div className="flex items-center gap-2">
             <AlertCircle className="w-4 h-4 shrink-0 text-rose-400" />
-            <span>{errorMsg || "Unable to establish interactive WebSocket shell session."}</span>
+            <span>
+              {errorMsg ||
+                "Unable to establish interactive WebSocket shell session."}
+            </span>
           </div>
           <button
             onClick={() => setReconnectKey((k) => k + 1)}

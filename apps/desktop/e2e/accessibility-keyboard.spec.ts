@@ -10,12 +10,18 @@ test.describe("KubeView UI - Accessibility & Keyboard Navigation (WCAG AA)", () 
     await page.waitForLoadState("domcontentloaded");
     const trigger = page.locator('[data-testid="context-switcher-trigger"]');
     await expect(trigger).toBeVisible({ timeout: 10000 });
-    await expect(trigger).toContainText("kubernetes-admin@kubekey", { timeout: 15000 });
+    await expect(trigger).toContainText("kubernetes-admin@kubekey", {
+      timeout: 15000,
+    });
     // Wait for telemetry metrics / overview cards to be rendered
-    await expect(page.locator("body")).toContainText(/Nodes|Pods|CPU|Memory/i, { timeout: 15000 });
+    await expect(page.locator("body")).toContainText(/Nodes|Pods|CPU|Memory/i, {
+      timeout: 15000,
+    });
   });
 
-  test("context switcher dropdown and search input are fully keyboard navigable", async ({ page }) => {
+  test("context switcher dropdown and search input are fully keyboard navigable", async ({
+    page,
+  }) => {
     const trigger = page.locator('[data-testid="context-switcher-trigger"]');
     await trigger.focus();
     await expect(trigger).toBeFocused();
@@ -24,7 +30,9 @@ test.describe("KubeView UI - Accessibility & Keyboard Navigation (WCAG AA)", () 
     await page.keyboard.press("Enter");
 
     // The search input should be visible and focused
-    const searchInput = page.locator('input[aria-label="Filter cluster contexts"]');
+    const searchInput = page.locator(
+      'input[aria-label="Filter cluster contexts"]',
+    );
     await expect(searchInput).toBeVisible({ timeout: 5000 });
 
     // Type query to filter
@@ -46,9 +54,13 @@ test.describe("KubeView UI - Accessibility & Keyboard Navigation (WCAG AA)", () 
     await expect(trigger).toContainText("mailconfig", { timeout: 10000 });
   });
 
-  test("cluster overview interactive elements support full keyboard interaction", async ({ page }) => {
+  test("cluster overview interactive elements support full keyboard interaction", async ({
+    page,
+  }) => {
     // 1. Refresh button has accessible name and can be focused via keyboard
-    const refreshBtn = page.locator('button[aria-label="Refresh cluster telemetry and diagnostics"]');
+    const refreshBtn = page.locator(
+      'button[aria-label="Refresh cluster telemetry and diagnostics"]',
+    );
     await expect(refreshBtn).toBeVisible({ timeout: 10000 });
     await refreshBtn.focus();
     await expect(refreshBtn).toBeFocused();
@@ -62,10 +74,14 @@ test.describe("KubeView UI - Accessibility & Keyboard Navigation (WCAG AA)", () 
     await page.keyboard.press("Enter");
 
     // Tab bar should now show Pods tab active and pods table visible
-    await expect(page.locator("body")).toContainText("coredns", { timeout: 10000 });
+    await expect(page.locator("body")).toContainText("coredns", {
+      timeout: 10000,
+    });
 
     // Switch back to Cluster Overview tab using keyboard on TabBar
-    const overviewTab = page.locator('[role="tab"]:has-text("Cluster Overview")');
+    const overviewTab = page.locator(
+      '[role="tab"]:has-text("Cluster Overview")',
+    );
     await expect(overviewTab).toBeVisible();
     await overviewTab.focus();
     await page.keyboard.press("Enter");
@@ -87,13 +103,19 @@ test.describe("KubeView UI - Accessibility & Keyboard Navigation (WCAG AA)", () 
     await expect(closeBtn).not.toBeVisible();
   });
 
-  test("status pills, badges, and primary buttons meet WCAG AA contrast standards", async ({ page }) => {
+  test("status pills, badges, and primary buttons meet WCAG AA contrast standards", async ({
+    page,
+  }) => {
     // Audit contrast on primary action button (Refresh)
-    const refreshBtn = page.locator('button[aria-label="Refresh cluster telemetry and diagnostics"]');
+    const refreshBtn = page.locator(
+      'button[aria-label="Refresh cluster telemetry and diagnostics"]',
+    );
     await expect(refreshBtn).toBeVisible({ timeout: 10000 });
 
     const refreshContrast = await page.evaluate(() => {
-      const btn = document.querySelector('button[aria-label="Refresh cluster telemetry and diagnostics"]');
+      const btn = document.querySelector(
+        'button[aria-label="Refresh cluster telemetry and diagnostics"]',
+      );
       if (!btn) return null;
       const style = window.getComputedStyle(btn);
       return {
@@ -104,13 +126,24 @@ test.describe("KubeView UI - Accessibility & Keyboard Navigation (WCAG AA)", () 
 
     expect(refreshContrast).not.toBeNull();
     // Refresh button uses text-zinc-950 on #f08a42 (orange) -> dark text on orange has > 7:1 contrast (AAA)
-    expect(refreshContrast?.color).toMatch(/(lab\(|oklch\(|rgb\(9,\s*9,\s*11\))/);
+    expect(refreshContrast?.color).toMatch(
+      /(lab\(|oklch\(|rgb\(9,\s*9,\s*11\))/,
+    );
 
     // Audit status indicators (Healthy / Ready badges)
     const statusBadges = await page.evaluate(() => {
-      const elements = Array.from(document.querySelectorAll("span, strong, button")).filter((el) => {
+      const elements = Array.from(
+        document.querySelectorAll("span, strong, button"),
+      ).filter((el) => {
         const text = el.textContent?.trim();
-        return ["Healthy", "Optimal", "Authorized", "Verified", "ClusterAdmin", "Running"].includes(text || "");
+        return [
+          "Healthy",
+          "Optimal",
+          "Authorized",
+          "Verified",
+          "ClusterAdmin",
+          "Running",
+        ].includes(text || "");
       });
       return elements.slice(0, 5).map((el) => {
         const style = window.getComputedStyle(el);

@@ -16,6 +16,7 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
+import { Tooltip } from "@/components/ui/Tooltip";
 
 export type EmptyStateVariant = "search" | "empty" | "healthy" | "folder";
 
@@ -67,14 +68,28 @@ export function EmptyState({
   const getIcon = () => {
     switch (variant) {
       case "search":
-        return <SearchX className="w-6 h-6 text-[var(--muted)]" aria-hidden="true" />;
+        return (
+          <SearchX className="w-6 h-6 text-[var(--muted)]" aria-hidden="true" />
+        );
       case "healthy":
-        return <CheckCircle2 className="w-6 h-6 text-emerald-600 dark:text-emerald-400" aria-hidden="true" />;
+        return (
+          <CheckCircle2
+            className="w-6 h-6 text-emerald-600 dark:text-emerald-400"
+            aria-hidden="true"
+          />
+        );
       case "folder":
-        return <FolderOpen className="w-6 h-6 text-[var(--accent)]" aria-hidden="true" />;
+        return (
+          <FolderOpen
+            className="w-6 h-6 text-[var(--accent)]"
+            aria-hidden="true"
+          />
+        );
       case "empty":
       default:
-        return <Inbox className="w-6 h-6 text-[var(--muted)]" aria-hidden="true" />;
+        return (
+          <Inbox className="w-6 h-6 text-[var(--muted)]" aria-hidden="true" />
+        );
     }
   };
 
@@ -82,7 +97,7 @@ export function EmptyState({
     <div
       className={cn(
         "flex-1 w-full max-w-xl mx-auto py-16 px-6 flex flex-col items-center justify-center text-center select-none animate-in fade-in duration-200 space-y-4",
-        className
+        className,
       )}
     >
       {/* Centered Hero Icon */}
@@ -125,9 +140,14 @@ export function EmptyState({
               >
                 <span>{s.label}</span>
                 {s.count !== undefined && (
-                  <span className="text-[10px] text-[var(--muted)]">({s.count})</span>
+                  <span className="text-[10px] text-[var(--muted)]">
+                    ({s.count})
+                  </span>
                 )}
-                <ArrowRight className="w-3 h-3 text-[var(--muted)]" aria-hidden="true" />
+                <ArrowRight
+                  className="w-3 h-3 text-[var(--muted)]"
+                  aria-hidden="true"
+                />
               </button>
             ))}
           </div>
@@ -138,20 +158,30 @@ export function EmptyState({
       {codeSnippet && (
         <div className="w-full max-w-md pt-1">
           <div className="group relative flex items-center justify-between p-2.5 rounded-xl bg-black/5 dark:bg-white/[0.04] border border-[var(--border)] font-mono text-xs text-[var(--foreground)]">
-            <span className="truncate pr-4 select-all text-[var(--muted)] font-mono">{codeSnippet}</span>
-            <button
-              type="button"
-              onClick={handleCopy}
-              aria-label="Copy command snippet"
-              className="p-1 rounded text-[var(--muted)] hover:text-[var(--foreground)] hover:bg-black/5 dark:hover:bg-white/5 transition-colors cursor-pointer shrink-0 focus-visible:ring-2 focus-visible:ring-[var(--accent)] focus-visible:outline-hidden"
-              title="Copy snippet"
+            <span className="truncate pr-4 select-all text-[var(--muted)] font-mono">
+              {codeSnippet}
+            </span>
+            <Tooltip
+              content={
+                copiedSnippet ? "Copied to clipboard" : "Copy command snippet"
+              }
             >
-              {copiedSnippet ? (
-                <Check className="w-3.5 h-3.5 text-emerald-500" aria-hidden="true" />
-              ) : (
-                <Copy className="w-3.5 h-3.5" aria-hidden="true" />
-              )}
-            </button>
+              <button
+                type="button"
+                onClick={handleCopy}
+                aria-label="Copy command snippet"
+                className="p-1 rounded text-[var(--muted)] hover:text-[var(--foreground)] hover:bg-black/5 dark:hover:bg-white/5 transition-colors cursor-pointer shrink-0 focus-visible:ring-2 focus-visible:ring-[var(--accent)] focus-visible:outline-hidden"
+              >
+                {copiedSnippet ? (
+                  <Check
+                    className="w-3.5 h-3.5 text-emerald-500"
+                    aria-hidden="true"
+                  />
+                ) : (
+                  <Copy className="w-3.5 h-3.5" aria-hidden="true" />
+                )}
+              </button>
+            </Tooltip>
           </div>
         </div>
       )}

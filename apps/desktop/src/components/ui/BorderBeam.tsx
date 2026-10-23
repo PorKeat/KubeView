@@ -45,7 +45,7 @@ export function BorderBeam({
         "[mask-clip:padding-box,border-box]",
         "[mask-composite:intersect]",
         "[mask-image:linear-gradient(transparent,transparent),linear-gradient(#000,#000)]",
-        className
+        className,
       )}
     >
       <div
@@ -54,7 +54,7 @@ export function BorderBeam({
           "animate-border-beam [animation-delay:var(--delay)]",
           "[background:radial-gradient(ellipse_at_center,var(--color-from)_0%,var(--color-to)_70%)]",
           "[offset-anchor:calc(var(--anchor)*1%)_50%]",
-          "[offset-path:rect(0_auto_auto_0_round_calc(var(--size)*1px))]"
+          "[offset-path:rect(0_auto_auto_0_round_calc(var(--size)*1px))]",
         )}
       />
     </div>

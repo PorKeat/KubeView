@@ -7,6 +7,7 @@
 ## 1. Functional Scope
 
 ### 1.1 Agentless Kubeconfig Loading & Aggregation (Go `clientcmd`)
+
 - Strictly agentless: Connects over HTTPS/TLS directly from the local workstation. No cluster-side agent, operator, or CRD installation required.
 - Auto-detects standard kubeconfig locations via `k8s.io/client-go/tools/clientcmd`:
   - Custom file paths defined via `$KUBECONFIG` environment variable.
@@ -16,6 +17,7 @@
 - Support for clusters with self-signed CA certificates, custom proxies, and client cert/key authentication.
 
 ### 1.2 Context & Namespace Management
+
 - Instant context switcher in the app header displaying:
   - Cluster name and alias.
   - API server URL.
@@ -27,7 +29,9 @@
   - Pinned/favorite namespaces for rapid switching.
 
 ### 1.3 Exec Credential Plugin Runner
+
 Support modern cloud Kubernetes authentication without requiring manual token extraction:
+
 - **AWS EKS:** `aws eks get-token` or `aws-iam-authenticator`.
 - **Azure AKS:** `kubelogin` (Azure Active Directory / Entra ID).
 - **Google Cloud GKE:** `gke-gcloud-auth-plugin`.
@@ -36,11 +40,13 @@ Support modern cloud Kubernetes authentication without requiring manual token ex
 - Token caching: Cache returned tokens according to their `expirationTimestamp` to prevent repeated subprocess spawning. Tokens stay in memory and are never exposed to the UI.
 
 ### 1.4 Dynamic Kubeconfig Watching & Hot Reload
+
 - Utilize OS-level filesystem watchers (`fsnotify` in Go) to monitor loaded kubeconfig files.
 - Automatically refresh cluster contexts when an external tool (e.g. `aws eks update-kubeconfig`, `kubectx`) alters the file.
 - Silent reload: Avoid jarring UI resets or lost user view states during automatic reloads.
 
 ### 1.5 Automated 4-Stage Connection Diagnostics
+
 When connecting or diagnosing connectivity failures, the engine runs 4 sequential probes:
 
 ```mermaid
@@ -62,6 +68,7 @@ flowchart TD
 ## 2. Technical Implementation Architecture
 
 ### JSON-RPC Protocol Contract (`rpc/v1`)
+
 ```json
 // Request: Connect & Probe Context
 {

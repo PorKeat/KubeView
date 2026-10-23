@@ -15,16 +15,16 @@ flowchart LR
 
 ### What Users Need vs What Is NOT Needed
 
-| Requirement | Needed? | Notes |
-| :--- | :---: | :--- |
-| **Kubernetes Cluster** | **Yes** | Local (KinD, Minikube, k3s) or Cloud (EKS, GKE, AKS, bare-metal). |
-| **Valid Kubeconfig** | **Yes** | Standard `~/.kube/config`, custom paths, or `$KUBECONFIG`. |
-| **Network Access to API Server** | **Yes** | Direct LAN, VPN, or proxy path to the Kubernetes API endpoint. |
-| **Valid Credentials / Plugin** | **Yes** | Client certs, bearer tokens, or external auth plugins (AWS, Azure, GCP). |
-| **`kubectl` CLI Installed** | **No** | Go `client-go` handles all API communication natively. |
+| Requirement                      |  Needed?  | Notes                                                                      |
+| :------------------------------- | :-------: | :------------------------------------------------------------------------- |
+| **Kubernetes Cluster**           |  **Yes**  | Local (KinD, Minikube, k3s) or Cloud (EKS, GKE, AKS, bare-metal).          |
+| **Valid Kubeconfig**             |  **Yes**  | Standard `~/.kube/config`, custom paths, or `$KUBECONFIG`.                 |
+| **Network Access to API Server** |  **Yes**  | Direct LAN, VPN, or proxy path to the Kubernetes API endpoint.             |
+| **Valid Credentials / Plugin**   |  **Yes**  | Client certs, bearer tokens, or external auth plugins (AWS, Azure, GCP).   |
+| **`kubectl` CLI Installed**      |  **No**   | Go `client-go` handles all API communication natively.                     |
 | **In-Cluster Agent or Operator** | ❌ **No** | **Strictly Agentless.** Zero workloads or CRDs injected into your cluster. |
-| **KubeView Cloud Account** | ❌ **No** | **100% Local-First.** No account creation, signup, or telemetry lock-in. |
-| **Remote KubeView Backend** | ❌ **No** | The backend runs locally on your machine as a bundled Go sidecar. |
+| **KubeView Cloud Account**       | ❌ **No** | **100% Local-First.** No account creation, signup, or telemetry lock-in.   |
+| **Remote KubeView Backend**      | ❌ **No** | The backend runs locally on your machine as a bundled Go sidecar.          |
 
 ---
 
@@ -51,6 +51,7 @@ stateDiagram-v2
 ```
 
 ### Screen 1: Welcome & Kubeconfig Discovery
+
 - **Auto-Detection:** Automatically inspects `$KUBECONFIG` and `~/.kube/config`. If valid contexts exist, populates a clean context cards grid immediately.
 - **Manual Import Option:** If no default config is found, presents an elegant drag-and-drop zone:
   - Drag and drop `.kube/config` or `.yaml` file.
@@ -58,7 +59,9 @@ stateDiagram-v2
   - "Paste Kubeconfig Text" modal.
 
 ### Screen 2: Context Selection & Connection Preview
+
 Displays discovered cluster contexts in a compact card grid:
+
 - Cluster name and alias.
 - Control plane server URL (e.g. `https://192.168.1.100:6443` or `*.eks.amazonaws.com`).
 - Configured user identity & auth type (Client Cert, Token, or Exec Plugin).
@@ -72,6 +75,7 @@ Displays discovered cluster contexts in a compact card grid:
 When the user clicks **Connect**, the Go engine executes a 4-stage sequential diagnostic probe:
 
 ### Stage 1: Network & DNS Probe
+
 - **Check:** Resolves the API server hostname and establishes a raw TCP handshake.
 - **Failure Symptoms:** DNS resolution failure, network timeout (no route to host), firewall block.
 - **Diagnostic Output:**
@@ -83,6 +87,7 @@ When the user clicks **Connect**, the Go engine executes a 4-stage sequential di
   ```
 
 ### Stage 2: Authentication & Credential Plugin Probe
+
 - **Check:** Validates client certificates expiration date; for exec plugins (e.g. `aws eks get-token`, `kubelogin`), executes the plugin binary with a 10s timeout.
 - **Failure Symptoms:** Missing CLI binary in `$PATH`, expired SSO token, invalid credentials.
 - **Diagnostic Output:**
@@ -94,6 +99,7 @@ When the user clicks **Connect**, the Go engine executes a 4-stage sequential di
   ```
 
 ### Stage 3: TLS & API Health Probe
+
 - **Check:** Initiates HTTPS TLS handshake with CA certificate verification; queries `/readyz` or `/livez`.
 - **Failure Symptoms:** `x509: certificate signed by unknown authority`, self-signed cert rejected.
 - **Diagnostic Output:**
@@ -106,6 +112,7 @@ When the user clicks **Connect**, the Go engine executes a 4-stage sequential di
   ```
 
 ### Stage 4: RBAC Baseline Verification
+
 - **Check:** Queries `SelfSubjectAccessReview` for basic discovery (`get namespaces`, `list pods`).
 - **Failure Symptoms:** Authenticated as user `dev-user`, but user has no RBAC permissions.
 - **Diagnostic Output:**

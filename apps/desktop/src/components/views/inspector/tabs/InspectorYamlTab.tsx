@@ -102,7 +102,11 @@ function tokenizeYamlLine(line: string): Token[] {
   }
 
   // 5. Template syntax line (e.g. {{- with secret ... -}} or export VAR=...)
-  if (rest.includes("{{") || rest.startsWith("export ") || rest.includes("}}")) {
+  if (
+    rest.includes("{{") ||
+    rest.startsWith("export ") ||
+    rest.includes("}}")
+  ) {
     tokens.push(...tokenizeTemplateOrScript(rest));
     return tokens;
   }
@@ -142,7 +146,11 @@ function tokenizeYamlValue(val: string): Token[] {
   }
 
   // Numbers (including integers, floats, and k8s quantities like 100m, 512Mi, 2Gi)
-  if (/^[+-]?(\d+(\.\d+)?|\.\d+)([eE][+-]?\d+)?(m|k|M|G|T|P|E|Ki|Mi|Gi|Ti|Pi|Ei)?$/.test(trimmed)) {
+  if (
+    /^[+-]?(\d+(\.\d+)?|\.\d+)([eE][+-]?\d+)?(m|k|M|G|T|P|E|Ki|Mi|Gi|Ti|Pi|Ei)?$/.test(
+      trimmed,
+    )
+  ) {
     return [{ text: val, className: "text-[#b5cea8]" }];
   }
 
@@ -165,31 +173,29 @@ function tokenizeYamlValue(val: string): Token[] {
 
 function tokenizeTemplateOrScript(str: string): Token[] {
   const parts = str.split(
-    /(\{\{-?|-?\}\}|"[^"]*"|'[^']*'|\bwith\b|\bend\b|\brange\b|\bif\b|\belse\b|\bsecret\b|\bexport\b)/g
+    /(\{\{-?|-?\}\}|"[^"]*"|'[^']*'|\bwith\b|\bend\b|\brange\b|\bif\b|\belse\b|\bsecret\b|\bexport\b)/g,
   );
-  return parts
-    .filter(Boolean)
-    .map((p) => {
-      if (p.startsWith("{{") || p.endsWith("}}")) {
-        return { text: p, className: "text-[#ffd700] font-bold" };
-      }
-      if (/^(with|end|range|if|else)$/.test(p)) {
-        return { text: p, className: "text-[#c586c0] font-semibold" };
-      }
-      if (p === "export") {
-        return { text: p, className: "text-[#569cd6] font-semibold" };
-      }
-      if (p === "secret") {
-        return { text: p, className: "text-[#dcdcaa]" };
-      }
-      if (p.startsWith('"') || p.startsWith("'")) {
-        return { text: p, className: "text-[#ce9178]" };
-      }
-      if (p.startsWith(".")) {
-        return { text: p, className: "text-[#9cdcfe]" };
-      }
-      return { text: p, className: "text-[#d4d4d4]" };
-    });
+  return parts.filter(Boolean).map((p) => {
+    if (p.startsWith("{{") || p.endsWith("}}")) {
+      return { text: p, className: "text-[#ffd700] font-bold" };
+    }
+    if (/^(with|end|range|if|else)$/.test(p)) {
+      return { text: p, className: "text-[#c586c0] font-semibold" };
+    }
+    if (p === "export") {
+      return { text: p, className: "text-[#569cd6] font-semibold" };
+    }
+    if (p === "secret") {
+      return { text: p, className: "text-[#dcdcaa]" };
+    }
+    if (p.startsWith('"') || p.startsWith("'")) {
+      return { text: p, className: "text-[#ce9178]" };
+    }
+    if (p.startsWith(".")) {
+      return { text: p, className: "text-[#9cdcfe]" };
+    }
+    return { text: p, className: "text-[#d4d4d4]" };
+  });
 }
 
 export function InspectorYamlTab({
@@ -306,7 +312,9 @@ export function InspectorYamlTab({
             )}
 
             {/* Word Wrap Toggle */}
-            <Tooltip content={isWrap ? "Disable word wrap" : "Enable word wrap"}>
+            <Tooltip
+              content={isWrap ? "Disable word wrap" : "Enable word wrap"}
+            >
               <button
                 type="button"
                 onClick={() => setIsWrap((prev) => !prev)}
@@ -315,7 +323,7 @@ export function InspectorYamlTab({
                   "h-7 w-7 rounded-lg flex items-center justify-center transition-all cursor-pointer border",
                   isWrap
                     ? "bg-[var(--accent)]/15 border-[var(--accent)]/30 text-[var(--accent)] shadow-2xs"
-                    : "border-transparent hover:bg-white/[0.08] text-slate-400 hover:text-white"
+                    : "border-transparent hover:bg-white/[0.08] text-slate-400 hover:text-white",
                 )}
               >
                 <WrapText className="w-3.5 h-3.5" />
@@ -335,7 +343,7 @@ export function InspectorYamlTab({
                   <RotateCw
                     className={cn(
                       "w-3.5 h-3.5",
-                      isLoading && "animate-spin text-[var(--accent)]"
+                      isLoading && "animate-spin text-[var(--accent)]",
                     )}
                   />
                 </button>
@@ -358,7 +366,11 @@ export function InspectorYamlTab({
             <div className="h-4 w-px bg-white/10 mx-0.5" />
 
             {/* Copy Button */}
-            <Tooltip content={copiedYaml ? "Copied to clipboard" : "Copy YAML to clipboard"}>
+            <Tooltip
+              content={
+                copiedYaml ? "Copied to clipboard" : "Copy YAML to clipboard"
+              }
+            >
               <button
                 type="button"
                 onClick={onCopy}
@@ -368,7 +380,7 @@ export function InspectorYamlTab({
                   "h-7 px-2.5 rounded-lg font-mono text-[11px] font-medium transition-all flex items-center gap-1.5 cursor-pointer shadow-xs active:scale-[0.98] border",
                   copiedYaml
                     ? "bg-emerald-500/20 text-emerald-300 border-emerald-500/30"
-                    : "bg-white/[0.06] hover:bg-white/[0.12] text-slate-200 border-white/[0.1]"
+                    : "bg-white/[0.06] hover:bg-white/[0.12] text-slate-200 border-white/[0.1]",
                 )}
               >
                 {copiedYaml ? (
@@ -403,9 +415,7 @@ export function InspectorYamlTab({
                     key={lineIdx}
                     className={cn(
                       "flex group transition-colors leading-5",
-                      isMatch
-                        ? "bg-[#623314]/40"
-                        : "hover:bg-white/[0.03]"
+                      isMatch ? "bg-[#623314]/40" : "hover:bg-white/[0.03]",
                     )}
                   >
                     {/* Line Number Gutter (unselectable, VS Code grey) */}
@@ -417,7 +427,9 @@ export function InspectorYamlTab({
                     <span
                       className={cn(
                         "pl-3.5 flex-1 font-mono text-[11px]",
-                        isWrap ? "whitespace-pre-wrap break-all" : "whitespace-pre"
+                        isWrap
+                          ? "whitespace-pre-wrap break-all"
+                          : "whitespace-pre",
                       )}
                     >
                       {tokens.map((tok, tIdx) => {
@@ -426,17 +438,20 @@ export function InspectorYamlTab({
                         // If search query is active and token contains match, highlight substring
                         if (
                           searchQuery.trim().length > 0 &&
-                          tok.text.toLowerCase().includes(searchQuery.toLowerCase())
+                          tok.text
+                            .toLowerCase()
+                            .includes(searchQuery.toLowerCase())
                         ) {
                           const regex = new RegExp(
                             `(${searchQuery.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")})`,
-                            "gi"
+                            "gi",
                           );
                           const segments = tok.text.split(regex);
                           return (
                             <span key={tIdx} className={tok.className}>
                               {segments.map((seg, sIdx) =>
-                                seg.toLowerCase() === searchQuery.toLowerCase() ? (
+                                seg.toLowerCase() ===
+                                searchQuery.toLowerCase() ? (
                                   <mark
                                     key={sIdx}
                                     className="bg-[#623314] text-[#ffd700] ring-1 ring-[#e98038] rounded-xs px-0.5"
@@ -445,7 +460,7 @@ export function InspectorYamlTab({
                                   </mark>
                                 ) : (
                                   seg
-                                )
+                                ),
                               )}
                             </span>
                           );

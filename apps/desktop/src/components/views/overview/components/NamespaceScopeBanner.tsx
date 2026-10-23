@@ -32,13 +32,20 @@ export function NamespaceScopeBanner({
           <Filter className="w-3 h-3" aria-hidden="true" />
         </div>
         <div className="flex items-center gap-2 flex-wrap">
-          <span className="text-[var(--muted)] font-medium">Namespace Scope:</span>
+          <span className="text-[var(--muted)] font-medium">
+            Namespace Scope:
+          </span>
           <span className="px-2 py-0.5 rounded font-mono font-semibold text-xs bg-[var(--accent)]/10 text-[var(--accent)] border border-[var(--accent)]/20">
             {currentNamespace}
           </span>
           <span className="text-[var(--muted)] font-mono text-[11px]">
-            <strong className="text-[var(--foreground)] font-semibold tabular-nums">{totalPods}</strong>{" "}
-            {totalPods === 1 ? "pod" : "pods"}, <strong className="text-[var(--foreground)] font-semibold tabular-nums">{hostingNodesCount}</strong>{" "}
+            <strong className="text-[var(--foreground)] font-semibold tabular-nums">
+              {totalPods}
+            </strong>{" "}
+            {totalPods === 1 ? "pod" : "pods"},{" "}
+            <strong className="text-[var(--foreground)] font-semibold tabular-nums">
+              {hostingNodesCount}
+            </strong>{" "}
             of {totalNodesCount} nodes hosting
           </span>
         </div>

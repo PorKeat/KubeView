@@ -7,6 +7,7 @@
 ## 1. Functional Scope
 
 ### 1.1 Supported Resource Categories
+
 The resource browser organizes resources into intuitive hierarchical categories:
 
 1. **Workloads:** Pods, Deployments, ReplicaSets, StatefulSets, DaemonSets, Jobs, CronJobs.
@@ -20,7 +21,9 @@ The resource browser organizes resources into intuitive hierarchical categories:
 9. **Custom Resources:** Dynamic CRD discovery and generic custom resource inspector.
 
 ### 1.2 Table Grid Standards (TanStack Table)
+
 Every resource table adheres to strict UX standards:
+
 - **Compact Density:** 32px-36px row height with readable Geist typography.
 - **Status Indicators:** Immediate visual pills (Green `#38B879` Running, Amber `#F5A623` Pending, Red `#E05252` Failed, Muted `#8A919E` Completed).
 - **Fast Search & Filter:** Instant fuzzy search across resource names, labels, and namespaces.
@@ -32,10 +35,12 @@ Every resource table adheres to strict UX standards:
   - Quick action toolbar (View YAML, Edit, Delete, Scale, Restart).
 
 ### 1.3 High-Performance Virtualization
+
 - TanStack Table v8 coupled with virtualized DOM row rendering.
 - Handles enterprise clusters with 10,000+ pods and 1,000+ nodes without memory degradation or input lag.
 
 ### 1.4 Custom Resource Definition (CRD) Engine
+
 - Go engine uses `k8s.io/client-go/dynamic` to list and watch arbitrary CRDs.
 - Introspects `additionalPrinterColumns` from `CustomResourceDefinition` specs to automatically generate table columns, headers, JSONPaths, and priority.
 - Full CRUD inspection for any custom resource (e.g., ArgoCD `Application`, Cert-Manager `Certificate`, Istio `VirtualService`).

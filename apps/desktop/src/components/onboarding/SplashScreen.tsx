@@ -53,7 +53,7 @@ export function SplashScreen() {
       onClick={handleComplete}
       className={cn(
         "fixed inset-0 z-50 flex flex-col items-center justify-center select-none bg-[var(--background)] cursor-pointer transition-opacity duration-350 ease-out",
-        isFadingOut ? "opacity-0 pointer-events-none" : "opacity-100"
+        isFadingOut ? "opacity-0 pointer-events-none" : "opacity-100",
       )}
     >
       {/* Subtle, soft ambient glow behind brand */}

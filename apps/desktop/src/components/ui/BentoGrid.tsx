@@ -13,7 +13,7 @@ export function BentoGrid({ children, className, ...props }: BentoGridProps) {
     <div
       className={cn(
         "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 w-full",
-        className
+        className,
       )}
       {...props}
     >
@@ -46,7 +46,7 @@ export const BentoCard = React.forwardRef<HTMLDivElement, BentoCardProps>(
       onMouseLeave,
       ...props
     },
-    ref
+    ref,
   ) => {
     const cardRef = React.useRef<HTMLDivElement | null>(null);
     const [isHovered, setIsHovered] = React.useState(false);
@@ -76,7 +76,8 @@ export const BentoCard = React.forwardRef<HTMLDivElement, BentoCardProps>(
           if (typeof ref === "function") {
             ref(node);
           } else if (ref) {
-            (ref as React.MutableRefObject<HTMLDivElement | null>).current = node;
+            (ref as React.MutableRefObject<HTMLDivElement | null>).current =
+              node;
           }
         }}
         onMouseMove={handleMouseMove}
@@ -90,7 +91,7 @@ export const BentoCard = React.forwardRef<HTMLDivElement, BentoCardProps>(
             : "border-[var(--border)] hover:border-black/20 dark:hover:border-white/20 hover:bg-[var(--surface-hover)] hover:shadow-xs",
           interactive &&
             "cursor-pointer hover:-translate-y-0.5 active:scale-[0.99] active:translate-y-0 motion-reduce:hover:translate-y-0 motion-reduce:active:scale-100 focus-visible:ring-2 focus-visible:ring-[var(--accent)] focus-visible:outline-hidden",
-          containerClassName
+          containerClassName,
         )}
         {...props}
       >
@@ -107,12 +108,17 @@ export const BentoCard = React.forwardRef<HTMLDivElement, BentoCardProps>(
         )}
 
         {/* Card Content Container */}
-        <div className={cn("relative z-10 w-full h-full p-4 sm:p-5 flex flex-col justify-between", className)}>
+        <div
+          className={cn(
+            "relative z-10 w-full h-full p-4 sm:p-5 flex flex-col justify-between",
+            className,
+          )}
+        >
           {children}
         </div>
       </div>
     );
-  }
+  },
 );
 
 BentoCard.displayName = "BentoCard";

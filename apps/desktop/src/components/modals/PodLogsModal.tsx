@@ -23,7 +23,7 @@ import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { CustomSelect } from "@/components/ui/CustomSelect";
 import { Tooltip } from "@/components/ui/Tooltip";
-import { getStreamPort } from "@/lib/ipc";
+import { getStreamCredentials, resetStreamCredentials } from "@/lib/ipc";
 
 const ERROR_REGEX = /error|fatal|fail|panic|exception/i;
 const WARN_REGEX = /warn|alert/i;
@@ -64,8 +64,8 @@ const LogLineRow = React.memo(function LogLineRow({
           isError
             ? "text-rose-400"
             : isWarning
-            ? "text-amber-300"
-            : "text-slate-300"
+              ? "text-amber-300"
+              : "text-slate-300",
         )}
       >
         {line}
@@ -98,7 +98,8 @@ export function PodLogsModal() {
   const podSummary = React.useMemo(() => {
     if (!logsModalPod) return null;
     return pods.find(
-      (p) => p.name === logsModalPod.name && p.namespace === logsModalPod.namespace
+      (p) =>
+        p.name === logsModalPod.name && p.namespace === logsModalPod.namespace,
     );
   }, [logsModalPod, pods]);
 
@@ -170,7 +171,7 @@ export function PodLogsModal() {
             setIsPreviousNotFound(true);
             setLogs("");
             toast.info(
-              `No previous terminated container found for "${currentContainerName || logsModalPod.name}".`
+              `No previous terminated container found for "${currentContainerName || logsModalPod.name}".`,
             );
           } else {
             setLogs(`Error retrieving logs: ${msg}`);
@@ -190,7 +191,7 @@ export function PodLogsModal() {
       showTimestamps,
       getPodLogs,
       currentContainerName,
-    ]
+    ],
   );
 
   React.useEffect(() => {
@@ -237,7 +238,8 @@ export function PodLogsModal() {
       });
       requestAnimationFrame(() => {
         if (logsContainerRef.current) {
-          logsContainerRef.current.scrollTop = logsContainerRef.current.scrollHeight;
+          logsContainerRef.current.scrollTop =
+            logsContainerRef.current.scrollHeight;
         }
       });
     };
@@ -246,16 +248,17 @@ export function PodLogsModal() {
       setIsLoading(true);
       setLogs(""); // Clear previous snapshot logs for a fresh live stream
       try {
-        const port = await getStreamPort();
+        const { port, token } = await getStreamCredentials();
         if (isCancelled) return;
 
         const url = new URL(`http://127.0.0.1:${port}/api/stream/logs`);
+        url.searchParams.set("token", token);
         url.searchParams.set("namespace", logsModalPod.namespace);
         url.searchParams.set("pod", logsModalPod.name);
         if (selectedContainer || logsModalPod.container) {
           url.searchParams.set(
             "container",
-            selectedContainer || logsModalPod.container || ""
+            selectedContainer || logsModalPod.container || "",
           );
         }
         url.searchParams.set("tailLines", String(tailLines));
@@ -295,6 +298,7 @@ export function PodLogsModal() {
         };
 
         es.onerror = () => {
+          resetStreamCredentials();
           if (flushTimer) clearTimeout(flushTimer);
           flushBuffer();
           if (!isCancelled) {
@@ -333,7 +337,8 @@ export function PodLogsModal() {
     if (isFollowing && logsContainerRef.current) {
       requestAnimationFrame(() => {
         if (logsContainerRef.current) {
-          logsContainerRef.current.scrollTop = logsContainerRef.current.scrollHeight;
+          logsContainerRef.current.scrollTop =
+            logsContainerRef.current.scrollHeight;
         }
       });
     }
@@ -385,14 +390,14 @@ export function PodLogsModal() {
 
   const scrollToBottom = () => {
     if (logsContainerRef.current) {
-      logsContainerRef.current.scrollTop = logsContainerRef.current.scrollHeight;
+      logsContainerRef.current.scrollTop =
+        logsContainerRef.current.scrollHeight;
     }
   };
 
   return (
     <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 md:p-6 bg-black/60 backdrop-blur-md animate-in fade-in duration-150">
       <div className="flex h-[100dvh] w-full max-w-6xl flex-col overflow-hidden rounded-none border border-[var(--border)] bg-[var(--surface)] shadow-2xl animate-in zoom-in-95 duration-150 select-none sm:h-[88vh] sm:rounded-2xl">
-        
         {/* Modal Top Header */}
         <div className="min-h-14 border-b border-[var(--border)] px-3 sm:px-5 py-2 flex flex-wrap sm:flex-nowrap items-center justify-between shrink-0 bg-slate-50/80 dark:bg-black/30 gap-2 sm:gap-3">
           {/* Left: Identity */}
@@ -470,11 +475,16 @@ export function PodLogsModal() {
                   "flex items-center gap-1.5 px-2.5 py-1 rounded-lg border text-[11px] font-mono font-medium transition-all cursor-pointer shadow-2xs active:scale-[0.98]",
                   isFollowing
                     ? "bg-emerald-500/15 border-emerald-500/30 text-emerald-600 dark:text-emerald-400 font-semibold"
-                    : "border-[var(--border)] bg-[var(--surface)] text-[var(--muted)] hover:text-[var(--foreground)] hover:bg-[var(--surface-hover)]"
+                    : "border-[var(--border)] bg-[var(--surface)] text-[var(--muted)] hover:text-[var(--foreground)] hover:bg-[var(--surface-hover)]",
                 )}
                 title="Toggle continuous log tailing and streaming"
               >
-                <Radio className={cn("w-3.5 h-3.5", isFollowing && "text-emerald-500")} />
+                <Radio
+                  className={cn(
+                    "w-3.5 h-3.5",
+                    isFollowing && "text-emerald-500",
+                  )}
+                />
                 <span>Follow</span>
               </button>
 
@@ -486,7 +496,7 @@ export function PodLogsModal() {
                   "flex items-center gap-1.5 px-2.5 py-1 rounded-lg border text-[11px] font-mono font-medium transition-all cursor-pointer shadow-2xs active:scale-[0.98]",
                   showTimestamps
                     ? "bg-[var(--surface-active)] border-[var(--border)] text-[var(--foreground)] font-semibold"
-                    : "border-[var(--border)] bg-[var(--surface)] text-[var(--muted)] hover:text-[var(--foreground)] hover:bg-[var(--surface-hover)]"
+                    : "border-[var(--border)] bg-[var(--surface)] text-[var(--muted)] hover:text-[var(--foreground)] hover:bg-[var(--surface-hover)]",
                 )}
                 title="Toggle RFC3339 timestamps"
               >
@@ -502,7 +512,7 @@ export function PodLogsModal() {
                   setPrevious(next);
                   if (next && restartCount === 0) {
                     toast.info(
-                      `Container "${currentContainerName}" has 0 restarts (no previous logs).`
+                      `Container "${currentContainerName}" has 0 restarts (no previous logs).`,
                     );
                   }
                 }}
@@ -510,7 +520,7 @@ export function PodLogsModal() {
                   "flex items-center gap-1.5 px-2.5 py-1 rounded-lg border text-[11px] font-mono font-medium transition-all cursor-pointer shadow-2xs active:scale-[0.98]",
                   previous
                     ? "bg-amber-500/15 border-amber-500/30 text-amber-600 dark:text-amber-400 font-semibold"
-                    : "border-[var(--border)] bg-[var(--surface)] text-[var(--muted)] hover:text-[var(--foreground)] hover:bg-[var(--surface-hover)]"
+                    : "border-[var(--border)] bg-[var(--surface)] text-[var(--muted)] hover:text-[var(--foreground)] hover:bg-[var(--surface-hover)]",
                 )}
                 title={
                   restartCount === 0
@@ -547,12 +557,19 @@ export function PodLogsModal() {
                   aria-label="Refresh logs"
                 >
                   <RotateCw
-                    className={cn("w-3.5 h-3.5", isLoading && "animate-spin text-[var(--accent)]")}
+                    className={cn(
+                      "w-3.5 h-3.5",
+                      isLoading && "animate-spin text-[var(--accent)]",
+                    )}
                   />
                 </button>
               </Tooltip>
 
-              <Tooltip content={copied ? "Copied to clipboard" : "Copy logs to clipboard"}>
+              <Tooltip
+                content={
+                  copied ? "Copied to clipboard" : "Copy logs to clipboard"
+                }
+              >
                 <button
                   type="button"
                   onClick={handleCopy}
@@ -636,7 +653,7 @@ export function PodLogsModal() {
                 "px-2 py-0.5 rounded-md text-[11px] font-mono flex items-center gap-1.5 transition-colors cursor-pointer border",
                 wrapLines
                   ? "bg-[var(--surface-active)] text-[var(--foreground)] border-[var(--border)] font-medium shadow-2xs"
-                  : "bg-transparent text-[var(--muted)] hover:text-[var(--foreground)] border-transparent"
+                  : "bg-transparent text-[var(--muted)] hover:text-[var(--foreground)] border-transparent",
               )}
               title="Toggle line wrapping"
             >
@@ -652,7 +669,7 @@ export function PodLogsModal() {
                 "px-2 py-0.5 rounded-md text-[11px] font-mono flex items-center gap-1.5 transition-colors cursor-pointer border",
                 showLineNumbers
                   ? "bg-[var(--surface-active)] text-[var(--foreground)] border-[var(--border)] font-medium shadow-2xs"
-                  : "bg-transparent text-[var(--muted)] hover:text-[var(--foreground)] border-transparent"
+                  : "bg-transparent text-[var(--muted)] hover:text-[var(--foreground)] border-transparent",
               )}
               title="Toggle line numbers"
             >
@@ -662,7 +679,10 @@ export function PodLogsModal() {
 
             {/* Total Lines counter */}
             <span className="px-2 py-0.5 rounded-md text-[10px] font-mono bg-black/5 dark:bg-white/5 border border-[var(--border)] text-[var(--muted)] hidden sm:inline-block">
-              Lines: <strong className="text-[var(--foreground)]">{filteredLines.length}</strong>
+              Lines:{" "}
+              <strong className="text-[var(--foreground)]">
+                {filteredLines.length}
+              </strong>
               {search && <span> (filtered)</span>}
             </span>
 
@@ -703,7 +723,9 @@ export function PodLogsModal() {
                   <code className="text-amber-400 font-mono text-[11px] bg-amber-500/10 px-1 py-0.5 rounded border border-amber-500/20">
                     {currentContainerName || logsModalPod.name}
                   </code>{" "}
-                  has <strong className="text-slate-200">0 restarts</strong> and has never terminated. Previous logs are only recorded after a container crashes or restarts.
+                  has <strong className="text-slate-200">0 restarts</strong> and
+                  has never terminated. Previous logs are only recorded after a
+                  container crashes or restarts.
                 </p>
               </div>
               <button
@@ -722,7 +744,9 @@ export function PodLogsModal() {
               </div>
               <div className="space-y-1">
                 <p className="text-xs font-semibold text-slate-200">
-                  {search ? `No log entries matching "${search}"` : "No logs available"}
+                  {search
+                    ? `No log entries matching "${search}"`
+                    : "No logs available"}
                 </p>
                 <p className="text-[11px] text-slate-400 max-w-xs">
                   {search

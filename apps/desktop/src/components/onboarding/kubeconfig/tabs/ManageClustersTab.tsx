@@ -31,7 +31,9 @@ export function ManageClustersTab({
     <div className="space-y-3">
       <div className="flex items-center justify-between text-xs text-[var(--muted)]">
         <span>Available Contexts in KubeView</span>
-        <span className="font-mono text-[11px]">{availableContexts.length} total</span>
+        <span className="font-mono text-[11px]">
+          {availableContexts.length} total
+        </span>
       </div>
 
       <div className="max-h-72 overflow-y-auto space-y-1.5 pr-1">
@@ -51,7 +53,7 @@ export function ManageClustersTab({
                 "flex items-center justify-between p-3 rounded-xl border transition-all cursor-pointer group",
                 isSelected
                   ? "bg-[#F08A42]/10 border-[#F08A42]/40 shadow-xs"
-                  : "bg-black/[0.02] dark:bg-white/[0.02] border-[var(--border)] hover:border-black/20 dark:hover:border-white/20 hover:bg-[var(--surface-hover)]"
+                  : "bg-black/[0.02] dark:bg-white/[0.02] border-[var(--border)] hover:border-black/20 dark:hover:border-white/20 hover:bg-[var(--surface-hover)]",
               )}
             >
               <div className="flex items-center gap-3 min-w-0 pr-2">
@@ -60,7 +62,7 @@ export function ManageClustersTab({
                     "w-8 h-8 rounded-lg flex items-center justify-center shrink-0 border",
                     isSelected
                       ? "bg-[#F08A42]/20 text-[#F08A42] border-[#F08A42]/40"
-                      : "bg-black/5 dark:bg-white/5 text-[var(--muted)] border-[var(--border)]"
+                      : "bg-black/5 dark:bg-white/5 text-[var(--muted)] border-[var(--border)]",
                   )}
                 >
                   <Server className="w-4 h-4" />
@@ -120,7 +122,11 @@ export function ManageClustersTab({
                   type="button"
                   onClick={(e) => {
                     e.stopPropagation();
-                    if (confirm(`Remove cluster context '${ctx.name}' from KubeView?`)) {
+                    if (
+                      confirm(
+                        `Remove cluster context '${ctx.name}' from KubeView?`,
+                      )
+                    ) {
                       deleteContext(ctx.name);
                       toast.success(`Removed context '${ctx.name}'`);
                     }
@@ -137,7 +143,8 @@ export function ManageClustersTab({
 
         {availableContexts.length === 0 && (
           <div className="text-center py-8 text-xs text-[var(--muted)]">
-            No cluster contexts configured yet. Import your first kubeconfig using the tabs above.
+            No cluster contexts configured yet. Import your first kubeconfig
+            using the tabs above.
           </div>
         )}
       </div>
@@ -158,11 +165,13 @@ export function ManageClustersTab({
             onClick={() => {
               if (
                 confirm(
-                  "Are you sure you want to remove all clusters from KubeView and start completely clean?"
+                  "Are you sure you want to remove all clusters from KubeView and start completely clean?",
                 )
               ) {
                 clearAllContexts();
-                toast.success("All cluster configs removed. Clean slate ready.");
+                toast.success(
+                  "All cluster configs removed. Clean slate ready.",
+                );
               }
             }}
             className="w-full flex items-center justify-center gap-2 py-1.5 rounded-xl text-xs text-rose-500/80 hover:text-rose-500 hover:bg-rose-500/10 border border-rose-500/20 transition-all cursor-pointer font-medium"

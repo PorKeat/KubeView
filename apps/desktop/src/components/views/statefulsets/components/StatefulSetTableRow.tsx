@@ -2,7 +2,9 @@
 
 import * as React from "react";
 import { motion, AnimatePresence } from "motion/react";
-import { CheckSquare, Square,
+import {
+  CheckSquare,
+  Square,
   Check,
   ChevronRight,
   Code2,
@@ -200,7 +202,10 @@ export function StatefulSetTableRow({
           isExpanded && "bg-[var(--surface-hover)]/70",
         )}
       >
-                <td className="px-2 text-center" onClick={(event) => event.stopPropagation()}>
+        <td
+          className="px-2 text-center"
+          onClick={(event) => event.stopPropagation()}
+        >
           <button
             type="button"
             onClick={() => onToggleSelect(itemKey)}
@@ -214,9 +219,11 @@ export function StatefulSetTableRow({
             )}
           </button>
         </td>
-<td className="py-1 px-3 font-medium font-mono text-[var(--foreground)] truncate">
+        <td className="py-1 px-3 font-medium font-mono text-[var(--foreground)] truncate">
           <div className="flex items-center gap-1 min-w-0">
-            <Tooltip content={isExpanded ? "Collapse details" : "Expand details"}>
+            <Tooltip
+              content={isExpanded ? "Collapse details" : "Expand details"}
+            >
               <button
                 type="button"
                 onClick={(event) => {
@@ -326,9 +333,19 @@ export function StatefulSetTableRow({
           {item.age}
         </td>
 
-        <td className="py-1 px-2 text-right" onClick={(event) => event.stopPropagation()}>
-          <div className="relative inline-flex items-center justify-end" ref={actionMenuRef}>
-            <Tooltip content="Actions menu" disabled={showActionMenu} side="left">
+        <td
+          className="py-1 px-2 text-right"
+          onClick={(event) => event.stopPropagation()}
+        >
+          <div
+            className="relative inline-flex items-center justify-end"
+            ref={actionMenuRef}
+          >
+            <Tooltip
+              content="Actions menu"
+              disabled={showActionMenu}
+              side="left"
+            >
               <button
                 ref={actionButtonRef}
                 type="button"
@@ -351,7 +368,12 @@ export function StatefulSetTableRow({
                   initial={{ opacity: 0, scale: 0.95, y: openUpwards ? 4 : -4 }}
                   animate={{ opacity: 1, scale: 1, y: 0 }}
                   exit={{ opacity: 0, scale: 0.95, y: openUpwards ? 4 : -4 }}
-                  transition={{ type: "spring", stiffness: 450, damping: 30, mass: 0.8 }}
+                  transition={{
+                    type: "spring",
+                    stiffness: 450,
+                    damping: 30,
+                    mass: 0.8,
+                  }}
                   onClick={(event) => event.stopPropagation()}
                   className={cn(
                     "absolute z-50 w-72 p-1.5 rounded-xl bg-[var(--surface)] border border-[var(--border)] shadow-2xl backdrop-blur-md text-left",
@@ -390,7 +412,8 @@ export function StatefulSetTableRow({
                       icon={SlidersHorizontal}
                       title="Scale Replicas"
                       detail={
-                        item.persistentVolumeClaimRetentionWhenScaled === "Delete"
+                        item.persistentVolumeClaimRetentionWhenScaled ===
+                        "Delete"
                           ? "Set replicas; PVCs for removed pods are deleted"
                           : `Set replicas; pods follow ${item.podManagementPolicy}`
                       }
@@ -412,7 +435,8 @@ export function StatefulSetTableRow({
                       icon={Trash2}
                       title="Delete StatefulSet"
                       detail={
-                        item.persistentVolumeClaimRetentionWhenDeleted === "Delete"
+                        item.persistentVolumeClaimRetentionWhenDeleted ===
+                        "Delete"
                           ? "Delete pods and volume claim templates"
                           : "Delete pods; persistent volume claims are retained"
                       }
@@ -436,7 +460,8 @@ export function StatefulSetTableRow({
                       <ChevronRight
                         className={cn(
                           "w-3.5 h-3.5 text-[var(--muted)] transition-transform duration-150",
-                          showKubectlSubmenu && "rotate-90 text-[var(--accent)]",
+                          showKubectlSubmenu &&
+                            "rotate-90 text-[var(--accent)]",
                         )}
                       />
                     </button>
@@ -450,7 +475,10 @@ export function StatefulSetTableRow({
                               key={command.label}
                               type="button"
                               onClick={() =>
-                                handleCopyKubectl(command.command, command.label)
+                                handleCopyKubectl(
+                                  command.command,
+                                  command.label,
+                                )
                               }
                               className="w-full text-left p-1.5 rounded-md hover:bg-black/5 dark:hover:bg-white/[0.06] transition-colors cursor-pointer group/kcmd flex items-center justify-between gap-2"
                             >
@@ -507,12 +535,15 @@ export function StatefulSetTableRow({
                       className="inline-flex max-w-full min-w-0 items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-mono bg-cyan-500/10 text-cyan-600 dark:text-cyan-400 border border-cyan-500/20"
                     >
                       <span className="shrink-0">Service:</span>
-                      <span className="truncate max-w-[200px]">{item.serviceName}</span>
+                      <span className="truncate max-w-[200px]">
+                        {item.serviceName}
+                      </span>
                     </span>
                   )}
                   <span className="px-1.5 py-0.5 rounded text-[10px] font-mono bg-black/5 dark:bg-white/5 border border-[var(--border)] text-[var(--muted)]">
                     {item.updateStrategy}
-                    {item.updateStrategy === "RollingUpdate" && item.partition > 0
+                    {item.updateStrategy === "RollingUpdate" &&
+                    item.partition > 0
                       ? ` · partition ${item.partition}`
                       : ""}
                   </span>
@@ -553,7 +584,10 @@ export function StatefulSetTableRow({
 
               <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 rounded-xl border border-[var(--border)]/70 bg-black/[0.02] dark:bg-white/[0.02] p-2.5">
                 <MetaItem label="Service" value={item.serviceName || "none"} />
-                <MetaItem label="Pod Management" value={item.podManagementPolicy} />
+                <MetaItem
+                  label="Pod Management"
+                  value={item.podManagementPolicy}
+                />
                 <MetaItem label="Update Strategy" value={item.updateStrategy} />
                 <MetaItem label="Partition" value={String(item.partition)} />
                 <MetaItem
@@ -608,15 +642,15 @@ export function StatefulSetTableRow({
 
               {item.updateStrategy === "OnDelete" && (
                 <div className="p-2 rounded-lg border border-amber-500/20 bg-amber-500/5 text-[10px] leading-relaxed text-amber-700 dark:text-amber-400">
-                  OnDelete strategy: a rollout patches the pod template, but pods
-                  update only when you delete them.
+                  OnDelete strategy: a rollout patches the pod template, but
+                  pods update only when you delete them.
                 </div>
               )}
               {(item.persistentVolumeClaimRetentionWhenDeleted === "Delete" ||
                 item.persistentVolumeClaimRetentionWhenScaled === "Delete") && (
                 <div className="p-2 rounded-lg border border-amber-500/20 bg-amber-500/5 text-[10px] leading-relaxed text-amber-700 dark:text-amber-400">
-                  PVC retention policy deletes persistent volume claims when this
-                  StatefulSet is deleted or scaled down.
+                  PVC retention policy deletes persistent volume claims when
+                  this StatefulSet is deleted or scaled down.
                 </div>
               )}
 

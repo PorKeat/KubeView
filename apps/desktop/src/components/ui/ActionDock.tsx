@@ -30,7 +30,7 @@ export function ActionDock({ items, className, size = "md" }: ActionDockProps) {
       className={cn(
         "relative flex items-center gap-1.5 p-1 rounded-xl bg-[var(--surface)] border border-[var(--border)] shadow-xs select-none",
         size === "sm" ? "h-9" : "h-10",
-        className
+        className,
       )}
     >
       {items.map((item) => {
@@ -40,7 +40,10 @@ export function ActionDock({ items, className, size = "md" }: ActionDockProps) {
         const isAccent = item.variant === "accent";
 
         return (
-          <div key={item.id} className="relative flex items-center justify-center">
+          <div
+            key={item.id}
+            className="relative flex items-center justify-center"
+          >
             <motion.button
               type="button"
               onClick={item.onClick}
@@ -58,14 +61,18 @@ export function ActionDock({ items, className, size = "md" }: ActionDockProps) {
                 isPrimary
                   ? "bg-[#f08a42] text-zinc-950 hover:bg-[#ff9d5c] font-semibold"
                   : isAccent
-                  ? "bg-[var(--accent)]/10 text-[var(--accent)] hover:bg-[var(--accent)]/20 border border-[var(--accent)]/30"
-                  : "bg-transparent text-[var(--foreground)] hover:bg-[var(--surface-hover)] hover:text-[var(--foreground)]"
+                    ? "bg-[var(--accent)]/10 text-[var(--accent)] hover:bg-[var(--accent)]/20 border border-[var(--accent)]/30"
+                    : "bg-transparent text-[var(--foreground)] hover:bg-[var(--surface-hover)] hover:text-[var(--foreground)]",
               )}
             >
               <Icon
                 className={cn(
                   size === "sm" ? "w-3.5 h-3.5" : "w-4 h-4",
-                  isPrimary ? "text-zinc-950" : isAccent ? "text-[var(--accent)]" : "text-[var(--muted)] hover:text-[var(--foreground)]"
+                  isPrimary
+                    ? "text-zinc-950"
+                    : isAccent
+                      ? "text-[var(--accent)]"
+                      : "text-[var(--muted)] hover:text-[var(--foreground)]",
                 )}
                 aria-hidden="true"
               />

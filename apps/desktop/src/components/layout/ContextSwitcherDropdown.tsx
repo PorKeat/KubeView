@@ -68,7 +68,9 @@ export function ContextSwitcherDropdown({
     };
   }, [isOpen]);
 
-  const currentInfo = availableContexts.find((c) => c.name === currentContext) || {
+  const currentInfo = availableContexts.find(
+    (c) => c.name === currentContext,
+  ) || {
     name: currentContext || "Select Cluster",
     cluster: currentContext || "none",
     server: "https://127.0.0.1:6443",
@@ -80,7 +82,7 @@ export function ContextSwitcherDropdown({
   const filteredContexts = availableContexts.filter(
     (c) =>
       c.name.toLowerCase().includes(search.toLowerCase()) ||
-      c.server.toLowerCase().includes(search.toLowerCase())
+      c.server.toLowerCase().includes(search.toLowerCase()),
   );
 
   const getProviderBadge = (provider: ClusterContextInfo["provider"]) => {
@@ -138,25 +140,31 @@ export function ContextSwitcherDropdown({
             "px-2.5 py-1.5 rounded-lg bg-[var(--background)] border border-[var(--border)] hover:bg-[var(--surface-hover)] hover:border-black/20 dark:hover:border-white/20",
           variant === "unified" &&
             "px-2.5 py-1.5 rounded-md hover:bg-black/[0.05] dark:hover:bg-white/[0.06]",
-          isOpen && variant === "unified" && "bg-black/[0.08] dark:bg-white/[0.1]",
-          className
+          isOpen &&
+            variant === "unified" &&
+            "bg-black/[0.08] dark:bg-white/[0.1]",
+          className,
         )}
         title={`Active Context: ${currentContext || "None"} (${connectionStatus})`}
       >
         <div className="flex items-center gap-1.5 min-w-0">
           <Server className="w-3.5 h-3.5 text-[var(--muted)] group-hover:text-[var(--foreground)] transition-colors shrink-0" />
-          <span className="font-semibold max-w-[90px] truncate sm:max-w-[130px]">{currentContext || "Select Cluster"}</span>
+          <span className="font-semibold max-w-[90px] truncate sm:max-w-[130px]">
+            {currentContext || "Select Cluster"}
+          </span>
         </div>
         <span className="hidden sm:inline-flex">
           {getProviderBadge(currentInfo.provider)}
         </span>
         {latencyMs > 0 && (
-          <span className="hidden sm:inline text-[11px] text-[var(--muted)] font-mono tabular-nums">({latencyMs}ms)</span>
+          <span className="hidden sm:inline text-[11px] text-[var(--muted)] font-mono tabular-nums">
+            ({latencyMs}ms)
+          </span>
         )}
         <ChevronDown
           className={cn(
             "w-3 h-3 text-[var(--muted)] group-hover:text-[var(--foreground)] transition-transform duration-200 shrink-0",
-            isOpen && "rotate-180"
+            isOpen && "rotate-180",
           )}
         />
       </button>
@@ -189,7 +197,10 @@ export function ContextSwitcherDropdown({
                 </span>
               </div>
               <div className="relative">
-                <Search className="w-3.5 h-3.5 absolute left-2.5 top-1/2 -translate-y-1/2 text-[var(--muted)]" aria-hidden="true" />
+                <Search
+                  className="w-3.5 h-3.5 absolute left-2.5 top-1/2 -translate-y-1/2 text-[var(--muted)]"
+                  aria-hidden="true"
+                />
                 <input
                   ref={inputRef}
                   type="text"
@@ -200,12 +211,20 @@ export function ContextSwitcherDropdown({
                     e.stopPropagation();
                     if (e.key === "ArrowDown") {
                       e.preventDefault();
-                      const firstItem = listRef.current?.querySelector<HTMLElement>('[role="menuitem"]');
+                      const firstItem =
+                        listRef.current?.querySelector<HTMLElement>(
+                          '[role="menuitem"]',
+                        );
                       firstItem?.focus();
-                    } else if (e.key === "Enter" && filteredContexts.length > 0) {
+                    } else if (
+                      e.key === "Enter" &&
+                      filteredContexts.length > 0
+                    ) {
                       e.preventDefault();
                       switchContext(filteredContexts[0].name);
-                      toast.info(`Connecting to cluster: ${filteredContexts[0].name}...`);
+                      toast.info(
+                        `Connecting to cluster: ${filteredContexts[0].name}...`,
+                      );
                       setIsOpen(false);
                     }
                   }}
@@ -217,7 +236,12 @@ export function ContextSwitcherDropdown({
             </div>
 
             {/* Contexts List */}
-            <div ref={listRef} className="max-h-60 overflow-y-auto p-1 space-y-1" role="menu" aria-label="Available Clusters">
+            <div
+              ref={listRef}
+              className="max-h-60 overflow-y-auto p-1 space-y-1"
+              role="menu"
+              aria-label="Available Clusters"
+            >
               {filteredContexts.map((ctx) => {
                 const isSelected = ctx.name === currentContext;
                 const isInternal = isInternalEndpoint(ctx.server);
@@ -242,11 +266,13 @@ export function ContextSwitcherDropdown({
                         setIsOpen(false);
                       } else if (e.key === "ArrowDown") {
                         e.preventDefault();
-                        const next = e.currentTarget.nextElementSibling as HTMLElement | null;
+                        const next = e.currentTarget
+                          .nextElementSibling as HTMLElement | null;
                         next?.focus();
                       } else if (e.key === "ArrowUp") {
                         e.preventDefault();
-                        const prev = e.currentTarget.previousElementSibling as HTMLElement | null;
+                        const prev = e.currentTarget
+                          .previousElementSibling as HTMLElement | null;
                         if (prev) {
                           prev.focus();
                         } else {
@@ -258,12 +284,19 @@ export function ContextSwitcherDropdown({
                       "w-full text-left flex items-start justify-between p-2 rounded-lg transition-all text-xs font-mono group cursor-pointer outline-hidden select-none border focus-visible:ring-1 focus-visible:ring-[var(--accent)]",
                       isSelected
                         ? "bg-black/[0.04] dark:bg-white/[0.06] border-black/10 dark:border-white/10 text-[var(--foreground)] shadow-xs"
-                        : "border-transparent hover:bg-black/[0.03] dark:hover:bg-white/[0.04] hover:border-[var(--border)] text-[var(--foreground)]"
+                        : "border-transparent hover:bg-black/[0.03] dark:hover:bg-white/[0.04] hover:border-[var(--border)] text-[var(--foreground)]",
                     )}
                   >
                     <div className="flex flex-col min-w-0 pr-2 flex-1">
                       <div className="flex items-center gap-1.5 flex-wrap">
-                        <span className={cn("truncate font-medium", isSelected ? "font-semibold text-[var(--foreground)]" : "text-[var(--foreground)]")}>
+                        <span
+                          className={cn(
+                            "truncate font-medium",
+                            isSelected
+                              ? "font-semibold text-[var(--foreground)]"
+                              : "text-[var(--foreground)]",
+                          )}
+                        >
                           {ctx.name}
                         </span>
                         {getProviderBadge(ctx.provider)}
@@ -279,7 +312,10 @@ export function ContextSwitcherDropdown({
                     </div>
 
                     <div className="flex items-center gap-1.5 shrink-0 pt-0.5">
-                      <Tooltip content="Configure endpoint IP / URL" side="left">
+                      <Tooltip
+                        content="Configure endpoint IP / URL"
+                        side="left"
+                      >
                         <button
                           type="button"
                           data-testid="configure-endpoint-btn"
@@ -293,7 +329,10 @@ export function ContextSwitcherDropdown({
                           }}
                           className="p-1 rounded hover:bg-black/10 dark:hover:bg-white/10 text-[var(--muted)] hover:text-[var(--foreground)] transition-colors cursor-pointer"
                         >
-                          <SlidersHorizontal className="w-3.5 h-3.5" aria-hidden="true" />
+                          <SlidersHorizontal
+                            className="w-3.5 h-3.5"
+                            aria-hidden="true"
+                          />
                         </button>
                       </Tooltip>
 
@@ -318,14 +357,22 @@ export function ContextSwitcherDropdown({
                           {ctx.latencyMs}ms
                         </span>
                       )}
-                      {isSelected && <Check className="w-3.5 h-3.5 text-[var(--accent)] shrink-0" aria-hidden="true" />}
+                      {isSelected && (
+                        <Check
+                          className="w-3.5 h-3.5 text-[var(--accent)] shrink-0"
+                          aria-hidden="true"
+                        />
+                      )}
                     </div>
                   </div>
                 );
               })}
 
               {filteredContexts.length === 0 && (
-                <div className="py-6 text-center text-xs text-[var(--muted)]" role="status">
+                <div
+                  className="py-6 text-center text-xs text-[var(--muted)]"
+                  role="status"
+                >
                   No matching clusters found.
                 </div>
               )}
@@ -352,11 +399,17 @@ export function ContextSwitcherDropdown({
                   toast.info("Running connection diagnostic probe...");
                   const res = await diagnoseContext();
                   if (res?.status === "connected") {
-                    toast.success(`Connection verified! ${res.serverVersion} (${res.latencyMs}ms)`);
+                    toast.success(
+                      `Connection verified! ${res.serverVersion} (${res.latencyMs}ms)`,
+                    );
                   } else if (res?.status === "degraded") {
-                    toast.warning("Cluster connected with restricted RBAC privileges.");
+                    toast.warning(
+                      "Cluster connected with restricted RBAC privileges.",
+                    );
                   } else {
-                    toast.error(`Connection failed: ${res?.remediation || "Check API endpoint"}`);
+                    toast.error(
+                      `Connection failed: ${res?.remediation || "Check API endpoint"}`,
+                    );
                   }
                 }}
                 className="w-full flex items-center gap-2 px-2.5 py-1.5 text-xs rounded-lg hover:bg-black/[0.04] dark:hover:bg-white/[0.05] text-[var(--muted)] hover:text-[var(--foreground)] cursor-pointer outline-hidden select-none transition-colors group"

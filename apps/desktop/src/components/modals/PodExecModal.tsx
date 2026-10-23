@@ -105,9 +105,14 @@ function formatAnsiOutput(raw: string): React.ReactNode {
       }
     } else {
       elements.push(
-        <span key={i} className={activeStyles.length > 0 ? activeStyles.join(" ") : undefined}>
+        <span
+          key={i}
+          className={
+            activeStyles.length > 0 ? activeStyles.join(" ") : undefined
+          }
+        >
           {part}
-        </span>
+        </span>,
       );
     }
   }
@@ -122,16 +127,28 @@ const QUICK_COMMANDS = [
   { label: "Disk Usage", cmd: "df -h" },
   { label: "OS Info", cmd: "uname -a" },
   { label: "Network DNS", cmd: "cat /etc/resolv.conf" },
-  { label: "Listening Ports", cmd: "netstat -tuln || ss -tulpn || cat /proc/net/tcp" },
+  {
+    label: "Listening Ports",
+    cmd: "netstat -tuln || ss -tulpn || cat /proc/net/tcp",
+  },
   { label: "Memory Info", cmd: "free -m || cat /proc/meminfo" },
 ];
 
 export function PodExecModal() {
-  const { execModalPod, closeExecModal, execPod, pods, currentContext, openLogsModal } = useClusterStore();
+  const {
+    execModalPod,
+    closeExecModal,
+    execPod,
+    pods,
+    currentContext,
+    openLogsModal,
+  } = useClusterStore();
   const [selectedContainer, setSelectedContainer] = React.useState<string>("");
   const [cwd, setCwd] = React.useState<string>("");
   const [shell, setShell] = React.useState<string>("auto");
-  const [execMode, setExecMode] = React.useState<"interactive" | "history">("interactive");
+  const [execMode, setExecMode] = React.useState<"interactive" | "history">(
+    "interactive",
+  );
   const [quickCmdToInsert, setQuickCmdToInsert] = React.useState<string>("");
   const [inputCommand, setInputCommand] = React.useState<string>("");
   const [history, setHistory] = React.useState<CommandHistoryItem[]>([]);
@@ -145,12 +162,13 @@ export function PodExecModal() {
 
   // Find pod to extract container list
   const currentPod = pods.find(
-    (p) => p.name === execModalPod?.name && p.namespace === execModalPod?.namespace
+    (p) =>
+      p.name === execModalPod?.name && p.namespace === execModalPod?.namespace,
   );
 
   const containerList = React.useMemo(
     () => currentPod?.containers.map((c) => c.name) || [],
-    [currentPod?.containers]
+    [currentPod?.containers],
   );
 
   React.useEffect(() => {
@@ -171,7 +189,12 @@ export function PodExecModal() {
       setQuickCmdToInsert("");
       setSelectedContainer("");
     }
-  }, [execModalPod?.name, execModalPod?.namespace, execModalPod?.container, containerList]);
+  }, [
+    execModalPod?.name,
+    execModalPod?.namespace,
+    execModalPod?.container,
+    containerList,
+  ]);
 
   // Escape key to close
   React.useEffect(() => {
@@ -244,7 +267,8 @@ export function PodExecModal() {
         const durationMs = Math.round(performance.now() - startTime);
 
         if (res?.exitCode === 0) {
-          const newResolvedDir = res.stdout.trim().split("\n").pop()?.trim() || "";
+          const newResolvedDir =
+            res.stdout.trim().split("\n").pop()?.trim() || "";
           setCwd(newResolvedDir);
           setHistory((prev) => [
             ...prev,
@@ -266,7 +290,8 @@ export function PodExecModal() {
               cwd: currentCwd || "~",
               timestamp: new Date().toLocaleTimeString(),
               stdout: "",
-              stderr: res?.stderr || `cd: ${rawTarget}: No such file or directory`,
+              stderr:
+                res?.stderr || `cd: ${rawTarget}: No such file or directory`,
               exitCode: res?.exitCode ?? 1,
               durationMs,
             },
@@ -376,7 +401,10 @@ export function PodExecModal() {
 
   const handleCopyHistory = () => {
     const text = history
-      .map((h) => `$ ${h.command}\n${h.stdout}${h.stderr ? `\nSTDERR:\n${h.stderr}` : ""}`)
+      .map(
+        (h) =>
+          `$ ${h.command}\n${h.stdout}${h.stderr ? `\nSTDERR:\n${h.stderr}` : ""}`,
+      )
       .join("\n\n");
     navigator.clipboard.writeText(text);
     setCopied(true);
@@ -389,7 +417,9 @@ export function PodExecModal() {
       <div
         className={cn(
           "bg-[var(--surface)] border border-[var(--border)] shadow-2xl flex flex-col overflow-hidden transition-all duration-200 animate-in zoom-in-95",
-          isMaximized ? "h-full w-full max-w-none rounded-none" : "h-[100dvh] w-full max-w-5xl rounded-none sm:h-[85vh] sm:rounded-2xl"
+          isMaximized
+            ? "h-full w-full max-w-none rounded-none"
+            : "h-[100dvh] w-full max-w-5xl rounded-none sm:h-[85vh] sm:rounded-2xl",
         )}
       >
         {/* Header */}
@@ -421,7 +451,7 @@ export function PodExecModal() {
                   "flex items-center gap-1.5 px-2.5 py-1 rounded-md transition-all cursor-pointer font-mono",
                   execMode === "interactive"
                     ? "bg-[var(--surface)] text-[var(--foreground)] shadow-2xs font-semibold"
-                    : "text-[var(--muted)] hover:text-[var(--foreground)]"
+                    : "text-[var(--muted)] hover:text-[var(--foreground)]",
                 )}
               >
                 <Terminal className="w-3.5 h-3.5 text-[var(--accent)]" />
@@ -434,7 +464,7 @@ export function PodExecModal() {
                   "flex items-center gap-1.5 px-2.5 py-1 rounded-md transition-all cursor-pointer font-mono",
                   execMode === "history"
                     ? "bg-[var(--surface)] text-[var(--foreground)] shadow-2xs font-semibold"
-                    : "text-[var(--muted)] hover:text-[var(--foreground)]"
+                    : "text-[var(--muted)] hover:text-[var(--foreground)]",
                 )}
               >
                 <History className="w-3.5 h-3.5" />
@@ -466,26 +496,40 @@ export function PodExecModal() {
                   </button>
                 </Tooltip>
 
-                <Tooltip content={copied ? "Copied to clipboard" : "Copy All Terminal Output"}>
+                <Tooltip
+                  content={
+                    copied ? "Copied to clipboard" : "Copy All Terminal Output"
+                  }
+                >
                   <button
                     onClick={handleCopyHistory}
                     className="p-1.5 rounded-lg hover:bg-[var(--surface-hover)] text-[var(--muted)] hover:text-[var(--foreground)] transition-colors cursor-pointer"
                     aria-label="Copy All Terminal Output"
                   >
-                    {copied ? <Check className="w-4 h-4 text-emerald-500" /> : <Copy className="w-4 h-4" />}
+                    {copied ? (
+                      <Check className="w-4 h-4 text-emerald-500" />
+                    ) : (
+                      <Copy className="w-4 h-4" />
+                    )}
                   </button>
                 </Tooltip>
               </>
             )}
 
             {/* Maximize / Restore */}
-            <Tooltip content={isMaximized ? "Restore window" : "Maximize window"}>
+            <Tooltip
+              content={isMaximized ? "Restore window" : "Maximize window"}
+            >
               <button
                 onClick={() => setIsMaximized(!isMaximized)}
                 className="p-1.5 rounded-lg hover:bg-[var(--surface-hover)] text-[var(--muted)] hover:text-[var(--foreground)] transition-colors cursor-pointer"
                 aria-label={isMaximized ? "Restore window" : "Maximize window"}
               >
-                {isMaximized ? <Minimize2 className="w-4 h-4" /> : <Maximize2 className="w-4 h-4" />}
+                {isMaximized ? (
+                  <Minimize2 className="w-4 h-4" />
+                ) : (
+                  <Maximize2 className="w-4 h-4" />
+                )}
               </button>
             </Tooltip>
 
@@ -537,7 +581,8 @@ export function PodExecModal() {
                   openLogsModal({
                     name: execModalPod.name,
                     namespace: execModalPod.namespace,
-                    container: selectedContainer || execModalPod.container || "",
+                    container:
+                      selectedContainer || execModalPod.container || "",
                   });
                   closeExecModal();
                 }
@@ -553,10 +598,20 @@ export function PodExecModal() {
               {history.length === 0 ? (
                 <div className="text-slate-500 text-xs space-y-1.5 border border-slate-900 rounded-xl p-4 bg-slate-900/30">
                   <p className="text-emerald-400 font-semibold">
-                    Command Runner ready for {execModalPod.name} [{selectedContainer || "primary"}]
+                    Command Runner ready for {execModalPod.name} [
+                    {selectedContainer || "primary"}]
                   </p>
                   <p className="text-slate-400">
-                    Type commands below or click quick diagnostic chips above. Press <kbd className="px-1.5 py-0.5 rounded bg-slate-800 text-slate-300 border border-slate-700 text-[10px]">↑</kbd> and <kbd className="px-1.5 py-0.5 rounded bg-slate-800 text-slate-300 border border-slate-700 text-[10px]">↓</kbd> to cycle through command history.
+                    Type commands below or click quick diagnostic chips above.
+                    Press{" "}
+                    <kbd className="px-1.5 py-0.5 rounded bg-slate-800 text-slate-300 border border-slate-700 text-[10px]">
+                      ↑
+                    </kbd>{" "}
+                    and{" "}
+                    <kbd className="px-1.5 py-0.5 rounded bg-slate-800 text-slate-300 border border-slate-700 text-[10px]">
+                      ↓
+                    </kbd>{" "}
+                    to cycle through command history.
                   </p>
                 </div>
               ) : (
@@ -565,15 +620,24 @@ export function PodExecModal() {
                     <div className="flex items-center justify-between text-[11px] text-slate-500 border-b border-slate-800/80 pb-1">
                       <div className="flex items-center gap-2">
                         <span className="text-emerald-400 font-semibold font-mono">
-                          root@{(selectedContainer || execModalPod.name).slice(0, 16)}:{item.cwd || "~"}#
+                          root@
+                          {(selectedContainer || execModalPod.name).slice(
+                            0,
+                            16,
+                          )}
+                          :{item.cwd || "~"}#
                         </span>
-                        <span className="text-white font-semibold">{item.command}</span>
+                        <span className="text-white font-semibold">
+                          {item.command}
+                        </span>
                       </div>
                       <div className="flex items-center gap-2">
                         <span
                           className={cn(
                             "px-1.5 py-0.2 rounded text-[10px] font-bold font-mono",
-                            item.exitCode === 0 ? "bg-emerald-500/20 text-emerald-400" : "bg-rose-500/20 text-rose-400"
+                            item.exitCode === 0
+                              ? "bg-emerald-500/20 text-emerald-400"
+                              : "bg-rose-500/20 text-rose-400",
                           )}
                         >
                           exit {item.exitCode}
@@ -600,7 +664,11 @@ export function PodExecModal() {
                           item.stderr.includes("OCI runtime exec failed")) && (
                           <div className="flex flex-wrap items-center gap-2 pl-2 pt-1 text-xs">
                             {containerList
-                              .filter((c) => c !== (selectedContainer || execModalPod.container))
+                              .filter(
+                                (c) =>
+                                  c !==
+                                  (selectedContainer || execModalPod.container),
+                              )
                               .map((otherC) => (
                                 <button
                                   key={otherC}
@@ -616,7 +684,9 @@ export function PodExecModal() {
                               onClick={() => {
                                 const cmd = `kubectl debug -it -n ${execModalPod.namespace} ${execModalPod.name} --image=busybox --target=${selectedContainer || execModalPod.container || "main"}`;
                                 navigator.clipboard.writeText(cmd);
-                                toast.success("Debug command copied to clipboard");
+                                toast.success(
+                                  "Debug command copied to clipboard",
+                                );
                               }}
                               className="px-2.5 py-1 rounded-md bg-white/[0.08] hover:bg-white/[0.15] text-slate-200 border border-white/[0.1] transition-colors font-mono text-[11px] cursor-pointer flex items-center gap-1.5"
                               title="Copy ephemeral debug command"
@@ -630,7 +700,10 @@ export function PodExecModal() {
                                 openLogsModal({
                                   name: execModalPod.name,
                                   namespace: execModalPod.namespace,
-                                  container: selectedContainer || execModalPod.container || undefined,
+                                  container:
+                                    selectedContainer ||
+                                    execModalPod.container ||
+                                    undefined,
                                 });
                                 closeExecModal();
                               }}
@@ -660,7 +733,12 @@ export function PodExecModal() {
             {/* Input Bar */}
             <div className="h-12 border-t border-[var(--border)] px-4 flex items-center gap-2.5 bg-[var(--surface)] shrink-0">
               <span className="text-emerald-500 font-mono font-bold text-xs shrink-0 select-none">
-                root@{(selectedContainer || execModalPod.container || "app").slice(0, 16)}:{cwd || "~"}#
+                root@
+                {(selectedContainer || execModalPod.container || "app").slice(
+                  0,
+                  16,
+                )}
+                :{cwd || "~"}#
               </span>
               <input
                 ref={inputRef}

@@ -2,6 +2,7 @@
 
 import * as React from "react";
 import { RotateCw, Trash2, X } from "lucide-react";
+import { Tooltip } from "@/components/ui/Tooltip";
 
 export interface ResourceBatchToolbarProps {
   selectedItemsCount: number;
@@ -21,7 +22,9 @@ export function ResourceBatchToolbar({
   return (
     <div className="h-9 bg-[var(--surface-active)] border-b border-[var(--border)] px-4 flex items-center justify-between text-xs text-[var(--foreground)] animate-in fade-in duration-100">
       <div className="flex items-center gap-2">
-        <span className="font-semibold text-[var(--accent)] font-mono">{selectedItemsCount}</span>
+        <span className="font-semibold text-[var(--accent)] font-mono">
+          {selectedItemsCount}
+        </span>
         <span>pod{selectedItemsCount > 1 ? "s" : ""} selected</span>
       </div>
 
@@ -40,13 +43,15 @@ export function ResourceBatchToolbar({
           <Trash2 className="w-3.5 h-3.5" />
           <span>Delete Selected ({selectedItemsCount})</span>
         </button>
-        <button
-          onClick={onClearSelection}
-          className="p-1 rounded text-[var(--muted)] hover:text-[var(--foreground)] cursor-pointer"
-          title="Clear Selection"
-        >
-          <X className="w-3.5 h-3.5" />
-        </button>
+        <Tooltip content="Clear selection">
+          <button
+            onClick={onClearSelection}
+            className="p-1 rounded text-[var(--muted)] hover:text-[var(--foreground)] cursor-pointer"
+            aria-label="Clear selection"
+          >
+            <X className="w-3.5 h-3.5" />
+          </button>
+        </Tooltip>
       </div>
     </div>
   );

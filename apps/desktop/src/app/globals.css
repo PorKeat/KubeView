@@ -3,8 +3,11 @@
 @custom-variant dark (&:where(.dark, .dark *));
 
 @theme {
-  --font-sans: var(--font-sans), "Inter", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-  --font-mono: var(--font-geist-mono), "JetBrains Mono", ui-monospace, monospace;
+  --font-sans:
+    var(--font-sans), "Inter", system-ui, -apple-system, BlinkMacSystemFont,
+    "Segoe UI", Roboto, sans-serif;
+  --font-mono:
+    var(--font-geist-mono), "JetBrains Mono", ui-monospace, monospace;
 }
 
 @layer base {
@@ -62,7 +65,11 @@
   body {
     background-color: var(--background);
     color: var(--foreground);
-    font-feature-settings: "rlig" 1, "calt" 1, "cv02" 1, "cv03" 1;
+    font-feature-settings:
+      "rlig" 1,
+      "calt" 1,
+      "cv02" 1,
+      "cv03" 1;
     user-select: none;
     -webkit-user-select: none;
     overflow: hidden;
@@ -98,7 +105,9 @@
   background: var(--surface);
   border: 1px solid var(--border);
   box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.03);
-  transition: border-color 0.15s ease, background-color 0.15s ease;
+  transition:
+    border-color 0.15s ease,
+    background-color 0.15s ease;
 }
 
 .glass-card:hover {
@@ -262,33 +271,77 @@ html {
   text-size-adjust: 100%;
 }
 
-html[data-font-size="sm"] { font-size: 14px; }
-html[data-font-size="md"] { font-size: 16px; }
-html[data-font-size="lg"] { font-size: 18px; }
-html[data-font-size="xl"] { font-size: 20px; }
+html[data-font-size="sm"] {
+  font-size: 14px;
+}
+html[data-font-size="md"] {
+  font-size: 16px;
+}
+html[data-font-size="lg"] {
+  font-size: 18px;
+}
+html[data-font-size="xl"] {
+  font-size: 20px;
+}
 
 /* Arbitrary pixel text does not follow rem scaling. Keep these labels in
    proportion with the user's selected base size. */
-html[data-font-size="sm"] .text-\[8px\] { font-size: 7px; }
-html[data-font-size="sm"] .text-\[9px\] { font-size: 8px; }
-html[data-font-size="sm"] .text-\[10px\] { font-size: 9px; }
-html[data-font-size="sm"] .text-\[11px\] { font-size: 10px; }
-html[data-font-size="sm"] .text-\[12px\] { font-size: 11px; }
-html[data-font-size="sm"] .text-\[13px\] { font-size: 12px; }
+html[data-font-size="sm"] .text-\[8px\] {
+  font-size: 7px;
+}
+html[data-font-size="sm"] .text-\[9px\] {
+  font-size: 8px;
+}
+html[data-font-size="sm"] .text-\[10px\] {
+  font-size: 9px;
+}
+html[data-font-size="sm"] .text-\[11px\] {
+  font-size: 10px;
+}
+html[data-font-size="sm"] .text-\[12px\] {
+  font-size: 11px;
+}
+html[data-font-size="sm"] .text-\[13px\] {
+  font-size: 12px;
+}
 
-html[data-font-size="lg"] .text-\[8px\] { font-size: 9px; }
-html[data-font-size="lg"] .text-\[9px\] { font-size: 10px; }
-html[data-font-size="lg"] .text-\[10px\] { font-size: 11px; }
-html[data-font-size="lg"] .text-\[11px\] { font-size: 12px; }
-html[data-font-size="lg"] .text-\[12px\] { font-size: 13px; }
-html[data-font-size="lg"] .text-\[13px\] { font-size: 15px; }
+html[data-font-size="lg"] .text-\[8px\] {
+  font-size: 9px;
+}
+html[data-font-size="lg"] .text-\[9px\] {
+  font-size: 10px;
+}
+html[data-font-size="lg"] .text-\[10px\] {
+  font-size: 11px;
+}
+html[data-font-size="lg"] .text-\[11px\] {
+  font-size: 12px;
+}
+html[data-font-size="lg"] .text-\[12px\] {
+  font-size: 13px;
+}
+html[data-font-size="lg"] .text-\[13px\] {
+  font-size: 15px;
+}
 
-html[data-font-size="xl"] .text-\[8px\] { font-size: 10px; }
-html[data-font-size="xl"] .text-\[9px\] { font-size: 11px; }
-html[data-font-size="xl"] .text-\[10px\] { font-size: 12px; }
-html[data-font-size="xl"] .text-\[11px\] { font-size: 13px; }
-html[data-font-size="xl"] .text-\[12px\] { font-size: 15px; }
-html[data-font-size="xl"] .text-\[13px\] { font-size: 16px; }
+html[data-font-size="xl"] .text-\[8px\] {
+  font-size: 10px;
+}
+html[data-font-size="xl"] .text-\[9px\] {
+  font-size: 11px;
+}
+html[data-font-size="xl"] .text-\[10px\] {
+  font-size: 12px;
+}
+html[data-font-size="xl"] .text-\[11px\] {
+  font-size: 13px;
+}
+html[data-font-size="xl"] .text-\[12px\] {
+  font-size: 15px;
+}
+html[data-font-size="xl"] .text-\[13px\] {
+  font-size: 16px;
+}
 
 /* Explicit accessibility preference, independent of the OS setting. */
 html[data-reduced-motion="true"] *,
@@ -307,4 +360,9 @@ html[data-reduced-motion="true"] *::after {
 .scrollbar-none::-webkit-scrollbar {
   width: 0;
   height: 0;
+}
+
+th[tabindex="0"]:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: -2px;
 }

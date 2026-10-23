@@ -2,40 +2,55 @@ import { spawn, type ChildProcessWithoutNullStreams } from "child_process";
 import readline from "readline";
 import path from "path";
 import fs from "fs";
-import os from "os";
 
 interface PendingRequest {
-  resolve: (value: any) => void;
-  reject: (reason?: any) => void;
+  resolve: (value: unknown) => void;
+  reject: (reason?: unknown) => void;
   timer: NodeJS.Timeout;
+}
+
+interface JsonRpcResponse {
+  id?: unknown;
+  result?: unknown;
+  error?: unknown;
+  method?: string;
+  params?: unknown;
+}
+
+function engineError(message: string, code: string): Error & { code: string } {
+  return Object.assign(new Error(message), { code });
 }
 
 class EngineBridge {
   private proc: ChildProcessWithoutNullStreams | null = null;
   private pending = new Map<number, PendingRequest>();
-  private notificationListeners = new Set<(event: string, data: any) => void>();
+  private notificationListeners = new Set<
+    (event: string, data: unknown) => void
+  >();
   private streamPort: number | null = null;
   private seq = 1;
   private binPath: string | null = null;
-  private isStarting = false;
+  private spawnBlockedUntil = 0;
 
   public async getStreamPort(): Promise<number> {
     if (this.streamPort) return this.streamPort;
-    try {
-      const res = await this.request<{ streamPort?: number }>("handshake");
-      if (res?.streamPort) {
-        this.streamPort = res.streamPort;
-        return res.streamPort;
-      }
-    } catch (e) {
-      console.warn("[EngineBridge] Handshake to retrieve streamPort failed:", e);
+    const res = await this.request<{ streamPort?: number }>("handshake");
+    if (!res?.streamPort) {
+      throw new Error(
+        "Streaming server port not available from engine handshake",
+      );
     }
-    throw new Error("Streaming server port not available from engine handshake");
+    this.streamPort = res.streamPort;
+    return res.streamPort;
   }
 
-  public onNotification(fn: (event: string, data: any) => void): () => void {
+  public onNotification(
+    fn: (event: string, data: unknown) => void,
+  ): () => void {
     this.notificationListeners.add(fn);
-    return () => this.notificationListeners.delete(fn);
+    return () => {
+      this.notificationListeners.delete(fn);
+    };
   }
 
   private findBinary(): string | null {
@@ -43,62 +58,91 @@ class EngineBridge {
       return this.binPath;
     }
 
+    const exe = process.platform === "win32" ? ".exe" : "";
     const candidates = [
-      // Running from apps/desktop
-      path.resolve(process.cwd(), "../../engine/bin/kubeview-engine"),
-      // Running from root
-      path.resolve(process.cwd(), "engine/bin/kubeview-engine"),
-      // Pre-compiled release / debug locations in src-tauri
-      path.resolve(process.cwd(), "../../src-tauri/target/release/kubeview-engine"),
-      path.resolve(process.cwd(), "src-tauri/target/release/kubeview-engine"),
-      path.resolve(process.cwd(), "../../src-tauri/target/debug/kubeview-engine"),
-      // Absolute fallback
-      "/Users/alexkgm/KubeView/engine/bin/kubeview-engine",
-    ];
+      process.env.KUBEVIEW_ENGINE_BIN,
+      path.resolve(process.cwd(), `../../engine/bin/kubeview-engine${exe}`),
+      path.resolve(process.cwd(), `engine/bin/kubeview-engine${exe}`),
+      path.resolve(
+        process.cwd(),
+        `../../src-tauri/target/release/kubeview-engine${exe}`,
+      ),
+      path.resolve(
+        process.cwd(),
+        `src-tauri/target/release/kubeview-engine${exe}`,
+      ),
+      path.resolve(
+        process.cwd(),
+        `../../src-tauri/target/debug/kubeview-engine${exe}`,
+      ),
+      path.join(path.dirname(process.execPath), `kubeview-engine${exe}`),
+    ].filter((candidate): candidate is string => Boolean(candidate));
 
-    for (const cand of candidates) {
-      if (fs.existsSync(cand)) {
-        try {
-          fs.accessSync(cand, fs.constants.X_OK);
-          this.binPath = cand;
-          return cand;
-        } catch {}
+    for (const candidate of candidates) {
+      if (!fs.existsSync(candidate)) continue;
+      try {
+        fs.accessSync(candidate, fs.constants.X_OK);
+        this.binPath = candidate;
+        return candidate;
+      } catch {
+        // Try the next candidate.
       }
     }
 
     return null;
   }
 
+  private failPending(reason: unknown): void {
+    for (const request of this.pending.values()) {
+      clearTimeout(request.timer);
+      request.reject(reason);
+    }
+    this.pending.clear();
+  }
+
   private ensureProcess(): ChildProcessWithoutNullStreams | null {
     if (this.proc && !this.proc.killed && this.proc.exitCode === null) {
       return this.proc;
     }
+    if (Date.now() < this.spawnBlockedUntil) {
+      return null;
+    }
 
     const bin = this.findBinary();
     if (!bin) {
-      console.warn("[EngineBridge] kubeview-engine binary not found among candidate paths.");
+      this.spawnBlockedUntil = Date.now() + 5000;
+      console.warn(
+        "[EngineBridge] kubeview-engine binary not found. Build it with pnpm build:engine or set KUBEVIEW_ENGINE_BIN.",
+      );
       return null;
     }
 
     try {
-      this.isStarting = true;
       const proc = spawn(bin, [], {
         stdio: ["pipe", "pipe", "pipe"],
+        windowsHide: true,
       });
 
+      const handleExit = (message: string) => {
+        console.warn(message);
+        if (this.proc === proc) this.proc = null;
+        this.streamPort = null;
+        this.spawnBlockedUntil = Date.now() + 1000;
+        this.failPending(engineError(message, "ENGINE_UNAVAILABLE"));
+      };
+
       proc.on("error", (err) => {
-        console.error("[EngineBridge] Process error:", err);
-        this.proc = null;
+        handleExit(`[EngineBridge] Engine process error: ${err.message}`);
       });
 
       proc.on("exit", (code, signal) => {
-        console.warn(`[EngineBridge] Process exited with code ${code}, signal ${signal}`);
-        this.proc = null;
-        for (const [id, req] of this.pending.entries()) {
-          clearTimeout(req.timer);
-          req.reject(new Error(`Engine process exited prematurely (code: ${code})`));
-        }
-        this.pending.clear();
+        handleExit(
+          `[EngineBridge] Engine exited (code ${code}, signal ${signal})`,
+        );
+      });
+
+      proc.stdin.on("error", (err) => {
+        handleExit(`[EngineBridge] Engine stdin error: ${err.message}`);
       });
 
       if (proc.stderr) {
@@ -116,69 +160,83 @@ class EngineBridge {
           const trimmed = line.trim();
           if (!trimmed.startsWith("{")) return;
           try {
-            const data = JSON.parse(trimmed);
-            if (data.id && this.pending.has(data.id)) {
-              const req = this.pending.get(data.id)!;
-              clearTimeout(req.timer);
-              this.pending.delete(data.id);
-              if (data.error) {
-                req.reject(data.error);
+            const data = JSON.parse(trimmed) as JsonRpcResponse;
+            const responseId = Number(data.id);
+            if (data.id !== undefined && this.pending.has(responseId)) {
+              const request = this.pending.get(responseId);
+              if (!request) return;
+              clearTimeout(request.timer);
+              this.pending.delete(responseId);
+              if (data.error !== undefined && data.error !== null) {
+                request.reject(data.error);
               } else {
-                req.resolve(data.result);
+                request.resolve(data.result);
               }
-            } else if (data.method && !data.id) {
-              // Server-initiated notification from Go engine
+            } else if (data.method && data.id === undefined) {
               for (const listener of this.notificationListeners) {
                 try {
                   listener(data.method, data.params);
                 } catch (err) {
-                  console.error("[EngineBridge] Notification listener error:", err);
+                  console.error(
+                    "[EngineBridge] Notification listener error:",
+                    err,
+                  );
                 }
               }
             }
-          } catch (e) {
-            console.warn("[EngineBridge] Failed to parse JSON-RPC line:", e);
+          } catch (err) {
+            console.warn("[EngineBridge] Failed to parse JSON-RPC line:", err);
           }
         });
       }
 
       this.proc = proc;
-      this.isStarting = false;
       return proc;
     } catch (err) {
       console.error("[EngineBridge] Failed to spawn engine:", err);
-      this.isStarting = false;
+      this.spawnBlockedUntil = Date.now() + 5000;
       return null;
     }
   }
 
-  public async request<T = any>(method: string, params: any = {}): Promise<T> {
+  public async request<T = unknown>(
+    method: string,
+    params: unknown = {},
+  ): Promise<T> {
     const proc = this.ensureProcess();
     if (!proc) {
-      // If binary is unavailable, try native fallback for system detection
-      if (method === "clusters.detectSystemConfigs") {
-        return this.nativeFallbackDetect() as unknown as T;
-      }
-      throw new Error("Go engine sidecar process could not be started");
+      throw engineError(
+        "Go engine sidecar process could not be started. Build it with pnpm build:engine or set KUBEVIEW_ENGINE_BIN.",
+        "ENGINE_UNAVAILABLE",
+      );
     }
 
     const id = this.seq++;
-    const payload = JSON.stringify({
-      jsonrpc: "2.0",
-      id,
-      method,
-      params: params ?? {},
-    }) + "\n";
+    const payload =
+      JSON.stringify({
+        jsonrpc: "2.0",
+        id,
+        method,
+        params: params ?? {},
+      }) + "\n";
 
     return new Promise<T>((resolve, reject) => {
       const timer = setTimeout(() => {
-        if (this.pending.has(id)) {
-          this.pending.delete(id);
-          reject(new Error(`RPC request '${method}' timed out after 20s`));
+        if (this.pending.delete(id)) {
+          reject(
+            engineError(
+              `RPC request '${method}' timed out after 20s`,
+              "TIMEOUT",
+            ),
+          );
         }
-      }, 20000);
+      }, 20_000);
 
-      this.pending.set(id, { resolve, reject, timer });
+      this.pending.set(id, {
+        resolve: (value) => resolve(value as T),
+        reject,
+        timer,
+      });
 
       try {
         proc.stdin.write(payload);
@@ -189,80 +247,11 @@ class EngineBridge {
       }
     });
   }
-
-  // Pure Node.js fallback scanner in case engine is offline
-  private nativeFallbackDetect(): any {
-    const home = os.homedir();
-    const kubeDir = path.join(home, ".kube");
-    const discoveredFiles: string[] = [];
-    const contexts: any[] = [];
-
-    const candidates = [
-      path.join(kubeDir, "config"),
-      path.join(kubeDir, "kubeconfig"),
-    ];
-
-    if (process.env.KUBECONFIG) {
-      const sep = process.platform === "win32" ? ";" : ":";
-      for (const p of process.env.KUBECONFIG.split(sep)) {
-        if (p.trim()) candidates.push(p.trim());
-      }
-    }
-
-    if (fs.existsSync(kubeDir)) {
-      try {
-        const files = fs.readdirSync(kubeDir);
-        for (const f of files) {
-          const full = path.join(kubeDir, f);
-          try {
-            const stat = fs.statSync(full);
-            if (stat.isFile() && !candidates.includes(full)) {
-              candidates.push(full);
-            }
-          } catch {}
-        }
-      } catch {}
-    }
-
-    for (const file of candidates) {
-      if (!fs.existsSync(file)) continue;
-      try {
-        const content = fs.readFileSync(file, "utf-8");
-        // Lightweight regex parse for context names and clusters
-        const ctxRegex = /-\s*name:\s*([^\s\n\r]+)/g;
-        const serverMatch = content.match(/server:\s*([^\s\n\r]+)/);
-        const server = serverMatch ? serverMatch[1].trim() : "kubernetes.cluster.local";
-        let match;
-        let hasContexts = false;
-        while ((match = ctxRegex.exec(content)) !== null) {
-          const name = match[1].replace(/['"]/g, "").trim();
-          if (name && !contexts.some((c) => c.contextName === name && c.filePath === file)) {
-            hasContexts = true;
-            contexts.push({
-              contextName: name,
-              clusterName: name,
-              server: server,
-              user: "admin",
-              provider: "generic",
-              authType: "cert",
-              filePath: file,
-              fileName: path.basename(file),
-              isImported: false,
-            });
-          }
-        }
-        if (hasContexts && !discoveredFiles.includes(file)) {
-          discoveredFiles.push(file);
-        }
-      } catch {}
-    }
-
-    return { discoveredFiles, contexts };
-  }
 }
 
-// Global singleton for Next.js dev server lifecycle
-const globalForBridge = globalThis as unknown as { engineBridge?: EngineBridge };
+const globalForBridge = globalThis as unknown as {
+  engineBridge?: EngineBridge;
+};
 export const engineBridge = globalForBridge.engineBridge || new EngineBridge();
 if (process.env.NODE_ENV !== "production") {
   globalForBridge.engineBridge = engineBridge;

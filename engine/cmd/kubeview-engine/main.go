@@ -26,7 +26,8 @@ func main() {
 	// 1. Initialize cluster manager
 	mgr, err := cluster.NewManager(*configPathFlag)
 	if err != nil {
-		server.Log("Warning: unable to load initial kubeconfig: %v", err)
+		server.Log("Fatal: unable to initialize kubeconfig manager: %v", err)
+		os.Exit(1)
 	}
 
 	diagRunner := diagnostics.NewRunner()
@@ -57,6 +58,7 @@ func main() {
 			Status:               "ready",
 			SupportedAPIVersions: []string{"v1"},
 			StreamPort:           streamSrv.GetPort(),
+			StreamToken:          streamSrv.Token(),
 		}, nil
 	})
 

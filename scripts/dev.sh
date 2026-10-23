@@ -181,16 +181,16 @@ if [ "$MODE" = "tauri" ]; then
   echo -e "${GREEN}Starting Tauri 2 Desktop Shell with Go sidecar...${NC}"
   $TAURI_RUNNER dev
 else
-  echo -e "${GREEN}Starting Next.js App on http://localhost:3005 with Go IPC Bridge...${NC}"
-  echo -e "${CYAN}Tip: Open http://localhost:3005 in your browser.${NC}"
+  echo -e "${GREEN}Starting Next.js App on http://127.0.0.1:3005 with Go IPC Bridge...${NC}"
+  echo -e "${CYAN}Tip: Open http://127.0.0.1:3005 in your browser.${NC}"
   echo -e "${CYAN}Run with './dev.sh --tauri' to launch the native desktop window.${NC}\n"
 
   if [ -f "./apps/desktop/node_modules/.bin/next" ]; then
-    (cd apps/desktop && ./node_modules/.bin/next dev --turbopack -p 3005)
+    (cd apps/desktop && ./node_modules/.bin/next dev --turbopack -p 3005 -H 127.0.0.1)
   elif command -v pnpm >/dev/null 2>&1; then
     pnpm --filter @kubeview/desktop dev
   elif command -v npx >/dev/null 2>&1; then
-    npx --workspace=@kubeview/desktop next dev --turbopack -p 3005
+    npx --workspace=@kubeview/desktop next dev --turbopack -p 3005 -H 127.0.0.1
   else
     echo -e "${RED}Error: Next.js dev server could not be started. Run 'pnpm install' first.${NC}" >&2
     exit 1

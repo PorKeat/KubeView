@@ -1,14 +1,7 @@
 "use client";
 
 import * as React from "react";
-import {
-  Menu,
-  Search,
-  Sun,
-  Moon,
-  Settings,
-  RefreshCw,
-} from "lucide-react";
+import { Menu, Search, Sun, Moon, Settings, RefreshCw } from "lucide-react";
 import { useTheme } from "next-themes";
 import { useLayoutStore } from "@/stores/layoutStore";
 import { useClusterStore } from "@/stores/clusterStore";
@@ -81,16 +74,18 @@ export function AppHeader() {
     >
       {/* Left: Window Controls Inset & Brand & Integrated Scope Control */}
       <div className="flex min-w-0 items-center gap-2 pl-2 sm:gap-3.5 md:pl-16">
-        <button
-          type="button"
-          onClick={openMobileNavigation}
-          aria-label="Open navigation"
-          aria-expanded={mobileSidebarOpen}
-          aria-controls="resource-navigation"
-          className="md:hidden flex h-9 w-9 shrink-0 items-center justify-center rounded-lg text-[var(--muted)] transition-colors hover:bg-black/[0.05] hover:text-[var(--foreground)] focus-visible:ring-2 focus-visible:ring-[var(--accent)] focus-visible:outline-hidden cursor-pointer dark:hover:bg-white/[0.06]"
-        >
-          <Menu className="h-4 w-4" aria-hidden="true" />
-        </button>
+        <Tooltip content="Open navigation" side="bottom">
+          <button
+            type="button"
+            onClick={openMobileNavigation}
+            aria-label="Open navigation"
+            aria-expanded={mobileSidebarOpen}
+            aria-controls="resource-navigation"
+            className="md:hidden flex h-9 w-9 shrink-0 items-center justify-center rounded-lg text-[var(--muted)] transition-colors hover:bg-black/[0.05] hover:text-[var(--foreground)] focus-visible:ring-2 focus-visible:ring-[var(--accent)] focus-visible:outline-hidden cursor-pointer dark:hover:bg-white/[0.06]"
+          >
+            <Menu className="h-4 w-4" aria-hidden="true" />
+          </button>
+        </Tooltip>
 
         <div className="hidden sm:block shrink-0">
           <Logo size="sm" />
@@ -118,8 +113,13 @@ export function AppHeader() {
           className="w-full h-9 flex items-center justify-between px-3 text-xs rounded-lg bg-black/[0.03] dark:bg-white/[0.04] border border-[var(--border)] hover:border-[var(--muted)]/40 hover:bg-black/[0.05] dark:hover:bg-white/[0.06] text-[var(--muted)] hover:text-[var(--foreground)] focus-visible:ring-2 focus-visible:ring-[var(--accent)] focus-visible:outline-hidden transition-all group cursor-pointer"
         >
           <div className="flex items-center gap-2.5 min-w-0">
-            <Search className="w-3.5 h-3.5 text-[var(--muted)] group-hover:text-[var(--foreground)] transition-colors shrink-0" aria-hidden="true" />
-            <span className="truncate hidden sm:inline">Search resources, pods, logs...</span>
+            <Search
+              className="w-3.5 h-3.5 text-[var(--muted)] group-hover:text-[var(--foreground)] transition-colors shrink-0"
+              aria-hidden="true"
+            />
+            <span className="truncate hidden sm:inline">
+              Search resources, pods, logs...
+            </span>
             <span className="truncate sm:hidden">Search...</span>
           </div>
           <kbd className="px-1.5 py-0.5 text-[11px] bg-black/[0.04] dark:bg-white/[0.06] border border-[var(--border)] rounded text-[var(--muted)] font-mono tabular-nums transition-colors shrink-0">
@@ -163,13 +163,23 @@ export function AppHeader() {
           side="bottom"
         >
           <button
-            onClick={() => setTheme(resolvedTheme === "dark" ? "light" : "dark")}
-            aria-label={mounted ? `Switch to ${resolvedTheme === "dark" ? "light" : "dark"} theme` : "Toggle Theme"}
+            onClick={() =>
+              setTheme(resolvedTheme === "dark" ? "light" : "dark")
+            }
+            aria-label={
+              mounted
+                ? `Switch to ${resolvedTheme === "dark" ? "light" : "dark"} theme`
+                : "Toggle Theme"
+            }
             suppressHydrationWarning
             className="hidden sm:flex h-9 w-9 rounded-lg items-center justify-center hover:bg-black/[0.05] dark:hover:bg-white/[0.06] text-[var(--muted)] hover:text-[var(--foreground)] focus-visible:ring-2 focus-visible:ring-[var(--accent)] focus-visible:outline-hidden transition-colors cursor-pointer"
           >
             {mounted ? (
-              resolvedTheme === "dark" ? <Sun className="w-4 h-4" aria-hidden="true" /> : <Moon className="w-4 h-4" aria-hidden="true" />
+              resolvedTheme === "dark" ? (
+                <Sun className="w-4 h-4" aria-hidden="true" />
+              ) : (
+                <Moon className="w-4 h-4" aria-hidden="true" />
+              )
             ) : (
               <div className="w-4 h-4" />
             )}

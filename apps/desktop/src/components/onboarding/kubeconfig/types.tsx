@@ -65,7 +65,7 @@ export function extractContexts(yamlText: string): string[] {
       m
         .replace(/-\s*name:\s*/, "")
         .replace(/['"]/g, "")
-        .trim()
+        .trim(),
     );
   } catch {
     return [];
@@ -73,32 +73,59 @@ export function extractContexts(yamlText: string): string[] {
 }
 
 export async function scanFilesFromDrop(
-  dataTransfer: DataTransfer
+  dataTransfer: DataTransfer,
 ): Promise<{ file: File; path: string }[]> {
   const results: { file: File; path: string }[] = [];
   const items = Array.from(dataTransfer.items || []);
 
-  async function traverseEntry(entry: any, currentPath = ""): Promise<void> {
+  interface FileSystemEntryLike {
+    isFile: boolean;
+    isDirectory: boolean;
+    name: string;
+    file?: (
+      success: (file: File) => void,
+      error: (err: unknown) => void,
+    ) => void;
+    createReader?: () => {
+      readEntries: (
+        success: (entries: FileSystemEntryLike[]) => void,
+        error: (err: unknown) => void,
+      ) => void;
+    };
+  }
+
+  async function traverseEntry(
+    entry: FileSystemEntryLike | null,
+    currentPath = "",
+  ): Promise<void> {
     if (!entry) return;
-    if (entry.isFile) {
-      const file: File = await new Promise((resolve, reject) => {
-        entry.file(resolve, reject);
+    if (entry.isFile && entry.file) {
+      const file = await new Promise<File>((resolve, reject) => {
+        entry.file?.(resolve, reject);
       });
-      results.push({ file, path: currentPath ? `${currentPath}/${file.name}` : file.name });
-    } else if (entry.isDirectory) {
+      results.push({
+        file,
+        path: currentPath ? `${currentPath}/${file.name}` : file.name,
+      });
+    } else if (entry.isDirectory && entry.createReader) {
       const dirReader = entry.createReader();
-      const entries: any[] = await new Promise((resolve, reject) => {
-        dirReader.readEntries(resolve, reject);
-      });
+      const entries = await new Promise<FileSystemEntryLike[]>(
+        (resolve, reject) => {
+          dirReader.readEntries(resolve, reject);
+        },
+      );
       for (const child of entries) {
-        await traverseEntry(child, currentPath ? `${currentPath}/${entry.name}` : entry.name);
+        await traverseEntry(
+          child,
+          currentPath ? `${currentPath}/${entry.name}` : entry.name,
+        );
       }
     }
   }
 
   const entries = items
     .map((item) => (item.webkitGetAsEntry ? item.webkitGetAsEntry() : null))
-    .filter(Boolean);
+    .filter((entry): entry is FileSystemEntry => Boolean(entry));
 
   if (entries.length > 0) {
     for (const entry of entries) {

@@ -13,7 +13,8 @@ export function LabelPill({ labelKey, value }: LabelPillProps) {
   const [copied, setCopied] = React.useState(false);
   const slashIndex = labelKey.lastIndexOf("/");
   const prefix = slashIndex !== -1 ? labelKey.substring(0, slashIndex + 1) : "";
-  const name = slashIndex !== -1 ? labelKey.substring(slashIndex + 1) : labelKey;
+  const name =
+    slashIndex !== -1 ? labelKey.substring(slashIndex + 1) : labelKey;
 
   const handleCopy = (e: React.MouseEvent) => {
     e.stopPropagation();

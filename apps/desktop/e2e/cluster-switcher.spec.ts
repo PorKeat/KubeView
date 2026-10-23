@@ -10,10 +10,14 @@ test.describe("KubeView UI - Cluster Context Switcher & Configuration", () => {
     // Wait for cluster context to load into UI
     const trigger = page.locator('[data-testid="context-switcher-trigger"]');
     await expect(trigger).toBeVisible({ timeout: 10000 });
-    await expect(trigger).toContainText("kubernetes-admin@kubekey", { timeout: 15000 });
+    await expect(trigger).toContainText("kubernetes-admin@kubekey", {
+      timeout: 15000,
+    });
   });
 
-  test("lists exactly 2 deduplicated clusters in dropdown menu", async ({ page }) => {
+  test("lists exactly 2 deduplicated clusters in dropdown menu", async ({
+    page,
+  }) => {
     const trigger = page.locator('[data-testid="context-switcher-trigger"]');
     await expect(trigger).toBeVisible({ timeout: 10000 });
 
@@ -25,8 +29,12 @@ test.describe("KubeView UI - Cluster Context Switcher & Configuration", () => {
     await expect(items).toHaveCount(2, { timeout: 5000 });
 
     // Verify the two specific cluster context names are present
-    await expect(items.filter({ hasText: "kubernetes-admin@kubekey" }).first()).toBeVisible();
-    await expect(items.filter({ hasText: "kubernetes-admin@kubekey (mailconfig)" })).toBeVisible();
+    await expect(
+      items.filter({ hasText: "kubernetes-admin@kubekey" }).first(),
+    ).toBeVisible();
+    await expect(
+      items.filter({ hasText: "kubernetes-admin@kubekey (mailconfig)" }),
+    ).toBeVisible();
   });
 
   test("can filter clusters via search input in dropdown", async ({ page }) => {
@@ -40,19 +48,25 @@ test.describe("KubeView UI - Cluster Context Switcher & Configuration", () => {
     await searchInput.fill("mailconfig");
     const items = page.locator('[data-testid="context-item"]');
     await expect(items).toHaveCount(1);
-    await expect(items.first()).toContainText("kubernetes-admin@kubekey (mailconfig)");
+    await expect(items.first()).toContainText(
+      "kubernetes-admin@kubekey (mailconfig)",
+    );
 
     // Clear search
     await searchInput.fill("");
     await expect(items).toHaveCount(2);
   });
 
-  test("opens and cancels the Configure API Server Endpoint modal", async ({ page }) => {
+  test("opens and cancels the Configure API Server Endpoint modal", async ({
+    page,
+  }) => {
     const trigger = page.locator('[data-testid="context-switcher-trigger"]');
     await trigger.click();
 
     // Click the configure slider icon on the first cluster
-    const configBtn = page.locator('[data-testid="configure-endpoint-btn"]').first();
+    const configBtn = page
+      .locator('[data-testid="configure-endpoint-btn"]')
+      .first();
     await expect(configBtn).toBeVisible();
     await configBtn.click();
 
@@ -61,7 +75,9 @@ test.describe("KubeView UI - Cluster Context Switcher & Configuration", () => {
     await expect(endpointInput).toBeVisible({ timeout: 5000 });
 
     // Verify skip TLS checkbox is present
-    const skipTlsCheckbox = page.locator('[data-testid="endpoint-modal-skip-tls"]');
+    const skipTlsCheckbox = page.locator(
+      '[data-testid="endpoint-modal-skip-tls"]',
+    );
     await expect(skipTlsCheckbox).toBeVisible();
 
     // Close modal via Cancel button
@@ -81,6 +97,9 @@ test.describe("KubeView UI - Cluster Context Switcher & Configuration", () => {
     await mailconfigItem.click();
 
     // Trigger should reflect the new active context
-    await expect(trigger).toContainText("kubernetes-admin@kubekey (mailconfig)", { timeout: 10000 });
+    await expect(trigger).toContainText(
+      "kubernetes-admin@kubekey (mailconfig)",
+      { timeout: 10000 },
+    );
   });
 });

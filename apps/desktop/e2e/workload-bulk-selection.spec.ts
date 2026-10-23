@@ -14,14 +14,31 @@ async function openApp(page: Page) {
 }
 
 test.describe("KubeView Workload Bulk Selection", () => {
-  test("selects multiple rows and previews safe bulk commands", async ({ page }) => {
+  test("selects multiple rows and previews safe bulk commands", async ({
+    page,
+  }) => {
     test.setTimeout(60000);
     await openApp(page);
 
     const workloads = [
-      { id: "replicasets", kind: "ReplicaSet", filter: /Filter replicasets/i, restart: false },
-      { id: "statefulsets", kind: "StatefulSet", filter: /Filter statefulsets/i, restart: true },
-      { id: "daemonsets", kind: "DaemonSet", filter: /Filter daemonsets/i, restart: true },
+      {
+        id: "replicasets",
+        kind: "ReplicaSet",
+        filter: /Filter replicasets/i,
+        restart: false,
+      },
+      {
+        id: "statefulsets",
+        kind: "StatefulSet",
+        filter: /Filter statefulsets/i,
+        restart: true,
+      },
+      {
+        id: "daemonsets",
+        kind: "DaemonSet",
+        filter: /Filter daemonsets/i,
+        restart: true,
+      },
       { id: "jobs", kind: "Job", filter: /Filter jobs/i, restart: false },
     ];
 
@@ -44,9 +61,7 @@ test.describe("KubeView Workload Bulk Selection", () => {
       const bulkToolbar = page.getByTestId("bulk-workload-toolbar");
       await expect(bulkToolbar).toBeVisible();
       await expect(bulkToolbar).toContainText("selected");
-      await expect(bulkToolbar).toContainText(
-        String(rowCount > 1 ? 2 : 1),
-      );
+      await expect(bulkToolbar).toContainText(String(rowCount > 1 ? 2 : 1));
 
       if (workload.restart) {
         await page.getByTestId("bulk-action-restart").click();

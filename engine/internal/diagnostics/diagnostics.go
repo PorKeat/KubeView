@@ -60,9 +60,9 @@ func (r *Runner) Diagnose(
 
 	if restConfig == nil {
 		return &DiagnosticResult{
-			ClusterID: clusterID,
-			Status:    "failed",
-			Stages:    stages,
+			ClusterID:   clusterID,
+			Status:      "failed",
+			Stages:      stages,
 			Remediation: "No configuration available for this cluster context.",
 		}
 	}

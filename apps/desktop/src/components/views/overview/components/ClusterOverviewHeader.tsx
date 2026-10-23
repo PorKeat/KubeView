@@ -53,8 +53,8 @@ export function ClusterOverviewHeader({
             connectionStatus === "connected"
               ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/25 hover:bg-emerald-500/20"
               : connectionStatus === "checking"
-              ? "bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/25 hover:bg-amber-500/20"
-              : "bg-rose-500/10 text-rose-600 dark:text-rose-400 border-rose-500/25 hover:bg-rose-500/20"
+                ? "bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/25 hover:bg-amber-500/20"
+                : "bg-rose-500/10 text-rose-600 dark:text-rose-400 border-rose-500/25 hover:bg-rose-500/20",
           )}
         >
           <span
@@ -63,16 +63,16 @@ export function ClusterOverviewHeader({
               connectionStatus === "connected"
                 ? "bg-emerald-500"
                 : connectionStatus === "checking"
-                ? "bg-amber-500 animate-pulse"
-                : "bg-rose-500"
+                  ? "bg-amber-500 animate-pulse"
+                  : "bg-rose-500",
             )}
           />
           <span>
             {connectionStatus === "connected"
               ? "Active"
               : connectionStatus === "checking"
-              ? "Probing..."
-              : "Degraded"}
+                ? "Probing..."
+                : "Degraded"}
           </span>
           {latencyMs > 0 && (
             <span
@@ -80,24 +80,29 @@ export function ClusterOverviewHeader({
                 "text-[10px] tabular-nums font-mono",
                 latencyMs > 1500
                   ? "text-amber-600 dark:text-amber-400 font-semibold"
-                  : "opacity-80"
+                  : "opacity-80",
               )}
             >
-              ({latencyMs >= 1000 ? `${(latencyMs / 1000).toFixed(1)}s` : `${latencyMs}ms`})
+              (
+              {latencyMs >= 1000
+                ? `${(latencyMs / 1000).toFixed(1)}s`
+                : `${latencyMs}ms`}
+              )
             </span>
           )}
         </button>
 
         {/* Version info */}
         <span className="text-[11px] text-[var(--muted)] font-mono hidden md:inline">
-          k8s <strong className="text-[var(--foreground)] font-medium tabular-nums">{serverVersion}</strong>
+          k8s{" "}
+          <strong className="text-[var(--foreground)] font-medium tabular-nums">
+            {serverVersion}
+          </strong>
         </span>
       </div>
 
       {/* Right: Operational Controls Toolbar */}
       <div className="flex items-center gap-2 shrink-0 flex-wrap">
-
-
         {/* Diagnostics Button */}
         <button
           type="button"
@@ -105,7 +110,10 @@ export function ClusterOverviewHeader({
           aria-label="Open Connection & Security Diagnostics"
           className="flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-[var(--surface)] hover:bg-[var(--surface-hover)] border border-[var(--border)] hover:border-black/20 dark:hover:border-white/20 text-xs font-medium text-[var(--foreground)] transition-colors cursor-pointer focus-visible:ring-1 focus-visible:ring-[var(--accent)] outline-hidden"
         >
-          <ShieldCheck className="w-3.5 h-3.5 text-[var(--accent)]" aria-hidden="true" />
+          <ShieldCheck
+            className="w-3.5 h-3.5 text-[var(--accent)]"
+            aria-hidden="true"
+          />
           <span className="hidden sm:inline">Diagnostics</span>
         </button>
 

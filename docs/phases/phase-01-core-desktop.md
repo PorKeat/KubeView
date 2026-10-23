@@ -7,6 +7,7 @@
 ## 1. Functional Scope
 
 ### 1.1 Desktop Windowing & Shell Architecture
+
 - Universal desktop support for macOS (Apple Silicon + Intel), Windows 10/11, and Linux via **Tauri 2**.
 - Custom frameless titlebar integrating native window controls, context indicator, and global search trigger.
 - **Next.js Static Export (`output: 'export'`):** Bundles to static HTML/JS/CSS assets loaded directly into the Tauri webview with zero node runtime overhead.
@@ -16,6 +17,7 @@
 - Status bar displaying active context latency, K8s version, background tasks, and Sonner toast center.
 
 ### 1.2 Themes & Typography
+
 - **Geist Font Family:** Geist Sans for crisp UI labels and Geist Mono for addresses, namespaces, YAML, and logs.
 - **Dark-First Theme Tokens:**
   - Background: `#17191D`
@@ -27,6 +29,7 @@
 - Dynamic theme switching via `next-themes` with zero flash of unstyled content (FOUC).
 
 ### 1.3 Command Palette (`cmdk`) & Toast Notifications (`Sonner`)
+
 - Global `Cmd+K` / `Ctrl+K` command palette built with `cmdk`.
 - Instant action triggers:
   - Jump to resource (e.g. `Pods`, `Deployments`, `Ingresses`).
@@ -35,6 +38,7 @@
 - Clean toast notifications powered by `Sonner` for task progress, warnings, and errors.
 
 ### 1.4 State Persistence & Configuration
+
 - Lightweight persistent store powered by `tauri-plugin-store`.
 - Persists:
   - Last active cluster context and namespace.

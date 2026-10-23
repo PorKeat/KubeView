@@ -386,4 +386,3 @@ func probeEndpoint(serverUrl string, timeoutDur time.Duration) bool {
 	_ = conn.Close()
 	return true
 }
-

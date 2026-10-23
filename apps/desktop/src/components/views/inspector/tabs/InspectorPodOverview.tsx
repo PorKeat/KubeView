@@ -24,13 +24,24 @@ import { cn } from "@/lib/utils";
 import { LabelPill } from "../components/LabelPill";
 import type { PodSummary } from "@kubeview/contracts";
 import type { SelectedResource } from "@/stores/clusterStore";
-import { getPodIssue, getPodPendingInfo } from "@/components/views/resources/lib/podIssues";
+import {
+  getPodIssue,
+  getPodPendingInfo,
+} from "@/components/views/resources/lib/podIssues";
 
 export interface InspectorPodOverviewProps {
   currentResource: SelectedResource;
   podData: PodSummary | undefined;
-  onOpenLogsModal?: (pod: { name: string; namespace: string; container?: string }) => void;
-  onOpenExecModal?: (pod: { name: string; namespace: string; container?: string }) => void;
+  onOpenLogsModal?: (pod: {
+    name: string;
+    namespace: string;
+    container?: string;
+  }) => void;
+  onOpenExecModal?: (pod: {
+    name: string;
+    namespace: string;
+    container?: string;
+  }) => void;
 }
 
 export function InspectorPodOverview({
@@ -75,11 +86,11 @@ export function InspectorPodOverview({
   // Automatic developer diagnostics for failing or pending workloads
   const issueInfo = React.useMemo(
     () => (podData ? getPodIssue(podData) : null),
-    [podData]
+    [podData],
   );
   const pendingInfo = React.useMemo(
     () => (!issueInfo && podData ? getPodPendingInfo(podData) : null),
-    [issueInfo, podData]
+    [issueInfo, podData],
   );
 
   return (
@@ -95,7 +106,10 @@ export function InspectorPodOverview({
               </span>
               {issueInfo.containerName && (
                 <span className="px-2 py-0.5 rounded text-[10px] bg-black/5 dark:bg-white/10 text-[var(--foreground)] border border-[var(--border)] font-mono">
-                  container: <strong className="text-[var(--accent)]">{issueInfo.containerName}</strong>
+                  container:{" "}
+                  <strong className="text-[var(--accent)]">
+                    {issueInfo.containerName}
+                  </strong>
                 </span>
               )}
               {issueInfo.exitCode !== undefined && (
@@ -139,7 +153,9 @@ export function InspectorPodOverview({
             <span className="px-1.5 py-0.5 rounded font-bold text-[9px] uppercase bg-rose-500 text-white shrink-0 mt-0.5">
               Fix
             </span>
-            <span className="leading-relaxed font-sans">{issueInfo.actionableTip}</span>
+            <span className="leading-relaxed font-sans">
+              {issueInfo.actionableTip}
+            </span>
           </div>
         </div>
       )}
@@ -155,7 +171,10 @@ export function InspectorPodOverview({
               </span>
               {pendingInfo.containerName && (
                 <span className="px-2 py-0.5 rounded text-[10px] bg-black/5 dark:bg-white/10 text-[var(--foreground)] border border-[var(--border)] font-mono">
-                  container: <strong className="text-[var(--accent)]">{pendingInfo.containerName}</strong>
+                  container:{" "}
+                  <strong className="text-[var(--accent)]">
+                    {pendingInfo.containerName}
+                  </strong>
                 </span>
               )}
             </div>
@@ -194,7 +213,9 @@ export function InspectorPodOverview({
             <span className="px-1.5 py-0.5 rounded font-bold text-[9px] uppercase bg-amber-500 text-white shrink-0 mt-0.5">
               Info
             </span>
-            <span className="leading-relaxed font-sans">{pendingInfo.actionableTip}</span>
+            <span className="leading-relaxed font-sans">
+              {pendingInfo.actionableTip}
+            </span>
           </div>
         </div>
       )}

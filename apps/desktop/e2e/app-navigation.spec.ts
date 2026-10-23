@@ -15,19 +15,27 @@ test.describe("KubeView UI - App Shell & Navigation", () => {
     await expect(page).toHaveTitle(/KubeView/i);
 
     // Verify context switcher trigger is visible in header
-    const switcherTrigger = page.locator('[data-testid="context-switcher-trigger"]');
+    const switcherTrigger = page.locator(
+      '[data-testid="context-switcher-trigger"]',
+    );
     await expect(switcherTrigger).toBeVisible({ timeout: 10000 });
 
     // Verify active context name is shown after loading
-    await expect(switcherTrigger).toContainText("kubernetes-admin@kubekey", { timeout: 15000 });
+    await expect(switcherTrigger).toContainText("kubernetes-admin@kubekey", {
+      timeout: 15000,
+    });
   });
 
-  test("displays bottom status bar with connection status", async ({ page }) => {
+  test("displays bottom status bar with connection status", async ({
+    page,
+  }) => {
     // Wait for connection status to settle
     await page.waitForTimeout(1000);
 
     // Status bar should be visible at bottom
-    const statusBar = page.locator("footer, [class*='StatusBar'], [class*='border-t']").last();
+    const statusBar = page
+      .locator("footer, [class*='StatusBar'], [class*='border-t']")
+      .last();
     await expect(statusBar).toBeVisible();
 
     // Verify version or connected indicator

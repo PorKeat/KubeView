@@ -18,7 +18,12 @@ interface TabState {
 }
 
 const DEFAULT_TABS: TabItem[] = [
-  { id: "overview", title: "Cluster Overview", icon: "LayoutDashboard", closable: false },
+  {
+    id: "overview",
+    title: "Cluster Overview",
+    icon: "LayoutDashboard",
+    closable: false,
+  },
   { id: "pods", title: "Pods", icon: "Box", closable: true },
 ];
 

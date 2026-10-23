@@ -22,7 +22,13 @@ export function ResourceNamespaceBanner({
   namespaceCounts,
   setCurrentNamespace,
 }: ResourceNamespaceBannerProps) {
-  if (podNodeFilter || currentNamespace === "all" || filteredItemsCount > 0 || totalPodsCount === 0 || search) {
+  if (
+    podNodeFilter ||
+    currentNamespace === "all" ||
+    filteredItemsCount > 0 ||
+    totalPodsCount === 0 ||
+    search
+  ) {
     return null;
   }
 
@@ -41,7 +47,9 @@ export function ResourceNamespaceBanner({
       </div>
 
       <div className="flex items-center gap-2 flex-wrap">
-        <span className="text-[11px] text-[var(--muted)]">Active namespaces:</span>
+        <span className="text-[11px] text-[var(--muted)]">
+          Active namespaces:
+        </span>
         {Object.entries(namespaceCounts)
           .filter(([ns]) => ns !== currentNamespace && ns !== "all")
           .sort((a, b) => b[1] - a[1])

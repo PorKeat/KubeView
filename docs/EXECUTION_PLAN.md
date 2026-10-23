@@ -28,6 +28,7 @@ flowchart TD
 ---
 
 ### Step 01: Architecture Foundation
+
 **Scope:** Monorepo scaffolding, versioned contracts package, Tauri 2 host shell, and Next.js static export.
 
 - [ ] **Monorepo Setup:**
@@ -48,6 +49,7 @@ flowchart TD
 ---
 
 ### Step 02: Engine Lifecycle & Process Supervision
+
 **Scope:** Go sidecar packaging, protocol handshake, stdio IPC dispatcher, and crash recovery.
 
 - [ ] **Go Engine Scaffolding (`engine/`):**
@@ -68,6 +70,7 @@ flowchart TD
 ---
 
 ### Step 03: Cluster Access & Connectivity
+
 **Scope:** Kubeconfig loading via `clientcmd`, context switching, auth plugins, and connection diagnostics.
 
 - [ ] **Kubeconfig Resolver (`internal/cluster`):**
@@ -84,6 +87,7 @@ flowchart TD
 ---
 
 ### Step 04: Resource Browser & Virtualized Grid
+
 **Scope:** API discovery, dynamic CRD client, TanStack Table v8, and virtualized data grid.
 
 - [ ] **Kubernetes API Discovery (`internal/kubernetes`):**
@@ -101,6 +105,7 @@ flowchart TD
 ---
 
 ### Step 05: Resource Operations & Monaco YAML Editor
+
 **Scope:** Monaco YAML editor, Monaco Diff Editor, server-side dry-run diffs, and safe mutations.
 
 - [ ] **Monaco YAML Editor & Schema Validation:**
@@ -118,6 +123,7 @@ flowchart TD
 ---
 
 ### Step 06: Troubleshooting Workbench
+
 **Scope:** High-throughput live logs, xterm.js container exec, probe diagnostics, and 1-click triage.
 
 - [ ] **Live Log Streamer (`internal/streaming`):**
@@ -135,6 +141,7 @@ flowchart TD
 ---
 
 ### Step 07: Performance, Caching & Safety
+
 **Scope:** SharedInformerFactory, DeltaFIFO, concurrency limits, and secret redaction.
 
 - [ ] **SharedInformerFactory & DeltaFIFO (`internal/watch`):**
@@ -148,6 +155,7 @@ flowchart TD
 ---
 
 ### Step 08: Integrations & Sandboxed Plugins
+
 **Scope:** Capability-based plugin SDK, scoped APIs, and first-party integration adapters.
 
 - [ ] **Plugin SDK (`packages/plugin-sdk`):**
@@ -162,6 +170,7 @@ flowchart TD
 ---
 
 ### Step 09: Release Hardening & Distribution
+
 **Scope:** Multi-platform CI/CD, code signing, automated updates, and integration tests.
 
 - [ ] **Automated Testing Suite:**

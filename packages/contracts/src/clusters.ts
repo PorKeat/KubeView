@@ -2,7 +2,8 @@
  * Cluster Contexts, Connectivity Status, and Diagnostic Models
  */
 
-export type ProviderType = "kind" | "eks" | "gke" | "aks" | "minikube" | "generic";
+export type ProviderType =
+  "kind" | "eks" | "gke" | "aks" | "minikube" | "generic";
 export type AuthType = "cert" | "token" | "exec" | "oidc" | "unknown";
 
 export interface ContextSummary {
@@ -117,6 +118,3 @@ export interface UpdateEndpointResult {
   contextName: string;
   newServer: string;
 }
-
-
-

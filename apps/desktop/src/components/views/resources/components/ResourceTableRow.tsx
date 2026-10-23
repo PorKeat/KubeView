@@ -254,7 +254,13 @@ export function ResourceTableRow({
         {/* Name with Expand Chevron & Quick Copy */}
         <td className="py-1 px-3 font-medium font-mono text-[var(--foreground)] truncate">
           <div className="flex items-center gap-1 min-w-0">
-            <Tooltip content={isExpanded ? "Collapse containers" : "Expand containers & sidecars"}>
+            <Tooltip
+              content={
+                isExpanded
+                  ? "Collapse containers"
+                  : "Expand containers & sidecars"
+              }
+            >
               <button
                 type="button"
                 onClick={(e) => {
@@ -263,7 +269,9 @@ export function ResourceTableRow({
                 }}
                 className="p-0.5 -ml-0.5 rounded hover:bg-black/10 dark:hover:bg-white/10 text-[var(--muted)] hover:text-[var(--foreground)] transition-colors cursor-pointer shrink-0"
                 aria-label={
-                  isExpanded ? "Collapse containers" : "Expand containers & sidecars"
+                  isExpanded
+                    ? "Collapse containers"
+                    : "Expand containers & sidecars"
                 }
               >
                 <ChevronRight
@@ -313,7 +321,9 @@ export function ResourceTableRow({
             className={cn(
               "tabular-nums text-xs",
               item.restarts === 0 && "opacity-40",
-              item.restarts > 0 && item.restarts < 10 && "text-amber-500 font-medium",
+              item.restarts > 0 &&
+                item.restarts < 10 &&
+                "text-amber-500 font-medium",
               item.restarts >= 10 && "text-rose-500 font-semibold",
             )}
             title={
@@ -373,7 +383,11 @@ export function ResourceTableRow({
         <td className="py-1 px-3 font-mono text-[var(--foreground)] text-[11px] truncate">
           <span
             className={cn(item.cpu === "-" && "opacity-40")}
-            title={item.cpu !== "-" ? `CPU Request: ${item.cpu}` : "No CPU request specified"}
+            title={
+              item.cpu !== "-"
+                ? `CPU Request: ${item.cpu}`
+                : "No CPU request specified"
+            }
           >
             {item.cpu}
           </span>
@@ -383,22 +397,35 @@ export function ResourceTableRow({
         <td className="py-1 px-3 font-mono text-[var(--foreground)] text-[11px] truncate">
           <span
             className={cn(item.memory === "-" && "opacity-40")}
-            title={item.memory !== "-" ? `Memory Request: ${item.memory}` : "No memory request specified"}
+            title={
+              item.memory !== "-"
+                ? `Memory Request: ${item.memory}`
+                : "No memory request specified"
+            }
           >
             {item.memory}
           </span>
         </td>
 
         {/* Age */}
-        <td className="py-1 px-3 font-mono text-[var(--muted)] truncate">{item.age}</td>
+        <td className="py-1 px-3 font-mono text-[var(--muted)] truncate">
+          {item.age}
+        </td>
 
         {/* Action Buttons: Clean '...' Dropdown */}
         <td
           className="py-1 px-2 text-right"
           onClick={(e) => e.stopPropagation()}
         >
-          <div className="relative inline-flex items-center justify-end" ref={actionMenuRef}>
-            <Tooltip content="Actions menu" disabled={showActionMenu} side="left">
+          <div
+            className="relative inline-flex items-center justify-end"
+            ref={actionMenuRef}
+          >
+            <Tooltip
+              content="Actions menu"
+              disabled={showActionMenu}
+              side="left"
+            >
               <button
                 ref={actionButtonRef}
                 type="button"
@@ -500,7 +527,8 @@ export function ResourceTableRow({
                       <ChevronRight
                         className={cn(
                           "w-3.5 h-3.5 text-[var(--muted)] transition-transform duration-150",
-                          showKubectlSubmenu && "rotate-90 text-[var(--accent)]",
+                          showKubectlSubmenu &&
+                            "rotate-90 text-[var(--accent)]",
                         )}
                       />
                     </button>
@@ -513,7 +541,9 @@ export function ResourceTableRow({
                             <button
                               key={kc.label}
                               type="button"
-                              onClick={() => handleCopyKubectl(kc.command, kc.label)}
+                              onClick={() =>
+                                handleCopyKubectl(kc.command, kc.label)
+                              }
                               className="w-full text-left p-1.5 rounded-md hover:bg-black/5 dark:hover:bg-white/[0.06] transition-colors cursor-pointer group/kcmd flex items-center justify-between gap-2"
                             >
                               <div className="min-w-0">

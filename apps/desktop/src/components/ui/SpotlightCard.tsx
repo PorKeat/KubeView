@@ -12,7 +12,10 @@ export interface SpotlightCardProps extends React.HTMLAttributes<HTMLDivElement>
   isSelected?: boolean;
 }
 
-export const SpotlightCard = React.forwardRef<HTMLDivElement, SpotlightCardProps>(
+export const SpotlightCard = React.forwardRef<
+  HTMLDivElement,
+  SpotlightCardProps
+>(
   (
     {
       children,
@@ -25,7 +28,7 @@ export const SpotlightCard = React.forwardRef<HTMLDivElement, SpotlightCardProps
       onMouseLeave,
       ...props
     },
-    ref
+    ref,
   ) => {
     const cardRef = React.useRef<HTMLDivElement | null>(null);
     const [isHovered, setIsHovered] = React.useState(false);
@@ -55,7 +58,8 @@ export const SpotlightCard = React.forwardRef<HTMLDivElement, SpotlightCardProps
           if (typeof ref === "function") {
             ref(node);
           } else if (ref) {
-            (ref as React.MutableRefObject<HTMLDivElement | null>).current = node;
+            (ref as React.MutableRefObject<HTMLDivElement | null>).current =
+              node;
           }
         }}
         onMouseMove={handleMouseMove}
@@ -67,7 +71,7 @@ export const SpotlightCard = React.forwardRef<HTMLDivElement, SpotlightCardProps
           isSelected
             ? "border-[var(--accent)] ring-1 ring-[var(--accent)]/40 bg-[var(--surface-hover)]"
             : "border-[var(--border)] hover:border-black/20 dark:hover:border-white/20 hover:bg-[var(--surface-hover)] hover:shadow-xs",
-          containerClassName
+          containerClassName,
         )}
         {...props}
       >
@@ -87,7 +91,7 @@ export const SpotlightCard = React.forwardRef<HTMLDivElement, SpotlightCardProps
         </div>
       </div>
     );
-  }
+  },
 );
 
 SpotlightCard.displayName = "SpotlightCard";

@@ -7,11 +7,13 @@
 ## 1. Functional Scope
 
 ### 1.1 Cluster Health & Status Gauge
+
 - Control plane health indicators: API Server, Controller Manager, Scheduler, etcd (when accessible).
 - Node readiness aggregate: Total nodes, Ready, NotReady, SchedulingDisabled / Cordoned.
 - Cluster version and runtime details (e.g. `v1.34.1`, container runtime `containerd://1.7.x`).
 
 ### 1.2 Workload Status Summary
+
 - **Pod Status Breakdown:** Donut chart and counters for:
   - Running (Healthy `#38B879`)
   - Pending (Scheduling bottlenecks `#F5A623`)
@@ -24,6 +26,7 @@
   - Jobs / CronJobs: Active vs Failed executions.
 
 ### 1.3 CPU & Memory Capacity Utilization (Apache ECharts)
+
 - Interactive, responsive charts rendered via **Apache ECharts**:
   - Live CPU core consumption vs allocatable cluster cores.
   - Live Memory (RAM) consumption vs allocatable cluster memory.
@@ -33,11 +36,13 @@
   - If no metrics provider is detected: display fallback capacity cards with install hints.
 
 ### 1.4 Problem Workloads & Warning Events Ticker (Better than Freelens)
+
 - **Active Warning Feed:** Live feed of Kubernetes `Warning` events across the selected namespace or entire cluster.
 - **Problem Workload Card:** Automatically identifies pods in `CrashLoopBackOff`, `ImagePullBackOff`, `OOMKilled`, or `NodeDiskPressure`.
 - **Direct 1-Click Triage:** Clicking any failing workload card immediately opens Phase 6's unified Troubleshooting Workbench for that specific pod.
 
 ### 1.5 Storage & Namespace Rollups
+
 - PersistentVolume allocation: Bound vs Available vs Released volume storage.
 - Top namespaces by resource consumption and active workload density.
 - Reorderable and collapsible widget cards tailored to the engineer's operational focus.

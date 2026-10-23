@@ -15,7 +15,8 @@ export const useLayoutStore = create<LayoutState>((set) => ({
   sidebarCollapsed: false,
   mobileSidebarOpen: false,
   commandPaletteOpen: false,
-  toggleSidebar: () => set((state) => ({ sidebarCollapsed: !state.sidebarCollapsed })),
+  toggleSidebar: () =>
+    set((state) => ({ sidebarCollapsed: !state.sidebarCollapsed })),
   setSidebarCollapsed: (collapsed) => set({ sidebarCollapsed: collapsed }),
   setMobileSidebarOpen: (open) => set({ mobileSidebarOpen: open }),
   toggleMobileSidebar: () =>

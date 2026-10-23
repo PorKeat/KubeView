@@ -30,7 +30,7 @@ export function Skeleton({
         "bg-black/[0.04] dark:bg-white/[0.05] border border-black/[0.03] dark:border-white/[0.04]",
         variant === "shimmer" ? "shimmer-wave" : "animate-pulse",
         roundedClass,
-        className
+        className,
       )}
       {...props}
     />
@@ -65,7 +65,13 @@ export function SkeletonBadge({ className }: { className?: string }) {
   return <Skeleton rounded="full" className={cn("h-5 w-16", className)} />;
 }
 
-export function SkeletonCircle({ size = 32, className }: { size?: number; className?: string }) {
+export function SkeletonCircle({
+  size = 32,
+  className,
+}: {
+  size?: number;
+  className?: string;
+}) {
   return (
     <Skeleton
       rounded="full"

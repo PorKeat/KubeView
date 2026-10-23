@@ -17,12 +17,14 @@ export function PodRestartModal() {
 
   const [isRestarting, setIsRestarting] = React.useState(false);
 
-  const isBulk = Boolean(bulkRestartConfirmPods && bulkRestartConfirmPods.length > 0);
+  const isBulk = Boolean(
+    bulkRestartConfirmPods && bulkRestartConfirmPods.length > 0,
+  );
   const targetPods = isBulk
     ? bulkRestartConfirmPods!
     : restartConfirmPod
-    ? [restartConfirmPod]
-    : [];
+      ? [restartConfirmPod]
+      : [];
 
   const handleClose = () => {
     if (isBulk) {
@@ -51,9 +53,13 @@ export function PodRestartModal() {
       if (isBulk) {
         const res = await bulkRestartPods(targetPods);
         if (res.failed === 0) {
-          toast.success(`Successfully restarted ${res.succeeded} pod${res.succeeded > 1 ? "s" : ""}`);
+          toast.success(
+            `Successfully restarted ${res.succeeded} pod${res.succeeded > 1 ? "s" : ""}`,
+          );
         } else {
-          toast.warning(`Restarted ${res.succeeded} pod(s), ${res.failed} failed`);
+          toast.warning(
+            `Restarted ${res.succeeded} pod(s), ${res.failed} failed`,
+          );
         }
         closeBulkRestartConfirm();
       } else {
@@ -74,56 +80,73 @@ export function PodRestartModal() {
 
   return (
     <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 bg-black/60 backdrop-blur-md animate-in fade-in duration-150">
-      <div className="flex max-h-[92dvh] w-full max-w-md flex-col gap-4 overflow-y-auto rounded-t-2xl border border-[var(--border)] bg-[var(--surface)] p-4 shadow-2xl animate-in zoom-in-95 duration-150 sm:rounded-2xl sm:p-6">
-        <div className="flex items-start gap-3.5">
-          <div className="p-2.5 rounded-xl bg-[var(--accent)]/15 text-[var(--accent)] border border-[var(--accent)]/25 shrink-0">
-            <RotateCw className="w-5 h-5" />
+      <div className="flex max-h-[92dvh] w-full max-w-md flex-col overflow-hidden rounded-t-2xl border border-[var(--border)] bg-[var(--surface)] shadow-2xl animate-in zoom-in-95 duration-150 sm:rounded-2xl">
+        <div className="flex-1 min-h-0 space-y-4 overflow-y-auto p-4 sm:p-6">
+          <div className="flex items-start gap-3.5">
+            <div className="p-2.5 rounded-xl bg-[var(--accent)]/15 text-[var(--accent)] border border-[var(--accent)]/25 shrink-0">
+              <RotateCw className="w-5 h-5" />
+            </div>
+            <div className="flex-1 min-w-0">
+              <h3 className="text-sm font-bold text-[var(--foreground)] tracking-tight">
+                {isBulk
+                  ? `Restart ${targetPods.length} Selected Pods`
+                  : "Restart Pod"}
+              </h3>
+              {isBulk ? (
+                <p className="text-xs text-[var(--muted)] mt-1 leading-relaxed">
+                  You are about to restart{" "}
+                  <strong className="text-[var(--foreground)] font-mono">
+                    {targetPods.length}
+                  </strong>{" "}
+                  pods by deleting and recreating them.
+                </p>
+              ) : (
+                <p className="text-xs text-[var(--muted)] mt-1 leading-relaxed">
+                  Are you sure you want to restart pod{" "}
+                  <strong className="text-[var(--foreground)] font-mono">
+                    {restartConfirmPod?.name}
+                  </strong>{" "}
+                  in namespace{" "}
+                  <strong className="text-[var(--foreground)] font-mono">
+                    {restartConfirmPod?.namespace}
+                  </strong>
+                  ? KubeView deletes the pod and lets its controller recreate
+                  it.
+                </p>
+              )}
+            </div>
           </div>
-          <div className="flex-1 min-w-0">
-            <h3 className="text-sm font-bold text-[var(--foreground)] tracking-tight">
-              {isBulk ? `Restart ${targetPods.length} Selected Pods` : "Restart Pod"}
-            </h3>
-            {isBulk ? (
-              <p className="text-xs text-[var(--muted)] mt-1 leading-relaxed">
-                You are about to restart{" "}
-                <strong className="text-[var(--foreground)] font-mono">{targetPods.length}</strong>{" "}
-                pods by deleting and recreating them.
-              </p>
-            ) : (
-              <p className="text-xs text-[var(--muted)] mt-1 leading-relaxed">
-                Are you sure you want to restart pod{" "}
-                <strong className="text-[var(--foreground)] font-mono">{restartConfirmPod?.name}</strong>{" "}
-                in namespace <strong className="text-[var(--foreground)] font-mono">{restartConfirmPod?.namespace}</strong>?
-                KubeView deletes the pod and lets its controller recreate it.
-              </p>
-            )}
+
+          {/* Bulk Pods List */}
+          {isBulk && (
+            <div className="max-h-36 overflow-y-auto border border-[var(--border)] rounded-xl bg-black/[0.02] dark:bg-white/[0.02] divide-y divide-[var(--border)] p-1 text-[11px] font-mono">
+              {targetPods.map((p) => (
+                <div
+                  key={`${p.namespace}/${p.name}`}
+                  className="px-2 py-1 flex items-center justify-between"
+                >
+                  <span className="text-[var(--foreground)] truncate max-w-[240px]">
+                    {p.name}
+                  </span>
+                  <span className="text-[10px] text-[var(--muted)] px-1.5 py-0.5 rounded bg-black/5 dark:bg-white/5 border border-[var(--border)]">
+                    {p.namespace}
+                  </span>
+                </div>
+              ))}
+            </div>
+          )}
+
+          <div className="p-3 rounded-xl bg-cyan-500/10 border border-cyan-500/20 text-cyan-600 dark:text-cyan-400 text-xs">
+            <p className="leading-relaxed text-[11px]">
+              Kubernetes has no direct pod restart command. KubeView deletes
+              each pod: pods owned by a Deployment, ReplicaSet, StatefulSet, or
+              DaemonSet are recreated by that controller, while standalone pods
+              are recreated from their existing spec.
+            </p>
           </div>
         </div>
 
-        {/* Bulk Pods List */}
-        {isBulk && (
-          <div className="max-h-36 overflow-y-auto border border-[var(--border)] rounded-xl bg-black/[0.02] dark:bg-white/[0.02] divide-y divide-[var(--border)] p-1 text-[11px] font-mono">
-            {targetPods.map((p) => (
-              <div key={`${p.namespace}/${p.name}`} className="px-2 py-1 flex items-center justify-between">
-                <span className="text-[var(--foreground)] truncate max-w-[240px]">{p.name}</span>
-                <span className="text-[10px] text-[var(--muted)] px-1.5 py-0.5 rounded bg-black/5 dark:bg-white/5 border border-[var(--border)]">
-                  {p.namespace}
-                </span>
-              </div>
-            ))}
-          </div>
-        )}
-
-        <div className="p-3 rounded-xl bg-cyan-500/10 border border-cyan-500/20 text-cyan-600 dark:text-cyan-400 text-xs">
-          <p className="leading-relaxed text-[11px]">
-            Kubernetes has no direct pod restart command. KubeView deletes each pod:
-            pods owned by a Deployment, ReplicaSet, StatefulSet, or DaemonSet are
-            recreated by that controller, while standalone pods are recreated from
-            their existing spec.
-          </p>
-        </div>
-
-        <div className="flex items-center justify-end gap-2 pt-2 border-t border-[var(--border)]">
+        <div className="flex shrink-0 items-center justify-end gap-2 border-t border-[var(--border)] bg-[var(--surface)] px-4 py-3 sm:px-6">
           <button
             onClick={handleClose}
             disabled={isRestarting}
@@ -144,7 +167,9 @@ export function PodRestartModal() {
             ) : (
               <>
                 <RotateCw className="w-3.5 h-3.5" />
-                <span>{isBulk ? `Restart ${targetPods.length} Pods` : "Restart Pod"}</span>
+                <span>
+                  {isBulk ? `Restart ${targetPods.length} Pods` : "Restart Pod"}
+                </span>
               </>
             )}
           </button>

@@ -3,6 +3,9 @@ package stream
 import (
 	"bufio"
 	"context"
+	"crypto/rand"
+	"crypto/subtle"
+	"encoding/hex"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -25,10 +28,32 @@ import (
 
 var upgrader = websocket.Upgrader{
 	CheckOrigin: func(r *http.Request) bool {
-		return true // Allow local connections from Tauri/Next.js
+		return originAllowed(r.Header.Get("Origin"))
 	},
 	ReadBufferSize:  4096,
 	WriteBufferSize: 4096,
+}
+
+var allowedStreamOrigins = map[string]struct{}{
+	"":                        {},
+	"tauri://localhost":       {},
+	"http://tauri.localhost":  {},
+	"https://tauri.localhost": {},
+	"http://localhost:3005":   {},
+	"http://127.0.0.1:3005":   {},
+}
+
+func originAllowed(origin string) bool {
+	_, ok := allowedStreamOrigins[strings.TrimSpace(origin)]
+	return ok
+}
+
+func generateToken() (string, error) {
+	buf := make([]byte, 32)
+	if _, err := rand.Read(buf); err != nil {
+		return "", err
+	}
+	return hex.EncodeToString(buf), nil
 }
 
 type StreamServer struct {
@@ -37,15 +62,21 @@ type StreamServer struct {
 	logger      *log.Logger
 	listener    net.Listener
 	port        int
+	token       string
 	server      *http.Server
 	subMu       sync.RWMutex
 	subscribers map[chan string]struct{}
 }
 
 func NewStreamServer(mgr *cluster.Manager) *StreamServer {
+	token, err := generateToken()
+	if err != nil {
+		log.Printf("[stream-server] failed to generate auth token: %v", err)
+	}
 	return &StreamServer{
 		mgr:         mgr,
 		logger:      log.New(os.Stderr, "[stream-server] ", log.LstdFlags|log.Lmicroseconds),
+		token:       token,
 		subscribers: make(map[chan string]struct{}),
 	}
 }
@@ -54,6 +85,10 @@ func NewStreamServer(mgr *cluster.Manager) *StreamServer {
 func (s *StreamServer) Start(bindAddr string) error {
 	if bindAddr == "" {
 		bindAddr = "127.0.0.1:0"
+	}
+
+	if s.token == "" {
+		return fmt.Errorf("stream server authentication token is unavailable")
 	}
 
 	ln, err := net.Listen("tcp", bindAddr)
@@ -76,9 +111,10 @@ func (s *StreamServer) Start(bindAddr string) error {
 	})
 
 	s.server = &http.Server{
-		Handler:      mux,
-		ReadTimeout:  0, // Infinite for persistent SSE and WebSocket streams
-		WriteTimeout: 0,
+		Handler:           mux,
+		ReadHeaderTimeout: 10 * time.Second,
+		ReadTimeout:       0, // Infinite for persistent SSE and WebSocket streams
+		WriteTimeout:      0,
 	}
 
 	s.logger.Printf("Local streaming server active on http://127.0.0.1:%d", s.port)
@@ -96,6 +132,47 @@ func (s *StreamServer) GetPort() int {
 	s.mu.RLock()
 	defer s.mu.RUnlock()
 	return s.port
+}
+
+// Token returns the per-process bearer token required by every stream endpoint.
+func (s *StreamServer) Token() string {
+	return s.token
+}
+
+func (s *StreamServer) authorize(r *http.Request) bool {
+	if s.token == "" {
+		return false
+	}
+	provided := r.URL.Query().Get("token")
+	if provided == "" {
+		auth := r.Header.Get("Authorization")
+		if strings.HasPrefix(auth, "Bearer ") {
+			provided = strings.TrimSpace(strings.TrimPrefix(auth, "Bearer "))
+		}
+	}
+	if provided == "" {
+		return false
+	}
+	return subtle.ConstantTimeCompare([]byte(provided), []byte(s.token)) == 1
+}
+
+func setCORSHeaders(w http.ResponseWriter, r *http.Request) {
+	origin := strings.TrimSpace(r.Header.Get("Origin"))
+	if origin == "" || !originAllowed(origin) {
+		return
+	}
+	w.Header().Set("Access-Control-Allow-Origin", origin)
+	w.Header().Add("Vary", "Origin")
+	w.Header().Set("Access-Control-Allow-Methods", "GET, OPTIONS")
+	w.Header().Set("Access-Control-Allow-Headers", "Content-Type, Authorization")
+}
+
+func writeSSEJSON(w io.Writer, event string, payload interface{}) {
+	data, err := json.Marshal(payload)
+	if err != nil {
+		data = []byte("{}")
+	}
+	_, _ = fmt.Fprintf(w, "event: %s\ndata: %s\n\n", event, data)
 }
 
 func (s *StreamServer) Stop() {
@@ -138,12 +215,18 @@ func (s *StreamServer) BroadcastNotification(event string, payload interface{}) 
 
 // handleEventsStream provides a real-time SSE stream for push notifications
 func (s *StreamServer) handleEventsStream(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Access-Control-Allow-Origin", "*")
-	w.Header().Set("Access-Control-Allow-Methods", "GET, OPTIONS")
-	w.Header().Set("Access-Control-Allow-Headers", "Content-Type")
+	setCORSHeaders(w, r)
 
 	if r.Method == http.MethodOptions {
+		if !originAllowed(r.Header.Get("Origin")) {
+			http.Error(w, "forbidden origin", http.StatusForbidden)
+			return
+		}
 		w.WriteHeader(http.StatusOK)
+		return
+	}
+	if !s.authorize(r) {
+		http.Error(w, "unauthorized", http.StatusUnauthorized)
 		return
 	}
 
@@ -196,12 +279,18 @@ func (s *StreamServer) handleEventsStream(w http.ResponseWriter, r *http.Request
 // handleLogsStream provides an ultra-fast Server-Sent Events (SSE) stream directly from K8s
 func (s *StreamServer) handleLogsStream(w http.ResponseWriter, r *http.Request) {
 	// Enable CORS for localhost
-	w.Header().Set("Access-Control-Allow-Origin", "*")
-	w.Header().Set("Access-Control-Allow-Methods", "GET, OPTIONS")
-	w.Header().Set("Access-Control-Allow-Headers", "Content-Type")
+	setCORSHeaders(w, r)
 
 	if r.Method == http.MethodOptions {
+		if !originAllowed(r.Header.Get("Origin")) {
+			http.Error(w, "forbidden origin", http.StatusForbidden)
+			return
+		}
 		w.WriteHeader(http.StatusOK)
+		return
+	}
+	if !s.authorize(r) {
+		http.Error(w, "unauthorized", http.StatusUnauthorized)
 		return
 	}
 
@@ -252,8 +341,8 @@ func (s *StreamServer) handleLogsStream(w http.ResponseWriter, r *http.Request) 
 			w.Header().Set("Content-Type", "text/event-stream; charset=utf-8")
 			w.Header().Set("Cache-Control", "no-cache, no-transform")
 			w.Header().Set("Connection", "keep-alive")
-			fmt.Fprintf(w, "event: init\ndata: {\"pod\":\"%s\",\"container\":\"%s\"}\n\n", podName, containerName)
-			fmt.Fprintf(w, "event: end\ndata: {}\n\n")
+			writeSSEJSON(w, "init", map[string]string{"pod": podName, "container": containerName})
+			writeSSEJSON(w, "end", map[string]string{})
 			flusher.Flush()
 			return
 		}
@@ -268,7 +357,7 @@ func (s *StreamServer) handleLogsStream(w http.ResponseWriter, r *http.Request) 
 	w.Header().Set("X-Accel-Buffering", "no")
 
 	// Initial event
-	fmt.Fprintf(w, "event: init\ndata: {\"pod\":\"%s\",\"container\":\"%s\"}\n\n", podName, containerName)
+	writeSSEJSON(w, "init", map[string]string{"pod": podName, "container": containerName})
 	flusher.Flush()
 
 	scanner := bufio.NewScanner(stream)
@@ -303,7 +392,7 @@ func (s *StreamServer) handleLogsStream(w http.ResponseWriter, r *http.Request) 
 		s.logger.Printf("Log stream ended with error: %v", err)
 	}
 
-	fmt.Fprintf(w, "event: end\ndata: {}\n\n")
+	writeSSEJSON(w, "end", map[string]string{})
 	flusher.Flush()
 }
 
@@ -338,6 +427,11 @@ func isNoSuchFileError(err error) bool {
 
 // handleExecWS provides a full-duplex interactive WebSocket terminal bridge to K8s SPDY PTY
 func (s *StreamServer) handleExecWS(w http.ResponseWriter, r *http.Request) {
+	setCORSHeaders(w, r)
+	if !s.authorize(r) {
+		http.Error(w, "unauthorized", http.StatusUnauthorized)
+		return
+	}
 	conn, err := upgrader.Upgrade(w, r, nil)
 	if err != nil {
 		s.logger.Printf("WebSocket upgrade failed: %v", err)

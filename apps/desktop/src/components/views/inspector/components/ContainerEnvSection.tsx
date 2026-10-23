@@ -1,7 +1,15 @@
 "use client";
 
 import * as React from "react";
-import { Key, ChevronDown, ChevronRight, Search, Eye, EyeOff, Copy } from "lucide-react";
+import {
+  Key,
+  ChevronDown,
+  ChevronRight,
+  Search,
+  Eye,
+  EyeOff,
+  Copy,
+} from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import type { ContainerEnvVar } from "@kubeview/contracts";
@@ -20,7 +28,8 @@ export function ContainerEnvSection({ env }: ContainerEnvSectionProps) {
         (e) =>
           e.name.toLowerCase().includes(search.toLowerCase()) ||
           (e.value && e.value.toLowerCase().includes(search.toLowerCase())) ||
-          (e.valueFrom && e.valueFrom.toLowerCase().includes(search.toLowerCase()))
+          (e.valueFrom &&
+            e.valueFrom.toLowerCase().includes(search.toLowerCase())),
       )
     : env;
 
@@ -32,13 +41,19 @@ export function ContainerEnvSection({ env }: ContainerEnvSectionProps) {
       >
         <div className="flex items-center gap-2">
           <Key className="w-3.5 h-3.5 text-amber-500" />
-          <span className="font-semibold text-[11px] text-[var(--foreground)]">Environment Variables</span>
+          <span className="font-semibold text-[11px] text-[var(--foreground)]">
+            Environment Variables
+          </span>
           <span className="px-1.5 py-0.2 rounded-full text-[10px] font-mono bg-black/5 dark:bg-white/5 border border-[var(--border)] text-[var(--muted)]">
             {env.length}
           </span>
         </div>
         <div className="flex items-center gap-1 text-[var(--muted)]">
-          {isOpen ? <ChevronDown className="w-3.5 h-3.5" /> : <ChevronRight className="w-3.5 h-3.5" />}
+          {isOpen ? (
+            <ChevronDown className="w-3.5 h-3.5" />
+          ) : (
+            <ChevronRight className="w-3.5 h-3.5" />
+          )}
         </div>
       </button>
 
@@ -61,11 +76,15 @@ export function ContainerEnvSection({ env }: ContainerEnvSectionProps) {
                 "flex items-center gap-1 px-2 py-1 rounded-lg border text-[10px] font-mono transition-colors cursor-pointer shrink-0",
                 showValues
                   ? "bg-amber-500/15 border-amber-500/30 text-amber-600 dark:text-amber-400 font-semibold"
-                  : "border-[var(--border)] text-[var(--muted)] hover:text-[var(--foreground)]"
+                  : "border-[var(--border)] text-[var(--muted)] hover:text-[var(--foreground)]",
               )}
               title={showValues ? "Mask sensitive values" : "Reveal all values"}
             >
-              {showValues ? <EyeOff className="w-3 h-3" /> : <Eye className="w-3 h-3" />}
+              {showValues ? (
+                <EyeOff className="w-3 h-3" />
+              ) : (
+                <Eye className="w-3 h-3" />
+              )}
               <span>{showValues ? "Mask" : "Reveal"}</span>
             </button>
           </div>
@@ -73,20 +92,27 @@ export function ContainerEnvSection({ env }: ContainerEnvSectionProps) {
           <div className="max-h-56 overflow-y-auto border border-[var(--border)] rounded-lg divide-y divide-[var(--border)] font-mono text-[10px]">
             {filtered.length > 0 ? (
               filtered.map((item) => {
-                const isSecret = Boolean(item.valueFrom && item.valueFrom.startsWith("Secret:"));
+                const isSecret = Boolean(
+                  item.valueFrom && item.valueFrom.startsWith("Secret:"),
+                );
                 const displayVal = showValues
                   ? item.value || (item.valueFrom ? item.valueFrom : "")
                   : isSecret || !item.value
-                  ? "••••••••"
-                  : item.value.length > 35
-                  ? item.value.slice(0, 35) + "..."
-                  : item.value;
+                    ? "••••••••"
+                    : item.value.length > 35
+                      ? item.value.slice(0, 35) + "..."
+                      : item.value;
 
                 return (
-                  <div key={item.name} className="p-2 flex items-start justify-between gap-2 hover:bg-[var(--surface-hover)] group">
+                  <div
+                    key={item.name}
+                    className="p-2 flex items-start justify-between gap-2 hover:bg-[var(--surface-hover)] group"
+                  >
                     <div className="min-w-0 flex-1 space-y-0.5">
                       <div className="flex items-center gap-1.5 flex-wrap">
-                        <span className="font-semibold text-[var(--foreground)] select-all">{item.name}</span>
+                        <span className="font-semibold text-[var(--foreground)] select-all">
+                          {item.name}
+                        </span>
                         {item.valueFrom && (
                           <span className="text-[9px] px-1.5 py-0.2 rounded bg-black/5 dark:bg-white/5 border border-[var(--border)] text-[var(--muted)]">
                             {item.valueFrom}

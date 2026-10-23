@@ -22,7 +22,12 @@ export function Logo({ variant = "full", size = "md", className }: LogoProps) {
 
   if (variant === "mark") {
     return (
-      <div className={cn("relative flex items-center justify-center shrink-0", className)}>
+      <div
+        className={cn(
+          "relative flex items-center justify-center shrink-0",
+          className,
+        )}
+      >
         <Image
           src="/logo-mark.png"
           alt="KubeView Logo"
@@ -48,7 +53,9 @@ export function Logo({ variant = "full", size = "md", className }: LogoProps) {
         />
         <div className="font-bold tracking-tight select-none">
           <span className="text-[var(--foreground)]">Kube</span>
-          <span className="bg-gradient-to-r from-[#F08A42] to-[#FF9E59] bg-clip-text text-transparent">View</span>
+          <span className="bg-gradient-to-r from-[#F08A42] to-[#FF9E59] bg-clip-text text-transparent">
+            View
+          </span>
         </div>
       </div>
     );
@@ -66,7 +73,9 @@ export function Logo({ variant = "full", size = "md", className }: LogoProps) {
       />
       <div className={cn("font-bold tracking-tight", text)}>
         <span className="text-[var(--foreground)]">Kube</span>
-        <span className="bg-gradient-to-r from-[#F08A42] to-[#FF9E59] bg-clip-text text-transparent">View</span>
+        <span className="bg-gradient-to-r from-[#F08A42] to-[#FF9E59] bg-clip-text text-transparent">
+          View
+        </span>
       </div>
     </div>
   );

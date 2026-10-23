@@ -55,8 +55,7 @@ export function AppShell() {
       }
     };
     window.addEventListener("keydown", handleSettingsShortcut);
-    return () =>
-      window.removeEventListener("keydown", handleSettingsShortcut);
+    return () => window.removeEventListener("keydown", handleSettingsShortcut);
   }, [openTab]);
 
   React.useEffect(() => {

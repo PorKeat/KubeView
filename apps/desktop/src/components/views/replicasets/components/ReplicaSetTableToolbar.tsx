@@ -1,7 +1,14 @@
 "use client";
 
 import * as React from "react";
-import { Search, X, RefreshCw, AlertTriangle, Clock, MinusCircle } from "lucide-react";
+import {
+  Search,
+  X,
+  RefreshCw,
+  AlertTriangle,
+  Clock,
+  MinusCircle,
+} from "lucide-react";
 import { motion } from "motion/react";
 import { cn } from "@/lib/utils";
 import { Tooltip } from "@/components/ui/Tooltip";
@@ -134,8 +141,11 @@ export function ReplicaSetTableToolbar({
               <span
                 className={cn(
                   "text-[10px] font-mono tabular-nums",
-                  pill.hasWarning && pill.count > 0 && "text-rose-500 font-semibold",
-                  ((pill.hasPending || pill.hasScaledDown) && pill.count > 0) &&
+                  pill.hasWarning &&
+                    pill.count > 0 &&
+                    "text-rose-500 font-semibold",
+                  (pill.hasPending || pill.hasScaledDown) &&
+                    pill.count > 0 &&
                     "text-amber-500 font-medium",
                   !pill.hasWarning &&
                     !pill.hasPending &&
