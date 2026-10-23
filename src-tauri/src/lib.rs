@@ -30,7 +30,8 @@ pub fn run() {
             let handle = app.handle().clone();
             let supervisor = tauri::async_runtime::block_on(async move {
                 supervisor::EngineSupervisor::start(handle).await
-            }).map_err(|e| {
+            })
+            .map_err(|e| {
                 log::error!("Failed to initialize engine supervisor: {}", e);
                 e
             })?;
@@ -45,7 +46,9 @@ pub fn run() {
 
                     // If Next.js dev server on :3005 is not running, fall back to bundled static assets
                     if std::net::TcpStream::connect("127.0.0.1:3005").is_err() {
-                        log::info!("Dev server on :3005 not reachable, navigating to bundled frontend");
+                        log::info!(
+                            "Dev server on :3005 not reachable, navigating to bundled frontend"
+                        );
                         if let Ok(target_url) = tauri::Url::parse("tauri://localhost") {
                             let _ = window.navigate(target_url);
                         }

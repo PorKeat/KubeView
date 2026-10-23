@@ -30,13 +30,8 @@ impl EngineSupervisor {
         let pending: PendingMap = Arc::new(Mutex::new(HashMap::new()));
         let stdin_tx: StdinSlot = Arc::new(Mutex::new(None));
 
-        let child = spawn_engine(
-            &app,
-            &bin_path,
-            Arc::clone(&pending),
-            Arc::clone(&stdin_tx),
-        )
-        .await?;
+        let child =
+            spawn_engine(&app, &bin_path, Arc::clone(&pending), Arc::clone(&stdin_tx)).await?;
 
         let supervisor = Arc::new(Self {
             stdin_tx,
@@ -99,7 +94,8 @@ impl EngineSupervisor {
                         Ok(new_child) => {
                             info!("Go engine sidecar restarted after {:?}", uptime);
                             child = new_child;
-                            let _ = app_handle.emit("engine:restarted", json!({ "status": "ready" }));
+                            let _ =
+                                app_handle.emit("engine:restarted", json!({ "status": "ready" }));
                             break;
                         }
                         Err(e) => {
@@ -114,11 +110,7 @@ impl EngineSupervisor {
         Ok(supervisor)
     }
 
-    pub async fn send_request(
-        &self,
-        method: &str,
-        params: Option<Value>,
-    ) -> Result<Value, String> {
+    pub async fn send_request(&self, method: &str, params: Option<Value>) -> Result<Value, String> {
         let sender = {
             let guard = self.stdin_tx.lock().await;
             guard.clone()
@@ -235,13 +227,19 @@ async fn spawn_engine(
                         }
                     } else if let Some(method) = val.get("method").and_then(|m| m.as_str()) {
                         let safe_event = method.replace('.', ":");
-                        info!("Forwarding engine notification to UI: {} as {}", method, safe_event);
+                        info!(
+                            "Forwarding engine notification to UI: {} as {}",
+                            method, safe_event
+                        );
                         let _ = app_handle.emit(&safe_event, val.get("params"));
                         let _ = app_handle.emit("engine-notification", val);
                     }
                 }
                 Err(e) => {
-                    warn!("Malformed JSON from engine stdout: {} | raw: {}", e, trimmed);
+                    warn!(
+                        "Malformed JSON from engine stdout: {} | raw: {}",
+                        e, trimmed
+                    );
                 }
             }
         }
