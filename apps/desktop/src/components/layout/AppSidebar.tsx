@@ -24,10 +24,15 @@ import {
   PanelLeftOpen,
   X,
   Settings,
+  ArrowLeft,
+  Keyboard,
+  Monitor,
+  Timer,
 } from "lucide-react";
 import { useLayoutStore } from "@/stores/layoutStore";
 import { useTabStore } from "@/stores/tabStore";
 import { useClusterStore } from "@/stores/clusterStore";
+import { useSettingsStore, type SettingsSection } from "@/stores/settingsStore";
 import { cn } from "@/lib/utils";
 
 interface NavItem {
@@ -44,6 +49,42 @@ interface NavGroup {
   items: NavItem[];
 }
 
+interface SettingsNavItem {
+  id: string;
+  testId: string;
+  section: SettingsSection;
+  title: string;
+  description: string;
+  icon: React.ElementType;
+}
+
+const SETTINGS_NAV_ITEMS: SettingsNavItem[] = [
+  {
+    id: "settings-appearance",
+    testId: "appearance",
+    section: "appearance",
+    title: "Appearance",
+    description: "Theme, text, motion",
+    icon: Monitor,
+  },
+  {
+    id: "settings-data-refresh",
+    testId: "data-refresh",
+    section: "data-refresh",
+    title: "Data & Refresh",
+    description: "Polling and table rows",
+    icon: Timer,
+  },
+  {
+    id: "settings-shortcuts",
+    testId: "shortcuts",
+    section: "shortcuts",
+    title: "Shortcuts",
+    description: "Keyboard reference",
+    icon: Keyboard,
+  },
+];
+
 export function AppSidebar() {
   const {
     sidebarCollapsed,
@@ -52,7 +93,14 @@ export function AppSidebar() {
     mobileSidebarOpen,
     setMobileSidebarOpen,
   } = useLayoutStore();
-  const { activeTabId, openTab } = useTabStore();
+  const {
+    activeTabId,
+    previousTabId,
+    openTabs,
+    openTab,
+    setActiveTab,
+  } = useTabStore();
+  const { activeSection, setActiveSection } = useSettingsStore();
   const {
     clusterOverview,
     totalPodsCount,
@@ -79,6 +127,14 @@ export function AppSidebar() {
     setPodLabelFilter,
   } = useClusterStore();
   const [collapsedGroups, setCollapsedGroups] = React.useState<Record<string, boolean>>({});
+  const isSettingsActive = activeTabId === "settings";
+  const settingsReturnTab = React.useMemo(
+    () =>
+      openTabs.find(
+        (tab) => tab.id === previousTabId && tab.id !== "settings",
+      ) ?? openTabs.find((tab) => tab.id !== "settings"),
+    [openTabs, previousTabId],
+  );
 
   React.useEffect(() => {
     if (mobileSidebarOpen && sidebarCollapsed) {
@@ -210,6 +266,20 @@ export function AppSidebar() {
     setMobileSidebarOpen(false);
   };
 
+  const handleSettingsSectionClick = (section: SettingsSection) => {
+    setActiveSection(section);
+    setMobileSidebarOpen(false);
+  };
+
+  const handleBackFromSettings = () => {
+    if (settingsReturnTab) {
+      setActiveTab(settingsReturnTab.id);
+    } else {
+      openTab({ id: "overview", title: "Cluster Overview", closable: false });
+    }
+    setMobileSidebarOpen(false);
+  };
+
   return (
     <>
       {mobileSidebarOpen && (
@@ -234,7 +304,7 @@ export function AppSidebar() {
       <div className="h-10 px-4 flex items-center justify-between border-b border-[var(--border)] shrink-0">
         {!sidebarCollapsed && (
           <span className="text-xs font-medium text-[var(--muted)]">
-            Resources
+            {isSettingsActive ? "Settings" : "Resources"}
           </span>
         )}
         <div className="ml-auto flex items-center gap-0.5">
@@ -258,7 +328,59 @@ export function AppSidebar() {
 
       {/* Navigation Tree */}
       <div className="flex-1 overflow-y-auto py-2.5 px-3 space-y-3">
-        {navigationGroups.map((group) => {
+        {isSettingsActive && (
+          <div className="space-y-0.5">
+            {!sidebarCollapsed && (
+              <div className="px-2 py-1 text-xs font-medium text-[var(--muted)]">
+                Preferences
+              </div>
+            )}
+            {SETTINGS_NAV_ITEMS.map((section) => {
+              const Icon = section.icon;
+              const isActiveSection = activeSection === section.section;
+              return (
+                <button
+                  key={section.id}
+                  type="button"
+                  data-testid={`settings-nav-${section.testId}`}
+                  aria-current={isActiveSection ? "page" : undefined}
+                  onClick={() => handleSettingsSectionClick(section.section)}
+                  title={sidebarCollapsed ? section.title : undefined}
+                  className={cn(
+                    "relative w-full flex items-center gap-2.5 px-2.5 py-2 text-xs rounded-lg transition-colors text-left group",
+                    isActiveSection
+                      ? "bg-[var(--surface-active)] text-[var(--foreground)] font-semibold border border-[var(--border)] cursor-pointer"
+                      : "text-[var(--foreground)] border border-transparent hover:bg-[var(--surface-hover)] cursor-pointer",
+                  )}
+                >
+                  {isActiveSection && (
+                    <span className="absolute left-0 top-1/2 h-4 w-0.5 -translate-y-1/2 rounded-r-full bg-[var(--accent)]" />
+                  )}
+                  <Icon
+                    className={cn(
+                      "w-4 h-4 shrink-0 transition-colors",
+                      isActiveSection
+                        ? "text-[var(--accent)]"
+                        : "text-[var(--muted)] group-hover:text-[var(--foreground)]",
+                    )}
+                    aria-hidden="true"
+                  />
+                  {!sidebarCollapsed && (
+                    <span className="min-w-0">
+                      <span className="block truncate font-medium">
+                        {section.title}
+                      </span>
+                      <span className="block truncate text-[9px] text-[var(--muted)]">
+                        {section.description}
+                      </span>
+                    </span>
+                  )}
+                </button>
+              );
+            })}
+          </div>
+        )}
+        {!isSettingsActive && navigationGroups.map((group) => {
           const isGroupCollapsed = collapsedGroups[group.category];
 
           return (
@@ -339,43 +461,60 @@ export function AppSidebar() {
       </div>
 
       <div className="shrink-0 border-t border-[var(--border)] p-2">
-        <button
-          type="button"
-          data-testid="nav-item-settings"
-          onClick={() =>
-            handleItemClick({ id: "settings", title: "Settings", icon: Settings })
-          }
-          aria-label="Settings"
-          aria-current={activeTabId === "settings" ? "page" : undefined}
-          title={sidebarCollapsed ? "Settings" : undefined}
-          className={cn(
-            "group relative flex w-full items-center gap-2.5 rounded-lg px-2.5 py-2 text-xs transition-colors cursor-pointer",
-            activeTabId === "settings"
-              ? "border border-[var(--border)] bg-[var(--surface-active)] font-semibold text-[var(--foreground)]"
-              : "text-[var(--foreground)] hover:bg-[var(--surface-hover)]",
-          )}
-        >
-          {activeTabId === "settings" && (
-            <span className="absolute left-0 top-1/2 h-4 w-0.5 -translate-y-1/2 rounded-r-full bg-[var(--accent)]" />
-          )}
-          <Settings
-            className={cn(
-              "h-4 w-4 shrink-0 transition-colors",
-              activeTabId === "settings"
-                ? "text-[var(--accent)]"
-                : "text-[var(--muted)] group-hover:text-[var(--foreground)]",
+        {isSettingsActive ? (
+          <button
+            type="button"
+            data-testid="nav-back"
+            onClick={handleBackFromSettings}
+            aria-label={
+              settingsReturnTab
+                ? `Back to ${settingsReturnTab.title}`
+                : "Back to overview"
+            }
+            title={sidebarCollapsed ? "Back" : undefined}
+            className="group flex w-full items-center gap-2.5 rounded-lg px-2.5 py-2 text-xs text-[var(--foreground)] transition-colors hover:bg-[var(--surface-hover)] cursor-pointer"
+          >
+            <ArrowLeft
+              className="h-4 w-4 shrink-0 text-[var(--muted)] group-hover:text-[var(--foreground)]"
+              aria-hidden="true"
+            />
+            {!sidebarCollapsed && (
+              <>
+                <span className="truncate">Back</span>
+                <span
+                  className="ml-auto max-w-[72px] truncate font-mono text-[9px] text-[var(--muted)]"
+                  title={settingsReturnTab?.title}
+                >
+                  {settingsReturnTab?.title ?? "Overview"}
+                </span>
+              </>
             )}
-            aria-hidden="true"
-          />
-          {!sidebarCollapsed && (
-            <>
-              <span className="truncate">Settings</span>
-              <kbd className="ml-auto rounded border border-[var(--border)] bg-black/[0.03] px-1.5 py-0.5 font-mono text-[9px] text-[var(--muted)] dark:bg-white/[0.04]">
-                ⌘,
-              </kbd>
-            </>
-          )}
-        </button>
+          </button>
+        ) : (
+          <button
+            type="button"
+            data-testid="nav-item-settings"
+            onClick={() =>
+              handleItemClick({ id: "settings", title: "Settings", icon: Settings })
+            }
+            aria-label="Settings"
+            title={sidebarCollapsed ? "Settings" : undefined}
+            className="group relative flex w-full items-center gap-2.5 rounded-lg px-2.5 py-2 text-xs text-[var(--foreground)] transition-colors hover:bg-[var(--surface-hover)] cursor-pointer"
+          >
+            <Settings
+              className="h-4 w-4 shrink-0 text-[var(--muted)] group-hover:text-[var(--foreground)]"
+              aria-hidden="true"
+            />
+            {!sidebarCollapsed && (
+              <>
+                <span className="truncate">Settings</span>
+                <kbd className="ml-auto rounded border border-[var(--border)] bg-black/[0.03] px-1.5 py-0.5 font-mono text-[9px] text-[var(--muted)] dark:bg-white/[0.04]">
+                  ⌘,
+                </kbd>
+              </>
+            )}
+          </button>
+        )}
       </div>
       </aside>
     </>

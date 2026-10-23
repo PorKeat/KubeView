@@ -174,6 +174,10 @@ test.describe("KubeView Responsive Shell", () => {
       "true",
     );
 
+    await page.getByRole("button", { name: "Open navigation" }).click();
+    await page.getByTestId("settings-nav-data-refresh").click();
+    await expect(page.getByTestId("settings-page-size-50")).toBeVisible();
+
     await page.getByTestId("settings-page-size-100").click();
     await page.getByTestId("settings-refresh-30").click();
     await expect(page.getByTestId("settings-refresh-30")).toHaveAttribute(
@@ -216,12 +220,43 @@ test.describe("KubeView Responsive Shell", () => {
     );
   });
 
-  test("opens settings from the sidebar as a workspace tab", async ({ page }) => {
+  test("switches the sidebar to settings navigation and offers Back", async ({
+    page,
+  }, testInfo) => {
     await openApp(page);
     await page.getByRole("button", { name: "Open navigation" }).click();
     await page.getByTestId("nav-item-settings").click();
     await expect(page.getByTestId("settings-view")).toBeVisible();
     await expect(page.getByRole("tab", { name: "Settings tab" })).toBeVisible();
+
+    await page.getByRole("button", { name: "Open navigation" }).click();
+    await expect(page.getByTestId("settings-nav-appearance")).toBeVisible();
+    await expect(page.getByTestId("settings-nav-data-refresh")).toBeVisible();
+    await expect(page.getByTestId("settings-nav-shortcuts")).toBeVisible();
+    await expect(page.getByTestId("nav-back")).toBeVisible();
+    await expect(page.getByTestId("nav-item-deployments")).toBeHidden();
+    await expect(page.getByTestId("settings-nav-appearance")).toHaveAttribute(
+      "aria-current",
+      "page",
+    );
+    await page.screenshot({
+      path: testInfo.outputPath("mobile-settings-sidebar.png"),
+    });
+
+    await page.getByTestId("settings-nav-data-refresh").click();
+    await expect(page.getByTestId("settings-page-size-50")).toBeVisible();
+    await page.getByRole("button", { name: "Open navigation" }).click();
+    await expect(page.getByTestId("settings-nav-data-refresh")).toHaveAttribute(
+      "aria-current",
+      "page",
+    );
+    await page.screenshot({
+      path: testInfo.outputPath("mobile-settings-sidebar-active.png"),
+    });
+
+    await page.getByTestId("nav-back").click();
+    await expect(page.getByTestId("settings-view")).not.toBeVisible();
+    await expect(page.getByRole("tab", { name: /Cluster Overview tab/i })).toBeVisible();
   });
 
   test("mobile header remains usable at extra-large font", async ({
@@ -319,10 +354,13 @@ test.describe("KubeView Desktop Shell", () => {
     await page.getByTestId("open-settings").click();
     await expect(page.getByTestId("settings-view")).toBeVisible();
     await expect(page.getByRole("tab", { name: "Settings tab" })).toBeVisible();
-    await expect(page.getByTestId("nav-item-settings")).toHaveAttribute(
+    await expect(page.getByTestId("settings-nav-appearance")).toBeVisible();
+    await expect(page.getByTestId("settings-nav-appearance")).toHaveAttribute(
       "aria-current",
       "page",
     );
+    await expect(page.getByTestId("nav-back")).toBeVisible();
+    await expect(page.getByTestId("nav-item-settings")).toBeHidden();
     await expectNoHorizontalOverflow(page, '[data-testid="settings-view"]');
     await page.screenshot({
       path: testInfo.outputPath("desktop-settings.png"),

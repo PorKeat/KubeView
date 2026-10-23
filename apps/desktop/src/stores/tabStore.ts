@@ -11,6 +11,7 @@ export interface TabItem {
 interface TabState {
   openTabs: TabItem[];
   activeTabId: string;
+  previousTabId: string;
   openTab: (tab: TabItem) => void;
   closeTab: (tabId: string) => void;
   setActiveTab: (tabId: string) => void;
@@ -24,11 +25,18 @@ const DEFAULT_TABS: TabItem[] = [
 export const useTabStore = create<TabState>((set, get) => ({
   openTabs: DEFAULT_TABS,
   activeTabId: "overview",
+  previousTabId: "overview",
   openTab: (tab) => {
-    const { openTabs } = get();
+    const { openTabs, activeTabId } = get();
     const exists = openTabs.some((t) => t.id === tab.id);
     if (!exists) {
-      set({ openTabs: [...openTabs, tab], activeTabId: tab.id });
+      set({
+        openTabs: [...openTabs, tab],
+        activeTabId: tab.id,
+        previousTabId: activeTabId,
+      });
+    } else if (activeTabId !== tab.id) {
+      set({ activeTabId: tab.id, previousTabId: activeTabId });
     } else {
       set({ activeTabId: tab.id });
     }
@@ -48,5 +56,9 @@ export const useTabStore = create<TabState>((set, get) => ({
 
     set({ openTabs: newTabs, activeTabId: newActiveId });
   },
-  setActiveTab: (tabId) => set({ activeTabId: tabId }),
+  setActiveTab: (tabId) => {
+    const { activeTabId } = get();
+    if (tabId === activeTabId) return;
+    set({ activeTabId: tabId, previousTabId: activeTabId });
+  },
 }));
