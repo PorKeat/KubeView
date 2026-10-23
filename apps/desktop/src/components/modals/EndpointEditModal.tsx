@@ -113,7 +113,7 @@ export function EndpointEditModal() {
         <Dialog.Overlay className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 animate-in fade-in duration-200" />
         <Dialog.Content
           aria-describedby="endpoint-modal-description"
-          className="fixed left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-lg p-6 bg-[var(--surface-elevated)] border border-[var(--border)] rounded-2xl shadow-2xl z-50 animate-in fade-in zoom-in-95 duration-200 outline-none select-none"
+          className="fixed left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-[calc(100%-2rem)] max-w-lg max-h-[90dvh] overflow-y-auto p-4 sm:p-6 bg-[var(--surface-elevated)] border border-[var(--border)] rounded-2xl shadow-2xl z-50 animate-in fade-in zoom-in-95 duration-200 outline-none select-none"
         >
           {/* Header */}
           <div className="flex items-start justify-between pb-4 border-b border-[var(--border)]">

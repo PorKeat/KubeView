@@ -21,6 +21,7 @@ import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { matchesLabelSelector } from "@/lib/labelSelector";
 import { useClusterStore } from "@/stores/clusterStore";
+import { useSettingsStore } from "@/stores/settingsStore";
 import type { PodSummary } from "@kubeview/contracts";
 import { TableSkeleton, EmptyState, Tooltip } from "@/components/ui";
 
@@ -84,7 +85,11 @@ export function ResourceListView({ resourceType }: ResourceListViewProps) {
   );
 
   // Client-side pagination for low memory & fast rendering on 1,000+ pods
-  const [pageSize, setPageSize] = React.useState<number>(50);
+  const defaultPageSize = useSettingsStore((s) => s.defaultPageSize);
+  const [pageSize, setPageSize] = React.useState<number>(defaultPageSize);
+  React.useEffect(() => {
+    setPageSize(defaultPageSize);
+  }, [defaultPageSize]);
   const [currentPage, setCurrentPage] = React.useState<number>(1);
 
   React.useEffect(() => {
@@ -571,8 +576,8 @@ export function ResourceListView({ resourceType }: ResourceListViewProps) {
           />
         </div>
       ) : (
-        <div className="flex-1 overflow-y-auto overflow-x-hidden min-h-0">
-          <table className="w-full text-left text-xs border-collapse table-fixed">
+        <div className="flex-1 overflow-auto min-h-0">
+          <table className="w-full min-w-[1080px] text-left text-xs border-collapse table-fixed">
             <thead className="sticky top-0 bg-[var(--surface)] z-10 border-b border-[var(--border)] select-none">
               <tr className="text-[11px] font-semibold text-[var(--muted)] uppercase tracking-wider h-8">
                 <th className="w-8 px-2 text-center">
@@ -758,8 +763,8 @@ export function ResourceListView({ resourceType }: ResourceListViewProps) {
       )}
 
       {/* Footer Status Bar with Enterprise Pagination Controls */}
-      <div className="h-10 border-t border-[var(--border)] px-4 flex items-center justify-between text-[11px] text-[var(--muted)] bg-[var(--surface)]/90 backdrop-blur-xs shrink-0 gap-4">
-        <div className="flex items-center gap-2 truncate">
+      <div className="min-h-10 border-t border-[var(--border)] px-2 sm:px-4 py-1.5 flex flex-wrap items-center justify-between text-[11px] text-[var(--muted)] bg-[var(--surface)]/90 backdrop-blur-xs shrink-0 gap-2 sm:gap-4">
+        <div className="flex min-w-0 max-w-full items-center gap-2 truncate">
           <span>
             Showing{" "}
             <span className="text-[var(--foreground)] font-mono font-medium">
@@ -804,7 +809,7 @@ export function ResourceListView({ resourceType }: ResourceListViewProps) {
           )}
         </div>
 
-        <div className="flex items-center gap-4 shrink-0">
+        <div className="flex flex-wrap items-center gap-2 shrink-0 sm:gap-4">
           {/* Page size selector with sliding spring indicator */}
           <div className="flex items-center gap-1.5">
             <span className="text-[10px] uppercase tracking-wider text-[var(--muted)] font-medium">
@@ -816,7 +821,7 @@ export function ResourceListView({ resourceType }: ResourceListViewProps) {
                 return (
                   <button
                     key={size}
-                    type="button"
+                    type="button" aria-pressed={isSelected} data-testid={`page-size-${size}`}
                     onClick={() => {
                       setPageSize(size);
                       setCurrentPage(1);

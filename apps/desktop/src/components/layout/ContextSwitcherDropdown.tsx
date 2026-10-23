@@ -133,7 +133,7 @@ export function ContextSwitcherDropdown({
         aria-label={`Active Kubernetes cluster: ${currentContext || "Select Cluster"}, status ${connectionStatus}`}
         aria-expanded={isOpen}
         className={cn(
-          "flex items-center gap-2 text-xs transition-colors text-[var(--foreground)] outline-hidden group select-none cursor-pointer focus-visible:ring-2 focus-visible:ring-[var(--accent)] focus-visible:outline-hidden",
+          "flex min-w-0 max-w-[170px] items-center gap-2 text-xs transition-colors text-[var(--foreground)] outline-hidden group select-none cursor-pointer focus-visible:ring-2 focus-visible:ring-[var(--accent)] focus-visible:outline-hidden sm:max-w-none",
           variant === "default" &&
             "px-2.5 py-1.5 rounded-lg bg-[var(--background)] border border-[var(--border)] hover:bg-[var(--surface-hover)] hover:border-black/20 dark:hover:border-white/20",
           variant === "unified" &&
@@ -145,11 +145,13 @@ export function ContextSwitcherDropdown({
       >
         <div className="flex items-center gap-1.5 min-w-0">
           <Server className="w-3.5 h-3.5 text-[var(--muted)] group-hover:text-[var(--foreground)] transition-colors shrink-0" />
-          <span className="font-semibold max-w-[130px] truncate">{currentContext || "Select Cluster"}</span>
+          <span className="font-semibold max-w-[90px] truncate sm:max-w-[130px]">{currentContext || "Select Cluster"}</span>
         </div>
-        {getProviderBadge(currentInfo.provider)}
+        <span className="hidden sm:inline-flex">
+          {getProviderBadge(currentInfo.provider)}
+        </span>
         {latencyMs > 0 && (
-          <span className="text-[11px] text-[var(--muted)] font-mono tabular-nums">({latencyMs}ms)</span>
+          <span className="hidden sm:inline text-[11px] text-[var(--muted)] font-mono tabular-nums">({latencyMs}ms)</span>
         )}
         <ChevronDown
           className={cn(

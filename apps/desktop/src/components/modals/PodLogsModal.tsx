@@ -390,13 +390,13 @@ export function PodLogsModal() {
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6 bg-black/60 backdrop-blur-md animate-in fade-in duration-150">
-      <div className="w-full max-w-6xl h-[88vh] bg-[var(--surface)] border border-[var(--border)] rounded-2xl shadow-2xl flex flex-col overflow-hidden animate-in zoom-in-95 duration-150 select-none">
+    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 md:p-6 bg-black/60 backdrop-blur-md animate-in fade-in duration-150">
+      <div className="flex h-[100dvh] w-full max-w-6xl flex-col overflow-hidden rounded-none border border-[var(--border)] bg-[var(--surface)] shadow-2xl animate-in zoom-in-95 duration-150 select-none sm:h-[88vh] sm:rounded-2xl">
         
         {/* Modal Top Header */}
-        <div className="h-14 border-b border-[var(--border)] px-4 sm:px-5 flex items-center justify-between shrink-0 bg-slate-50/80 dark:bg-black/30 gap-3">
+        <div className="min-h-14 border-b border-[var(--border)] px-3 sm:px-5 py-2 flex flex-wrap sm:flex-nowrap items-center justify-between shrink-0 bg-slate-50/80 dark:bg-black/30 gap-2 sm:gap-3">
           {/* Left: Identity */}
-          <div className="flex items-center gap-3 min-w-0 pr-2">
+          <div className="flex flex-1 items-center gap-2 sm:gap-3 min-w-0 pr-0 sm:pr-2">
             <div className="w-9 h-9 rounded-xl bg-black/[0.04] dark:bg-white/[0.06] border border-[var(--border)] flex items-center justify-center text-[var(--foreground)] shrink-0 shadow-2xs">
               <FileText className="w-4 h-4 text-[var(--accent)]" />
             </div>
@@ -427,7 +427,7 @@ export function PodLogsModal() {
           </div>
 
           {/* Right: Controls & Actions */}
-          <div className="flex items-center gap-2 shrink-0">
+          <div className="flex max-w-full items-center gap-2 overflow-x-auto shrink-0 scrollbar-none">
             {/* Container Selector (if multi-container pod) */}
             {containers.length > 1 && (
               <CustomSelect

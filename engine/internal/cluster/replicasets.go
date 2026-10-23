@@ -223,6 +223,9 @@ func (m *Manager) ScaleReplicaSet(ctx context.Context, p ReplicaSetActionParams)
 	if p.Replicas == nil {
 		return fmt.Errorf("replicas is required")
 	}
+	if *p.Replicas < 0 {
+		return fmt.Errorf("replicas must be zero or greater")
+	}
 
 	client, _, err := m.GetClientForContext(p.ContextName)
 	if err != nil {

@@ -2,7 +2,7 @@
 
 import * as React from "react";
 import { motion, AnimatePresence } from "motion/react";
-import {
+import { CheckSquare, Square,
   Copy,
   Check,
   ChevronRight,
@@ -27,15 +27,20 @@ import {
 
 export interface ReplicaSetTableRowProps {
   item: ReplicaSetSummary;
+  isSelected: boolean;
+  onToggleSelect: (key: string) => void;
   onViewPods: (replicaSet: ReplicaSetSummary) => void;
   onRowClick?: (replicaSet: ReplicaSetSummary) => void;
 }
 
 export function ReplicaSetTableRow({
   item,
+  isSelected,
+  onToggleSelect,
   onViewPods,
   onRowClick,
 }: ReplicaSetTableRowProps) {
+  const itemKey = `${item.namespace}/${item.name}`;
   const openWorkloadAction = useClusterStore(
     (state) => state.openWorkloadAction,
   );
@@ -161,10 +166,25 @@ export function ReplicaSetTableRow({
         }}
         className={cn(
           "hover:bg-[var(--surface-hover)] cursor-pointer transition-colors group h-9 text-xs",
+          isSelected && "bg-[var(--accent)]/5 dark:bg-[var(--accent)]/10",
           isExpanded && "bg-[var(--surface-hover)]/70",
         )}
       >
-        <td className="py-1 px-3 font-medium font-mono text-[var(--foreground)] truncate">
+                <td className="px-2 text-center" onClick={(event) => event.stopPropagation()}>
+          <button
+            type="button"
+            onClick={() => onToggleSelect(itemKey)}
+            className="text-[var(--muted)] hover:text-[var(--foreground)] flex items-center justify-center cursor-pointer"
+            aria-label={`Select ReplicaSet ${item.name}`}
+          >
+            {isSelected ? (
+              <CheckSquare className="w-3.5 h-3.5 text-[var(--accent)]" />
+            ) : (
+              <Square className="w-3.5 h-3.5 opacity-60 group-hover:opacity-100" />
+            )}
+          </button>
+        </td>
+<td className="py-1 px-3 font-medium font-mono text-[var(--foreground)] truncate">
           <div className="flex items-center gap-1 min-w-0">
             <Tooltip content={isExpanded ? "Collapse details" : "Expand details"}>
               <button
@@ -412,7 +432,7 @@ export function ReplicaSetTableRow({
         <tr className="bg-[var(--surface-active)]/15 dark:bg-white/[0.012] border-b border-[var(--border)]">
           <td
             className="py-3 px-4 pl-10 pr-6"
-            colSpan={9}
+            colSpan={10}
             onClick={(event) => event.stopPropagation()}
           >
             <motion.div

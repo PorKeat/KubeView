@@ -27,6 +27,28 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" suppressHydrationWarning className={`${inter.variable} ${GeistMono.variable}`}>
+      <head>
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `
+              (function () {
+                try {
+                  var raw = localStorage.getItem("kubeview-preferences");
+                  if (!raw) return;
+                  var parsed = JSON.parse(raw);
+                  var state = parsed && parsed.state ? parsed.state : {};
+                  if (state.fontSize) {
+                    document.documentElement.dataset.fontSize = state.fontSize;
+                  }
+                  if (state.reducedMotion === true) {
+                    document.documentElement.dataset.reducedMotion = "true";
+                  }
+                } catch (error) {}
+              })();
+            `,
+          }}
+        />
+      </head>
       <body suppressHydrationWarning className="h-screen w-screen font-sans antialiased overflow-hidden select-none">
         <ThemeProvider attribute="class" defaultTheme="dark" enableSystem disableTransitionOnChange>
           <QueryProvider>

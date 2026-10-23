@@ -6,6 +6,8 @@ import {
   Box,
   Layers,
   Repeat,
+  Cpu,
+  Clock,
   Network,
   Database,
   LayoutDashboard,
@@ -20,6 +22,7 @@ import {
   FileCode,
   Shield,
   Search,
+  Settings,
 } from "lucide-react";
 import { useLayoutStore } from "@/stores/layoutStore";
 import { useTabStore } from "@/stores/tabStore";
@@ -53,6 +56,18 @@ export function CommandPalette() {
     return () => document.removeEventListener("keydown", down);
   }, [commandPaletteOpen, setCommandPaletteOpen]);
 
+  React.useEffect(() => {
+    if (!commandPaletteOpen) return;
+    const handleEscape = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        event.preventDefault();
+        setCommandPaletteOpen(false);
+      }
+    };
+    window.addEventListener("keydown", handleEscape);
+    return () => window.removeEventListener("keydown", handleEscape);
+  }, [commandPaletteOpen, setCommandPaletteOpen]);
+
   if (!commandPaletteOpen) return null;
 
   const navigateTo = (id: string, title: string) => {
@@ -62,11 +77,11 @@ export function CommandPalette() {
 
   return (
     <div
-      className="fixed inset-0 z-50 bg-black/40 dark:bg-black/65 backdrop-blur-xs flex items-start justify-center pt-20 select-none animate-in fade-in duration-100"
+      className="fixed inset-0 z-50 bg-black/40 dark:bg-black/65 backdrop-blur-xs flex items-start justify-center pt-16 sm:pt-20 select-none animate-in fade-in duration-100"
       onClick={() => setCommandPaletteOpen(false)}
     >
       <div
-        className="w-full max-w-xl bg-[var(--surface-elevated)] border border-[var(--border)] rounded-xl shadow-2xl overflow-hidden animate-in zoom-in-95 duration-100"
+        className="w-[calc(100%-1.5rem)] max-w-xl bg-[var(--surface-elevated)] border border-[var(--border)] rounded-xl shadow-2xl overflow-hidden animate-in zoom-in-95 duration-100"
         onClick={(e) => e.stopPropagation()}
       >
         <Command className="w-full">
@@ -117,6 +132,27 @@ export function CommandPalette() {
               >
                 <Repeat className="w-4 h-4 text-cyan-500 dark:text-cyan-400" />
                 <span>ReplicaSets</span>
+              </Command.Item>
+              <Command.Item
+                onSelect={() => navigateTo("statefulsets", "StatefulSets")}
+                className="flex items-center gap-2.5 px-2.5 py-2 rounded-md cursor-pointer hover:bg-[var(--surface-hover)] text-[var(--foreground)] transition-colors"
+              >
+                <Database className="w-4 h-4 text-amber-500 dark:text-amber-400" />
+                <span>StatefulSets</span>
+              </Command.Item>
+              <Command.Item
+                onSelect={() => navigateTo("daemonsets", "DaemonSets")}
+                className="flex items-center gap-2.5 px-2.5 py-2 rounded-md cursor-pointer hover:bg-[var(--surface-hover)] text-[var(--foreground)] transition-colors"
+              >
+                <Cpu className="w-4 h-4 text-sky-500 dark:text-sky-400" />
+                <span>DaemonSets</span>
+              </Command.Item>
+              <Command.Item
+                onSelect={() => navigateTo("jobs", "Jobs & CronJobs")}
+                className="flex items-center gap-2.5 px-2.5 py-2 rounded-md cursor-pointer hover:bg-[var(--surface-hover)] text-[var(--foreground)] transition-colors"
+              >
+                <Clock className="w-4 h-4 text-violet-500 dark:text-violet-400" />
+                <span>Jobs &amp; CronJobs</span>
               </Command.Item>
               <Command.Item
                 disabled
@@ -277,6 +313,13 @@ export function CommandPalette() {
               >
                 <PanelLeftClose className="w-4 h-4 text-[var(--muted)]" />
                 <span>Toggle Sidebar Navigation</span>
+              </Command.Item>
+              <Command.Item
+                onSelect={() => navigateTo("settings", "Settings")}
+                className="flex items-center gap-2.5 px-2.5 py-2 rounded-md cursor-pointer hover:bg-[var(--surface-hover)] text-[var(--foreground)] transition-colors"
+              >
+                <Settings className="w-4 h-4 text-[var(--accent)]" />
+                <span>Settings &amp; Preferences</span>
               </Command.Item>
             </Command.Group>
           </Command.List>

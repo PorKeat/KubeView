@@ -388,6 +388,95 @@ func main() {
 		return res, nil
 	})
 
+	// Method: statefulsets.list
+	server.Register("statefulsets.list", func(params json.RawMessage) (interface{}, *ipc.RPCError) {
+		var p cluster.ListStatefulSetsParams
+		if len(params) > 0 {
+			_ = json.Unmarshal(params, &p)
+		}
+		ctxName := p.ContextName
+		if ctxName == "" {
+			if listRes, err := mgr.ListContexts(); err == nil {
+				ctxName = listRes.CurrentContext
+			}
+		}
+
+		ctx, cancel := context.WithTimeout(context.Background(), 16*time.Second)
+		defer cancel()
+
+		res, err := mgr.ListStatefulSets(ctx, ctxName, p.Namespace)
+		if err != nil {
+			return nil, &ipc.RPCError{
+				Code:    ipc.ErrK8sConnFailed,
+				Message: fmt.Sprintf("Failed to list statefulsets: %v", err),
+			}
+		}
+		return res, nil
+	})
+
+	// Method: daemonsets.list
+	server.Register("daemonsets.list", func(params json.RawMessage) (interface{}, *ipc.RPCError) {
+		var p cluster.ListDaemonSetsParams
+		if len(params) > 0 {
+			_ = json.Unmarshal(params, &p)
+		}
+		ctxName := p.ContextName
+		if ctxName == "" {
+			if listRes, err := mgr.ListContexts(); err == nil {
+				ctxName = listRes.CurrentContext
+			}
+		}
+		ctx, cancel := context.WithTimeout(context.Background(), 16*time.Second)
+		defer cancel()
+		res, err := mgr.ListDaemonSets(ctx, ctxName, p.Namespace)
+		if err != nil {
+			return nil, &ipc.RPCError{Code: ipc.ErrK8sConnFailed, Message: fmt.Sprintf("Failed to list daemonsets: %v", err)}
+		}
+		return res, nil
+	})
+
+	// Method: jobs.list
+	server.Register("jobs.list", func(params json.RawMessage) (interface{}, *ipc.RPCError) {
+		var p cluster.ListJobsParams
+		if len(params) > 0 {
+			_ = json.Unmarshal(params, &p)
+		}
+		ctxName := p.ContextName
+		if ctxName == "" {
+			if listRes, err := mgr.ListContexts(); err == nil {
+				ctxName = listRes.CurrentContext
+			}
+		}
+		ctx, cancel := context.WithTimeout(context.Background(), 16*time.Second)
+		defer cancel()
+		res, err := mgr.ListJobs(ctx, ctxName, p.Namespace)
+		if err != nil {
+			return nil, &ipc.RPCError{Code: ipc.ErrK8sConnFailed, Message: fmt.Sprintf("Failed to list jobs: %v", err)}
+		}
+		return res, nil
+	})
+
+	// Method: cronjobs.list
+	server.Register("cronjobs.list", func(params json.RawMessage) (interface{}, *ipc.RPCError) {
+		var p cluster.ListCronJobsParams
+		if len(params) > 0 {
+			_ = json.Unmarshal(params, &p)
+		}
+		ctxName := p.ContextName
+		if ctxName == "" {
+			if listRes, err := mgr.ListContexts(); err == nil {
+				ctxName = listRes.CurrentContext
+			}
+		}
+		ctx, cancel := context.WithTimeout(context.Background(), 16*time.Second)
+		defer cancel()
+		res, err := mgr.ListCronJobs(ctx, ctxName, p.Namespace)
+		if err != nil {
+			return nil, &ipc.RPCError{Code: ipc.ErrK8sConnFailed, Message: fmt.Sprintf("Failed to list cronjobs: %v", err)}
+		}
+		return res, nil
+	})
+
 	// Method: pods.logs
 	server.Register("pods.logs", func(params json.RawMessage) (interface{}, *ipc.RPCError) {
 		var p cluster.PodLogsParams
@@ -554,8 +643,8 @@ func main() {
 		if err := json.Unmarshal(params, &p); err != nil {
 			return nil, &ipc.RPCError{Code: ipc.ErrCodeInvalidParams, Message: fmt.Sprintf("Invalid params: %v", err)}
 		}
-		if p.Name == "" || p.Replicas == nil {
-			return nil, &ipc.RPCError{Code: ipc.ErrCodeInvalidParams, Message: "name and replicas are required"}
+		if p.Name == "" || p.Replicas == nil || *p.Replicas < 0 {
+			return nil, &ipc.RPCError{Code: ipc.ErrCodeInvalidParams, Message: "name and non-negative replicas are required"}
 		}
 		if p.ContextName == "" {
 			if listRes, err := mgr.ListContexts(); err == nil {
@@ -598,8 +687,8 @@ func main() {
 		if err := json.Unmarshal(params, &p); err != nil {
 			return nil, &ipc.RPCError{Code: ipc.ErrCodeInvalidParams, Message: fmt.Sprintf("Invalid params: %v", err)}
 		}
-		if p.Name == "" || p.Replicas == nil {
-			return nil, &ipc.RPCError{Code: ipc.ErrCodeInvalidParams, Message: "name and replicas are required"}
+		if p.Name == "" || p.Replicas == nil || *p.Replicas < 0 {
+			return nil, &ipc.RPCError{Code: ipc.ErrCodeInvalidParams, Message: "name and non-negative replicas are required"}
 		}
 		if p.ContextName == "" {
 			if listRes, err := mgr.ListContexts(); err == nil {
@@ -634,6 +723,227 @@ func main() {
 			return nil, &ipc.RPCError{Code: ipc.ErrCodeInternalError, Message: fmt.Sprintf("Failed to delete replicaset: %v", err)}
 		}
 		return map[string]interface{}{"success": true, "name": p.Name}, nil
+	})
+
+	// Method: statefulsets.restart
+	server.Register("statefulsets.restart", func(params json.RawMessage) (interface{}, *ipc.RPCError) {
+		var p cluster.StatefulSetActionParams
+		if err := json.Unmarshal(params, &p); err != nil {
+			return nil, &ipc.RPCError{Code: ipc.ErrCodeInvalidParams, Message: fmt.Sprintf("Invalid params: %v", err)}
+		}
+		if p.Name == "" {
+			return nil, &ipc.RPCError{Code: ipc.ErrCodeInvalidParams, Message: "name is required"}
+		}
+		if p.ContextName == "" {
+			if listRes, err := mgr.ListContexts(); err == nil {
+				p.ContextName = listRes.CurrentContext
+			}
+		}
+		ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+		defer cancel()
+		if err := mgr.RestartStatefulSet(ctx, p); err != nil {
+			return nil, &ipc.RPCError{Code: ipc.ErrCodeInternalError, Message: fmt.Sprintf("Failed to restart statefulset: %v", err)}
+		}
+		return map[string]interface{}{"success": true, "name": p.Name}, nil
+	})
+
+	// Method: statefulsets.scale
+	server.Register("statefulsets.scale", func(params json.RawMessage) (interface{}, *ipc.RPCError) {
+		var p cluster.StatefulSetActionParams
+		if err := json.Unmarshal(params, &p); err != nil {
+			return nil, &ipc.RPCError{Code: ipc.ErrCodeInvalidParams, Message: fmt.Sprintf("Invalid params: %v", err)}
+		}
+		if p.Name == "" || p.Replicas == nil || *p.Replicas < 0 {
+			return nil, &ipc.RPCError{Code: ipc.ErrCodeInvalidParams, Message: "name and non-negative replicas are required"}
+		}
+		if p.ContextName == "" {
+			if listRes, err := mgr.ListContexts(); err == nil {
+				p.ContextName = listRes.CurrentContext
+			}
+		}
+		ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+		defer cancel()
+		if err := mgr.ScaleStatefulSet(ctx, p); err != nil {
+			return nil, &ipc.RPCError{Code: ipc.ErrCodeInternalError, Message: fmt.Sprintf("Failed to scale statefulset: %v", err)}
+		}
+		return map[string]interface{}{"success": true, "name": p.Name, "replicas": *p.Replicas}, nil
+	})
+
+	// Method: statefulsets.delete
+	server.Register("statefulsets.delete", func(params json.RawMessage) (interface{}, *ipc.RPCError) {
+		var p cluster.StatefulSetActionParams
+		if err := json.Unmarshal(params, &p); err != nil {
+			return nil, &ipc.RPCError{Code: ipc.ErrCodeInvalidParams, Message: fmt.Sprintf("Invalid params: %v", err)}
+		}
+		if p.Name == "" {
+			return nil, &ipc.RPCError{Code: ipc.ErrCodeInvalidParams, Message: "name is required"}
+		}
+		if p.ContextName == "" {
+			if listRes, err := mgr.ListContexts(); err == nil {
+				p.ContextName = listRes.CurrentContext
+			}
+		}
+		ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+		defer cancel()
+		if err := mgr.DeleteStatefulSet(ctx, p); err != nil {
+			return nil, &ipc.RPCError{Code: ipc.ErrCodeInternalError, Message: fmt.Sprintf("Failed to delete statefulset: %v", err)}
+		}
+		return map[string]interface{}{"success": true, "name": p.Name}, nil
+	})
+
+	// Method: daemonsets.restart
+	server.Register("daemonsets.restart", func(params json.RawMessage) (interface{}, *ipc.RPCError) {
+		var p cluster.DaemonSetActionParams
+		if err := json.Unmarshal(params, &p); err != nil {
+			return nil, &ipc.RPCError{Code: ipc.ErrCodeInvalidParams, Message: fmt.Sprintf("Invalid params: %v", err)}
+		}
+		if p.Name == "" {
+			return nil, &ipc.RPCError{Code: ipc.ErrCodeInvalidParams, Message: "name is required"}
+		}
+		if p.ContextName == "" {
+			if listRes, err := mgr.ListContexts(); err == nil {
+				p.ContextName = listRes.CurrentContext
+			}
+		}
+		ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+		defer cancel()
+		if err := mgr.RestartDaemonSet(ctx, p); err != nil {
+			return nil, &ipc.RPCError{Code: ipc.ErrCodeInternalError, Message: fmt.Sprintf("Failed to restart daemonset: %v", err)}
+		}
+		return map[string]interface{}{"success": true, "name": p.Name}, nil
+	})
+
+	// Method: daemonsets.delete
+	server.Register("daemonsets.delete", func(params json.RawMessage) (interface{}, *ipc.RPCError) {
+		var p cluster.DaemonSetActionParams
+		if err := json.Unmarshal(params, &p); err != nil {
+			return nil, &ipc.RPCError{Code: ipc.ErrCodeInvalidParams, Message: fmt.Sprintf("Invalid params: %v", err)}
+		}
+		if p.Name == "" {
+			return nil, &ipc.RPCError{Code: ipc.ErrCodeInvalidParams, Message: "name is required"}
+		}
+		if p.ContextName == "" {
+			if listRes, err := mgr.ListContexts(); err == nil {
+				p.ContextName = listRes.CurrentContext
+			}
+		}
+		ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+		defer cancel()
+		if err := mgr.DeleteDaemonSet(ctx, p); err != nil {
+			return nil, &ipc.RPCError{Code: ipc.ErrCodeInternalError, Message: fmt.Sprintf("Failed to delete daemonset: %v", err)}
+		}
+		return map[string]interface{}{"success": true, "name": p.Name}, nil
+	})
+
+	// Method: jobs.delete
+	server.Register("jobs.delete", func(params json.RawMessage) (interface{}, *ipc.RPCError) {
+		var p cluster.JobActionParams
+		if err := json.Unmarshal(params, &p); err != nil {
+			return nil, &ipc.RPCError{Code: ipc.ErrCodeInvalidParams, Message: fmt.Sprintf("Invalid params: %v", err)}
+		}
+		if p.Name == "" {
+			return nil, &ipc.RPCError{Code: ipc.ErrCodeInvalidParams, Message: "name is required"}
+		}
+		if p.ContextName == "" {
+			if listRes, err := mgr.ListContexts(); err == nil {
+				p.ContextName = listRes.CurrentContext
+			}
+		}
+		ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+		defer cancel()
+		if err := mgr.DeleteJob(ctx, p); err != nil {
+			return nil, &ipc.RPCError{Code: ipc.ErrCodeInternalError, Message: fmt.Sprintf("Failed to delete job: %v", err)}
+		}
+		return map[string]interface{}{"success": true, "name": p.Name}, nil
+	})
+
+	// Method: cronjobs.suspend
+	server.Register("cronjobs.suspend", func(params json.RawMessage) (interface{}, *ipc.RPCError) {
+		var p cluster.CronJobActionParams
+		if err := json.Unmarshal(params, &p); err != nil {
+			return nil, &ipc.RPCError{Code: ipc.ErrCodeInvalidParams, Message: fmt.Sprintf("Invalid params: %v", err)}
+		}
+		if p.Name == "" {
+			return nil, &ipc.RPCError{Code: ipc.ErrCodeInvalidParams, Message: "name is required"}
+		}
+		if p.ContextName == "" {
+			if listRes, err := mgr.ListContexts(); err == nil {
+				p.ContextName = listRes.CurrentContext
+			}
+		}
+		ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+		defer cancel()
+		if err := mgr.SetCronJobSuspend(ctx, p, true); err != nil {
+			return nil, &ipc.RPCError{Code: ipc.ErrCodeInternalError, Message: fmt.Sprintf("Failed to suspend cronjob: %v", err)}
+		}
+		return map[string]interface{}{"success": true, "name": p.Name, "suspend": true}, nil
+	})
+
+	// Method: cronjobs.resume
+	server.Register("cronjobs.resume", func(params json.RawMessage) (interface{}, *ipc.RPCError) {
+		var p cluster.CronJobActionParams
+		if err := json.Unmarshal(params, &p); err != nil {
+			return nil, &ipc.RPCError{Code: ipc.ErrCodeInvalidParams, Message: fmt.Sprintf("Invalid params: %v", err)}
+		}
+		if p.Name == "" {
+			return nil, &ipc.RPCError{Code: ipc.ErrCodeInvalidParams, Message: "name is required"}
+		}
+		if p.ContextName == "" {
+			if listRes, err := mgr.ListContexts(); err == nil {
+				p.ContextName = listRes.CurrentContext
+			}
+		}
+		ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+		defer cancel()
+		if err := mgr.SetCronJobSuspend(ctx, p, false); err != nil {
+			return nil, &ipc.RPCError{Code: ipc.ErrCodeInternalError, Message: fmt.Sprintf("Failed to resume cronjob: %v", err)}
+		}
+		return map[string]interface{}{"success": true, "name": p.Name, "suspend": false}, nil
+	})
+
+	// Method: cronjobs.delete
+	server.Register("cronjobs.delete", func(params json.RawMessage) (interface{}, *ipc.RPCError) {
+		var p cluster.CronJobActionParams
+		if err := json.Unmarshal(params, &p); err != nil {
+			return nil, &ipc.RPCError{Code: ipc.ErrCodeInvalidParams, Message: fmt.Sprintf("Invalid params: %v", err)}
+		}
+		if p.Name == "" {
+			return nil, &ipc.RPCError{Code: ipc.ErrCodeInvalidParams, Message: "name is required"}
+		}
+		if p.ContextName == "" {
+			if listRes, err := mgr.ListContexts(); err == nil {
+				p.ContextName = listRes.CurrentContext
+			}
+		}
+		ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+		defer cancel()
+		if err := mgr.DeleteCronJob(ctx, p); err != nil {
+			return nil, &ipc.RPCError{Code: ipc.ErrCodeInternalError, Message: fmt.Sprintf("Failed to delete cronjob: %v", err)}
+		}
+		return map[string]interface{}{"success": true, "name": p.Name}, nil
+	})
+
+	// Method: cronjobs.trigger
+	server.Register("cronjobs.trigger", func(params json.RawMessage) (interface{}, *ipc.RPCError) {
+		var p cluster.CronJobActionParams
+		if err := json.Unmarshal(params, &p); err != nil {
+			return nil, &ipc.RPCError{Code: ipc.ErrCodeInvalidParams, Message: fmt.Sprintf("Invalid params: %v", err)}
+		}
+		if p.Name == "" {
+			return nil, &ipc.RPCError{Code: ipc.ErrCodeInvalidParams, Message: "name is required"}
+		}
+		if p.ContextName == "" {
+			if listRes, err := mgr.ListContexts(); err == nil {
+				p.ContextName = listRes.CurrentContext
+			}
+		}
+		ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+		defer cancel()
+		jobName, err := mgr.TriggerCronJob(ctx, p)
+		if err != nil {
+			return nil, &ipc.RPCError{Code: ipc.ErrCodeInternalError, Message: fmt.Sprintf("Failed to trigger cronjob: %v", err)}
+		}
+		return map[string]interface{}{"success": true, "name": p.Name, "jobName": jobName}, nil
 	})
 
 	// Method: deployments.yaml
@@ -684,6 +994,104 @@ func main() {
 		res, err := mgr.GetReplicaSetYaml(ctx, p.ContextName, p.Namespace, p.ReplicaSetName)
 		if err != nil {
 			return nil, &ipc.RPCError{Code: ipc.ErrCodeInternalError, Message: fmt.Sprintf("Failed to get replicaset YAML: %v", err)}
+		}
+		return res, nil
+	})
+
+	// Method: statefulsets.yaml
+	server.Register("statefulsets.yaml", func(params json.RawMessage) (interface{}, *ipc.RPCError) {
+		var p struct {
+			ContextName     string `json:"contextName"`
+			Namespace       string `json:"namespace"`
+			StatefulSetName string `json:"statefulSetName"`
+		}
+		if err := json.Unmarshal(params, &p); err != nil {
+			return nil, &ipc.RPCError{Code: ipc.ErrCodeInvalidParams, Message: fmt.Sprintf("Invalid params: %v", err)}
+		}
+		if p.ContextName == "" {
+			if listRes, err := mgr.ListContexts(); err == nil {
+				p.ContextName = listRes.CurrentContext
+			}
+		}
+
+		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+		defer cancel()
+
+		res, err := mgr.GetStatefulSetYaml(ctx, p.ContextName, p.Namespace, p.StatefulSetName)
+		if err != nil {
+			return nil, &ipc.RPCError{Code: ipc.ErrCodeInternalError, Message: fmt.Sprintf("Failed to get statefulset YAML: %v", err)}
+		}
+		return res, nil
+	})
+
+	// Method: daemonsets.yaml
+	server.Register("daemonsets.yaml", func(params json.RawMessage) (interface{}, *ipc.RPCError) {
+		var p struct {
+			ContextName   string `json:"contextName"`
+			Namespace     string `json:"namespace"`
+			DaemonSetName string `json:"daemonSetName"`
+		}
+		if err := json.Unmarshal(params, &p); err != nil {
+			return nil, &ipc.RPCError{Code: ipc.ErrCodeInvalidParams, Message: fmt.Sprintf("Invalid params: %v", err)}
+		}
+		if p.ContextName == "" {
+			if listRes, err := mgr.ListContexts(); err == nil {
+				p.ContextName = listRes.CurrentContext
+			}
+		}
+		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+		defer cancel()
+		res, err := mgr.GetDaemonSetYaml(ctx, p.ContextName, p.Namespace, p.DaemonSetName)
+		if err != nil {
+			return nil, &ipc.RPCError{Code: ipc.ErrCodeInternalError, Message: fmt.Sprintf("Failed to get daemonset YAML: %v", err)}
+		}
+		return res, nil
+	})
+
+	// Method: jobs.yaml
+	server.Register("jobs.yaml", func(params json.RawMessage) (interface{}, *ipc.RPCError) {
+		var p struct {
+			ContextName string `json:"contextName"`
+			Namespace   string `json:"namespace"`
+			JobName     string `json:"jobName"`
+		}
+		if err := json.Unmarshal(params, &p); err != nil {
+			return nil, &ipc.RPCError{Code: ipc.ErrCodeInvalidParams, Message: fmt.Sprintf("Invalid params: %v", err)}
+		}
+		if p.ContextName == "" {
+			if listRes, err := mgr.ListContexts(); err == nil {
+				p.ContextName = listRes.CurrentContext
+			}
+		}
+		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+		defer cancel()
+		res, err := mgr.GetJobYaml(ctx, p.ContextName, p.Namespace, p.JobName)
+		if err != nil {
+			return nil, &ipc.RPCError{Code: ipc.ErrCodeInternalError, Message: fmt.Sprintf("Failed to get job YAML: %v", err)}
+		}
+		return res, nil
+	})
+
+	// Method: cronjobs.yaml
+	server.Register("cronjobs.yaml", func(params json.RawMessage) (interface{}, *ipc.RPCError) {
+		var p struct {
+			ContextName string `json:"contextName"`
+			Namespace   string `json:"namespace"`
+			CronJobName string `json:"cronJobName"`
+		}
+		if err := json.Unmarshal(params, &p); err != nil {
+			return nil, &ipc.RPCError{Code: ipc.ErrCodeInvalidParams, Message: fmt.Sprintf("Invalid params: %v", err)}
+		}
+		if p.ContextName == "" {
+			if listRes, err := mgr.ListContexts(); err == nil {
+				p.ContextName = listRes.CurrentContext
+			}
+		}
+		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+		defer cancel()
+		res, err := mgr.GetCronJobYaml(ctx, p.ContextName, p.Namespace, p.CronJobName)
+		if err != nil {
+			return nil, &ipc.RPCError{Code: ipc.ErrCodeInternalError, Message: fmt.Sprintf("Failed to get cronjob YAML: %v", err)}
 		}
 		return res, nil
 	})

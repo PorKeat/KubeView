@@ -17,6 +17,19 @@ import type {
   ListReplicaSetsResult,
   DeploymentActionParams,
   ReplicaSetActionParams,
+  StatefulSetSummary,
+  ListStatefulSetsResult,
+  StatefulSetActionParams,
+  DaemonSetSummary,
+  ListDaemonSetsResult,
+  DaemonSetActionParams,
+  JobSummary,
+  ListJobsResult,
+  JobActionParams,
+  CronJobSummary,
+  ListCronJobsResult,
+  CronJobActionParams,
+  CronJobTriggerResult,
   PodLogsParams,
   PodLogsResult,
   DeletePodParams,
@@ -41,6 +54,10 @@ export * from "./clusterTypes";
 const inFlightPodsPromises = new Map<string, Promise<void>>();
 const inFlightDeploymentsPromises = new Map<string, Promise<void>>();
 const inFlightReplicaSetsPromises = new Map<string, Promise<void>>();
+const inFlightStatefulSetsPromises = new Map<string, Promise<void>>();
+const inFlightDaemonSetsPromises = new Map<string, Promise<void>>();
+const inFlightJobsPromises = new Map<string, Promise<void>>();
+const inFlightCronJobsPromises = new Map<string, Promise<void>>();
 const inFlightOverviewPromises = new Map<string, Promise<ClusterOverviewResult | null>>();
 let contextSwitchSeq = 0;
 
@@ -79,6 +96,24 @@ export const useClusterStore = create<ClusterState>((set, get) => ({
   totalReplicaSetsCount: 0,
   isReplicaSetsLoading: true,
   hasLoadedReplicaSetsOnce: false,
+  statefulSets: [],
+  totalStatefulSetsCount: 0,
+  isStatefulSetsLoading: true,
+  hasLoadedStatefulSetsOnce: false,
+  daemonSets: [],
+  totalDaemonSetsCount: 0,
+  isDaemonSetsLoading: true,
+  hasLoadedDaemonSetsOnce: false,
+  jobs: [],
+  totalJobsCount: 0,
+  isJobsLoading: true,
+  hasLoadedJobsOnce: false,
+  jobOwnerFilter: null,
+  jobsViewMode: "jobs",
+  cronJobs: [],
+  totalCronJobsCount: 0,
+  isCronJobsLoading: true,
+  hasLoadedCronJobsOnce: false,
   setPodNodeFilter: (nodeName) => {
     set({ podNodeFilter: nodeName });
     if (get().pods.length === 0 && get().currentContext) {
@@ -89,6 +124,8 @@ export const useClusterStore = create<ClusterState>((set, get) => ({
   setPodLabelFilter: (selector, source = null) => {
     set({ podLabelFilter: selector, podLabelFilterSource: source });
   },
+  setJobOwnerFilter: (owner) => set({ jobOwnerFilter: owner }),
+  setJobsViewMode: (mode) => set({ jobsViewMode: mode }),
 
   detectedSystemConfigs: [],
   isDetectingConfigs: false,
@@ -100,6 +137,7 @@ export const useClusterStore = create<ClusterState>((set, get) => ({
   bulkDeleteConfirmPods: null,
   bulkRestartConfirmPods: null,
   workloadAction: null,
+  bulkWorkloadAction: null,
 
   autoRefreshInterval: 0,
   setAutoRefreshInterval: (interval) => set({ autoRefreshInterval: interval }),
@@ -135,6 +173,66 @@ export const useClusterStore = create<ClusterState>((set, get) => ({
 
   openWorkloadAction: (action) => set({ workloadAction: action }),
   closeWorkloadAction: () => set({ workloadAction: null }),
+  openBulkWorkloadAction: (action) => set({ bulkWorkloadAction: action }),
+  closeBulkWorkloadAction: () => set({ bulkWorkloadAction: null }),
+
+  executeBulkWorkloadAction: async (action) => {
+    const targetCtx = get().currentContext;
+    let succeeded = 0;
+    let failed = 0;
+
+    for (const target of action.targets) {
+      const params = {
+        name: target.name,
+        namespace: target.namespace,
+        contextName: targetCtx,
+      };
+      try {
+        if (action.kind === "ReplicaSet") {
+          await invokeRpc("replicasets.delete", params);
+        } else if (action.kind === "StatefulSet") {
+          await invokeRpc(
+            action.action === "restart"
+              ? "statefulsets.restart"
+              : "statefulsets.delete",
+            params,
+          );
+        } else if (action.kind === "DaemonSet") {
+          await invokeRpc(
+            action.action === "restart"
+              ? "daemonsets.restart"
+              : "daemonsets.delete",
+            params,
+          );
+        } else {
+          await invokeRpc("jobs.delete", params);
+        }
+        succeeded += 1;
+      } catch (error) {
+        failed += 1;
+        console.error(
+          `Bulk ${action.action} failed for ${action.kind} ${target.namespace}/${target.name}:`,
+          error,
+        );
+      }
+    }
+
+    if (succeeded > 0) {
+      if (action.kind === "ReplicaSet") {
+        await get().loadReplicaSets();
+      } else if (action.kind === "StatefulSet") {
+        await get().loadStatefulSets();
+      } else if (action.kind === "DaemonSet") {
+        await get().loadDaemonSets();
+      } else {
+        await get().loadJobs();
+      }
+      await get().loadPods();
+      await get().loadClusterOverview();
+    }
+
+    return { succeeded, failed };
+  },
 
   loadContexts: async () => {
     set({ isLoading: true });
@@ -189,6 +287,24 @@ export const useClusterStore = create<ClusterState>((set, get) => ({
           totalReplicaSetsCount: 0,
           isReplicaSetsLoading: false,
           hasLoadedReplicaSetsOnce: true,
+          statefulSets: [],
+          totalStatefulSetsCount: 0,
+          isStatefulSetsLoading: false,
+          hasLoadedStatefulSetsOnce: true,
+          daemonSets: [],
+          totalDaemonSetsCount: 0,
+          isDaemonSetsLoading: false,
+          hasLoadedDaemonSetsOnce: true,
+          jobs: [],
+          totalJobsCount: 0,
+          isJobsLoading: false,
+          hasLoadedJobsOnce: true,
+          jobOwnerFilter: null,
+          jobsViewMode: "jobs",
+          cronJobs: [],
+          totalCronJobsCount: 0,
+          isCronJobsLoading: false,
+          hasLoadedCronJobsOnce: true,
         });
       }
     } catch (err) {
@@ -211,6 +327,24 @@ export const useClusterStore = create<ClusterState>((set, get) => ({
         totalReplicaSetsCount: 0,
         isReplicaSetsLoading: false,
         hasLoadedReplicaSetsOnce: true,
+        statefulSets: [],
+        totalStatefulSetsCount: 0,
+        isStatefulSetsLoading: false,
+        hasLoadedStatefulSetsOnce: true,
+        daemonSets: [],
+        totalDaemonSetsCount: 0,
+        isDaemonSetsLoading: false,
+        hasLoadedDaemonSetsOnce: true,
+        jobs: [],
+        totalJobsCount: 0,
+        isJobsLoading: false,
+        hasLoadedJobsOnce: true,
+        jobOwnerFilter: null,
+        jobsViewMode: "jobs",
+        cronJobs: [],
+        totalCronJobsCount: 0,
+        isCronJobsLoading: false,
+        hasLoadedCronJobsOnce: true,
       });
     }
   },
@@ -228,6 +362,7 @@ export const useClusterStore = create<ClusterState>((set, get) => ({
       podLabelFilter: null,
       podLabelFilterSource: null,
       workloadAction: null,
+      bulkWorkloadAction: null,
       deployments: [],
       totalDeploymentsCount: 0,
       isDeploymentsLoading: true,
@@ -236,6 +371,24 @@ export const useClusterStore = create<ClusterState>((set, get) => ({
       totalReplicaSetsCount: 0,
       isReplicaSetsLoading: true,
       hasLoadedReplicaSetsOnce: false,
+      statefulSets: [],
+      totalStatefulSetsCount: 0,
+      isStatefulSetsLoading: true,
+      hasLoadedStatefulSetsOnce: false,
+      daemonSets: [],
+      totalDaemonSetsCount: 0,
+      isDaemonSetsLoading: true,
+      hasLoadedDaemonSetsOnce: false,
+      jobs: [],
+      totalJobsCount: 0,
+      isJobsLoading: true,
+      hasLoadedJobsOnce: false,
+      jobOwnerFilter: null,
+      jobsViewMode: "jobs",
+      cronJobs: [],
+      totalCronJobsCount: 0,
+      isCronJobsLoading: true,
+      hasLoadedCronJobsOnce: false,
     });
 
     try {
@@ -586,6 +739,238 @@ export const useClusterStore = create<ClusterState>((set, get) => ({
     return promise;
   },
 
+  loadStatefulSets: async (namespace?: string, contextName?: string) => {
+    const targetCtx = contextName || get().currentContext;
+    if (!targetCtx) {
+      set({ statefulSets: [], totalStatefulSetsCount: 0, isStatefulSetsLoading: false });
+      return;
+    }
+
+    const rbac = get().rbacMode;
+    const targetNs = namespace ?? get().currentNamespace;
+    const queryNs = rbac === "namespace-scoped" && targetNs !== "all" ? targetNs : "";
+    const fetchKey = `${targetCtx}::${queryNs}`;
+
+    if (inFlightStatefulSetsPromises.has(fetchKey)) {
+      return inFlightStatefulSetsPromises.get(fetchKey);
+    }
+
+    if (get().statefulSets.length === 0 && get().currentContext === targetCtx) {
+      set({ isStatefulSetsLoading: true });
+    }
+
+    const promise = (async () => {
+      try {
+        const res = await invokeRpc<ListStatefulSetsResult>("statefulsets.list", {
+          contextName: targetCtx,
+          namespace: queryNs,
+        });
+
+        if (get().currentContext === targetCtx) {
+          if (res && res.items) {
+            set({
+              statefulSets: res.items,
+              totalStatefulSetsCount: res.totalCount ?? res.items.length,
+              isStatefulSetsLoading: false,
+              hasLoadedStatefulSetsOnce: true,
+            });
+          } else {
+            set({
+              statefulSets: [],
+              totalStatefulSetsCount: 0,
+              isStatefulSetsLoading: false,
+              hasLoadedStatefulSetsOnce: true,
+            });
+          }
+        }
+      } catch (err) {
+        console.warn("[ClusterStore] Failed to load stateful sets:", err);
+        if (get().currentContext === targetCtx) {
+          set({ isStatefulSetsLoading: false, hasLoadedStatefulSetsOnce: true });
+        }
+      } finally {
+        inFlightStatefulSetsPromises.delete(fetchKey);
+      }
+    })();
+
+    inFlightStatefulSetsPromises.set(fetchKey, promise);
+    return promise;
+  },
+
+  loadDaemonSets: async (namespace?: string, contextName?: string) => {
+    const targetCtx = contextName || get().currentContext;
+    if (!targetCtx) {
+      set({ daemonSets: [], totalDaemonSetsCount: 0, isDaemonSetsLoading: false });
+      return;
+    }
+
+    const rbac = get().rbacMode;
+    const targetNs = namespace ?? get().currentNamespace;
+    const queryNs = rbac === "namespace-scoped" && targetNs !== "all" ? targetNs : "";
+    const fetchKey = `${targetCtx}::${queryNs}`;
+
+    if (inFlightDaemonSetsPromises.has(fetchKey)) {
+      return inFlightDaemonSetsPromises.get(fetchKey);
+    }
+
+    if (get().daemonSets.length === 0 && get().currentContext === targetCtx) {
+      set({ isDaemonSetsLoading: true });
+    }
+
+    const promise = (async () => {
+      try {
+        const res = await invokeRpc<ListDaemonSetsResult>("daemonsets.list", {
+          contextName: targetCtx,
+          namespace: queryNs,
+        });
+
+        if (get().currentContext === targetCtx) {
+          if (res && res.items) {
+            set({
+              daemonSets: res.items,
+              totalDaemonSetsCount: res.totalCount ?? res.items.length,
+              isDaemonSetsLoading: false,
+              hasLoadedDaemonSetsOnce: true,
+            });
+          } else {
+            set({
+              daemonSets: [],
+              totalDaemonSetsCount: 0,
+              isDaemonSetsLoading: false,
+              hasLoadedDaemonSetsOnce: true,
+            });
+          }
+        }
+      } catch (err) {
+        console.warn("[ClusterStore] Failed to load daemonsets:", err);
+        if (get().currentContext === targetCtx) {
+          set({ isDaemonSetsLoading: false, hasLoadedDaemonSetsOnce: true });
+        }
+      } finally {
+        inFlightDaemonSetsPromises.delete(fetchKey);
+      }
+    })();
+
+    inFlightDaemonSetsPromises.set(fetchKey, promise);
+    return promise;
+  },
+
+  loadJobs: async (namespace?: string, contextName?: string) => {
+    const targetCtx = contextName || get().currentContext;
+    if (!targetCtx) {
+      set({ jobs: [], totalJobsCount: 0, isJobsLoading: false });
+      return;
+    }
+
+    const rbac = get().rbacMode;
+    const targetNs = namespace ?? get().currentNamespace;
+    const queryNs = rbac === "namespace-scoped" && targetNs !== "all" ? targetNs : "";
+    const fetchKey = `${targetCtx}::${queryNs}`;
+
+    if (inFlightJobsPromises.has(fetchKey)) {
+      return inFlightJobsPromises.get(fetchKey);
+    }
+
+    if (get().jobs.length === 0 && get().currentContext === targetCtx) {
+      set({ isJobsLoading: true });
+    }
+
+    const promise = (async () => {
+      try {
+        const res = await invokeRpc<ListJobsResult>("jobs.list", {
+          contextName: targetCtx,
+          namespace: queryNs,
+        });
+
+        if (get().currentContext === targetCtx) {
+          if (res && res.items) {
+            set({
+              jobs: res.items,
+              totalJobsCount: res.totalCount ?? res.items.length,
+              isJobsLoading: false,
+              hasLoadedJobsOnce: true,
+            });
+          } else {
+            set({
+              jobs: [],
+              totalJobsCount: 0,
+              isJobsLoading: false,
+              hasLoadedJobsOnce: true,
+            });
+          }
+        }
+      } catch (err) {
+        console.warn("[ClusterStore] Failed to load jobs:", err);
+        if (get().currentContext === targetCtx) {
+          set({ isJobsLoading: false, hasLoadedJobsOnce: true });
+        }
+      } finally {
+        inFlightJobsPromises.delete(fetchKey);
+      }
+    })();
+
+    inFlightJobsPromises.set(fetchKey, promise);
+    return promise;
+  },
+
+  loadCronJobs: async (namespace?: string, contextName?: string) => {
+    const targetCtx = contextName || get().currentContext;
+    if (!targetCtx) {
+      set({ cronJobs: [], totalCronJobsCount: 0, isCronJobsLoading: false });
+      return;
+    }
+
+    const rbac = get().rbacMode;
+    const targetNs = namespace ?? get().currentNamespace;
+    const queryNs = rbac === "namespace-scoped" && targetNs !== "all" ? targetNs : "";
+    const fetchKey = `${targetCtx}::${queryNs}`;
+
+    if (inFlightCronJobsPromises.has(fetchKey)) {
+      return inFlightCronJobsPromises.get(fetchKey);
+    }
+
+    if (get().cronJobs.length === 0 && get().currentContext === targetCtx) {
+      set({ isCronJobsLoading: true });
+    }
+
+    const promise = (async () => {
+      try {
+        const res = await invokeRpc<ListCronJobsResult>("cronjobs.list", {
+          contextName: targetCtx,
+          namespace: queryNs,
+        });
+
+        if (get().currentContext === targetCtx) {
+          if (res && res.items) {
+            set({
+              cronJobs: res.items,
+              totalCronJobsCount: res.totalCount ?? res.items.length,
+              isCronJobsLoading: false,
+              hasLoadedCronJobsOnce: true,
+            });
+          } else {
+            set({
+              cronJobs: [],
+              totalCronJobsCount: 0,
+              isCronJobsLoading: false,
+              hasLoadedCronJobsOnce: true,
+            });
+          }
+        }
+      } catch (err) {
+        console.warn("[ClusterStore] Failed to load cronjobs:", err);
+        if (get().currentContext === targetCtx) {
+          set({ isCronJobsLoading: false, hasLoadedCronJobsOnce: true });
+        }
+      } finally {
+        inFlightCronJobsPromises.delete(fetchKey);
+      }
+    })();
+
+    inFlightCronJobsPromises.set(fetchKey, promise);
+    return promise;
+  },
+
   getPodLogs: async (params: PodLogsParams) => {
     const targetCtx = params.contextName || get().currentContext;
     return await invokeRpc<PodLogsResult>("pods.logs", {
@@ -668,6 +1053,97 @@ export const useClusterStore = create<ClusterState>((set, get) => ({
     await get().loadClusterOverview();
   },
 
+  restartStatefulSet: async (params: StatefulSetActionParams) => {
+    const targetCtx = params.contextName || get().currentContext;
+    await invokeRpc("statefulsets.restart", {
+      ...params,
+      contextName: targetCtx,
+    });
+    await get().loadStatefulSets();
+    await get().loadPods();
+    await get().loadClusterOverview();
+  },
+
+  scaleStatefulSet: async (params: StatefulSetActionParams) => {
+    const targetCtx = params.contextName || get().currentContext;
+    await invokeRpc("statefulsets.scale", {
+      ...params,
+      contextName: targetCtx,
+    });
+    await get().loadStatefulSets();
+    await get().loadPods();
+    await get().loadClusterOverview();
+  },
+
+  deleteStatefulSet: async (params: StatefulSetActionParams) => {
+    const targetCtx = params.contextName || get().currentContext;
+    await invokeRpc("statefulsets.delete", {
+      ...params,
+      contextName: targetCtx,
+    });
+    await get().loadStatefulSets();
+    await get().loadPods();
+    await get().loadClusterOverview();
+  },
+
+  restartDaemonSet: async (params: DaemonSetActionParams) => {
+    const targetCtx = params.contextName || get().currentContext;
+    await invokeRpc("daemonsets.restart", { ...params, contextName: targetCtx });
+    await get().loadDaemonSets();
+    await get().loadPods();
+    await get().loadClusterOverview();
+  },
+
+  deleteDaemonSet: async (params: DaemonSetActionParams) => {
+    const targetCtx = params.contextName || get().currentContext;
+    await invokeRpc("daemonsets.delete", { ...params, contextName: targetCtx });
+    await get().loadDaemonSets();
+    await get().loadPods();
+    await get().loadClusterOverview();
+  },
+
+  deleteJob: async (params: JobActionParams) => {
+    const targetCtx = params.contextName || get().currentContext;
+    await invokeRpc("jobs.delete", { ...params, contextName: targetCtx });
+    await get().loadJobs();
+    await get().loadPods();
+    await get().loadClusterOverview();
+  },
+
+  deleteCronJob: async (params: CronJobActionParams) => {
+    const targetCtx = params.contextName || get().currentContext;
+    await invokeRpc("cronjobs.delete", { ...params, contextName: targetCtx });
+    await get().loadCronJobs();
+    await get().loadJobs();
+    await get().loadPods();
+    await get().loadClusterOverview();
+  },
+
+  suspendCronJob: async (params: CronJobActionParams) => {
+    const targetCtx = params.contextName || get().currentContext;
+    await invokeRpc("cronjobs.suspend", { ...params, contextName: targetCtx });
+    await get().loadCronJobs();
+  },
+
+  resumeCronJob: async (params: CronJobActionParams) => {
+    const targetCtx = params.contextName || get().currentContext;
+    await invokeRpc("cronjobs.resume", { ...params, contextName: targetCtx });
+    await get().loadCronJobs();
+  },
+
+  triggerCronJob: async (params: CronJobActionParams) => {
+    const targetCtx = params.contextName || get().currentContext;
+    const res = await invokeRpc<CronJobTriggerResult>("cronjobs.trigger", {
+      ...params,
+      contextName: targetCtx,
+    });
+    await get().loadJobs();
+    await get().loadCronJobs();
+    await get().loadPods();
+    await get().loadClusterOverview();
+    return res?.jobName || "";
+  },
+
   bulkDeletePods: async (pods: { name: string; namespace: string }[], force?: boolean) => {
     const targetCtx = get().currentContext;
     let succeeded = 0;
@@ -747,6 +1223,46 @@ export const useClusterStore = create<ClusterState>((set, get) => ({
       contextName: targetCtx,
       namespace,
       replicaSetName: name,
+    });
+    return res?.yaml || "";
+  },
+
+  getStatefulSetYaml: async (name: string, namespace: string, contextName?: string) => {
+    const targetCtx = contextName || get().currentContext;
+    const res = await invokeRpc<PodYamlResult>("statefulsets.yaml", {
+      contextName: targetCtx,
+      namespace,
+      statefulSetName: name,
+    });
+    return res?.yaml || "";
+  },
+
+  getDaemonSetYaml: async (name: string, namespace: string, contextName?: string) => {
+    const targetCtx = contextName || get().currentContext;
+    const res = await invokeRpc<PodYamlResult>("daemonsets.yaml", {
+      contextName: targetCtx,
+      namespace,
+      daemonSetName: name,
+    });
+    return res?.yaml || "";
+  },
+
+  getJobYaml: async (name: string, namespace: string, contextName?: string) => {
+    const targetCtx = contextName || get().currentContext;
+    const res = await invokeRpc<PodYamlResult>("jobs.yaml", {
+      contextName: targetCtx,
+      namespace,
+      jobName: name,
+    });
+    return res?.yaml || "";
+  },
+
+  getCronJobYaml: async (name: string, namespace: string, contextName?: string) => {
+    const targetCtx = contextName || get().currentContext;
+    const res = await invokeRpc<PodYamlResult>("cronjobs.yaml", {
+      contextName: targetCtx,
+      namespace,
+      cronJobName: name,
     });
     return res?.yaml || "";
   },
@@ -883,6 +1399,24 @@ export const useClusterStore = create<ClusterState>((set, get) => ({
         totalReplicaSetsCount: 0,
         isReplicaSetsLoading: false,
         hasLoadedReplicaSetsOnce: false,
+        statefulSets: [],
+        totalStatefulSetsCount: 0,
+        isStatefulSetsLoading: false,
+        hasLoadedStatefulSetsOnce: false,
+        daemonSets: [],
+        totalDaemonSetsCount: 0,
+        isDaemonSetsLoading: false,
+        hasLoadedDaemonSetsOnce: false,
+        jobs: [],
+        totalJobsCount: 0,
+        isJobsLoading: false,
+        hasLoadedJobsOnce: false,
+        jobOwnerFilter: null,
+        jobsViewMode: "jobs",
+        cronJobs: [],
+        totalCronJobsCount: 0,
+        isCronJobsLoading: false,
+        hasLoadedCronJobsOnce: false,
       });
     } catch (err) {
       console.error("Failed to clear contexts:", err);

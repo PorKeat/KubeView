@@ -6,6 +6,10 @@ import { ClusterOverviewView } from "./ClusterOverviewView";
 import { ResourceListView } from "./ResourceListView";
 import { DeploymentListView } from "./deployments/DeploymentListView";
 import { ReplicaSetListView } from "./replicasets/ReplicaSetListView";
+import { StatefulSetListView } from "./statefulsets/StatefulSetListView";
+import { DaemonSetListView } from "./daemonsets/DaemonSetListView";
+import { JobsCronJobsListView } from "./jobs/JobsCronJobsListView";
+import { SettingsView } from "./settings/SettingsView";
 import { ErrorBoundary, NotFoundState } from "@/components/ui";
 
 export function ActiveViewRenderer() {
@@ -25,6 +29,22 @@ export function ActiveViewRenderer() {
 
         if (activeTabId === "replicasets") {
           return <ReplicaSetListView />;
+        }
+
+        if (activeTabId === "statefulsets") {
+          return <StatefulSetListView />;
+        }
+
+        if (activeTabId === "daemonsets") {
+          return <DaemonSetListView />;
+        }
+
+        if (activeTabId === "jobs") {
+          return <JobsCronJobsListView />;
+        }
+
+        if (activeTabId === "settings") {
+          return <SettingsView />;
         }
 
         if (!activeTab && activeTabId !== "overview") {

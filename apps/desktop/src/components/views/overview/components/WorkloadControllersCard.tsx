@@ -12,6 +12,8 @@ export interface WorkloadControllersCardProps {
   currentNamespace: string;
   isFullWidth?: boolean;
   onInspectWorkload: (namespace: string) => void;
+  onInspectStatefulSets: (namespace: string) => void;
+  onInspectDaemonSets: (namespace: string) => void;
 }
 
 export function WorkloadControllersCard({
@@ -20,6 +22,8 @@ export function WorkloadControllersCard({
   currentNamespace,
   isFullWidth = false,
   onInspectWorkload,
+  onInspectStatefulSets,
+  onInspectDaemonSets,
 }: WorkloadControllersCardProps) {
   const dep = workloads?.deployments ?? { total: 0, ready: 0, degraded: 0 };
   const sts = workloads?.statefulSets ?? { total: 0, ready: 0, degraded: 0, unreadyList: [] };
@@ -166,9 +170,10 @@ export function WorkloadControllersCard({
                     <button
                       key={item}
                       type="button"
-                      onClick={() => onInspectWorkload(ns)}
+                      data-testid="overview-statefulsets-action"
+                      onClick={() => onInspectStatefulSets(ns)}
                       className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[11px] font-mono bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/25 hover:bg-amber-500/20 cursor-pointer transition-colors"
-                      title={`Click to filter and inspect pods in namespace '${ns}'`}
+                      title={`Click to inspect StatefulSets in namespace '${ns}'`}
                     >
                       <AlertTriangle className="w-3 h-3 text-amber-500 shrink-0" aria-hidden="true" />
                       <span>{item}</span>
@@ -181,7 +186,8 @@ export function WorkloadControllersCard({
                 <span>Healthy quorum</span>
                 <button
                   type="button"
-                  onClick={() => onInspectWorkload(isNamespaceScoped ? currentNamespace : "all")}
+                  data-testid="overview-statefulsets-action"
+                  onClick={() => onInspectStatefulSets(isNamespaceScoped ? currentNamespace : "all")}
                   className="text-[var(--accent)] hover:underline text-xs font-medium flex items-center gap-0.5 cursor-pointer"
                 >
                   <span>Inspect</span>
@@ -232,7 +238,8 @@ export function WorkloadControllersCard({
               <span>{ds.degraded === 0 ? "All node agents scheduled" : `${ds.degraded} Degraded`}</span>
               <button
                 type="button"
-                onClick={() => onInspectWorkload(isNamespaceScoped ? currentNamespace : "kube-system")}
+                data-testid="overview-daemonsets-action"
+                onClick={() => onInspectDaemonSets(isNamespaceScoped ? currentNamespace : "kube-system")}
                 className="text-[var(--accent)] hover:underline text-xs font-medium flex items-center gap-0.5 cursor-pointer"
               >
                 <span>Inspect</span>

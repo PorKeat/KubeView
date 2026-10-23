@@ -32,6 +32,8 @@ export function ClusterOverviewView() {
     loadClusterOverview,
     setCurrentNamespace,
     loadPods,
+    loadStatefulSets,
+    loadDaemonSets,
     pods,
     autoRefreshInterval,
     setAutoRefreshInterval,
@@ -275,6 +277,26 @@ export function ClusterOverviewView() {
     loadPods(targetNs);
   };
 
+  const handleInspectStatefulSets = (targetNs: string) => {
+    setCurrentNamespace(targetNs);
+    openTab({
+      id: "statefulsets",
+      title: targetNs === "all" ? "StatefulSets" : `StatefulSets (${targetNs})`,
+      closable: true,
+    });
+    loadStatefulSets(targetNs);
+  };
+
+  const handleInspectDaemonSets = (targetNs: string) => {
+    setCurrentNamespace(targetNs);
+    openTab({
+      id: "daemonsets",
+      title: targetNs === "all" ? "DaemonSets" : `DaemonSets (${targetNs})`,
+      closable: true,
+    });
+    loadDaemonSets(targetNs);
+  };
+
   const handleScrollToNodes = () => {
     const el = document.getElementById("cluster-nodes-section");
     if (el) {
@@ -365,6 +387,8 @@ export function ClusterOverviewView() {
             currentNamespace={currentNamespace}
             isFullWidth={false}
             onInspectWorkload={handleInspectWorkload}
+            onInspectStatefulSets={handleInspectStatefulSets}
+            onInspectDaemonSets={handleInspectDaemonSets}
           />
 
           <div id="cluster-warning-events-card" className="h-full flex flex-col">
@@ -414,6 +438,8 @@ export function ClusterOverviewView() {
             currentNamespace={currentNamespace}
             isFullWidth={true}
             onInspectWorkload={handleInspectWorkload}
+            onInspectStatefulSets={handleInspectStatefulSets}
+            onInspectDaemonSets={handleInspectDaemonSets}
           />
         </div>
       )}

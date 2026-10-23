@@ -2,16 +2,17 @@
 
 import * as React from "react";
 import {
+  Menu,
   Search,
   Sun,
   Moon,
-  Laptop,
   Settings,
   RefreshCw,
 } from "lucide-react";
 import { useTheme } from "next-themes";
 import { useLayoutStore } from "@/stores/layoutStore";
 import { useClusterStore } from "@/stores/clusterStore";
+import { useTabStore } from "@/stores/tabStore";
 import { toast } from "sonner";
 
 import { Logo } from "@/components/brand/Logo";
@@ -23,7 +24,13 @@ import { Tooltip } from "@/components/ui/Tooltip";
 export function AppHeader() {
   const [mounted, setMounted] = React.useState(false);
   const { setTheme, resolvedTheme } = useTheme();
-  const { setCommandPaletteOpen } = useLayoutStore();
+  const {
+    setCommandPaletteOpen,
+    setMobileSidebarOpen,
+    setSidebarCollapsed,
+    mobileSidebarOpen,
+  } = useLayoutStore();
+  const { openTab } = useTabStore();
   const {
     currentContext,
     currentNamespace,
@@ -40,6 +47,14 @@ export function AppHeader() {
   React.useEffect(() => {
     setMounted(true);
   }, []);
+
+  const openMobileNavigation = () => {
+    setSidebarCollapsed(false);
+    setMobileSidebarOpen(true);
+  };
+
+  const openSettings = () =>
+    openTab({ id: "settings", title: "Settings", closable: true });
 
   const handleRefresh = async () => {
     setIsRefreshing(true);
@@ -62,14 +77,27 @@ export function AppHeader() {
   return (
     <header
       data-tauri-drag-region
-      className="h-14 w-full border-b border-[var(--border)] bg-[var(--surface)] flex items-center justify-between px-4 sm:px-6 select-none shrink-0 z-30 gap-4"
+      className="h-14 w-full border-b border-[var(--border)] bg-[var(--surface)] flex items-center justify-between px-2 sm:px-4 lg:px-6 select-none shrink-0 z-30 gap-2 sm:gap-4"
     >
       {/* Left: Window Controls Inset & Brand & Integrated Scope Control */}
-      <div className="flex items-center gap-3.5 pl-16 shrink-0">
-        <Logo size="sm" />
+      <div className="flex min-w-0 items-center gap-2 pl-2 sm:gap-3.5 md:pl-16">
+        <button
+          type="button"
+          onClick={openMobileNavigation}
+          aria-label="Open navigation"
+          aria-expanded={mobileSidebarOpen}
+          aria-controls="resource-navigation"
+          className="md:hidden flex h-9 w-9 shrink-0 items-center justify-center rounded-lg text-[var(--muted)] transition-colors hover:bg-black/[0.05] hover:text-[var(--foreground)] focus-visible:ring-2 focus-visible:ring-[var(--accent)] focus-visible:outline-hidden cursor-pointer dark:hover:bg-white/[0.06]"
+        >
+          <Menu className="h-4 w-4" aria-hidden="true" />
+        </button>
+
+        <div className="hidden sm:block shrink-0">
+          <Logo size="sm" />
+        </div>
 
         {/* Integrated Cluster & Namespace Scope Bar (Single Quiet Border, No Line Clutter) */}
-        <div className="flex items-center rounded-lg bg-black/[0.03] dark:bg-white/[0.04] border border-[var(--border)] p-0.5 shrink-0">
+        <div className="flex min-w-0 items-center rounded-lg bg-black/[0.03] dark:bg-white/[0.04] border border-[var(--border)] p-0.5 shrink-0">
           <ContextSwitcherDropdown variant="unified" />
           {connectionStatus !== "offline" && (
             <>
@@ -83,7 +111,7 @@ export function AppHeader() {
       </div>
 
       {/* Center: Search Trigger (Cmd+K) - 36px High-Craft Command Pill */}
-      <div className="flex-1 max-w-md mx-2 sm:mx-4 min-w-0">
+      <div className="hidden lg:block flex-1 max-w-md mx-2 lg:mx-4 min-w-0">
         <button
           onClick={() => setCommandPaletteOpen(true)}
           aria-label="Search resources, pods, logs (Press Command K or Control K to open)"
@@ -101,14 +129,24 @@ export function AppHeader() {
       </div>
 
       {/* Right: Quick Actions & Utilities - 36px Tactile Buttons */}
-      <div className="flex items-center gap-1">
+      <div className="flex shrink-0 items-center gap-0.5 sm:gap-1">
+        <Tooltip content="Search resources (⌘K)" side="bottom">
+          <button
+            onClick={() => setCommandPaletteOpen(true)}
+            aria-label="Search resources"
+            className="lg:hidden h-9 w-9 rounded-lg flex items-center justify-center hover:bg-black/[0.05] dark:hover:bg-white/[0.06] text-[var(--muted)] hover:text-[var(--foreground)] focus-visible:ring-2 focus-visible:ring-[var(--accent)] focus-visible:outline-hidden transition-colors cursor-pointer"
+          >
+            <Search className="w-4 h-4" aria-hidden="true" />
+          </button>
+        </Tooltip>
+
         <NotificationCenterDropdown />
 
         <Tooltip content="Refresh Resources" side="bottom">
           <button
             onClick={handleRefresh}
             aria-label="Refresh Resources"
-            className="h-9 w-9 rounded-lg flex items-center justify-center hover:bg-black/[0.05] dark:hover:bg-white/[0.06] text-[var(--muted)] hover:text-[var(--foreground)] focus-visible:ring-2 focus-visible:ring-[var(--accent)] focus-visible:outline-hidden transition-colors cursor-pointer"
+            className="hidden sm:flex h-9 w-9 rounded-lg items-center justify-center hover:bg-black/[0.05] dark:hover:bg-white/[0.06] text-[var(--muted)] hover:text-[var(--foreground)] focus-visible:ring-2 focus-visible:ring-[var(--accent)] focus-visible:outline-hidden transition-colors cursor-pointer"
           >
             <RefreshCw className="w-4 h-4" aria-hidden="true" />
           </button>
@@ -128,7 +166,7 @@ export function AppHeader() {
             onClick={() => setTheme(resolvedTheme === "dark" ? "light" : "dark")}
             aria-label={mounted ? `Switch to ${resolvedTheme === "dark" ? "light" : "dark"} theme` : "Toggle Theme"}
             suppressHydrationWarning
-            className="h-9 w-9 rounded-lg flex items-center justify-center hover:bg-black/[0.05] dark:hover:bg-white/[0.06] text-[var(--muted)] hover:text-[var(--foreground)] focus-visible:ring-2 focus-visible:ring-[var(--accent)] focus-visible:outline-hidden transition-colors cursor-pointer"
+            className="hidden sm:flex h-9 w-9 rounded-lg items-center justify-center hover:bg-black/[0.05] dark:hover:bg-white/[0.06] text-[var(--muted)] hover:text-[var(--foreground)] focus-visible:ring-2 focus-visible:ring-[var(--accent)] focus-visible:outline-hidden transition-colors cursor-pointer"
           >
             {mounted ? (
               resolvedTheme === "dark" ? <Sun className="w-4 h-4" aria-hidden="true" /> : <Moon className="w-4 h-4" aria-hidden="true" />
@@ -138,11 +176,13 @@ export function AppHeader() {
           </button>
         </Tooltip>
 
-        <Tooltip content="Settings & Preferences (Coming Soon)" side="bottom">
+        <Tooltip content="Settings & Preferences (⌘,)" side="bottom">
           <button
-            disabled
-            aria-label="Settings and global preferences (coming soon)"
-            className="h-9 w-9 rounded-lg flex items-center justify-center opacity-30 cursor-not-allowed text-[var(--muted)]"
+            type="button"
+            onClick={openSettings}
+            data-testid="open-settings"
+            aria-label="Open settings and preferences"
+            className="h-9 w-9 rounded-lg flex items-center justify-center hover:bg-black/[0.05] dark:hover:bg-white/[0.06] text-[var(--muted)] hover:text-[var(--foreground)] focus-visible:ring-2 focus-visible:ring-[var(--accent)] focus-visible:outline-hidden transition-colors cursor-pointer"
           >
             <Settings className="w-4 h-4" aria-hidden="true" />
           </button>

@@ -76,8 +76,8 @@ export function ReplicaSetTableToolbar({
   );
 
   return (
-    <div className="h-11 border-b border-[var(--border)] px-3 flex items-center justify-between shrink-0 glass-panel gap-3">
-      <div className="relative flex-1 max-w-sm">
+    <div className="min-h-11 border-b border-[var(--border)] px-2 sm:px-3 py-1.5 flex flex-wrap lg:flex-nowrap items-center justify-between shrink-0 glass-panel gap-2 sm:gap-3">
+      <div className="relative flex-1 min-w-0 w-full max-w-sm order-1 sm:order-none sm:w-auto">
         <Search className="w-3.5 h-3.5 absolute left-2.5 top-1/2 -translate-y-1/2 text-[var(--muted)]" />
         <input
           type="text"
@@ -100,7 +100,7 @@ export function ReplicaSetTableToolbar({
         )}
       </div>
 
-      <div className="relative flex items-center gap-1 bg-slate-100/80 dark:bg-black/30 p-0.5 rounded-lg border border-[var(--border)] text-xs select-none">
+      <div className="relative flex max-w-full min-w-0 shrink-0 items-center gap-1 overflow-x-auto whitespace-nowrap rounded-lg border border-[var(--border)] bg-slate-100/80 p-0.5 text-xs select-none order-2 sm:order-none dark:bg-black/30">
         {filterPills.map((pill) => {
           const isActive = statusFilter === pill.id;
           return (
@@ -150,7 +150,7 @@ export function ReplicaSetTableToolbar({
         })}
       </div>
 
-      <div className="flex items-center gap-2 text-xs text-[var(--muted)] shrink-0">
+      <div className="flex max-w-full flex-wrap items-center gap-2 text-xs text-[var(--muted)] shrink-0 order-3 sm:order-none">
         <span className="font-mono text-[11px]">{sortedItemsCount} items</span>
         <div className="h-3 w-[1px] bg-[var(--border)]" />
         <Tooltip content="Refresh replicasets">

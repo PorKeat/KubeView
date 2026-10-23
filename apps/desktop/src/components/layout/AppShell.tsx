@@ -15,13 +15,49 @@ import { PodExecModal } from "@/components/modals/PodExecModal";
 import { PodDeleteModal } from "@/components/modals/PodDeleteModal";
 import { PodRestartModal } from "@/components/modals/PodRestartModal";
 import { WorkloadActionModal } from "@/components/modals/WorkloadActionModal";
+import { BulkWorkloadActionModal } from "@/components/modals/BulkWorkloadActionModal";
 import { EndpointEditModal } from "@/components/modals/EndpointEditModal";
 
 import { useClusterStore } from "@/stores/clusterStore";
+import { useSettingsStore } from "@/stores/settingsStore";
+import { useTabStore } from "@/stores/tabStore";
 
 export function AppShell() {
   const loadContexts = useClusterStore((s) => s.loadContexts);
   const initEventListener = useClusterStore((s) => s.initEventListener);
+  const setAutoRefreshInterval = useClusterStore(
+    (s) => s.setAutoRefreshInterval,
+  );
+  const fontSize = useSettingsStore((s) => s.fontSize);
+  const reducedMotion = useSettingsStore((s) => s.reducedMotion);
+  const autoRefreshSeconds = useSettingsStore((s) => s.autoRefreshSeconds);
+  const openTab = useTabStore((s) => s.openTab);
+
+  React.useEffect(() => {
+    document.documentElement.dataset.fontSize = fontSize;
+  }, [fontSize]);
+
+  React.useEffect(() => {
+    document.documentElement.dataset.reducedMotion = reducedMotion
+      ? "true"
+      : "false";
+  }, [reducedMotion]);
+
+  React.useEffect(() => {
+    setAutoRefreshInterval(autoRefreshSeconds * 1000);
+  }, [autoRefreshSeconds, setAutoRefreshInterval]);
+
+  React.useEffect(() => {
+    const handleSettingsShortcut = (event: KeyboardEvent) => {
+      if ((event.metaKey || event.ctrlKey) && event.key === ",") {
+        event.preventDefault();
+        openTab({ id: "settings", title: "Settings", closable: true });
+      }
+    };
+    window.addEventListener("keydown", handleSettingsShortcut);
+    return () =>
+      window.removeEventListener("keydown", handleSettingsShortcut);
+  }, [openTab]);
 
   React.useEffect(() => {
     loadContexts();
@@ -52,7 +88,7 @@ export function AppShell() {
       {/* 4. Global Command Palette Modal (Cmd+K) */}
       <CommandPalette />
 
-      {/* 5. Resource Inspector Slide-Over Drawer */}
+      {/* 6. Resource Inspector Slide-Over Drawer */}
       <ResourceInspectorDrawer />
 
       {/* 6. Onboarding & Kubeconfig Management Modal */}
@@ -64,6 +100,7 @@ export function AppShell() {
       <PodDeleteModal />
       <PodRestartModal />
       <WorkloadActionModal />
+      <BulkWorkloadActionModal />
       <EndpointEditModal />
 
       {/* 8. Initial High-Tech Splash Screen Overlay */}

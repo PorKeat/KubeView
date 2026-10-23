@@ -13,17 +13,24 @@ import {
   ChevronsRight,
   RefreshCw,
   Globe,
+  CheckSquare,
+  MinusSquare,
+  Square,
+  Trash2,
 } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { formatLabelSelector } from "@/lib/labelSelector";
 import { useClusterStore } from "@/stores/clusterStore";
+import { useSettingsStore } from "@/stores/settingsStore";
 import { useTabStore } from "@/stores/tabStore";
 import type { ReplicaSetSummary } from "@kubeview/contracts";
 import { TableSkeleton, EmptyState, Tooltip } from "@/components/ui";
 
 import { ReplicaSetTableToolbar } from "./components/ReplicaSetTableToolbar";
 import { ReplicaSetTableRow } from "./components/ReplicaSetTableRow";
+import { BulkWorkloadToolbar } from "@/components/views/shared/BulkWorkloadToolbar";
+import { useWorkloadSelection } from "@/components/views/shared/useWorkloadSelection";
 import {
   replicaSetMatchesSearch,
   replicaSetMatchesStatus,
@@ -31,6 +38,9 @@ import {
 } from "./lib/replicaSetStatus";
 
 type SortField = "name" | "namespace" | "status" | "ready" | "age";
+
+const getReplicaSetKey = (item: ReplicaSetSummary) =>
+  `${item.namespace}/${item.name}`;
 
 export function ReplicaSetListView() {
   const {
@@ -49,6 +59,7 @@ export function ReplicaSetListView() {
     connectionStatus,
     openKubeconfigModal,
     autoRefreshInterval,
+    openBulkWorkloadAction,
   } = useClusterStore();
   const { openTab } = useTabStore();
 
@@ -58,7 +69,11 @@ export function ReplicaSetListView() {
     React.useState<ReplicaSetStatusFilter>("all");
   const [sortField, setSortField] = React.useState<SortField>("name");
   const [sortAsc, setSortAsc] = React.useState(true);
-  const [pageSize, setPageSize] = React.useState<number>(50);
+  const defaultPageSize = useSettingsStore((s) => s.defaultPageSize);
+  const [pageSize, setPageSize] = React.useState<number>(defaultPageSize);
+  React.useEffect(() => {
+    setPageSize(defaultPageSize);
+  }, [defaultPageSize]);
   const [currentPage, setCurrentPage] = React.useState<number>(1);
 
   React.useEffect(() => {
@@ -157,6 +172,21 @@ export function ReplicaSetListView() {
     return sortedItems.slice(start, start + pageSize);
   }, [sortedItems, safeCurrentPage, pageSize]);
 
+  const selection = useWorkloadSelection(replicaSets, paginatedItems, getReplicaSetKey);
+
+  const openBulkDelete = () => {
+    if (selection.selectedObjects.length === 0) return;
+    openBulkWorkloadAction({
+      kind: "ReplicaSet",
+      action: "delete",
+      targets: selection.selectedObjects.map((item) => ({
+        name: item.name,
+        namespace: item.namespace,
+      })),
+      onCompleted: selection.clearSelection,
+    });
+  };
+
   const handleViewPods = (replicaSet: ReplicaSetSummary) => {
     const selector = formatLabelSelector(replicaSet.selector);
     setCurrentNamespace(replicaSet.namespace);
@@ -220,6 +250,21 @@ export function ReplicaSetListView() {
         isLoading={isReplicaSetsLoading}
       />
 
+      <BulkWorkloadToolbar
+        selectedCount={selection.selectedItems.size}
+        noun="ReplicaSet"
+        pluralNoun="ReplicaSets"
+        onClear={selection.clearSelection}
+        actions={[
+          {
+            id: "delete",
+            label: "Delete Selected",
+            icon: Trash2,
+            tone: "danger",
+            onClick: openBulkDelete,
+          },
+        ]}
+      />
       {!hasLoadedReplicaSetsOnce ||
       (isReplicaSetsLoading && filteredItems.length === 0) ? (
         <TableSkeleton rows={10} columns={8} />
@@ -338,10 +383,28 @@ export function ReplicaSetListView() {
           />
         </div>
       ) : (
-        <div className="flex-1 overflow-y-auto overflow-x-hidden min-h-0">
-          <table className="w-full text-left text-xs border-collapse table-fixed">
+        <div className="flex-1 overflow-auto min-h-0">
+          <table className="w-full min-w-[960px] text-left text-xs border-collapse table-fixed">
             <thead className="sticky top-0 bg-[var(--surface)] z-10 border-b border-[var(--border)] select-none">
               <tr className="text-[11px] font-semibold text-[var(--muted)] uppercase tracking-wider h-8">
+                <th className="w-8 px-2 text-center">
+                  <Tooltip content={selection.isPageAllSelected ? "Deselect all on page" : "Select all on page"}>
+                    <button
+                      onClick={selection.toggleSelectAll}
+                      className="text-[var(--muted)] hover:text-[var(--foreground)] flex items-center justify-center cursor-pointer"
+                      aria-label={selection.isPageAllSelected ? "Deselect all on page" : "Select all on page"}
+                    >
+                      {selection.isPageAllSelected ? (
+                        <CheckSquare className="w-3.5 h-3.5 text-[var(--accent)]" />
+                      ) : selection.isPageSomeSelected || selection.selectedItems.size > 0 ? (
+                        <MinusSquare className="w-3.5 h-3.5 text-[var(--accent)]" />
+                      ) : (
+                        <Square className="w-3.5 h-3.5" />
+                      )}
+                    </button>
+                  </Tooltip>
+                </th>
+
                 <th
                   onClick={() => handleSort("name")}
                   className="w-48 sm:w-56 md:w-64 py-1 px-3 cursor-pointer hover:text-[var(--foreground)] transition-colors min-w-0"
@@ -398,6 +461,8 @@ export function ReplicaSetListView() {
                 <ReplicaSetTableRow
                   key={`${item.namespace}/${item.name}`}
                   item={item}
+                  isSelected={selection.selectedItems.has(getReplicaSetKey(item))}
+                  onToggleSelect={selection.toggleSelectItem}
                   onViewPods={handleViewPods}
                   onRowClick={(replicaSet) =>
                     openInspector({
@@ -415,8 +480,8 @@ export function ReplicaSetListView() {
         </div>
       )}
 
-      <div className="h-10 border-t border-[var(--border)] px-4 flex items-center justify-between text-[11px] text-[var(--muted)] bg-[var(--surface)]/90 backdrop-blur-xs shrink-0 gap-4">
-        <div className="flex items-center gap-2 truncate">
+      <div className="min-h-10 border-t border-[var(--border)] px-2 sm:px-4 py-1.5 flex flex-wrap items-center justify-between text-[11px] text-[var(--muted)] bg-[var(--surface)]/90 backdrop-blur-xs shrink-0 gap-2 sm:gap-4">
+        <div className="flex min-w-0 max-w-full items-center gap-2 truncate">
           <span>
             Showing{" "}
             <span className="text-[var(--foreground)] font-mono font-medium">
@@ -457,7 +522,7 @@ export function ReplicaSetListView() {
           )}
         </div>
 
-        <div className="flex items-center gap-4 shrink-0">
+        <div className="flex flex-wrap items-center gap-2 shrink-0 sm:gap-4">
           <div className="flex items-center gap-1.5">
             <span className="text-[10px] uppercase tracking-wider text-[var(--muted)] font-medium">
               Rows:
@@ -468,7 +533,7 @@ export function ReplicaSetListView() {
                 return (
                   <button
                     key={size}
-                    type="button"
+                    type="button" aria-pressed={isSelected} data-testid={`page-size-${size}`}
                     onClick={() => {
                       setPageSize(size);
                       setCurrentPage(1);

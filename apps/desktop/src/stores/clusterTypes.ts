@@ -8,6 +8,15 @@ import type {
   ReplicaSetSummary,
   DeploymentActionParams,
   ReplicaSetActionParams,
+  StatefulSetSummary,
+  StatefulSetActionParams,
+  DaemonSetSummary,
+  DaemonSetActionParams,
+  JobSummary,
+  JobActionParams,
+  CronJobSummary,
+  CronJobActionParams,
+  CronJobTriggerResult,
   PodLogsParams,
   PodLogsResult,
   DeletePodParams,
@@ -65,6 +74,86 @@ export type WorkloadActionRequest =
       namespace: string;
       replicas?: number;
       ownerDeployment?: string;
+    }
+  | {
+      kind: "StatefulSet";
+      action: "scale" | "restart" | "delete";
+      name: string;
+      namespace: string;
+      replicas?: number;
+      serviceName?: string;
+      podManagementPolicy?: string;
+      updateStrategy?: string;
+      partition?: number;
+      maxUnavailable?: string;
+      pvcRetentionWhenDeleted?: string;
+      pvcRetentionWhenScaled?: string;
+    }
+  | {
+      kind: "DaemonSet";
+      action: "restart" | "delete";
+      name: string;
+      namespace: string;
+      updateStrategy?: string;
+      maxUnavailable?: string;
+      maxSurge?: string;
+    }
+  | {
+      kind: "Job";
+      action: "delete";
+      name: string;
+      namespace: string;
+      ownerCronJob?: string;
+      active?: number;
+    }
+  | {
+      kind: "CronJob";
+      action: "delete" | "suspend" | "resume" | "trigger";
+      name: string;
+      namespace: string;
+      schedule?: string;
+      suspend?: boolean;
+      concurrencyPolicy?: string;
+    };
+
+export interface BulkWorkloadTarget {
+  name: string;
+  namespace: string;
+}
+
+export interface BulkWorkloadActionResult {
+  succeeded: number;
+  failed: number;
+}
+
+/**
+ * Bulk mutations only expose actions that are valid for every target kind.
+ * ReplicaSets have no rollout restart; Jobs have no scale or restart.
+ */
+export type BulkWorkloadActionRequest =
+  | {
+      kind: "ReplicaSet";
+      action: "delete";
+      targets: BulkWorkloadTarget[];
+      onCompleted?: () => void;
+    }
+  | {
+      kind: "StatefulSet";
+      action: "restart" | "delete";
+      targets: BulkWorkloadTarget[];
+      onCompleted?: () => void;
+    }
+  | {
+      kind: "DaemonSet";
+      action: "restart" | "delete";
+      targets: BulkWorkloadTarget[];
+      onCompleted?: () => void;
+    }
+  | {
+      kind: "Job";
+      action: "delete";
+      targets: BulkWorkloadTarget[];
+      onCompleted?: () => void;
     };
 
 export interface ClusterState {
@@ -113,6 +202,34 @@ export interface ClusterState {
   isReplicaSetsLoading: boolean;
   hasLoadedReplicaSetsOnce: boolean;
 
+  // StatefulSet workloads
+  statefulSets: StatefulSetSummary[];
+  totalStatefulSetsCount: number;
+  isStatefulSetsLoading: boolean;
+  hasLoadedStatefulSetsOnce: boolean;
+
+  // DaemonSet workloads
+  daemonSets: DaemonSetSummary[];
+  totalDaemonSetsCount: number;
+  isDaemonSetsLoading: boolean;
+  hasLoadedDaemonSetsOnce: boolean;
+
+  // Job workloads
+  jobs: JobSummary[];
+  totalJobsCount: number;
+  isJobsLoading: boolean;
+  hasLoadedJobsOnce: boolean;
+  jobOwnerFilter: string | null;
+  setJobOwnerFilter: (owner: string | null) => void;
+  jobsViewMode: "jobs" | "cronjobs";
+  setJobsViewMode: (mode: "jobs" | "cronjobs") => void;
+
+  // CronJob workloads
+  cronJobs: CronJobSummary[];
+  totalCronJobsCount: number;
+  isCronJobsLoading: boolean;
+  hasLoadedCronJobsOnce: boolean;
+
   // OS Auto-Detected Kubeconfig Contexts
   detectedSystemConfigs: DetectedContextInfo[];
   isDetectingConfigs: boolean;
@@ -128,6 +245,13 @@ export interface ClusterState {
   workloadAction: WorkloadActionRequest | null;
   openWorkloadAction: (action: WorkloadActionRequest) => void;
   closeWorkloadAction: () => void;
+
+  bulkWorkloadAction: BulkWorkloadActionRequest | null;
+  openBulkWorkloadAction: (action: BulkWorkloadActionRequest) => void;
+  closeBulkWorkloadAction: () => void;
+  executeBulkWorkloadAction: (
+    action: BulkWorkloadActionRequest,
+  ) => Promise<BulkWorkloadActionResult>;
 
   // Auto-refresh interval (0 = off, 3000, 5000, 10000, 30000)
   autoRefreshInterval: number;
@@ -149,6 +273,10 @@ export interface ClusterState {
   loadPods: (namespace?: string, contextName?: string) => Promise<void>;
   loadDeployments: (namespace?: string, contextName?: string) => Promise<void>;
   loadReplicaSets: (namespace?: string, contextName?: string) => Promise<void>;
+  loadStatefulSets: (namespace?: string, contextName?: string) => Promise<void>;
+  loadDaemonSets: (namespace?: string, contextName?: string) => Promise<void>;
+  loadJobs: (namespace?: string, contextName?: string) => Promise<void>;
+  loadCronJobs: (namespace?: string, contextName?: string) => Promise<void>;
   getPodLogs: (params: PodLogsParams) => Promise<PodLogsResult>;
   deletePod: (params: DeletePodParams) => Promise<void>;
   restartPod: (params: RestartPodParams) => Promise<void>;
@@ -157,6 +285,16 @@ export interface ClusterState {
   deleteDeployment: (params: DeploymentActionParams) => Promise<void>;
   scaleReplicaSet: (params: ReplicaSetActionParams) => Promise<void>;
   deleteReplicaSet: (params: ReplicaSetActionParams) => Promise<void>;
+  restartStatefulSet: (params: StatefulSetActionParams) => Promise<void>;
+  scaleStatefulSet: (params: StatefulSetActionParams) => Promise<void>;
+  deleteStatefulSet: (params: StatefulSetActionParams) => Promise<void>;
+  restartDaemonSet: (params: DaemonSetActionParams) => Promise<void>;
+  deleteDaemonSet: (params: DaemonSetActionParams) => Promise<void>;
+  deleteJob: (params: JobActionParams) => Promise<void>;
+  deleteCronJob: (params: CronJobActionParams) => Promise<void>;
+  suspendCronJob: (params: CronJobActionParams) => Promise<void>;
+  resumeCronJob: (params: CronJobActionParams) => Promise<void>;
+  triggerCronJob: (params: CronJobActionParams) => Promise<string>;
   bulkDeletePods: (
     pods: { name: string; namespace: string }[],
     force?: boolean
@@ -168,6 +306,10 @@ export interface ClusterState {
   getPodYaml: (podName: string, namespace: string, contextName?: string) => Promise<string>;
   getDeploymentYaml: (name: string, namespace: string, contextName?: string) => Promise<string>;
   getReplicaSetYaml: (name: string, namespace: string, contextName?: string) => Promise<string>;
+  getStatefulSetYaml: (name: string, namespace: string, contextName?: string) => Promise<string>;
+  getDaemonSetYaml: (name: string, namespace: string, contextName?: string) => Promise<string>;
+  getJobYaml: (name: string, namespace: string, contextName?: string) => Promise<string>;
+  getCronJobYaml: (name: string, namespace: string, contextName?: string) => Promise<string>;
   getPodEvents: (podName: string, namespace: string, contextName?: string) => Promise<PodEventItem[]>;
 
   openLogsModal: (pod: PodModalTarget) => void;

@@ -22,6 +22,8 @@ import {
   ChevronRight,
   PanelLeftClose,
   PanelLeftOpen,
+  X,
+  Settings,
 } from "lucide-react";
 import { useLayoutStore } from "@/stores/layoutStore";
 import { useTabStore } from "@/stores/tabStore";
@@ -43,7 +45,13 @@ interface NavGroup {
 }
 
 export function AppSidebar() {
-  const { sidebarCollapsed, toggleSidebar } = useLayoutStore();
+  const {
+    sidebarCollapsed,
+    toggleSidebar,
+    setSidebarCollapsed,
+    mobileSidebarOpen,
+    setMobileSidebarOpen,
+  } = useLayoutStore();
   const { activeTabId, openTab } = useTabStore();
   const {
     clusterOverview,
@@ -51,18 +59,52 @@ export function AppSidebar() {
     pods,
     deployments,
     replicaSets,
+    statefulSets,
+    daemonSets,
+    jobs,
+    cronJobs,
+    totalJobsCount,
+    totalCronJobsCount,
     loadPods,
     loadDeployments,
     loadReplicaSets,
+    loadStatefulSets,
+    loadDaemonSets,
+    loadJobs,
+    loadCronJobs,
+    setJobOwnerFilter,
+    setJobsViewMode,
     setCurrentNamespace,
     setPodNodeFilter,
     setPodLabelFilter,
   } = useClusterStore();
   const [collapsedGroups, setCollapsedGroups] = React.useState<Record<string, boolean>>({});
 
+  React.useEffect(() => {
+    if (mobileSidebarOpen && sidebarCollapsed) {
+      setSidebarCollapsed(false);
+    }
+  }, [mobileSidebarOpen, setSidebarCollapsed, sidebarCollapsed]);
+
+  React.useEffect(() => {
+    if (!mobileSidebarOpen) return;
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        setMobileSidebarOpen(false);
+      }
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [mobileSidebarOpen, setMobileSidebarOpen]);
+
   const realPodsCount = clusterOverview?.totalPods ?? (totalPodsCount > 0 ? totalPodsCount : pods.length);
   const deploymentCount = clusterOverview?.workloads?.deployments?.total ?? deployments.length;
   const replicaSetCount = clusterOverview?.workloads?.replicaSets?.total ?? replicaSets.length;
+  const statefulSetCount = clusterOverview?.workloads?.statefulSets?.total ?? statefulSets.length;
+  const daemonSetCount = clusterOverview?.workloads?.daemonSets?.total ?? daemonSets.length;
+  const jobsCount = clusterOverview?.workloads?.jobs?.total ?? (totalJobsCount || jobs.length);
+  const cronJobsCount = clusterOverview?.workloads?.cronJobs?.total ?? (totalCronJobsCount || cronJobs.length);
+  const jobsAndCronJobsCount = jobsCount + cronJobsCount;
 
   const navigationGroups: NavGroup[] = React.useMemo(() => [
     {
@@ -83,9 +125,9 @@ export function AppSidebar() {
         },
         { id: "deployments", title: "Deployments", icon: Layers, badge: deploymentCount > 0 ? deploymentCount : undefined, badgeVariant: "accent" },
         { id: "replicasets", title: "ReplicaSets", icon: Repeat, badge: replicaSetCount > 0 ? replicaSetCount : undefined, badgeVariant: "accent" },
-        { id: "statefulsets", title: "StatefulSets", icon: Database, badge: "Soon", badgeVariant: "soon", disabled: true },
-        { id: "daemonsets", title: "DaemonSets", icon: Cpu, badge: "Soon", badgeVariant: "soon", disabled: true },
-        { id: "jobs", title: "Jobs & CronJobs", icon: Clock, badge: "Soon", badgeVariant: "soon", disabled: true },
+        { id: "statefulsets", title: "StatefulSets", icon: Database, badge: statefulSetCount > 0 ? statefulSetCount : undefined, badgeVariant: "accent" },
+        { id: "daemonsets", title: "DaemonSets", icon: Cpu, badge: daemonSetCount > 0 ? daemonSetCount : undefined, badgeVariant: "accent" },
+        { id: "jobs", title: "Jobs & CronJobs", icon: Clock, badge: jobsAndCronJobsCount > 0 ? jobsAndCronJobsCount : undefined, badgeVariant: "accent" },
       ],
     },
     {
@@ -114,7 +156,7 @@ export function AppSidebar() {
         { id: "crds", title: "Custom Resources", icon: Boxes, badge: "Soon", badgeVariant: "soon", disabled: true },
       ],
     },
-  ], [realPodsCount, deploymentCount, replicaSetCount]);
+  ], [realPodsCount, deploymentCount, replicaSetCount, statefulSetCount, daemonSetCount, jobsAndCronJobsCount]);
 
   const toggleGroup = (category: string) => {
     setCollapsedGroups((prev) => ({ ...prev, [category]: !prev[category] }));
@@ -142,20 +184,52 @@ export function AppSidebar() {
       loadReplicaSets("all");
     }
 
+    if (item.id === "statefulsets") {
+      setCurrentNamespace("all");
+      loadStatefulSets("all");
+    }
+
+    if (item.id === "daemonsets") {
+      setCurrentNamespace("all");
+      loadDaemonSets("all");
+    }
+
+    if (item.id === "jobs") {
+      setCurrentNamespace("all");
+      setJobOwnerFilter(null);
+      setJobsViewMode("jobs");
+      loadJobs("all");
+      loadCronJobs("all");
+    }
+
     openTab({
       id: item.id,
       title: item.title,
       closable: item.id !== "overview",
     });
+    setMobileSidebarOpen(false);
   };
 
   return (
-    <aside
-      className={cn(
-        "h-full border-r border-[var(--border)] bg-[var(--surface)] hidden md:flex flex-col select-none transition-all duration-200 shrink-0",
-        sidebarCollapsed ? "w-14" : "w-56"
+    <>
+      {mobileSidebarOpen && (
+        <div
+          className="fixed inset-0 z-40 bg-black/50 backdrop-blur-[1px] md:hidden"
+          onClick={() => setMobileSidebarOpen(false)}
+          aria-hidden="true"
+        />
       )}
-    >
+      <aside
+        id="resource-navigation"
+        aria-label="Resource navigation"
+        className={cn(
+          "h-full border-r border-[var(--border)] bg-[var(--surface)] flex-col select-none transition-all duration-200 shrink-0",
+          mobileSidebarOpen
+            ? "fixed inset-y-0 left-0 z-50 flex w-64 md:static md:z-auto md:w-56"
+            : "hidden md:flex",
+          !mobileSidebarOpen && (sidebarCollapsed ? "w-14" : "w-56")
+        )}
+      >
       {/* Sidebar Header / Collapse Toggle */}
       <div className="h-10 px-4 flex items-center justify-between border-b border-[var(--border)] shrink-0">
         {!sidebarCollapsed && (
@@ -163,13 +237,23 @@ export function AppSidebar() {
             Resources
           </span>
         )}
-        <button
-          onClick={toggleSidebar}
-          className="p-1.5 rounded-md hover:bg-black/[0.04] dark:hover:bg-white/[0.06] text-[var(--muted)] hover:text-[var(--foreground)] transition-colors ml-auto cursor-pointer"
-          title={sidebarCollapsed ? "Expand Sidebar" : "Collapse Sidebar"}
-        >
-          {sidebarCollapsed ? <PanelLeftOpen className="w-4 h-4" /> : <PanelLeftClose className="w-4 h-4" />}
-        </button>
+        <div className="ml-auto flex items-center gap-0.5">
+          <button
+            onClick={() => setMobileSidebarOpen(false)}
+            className="md:hidden p-1.5 rounded-md hover:bg-black/[0.04] dark:hover:bg-white/[0.06] text-[var(--muted)] hover:text-[var(--foreground)] transition-colors cursor-pointer"
+            aria-label="Close navigation"
+          >
+            <X className="w-4 h-4" aria-hidden="true" />
+          </button>
+          <button
+            onClick={toggleSidebar}
+            className="hidden md:inline-flex p-1.5 rounded-md hover:bg-black/[0.04] dark:hover:bg-white/[0.06] text-[var(--muted)] hover:text-[var(--foreground)] transition-colors cursor-pointer"
+            title={sidebarCollapsed ? "Expand Sidebar" : "Collapse Sidebar"}
+            aria-label={sidebarCollapsed ? "Expand Sidebar" : "Collapse Sidebar"}
+          >
+            {sidebarCollapsed ? <PanelLeftOpen className="w-4 h-4" /> : <PanelLeftClose className="w-4 h-4" />}
+          </button>
+        </div>
       </div>
 
       {/* Navigation Tree */}
@@ -253,6 +337,47 @@ export function AppSidebar() {
           );
         })}
       </div>
-    </aside>
+
+      <div className="shrink-0 border-t border-[var(--border)] p-2">
+        <button
+          type="button"
+          data-testid="nav-item-settings"
+          onClick={() =>
+            handleItemClick({ id: "settings", title: "Settings", icon: Settings })
+          }
+          aria-label="Settings"
+          aria-current={activeTabId === "settings" ? "page" : undefined}
+          title={sidebarCollapsed ? "Settings" : undefined}
+          className={cn(
+            "group relative flex w-full items-center gap-2.5 rounded-lg px-2.5 py-2 text-xs transition-colors cursor-pointer",
+            activeTabId === "settings"
+              ? "border border-[var(--border)] bg-[var(--surface-active)] font-semibold text-[var(--foreground)]"
+              : "text-[var(--foreground)] hover:bg-[var(--surface-hover)]",
+          )}
+        >
+          {activeTabId === "settings" && (
+            <span className="absolute left-0 top-1/2 h-4 w-0.5 -translate-y-1/2 rounded-r-full bg-[var(--accent)]" />
+          )}
+          <Settings
+            className={cn(
+              "h-4 w-4 shrink-0 transition-colors",
+              activeTabId === "settings"
+                ? "text-[var(--accent)]"
+                : "text-[var(--muted)] group-hover:text-[var(--foreground)]",
+            )}
+            aria-hidden="true"
+          />
+          {!sidebarCollapsed && (
+            <>
+              <span className="truncate">Settings</span>
+              <kbd className="ml-auto rounded border border-[var(--border)] bg-black/[0.03] px-1.5 py-0.5 font-mono text-[9px] text-[var(--muted)] dark:bg-white/[0.04]">
+                ⌘,
+              </kbd>
+            </>
+          )}
+        </button>
+      </div>
+      </aside>
+    </>
   );
 }

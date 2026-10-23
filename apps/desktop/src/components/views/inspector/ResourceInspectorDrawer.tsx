@@ -3,12 +3,17 @@
 import * as React from "react";
 import { useClusterStore, SelectedResource } from "@/stores/clusterStore";
 import { useTabStore } from "@/stores/tabStore";
+import { useLayoutStore } from "@/stores/layoutStore";
 import type {
   PodSummary,
   PodEventItem,
   NodeSummary,
   DeploymentSummary,
   ReplicaSetSummary,
+  StatefulSetSummary,
+  DaemonSetSummary,
+  JobSummary,
+  CronJobSummary,
 } from "@kubeview/contracts";
 import { toast } from "sonner";
 import { motion } from "motion/react";
@@ -23,6 +28,9 @@ import { InspectorConditionsTab } from "./tabs/InspectorConditionsTab";
 import { InspectorEventsTab } from "./tabs/InspectorEventsTab";
 import { InspectorYamlTab } from "./tabs/InspectorYamlTab";
 import { InspectorWorkloadOverview } from "./tabs/InspectorWorkloadOverview";
+import { InspectorDaemonSetOverview } from "./tabs/InspectorDaemonSetOverview";
+import { InspectorJobOverview } from "./tabs/InspectorJobOverview";
+import { InspectorCronJobOverview } from "./tabs/InspectorCronJobOverview";
 import {
   InspectorWorkloadConditionsTab,
   type WorkloadConditionLike,
@@ -114,12 +122,19 @@ export function ResourceInspectorDrawer() {
     getPodYaml,
     getDeploymentYaml,
     getReplicaSetYaml,
+    getStatefulSetYaml,
+    getDaemonSetYaml,
+    getJobYaml,
+    getCronJobYaml,
     getPodEvents,
     pods,
     loadPods,
+    loadJobs,
     setCurrentNamespace,
     setPodNodeFilter,
     setPodLabelFilter,
+    setJobOwnerFilter,
+    setJobsViewMode,
     openWorkloadAction,
     openInspector,
   } = useClusterStore();
@@ -166,7 +181,11 @@ export function ResourceInspectorDrawer() {
   const isNode = currentResource?.kind === "Node";
   const isDeployment = currentResource?.kind === "Deployment";
   const isReplicaSet = currentResource?.kind === "ReplicaSet";
-  const isWorkload = isDeployment || isReplicaSet;
+  const isStatefulSet = currentResource?.kind === "StatefulSet";
+  const isDaemonSet = currentResource?.kind === "DaemonSet";
+  const isJob = currentResource?.kind === "Job";
+  const isCronJob = currentResource?.kind === "CronJob";
+  const isWorkload = isDeployment || isReplicaSet || isStatefulSet || isDaemonSet || isJob || isCronJob;
   const podData =
     !isNode && !isWorkload
       ? (currentResource?.data as unknown as PodSummary | undefined)
@@ -180,8 +199,25 @@ export function ResourceInspectorDrawer() {
   const replicaSetData = isReplicaSet
     ? (currentResource?.data as unknown as ReplicaSetSummary | undefined)
     : undefined;
+  const statefulSetData = isStatefulSet
+    ? (currentResource?.data as unknown as StatefulSetSummary | undefined)
+    : undefined;
+  const daemonSetData = isDaemonSet
+    ? (currentResource?.data as unknown as DaemonSetSummary | undefined)
+    : undefined;
+  const jobData = isJob
+    ? (currentResource?.data as unknown as JobSummary | undefined)
+    : undefined;
+  const cronJobData = isCronJob
+    ? (currentResource?.data as unknown as CronJobSummary | undefined)
+    : undefined;
   const workloadConditions: WorkloadConditionLike[] =
-    deploymentData?.conditions ?? replicaSetData?.conditions ?? [];
+    deploymentData?.conditions ??
+    replicaSetData?.conditions ??
+    statefulSetData?.conditions ??
+    daemonSetData?.conditions ??
+    jobData?.conditions ??
+    [];
 
   // Reset to the overview tab whenever a different resource is inspected.
   React.useEffect(() => {
@@ -220,7 +256,15 @@ export function ResourceInspectorDrawer() {
       ? getDeploymentYaml(currentResource.name, resolvedNs)
       : isReplicaSet
         ? getReplicaSetYaml(currentResource.name, resolvedNs)
-        : getPodYaml(currentResource.name, resolvedNs);
+        : isStatefulSet
+          ? getStatefulSetYaml(currentResource.name, resolvedNs)
+          : isDaemonSet
+            ? getDaemonSetYaml(currentResource.name, resolvedNs)
+            : isJob
+              ? getJobYaml(currentResource.name, resolvedNs)
+              : isCronJob
+                ? getCronJobYaml(currentResource.name, resolvedNs)
+                : getPodYaml(currentResource.name, resolvedNs);
 
     fetchManifest
       .then((yamlStr) => {
@@ -245,7 +289,7 @@ export function ResourceInspectorDrawer() {
         }
       })
       .finally(() => setIsLoadingYaml(false));
-  }, [currentResource, isNode, isDeployment, isReplicaSet, podData, pods, getPodYaml, getDeploymentYaml, getReplicaSetYaml]);
+  }, [currentResource, isNode, isDeployment, isReplicaSet, isStatefulSet, isDaemonSet, isJob, isCronJob, podData, pods, getPodYaml, getDeploymentYaml, getReplicaSetYaml, getStatefulSetYaml, getDaemonSetYaml, getJobYaml, getCronJobYaml]);
 
   React.useEffect(() => {
     if (isInspectorOpen && activeTab === "yaml" && !isNode) {
@@ -268,10 +312,28 @@ export function ResourceInspectorDrawer() {
     }
   }, [isInspectorOpen, currentResource?.name, currentResource?.namespace, activeTab, getPodEvents, isNode, isWorkload]);
 
-  // Close on Escape key
+  // Close on Escape key, but only when no modal or palette above the drawer
+  // owns the keystroke. Child overlays should dismiss independently.
   React.useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === "Escape" && isInspectorOpen) {
+      if (e.key !== "Escape" || !isInspectorOpen) return;
+
+      const clusterState = useClusterStore.getState();
+      const childOverlayOpen = Boolean(
+        clusterState.workloadAction ||
+          clusterState.bulkWorkloadAction ||
+          clusterState.logsModalPod ||
+          clusterState.execModalPod ||
+          clusterState.deleteConfirmPod ||
+          clusterState.restartConfirmPod ||
+          clusterState.bulkDeleteConfirmPods?.length ||
+          clusterState.bulkRestartConfirmPods?.length ||
+          clusterState.isEndpointModalOpen ||
+          clusterState.isKubeconfigModalOpen ||
+          useLayoutStore.getState().commandPaletteOpen,
+      );
+
+      if (!childOverlayOpen) {
         closeInspector();
       }
     };
@@ -328,9 +390,13 @@ export function ResourceInspectorDrawer() {
   };
 
   const handleViewPodsForWorkload = () => {
-    if (!currentResource || !isWorkload) return;
+    if (!currentResource || !isWorkload || isCronJob) return;
     const selector = formatLabelSelector(
-      deploymentData?.selector ?? replicaSetData?.selector,
+      deploymentData?.selector ??
+        replicaSetData?.selector ??
+        statefulSetData?.selector ??
+        daemonSetData?.selector ??
+        jobData?.selector,
     );
     setCurrentNamespace(currentResource.namespace);
     setPodNodeFilter(null);
@@ -369,17 +435,68 @@ export function ResourceInspectorDrawer() {
         replicas: replicaSetData?.desiredReplicas ?? 1,
         ownerDeployment: replicaSetData?.ownerDeployment,
       });
+      return;
+    }
+    if (isStatefulSet) {
+      openWorkloadAction({
+        kind: "StatefulSet",
+        action: "scale",
+        name: currentResource.name,
+        namespace: currentResource.namespace,
+        replicas: statefulSetData?.desiredReplicas ?? 1,
+        serviceName: statefulSetData?.serviceName,
+        podManagementPolicy: statefulSetData?.podManagementPolicy,
+        updateStrategy: statefulSetData?.updateStrategy,
+        partition: statefulSetData?.partition,
+        maxUnavailable: statefulSetData?.maxUnavailable,
+        pvcRetentionWhenDeleted:
+          statefulSetData?.persistentVolumeClaimRetentionWhenDeleted,
+        pvcRetentionWhenScaled:
+          statefulSetData?.persistentVolumeClaimRetentionWhenScaled,
+      });
     }
   };
 
   const handleRestartWorkload = () => {
-    if (!currentResource || !isDeployment) return;
-    openWorkloadAction({
-      kind: "Deployment",
-      action: "restart",
-      name: currentResource.name,
-      namespace: currentResource.namespace,
-    });
+    if (!currentResource) return;
+    if (isDeployment) {
+      openWorkloadAction({
+        kind: "Deployment",
+        action: "restart",
+        name: currentResource.name,
+        namespace: currentResource.namespace,
+      });
+      return;
+    }
+    if (isStatefulSet) {
+      openWorkloadAction({
+        kind: "StatefulSet",
+        action: "restart",
+        name: currentResource.name,
+        namespace: currentResource.namespace,
+        serviceName: statefulSetData?.serviceName,
+        podManagementPolicy: statefulSetData?.podManagementPolicy,
+        updateStrategy: statefulSetData?.updateStrategy,
+        partition: statefulSetData?.partition,
+        maxUnavailable: statefulSetData?.maxUnavailable,
+        pvcRetentionWhenDeleted:
+          statefulSetData?.persistentVolumeClaimRetentionWhenDeleted,
+        pvcRetentionWhenScaled:
+          statefulSetData?.persistentVolumeClaimRetentionWhenScaled,
+      });
+      return;
+    }
+    if (isDaemonSet) {
+      openWorkloadAction({
+        kind: "DaemonSet",
+        action: "restart",
+        name: currentResource.name,
+        namespace: currentResource.namespace,
+        updateStrategy: daemonSetData?.updateStrategy,
+        maxUnavailable: daemonSetData?.maxUnavailable,
+        maxSurge: daemonSetData?.maxSurge,
+      });
+    }
   };
 
   const handleDeleteWorkload = () => {
@@ -401,15 +518,108 @@ export function ResourceInspectorDrawer() {
         namespace: currentResource.namespace,
         ownerDeployment: replicaSetData?.ownerDeployment,
       });
+      return;
+    }
+    if (isStatefulSet) {
+      openWorkloadAction({
+        kind: "StatefulSet",
+        action: "delete",
+        name: currentResource.name,
+        namespace: currentResource.namespace,
+        serviceName: statefulSetData?.serviceName,
+        podManagementPolicy: statefulSetData?.podManagementPolicy,
+        updateStrategy: statefulSetData?.updateStrategy,
+        partition: statefulSetData?.partition,
+        maxUnavailable: statefulSetData?.maxUnavailable,
+        pvcRetentionWhenDeleted:
+          statefulSetData?.persistentVolumeClaimRetentionWhenDeleted,
+        pvcRetentionWhenScaled:
+          statefulSetData?.persistentVolumeClaimRetentionWhenScaled,
+      });
+      return;
+    }
+    if (isDaemonSet) {
+      openWorkloadAction({
+        kind: "DaemonSet",
+        action: "delete",
+        name: currentResource.name,
+        namespace: currentResource.namespace,
+        updateStrategy: daemonSetData?.updateStrategy,
+        maxUnavailable: daemonSetData?.maxUnavailable,
+        maxSurge: daemonSetData?.maxSurge,
+      });
+      return;
+    }
+    if (isJob) {
+      openWorkloadAction({
+        kind: "Job",
+        action: "delete",
+        name: currentResource.name,
+        namespace: currentResource.namespace,
+        ownerCronJob: jobData?.ownerCronJob,
+        active: jobData?.active,
+      });
+      return;
+    }
+    if (isCronJob) {
+      openWorkloadAction({
+        kind: "CronJob",
+        action: "delete",
+        name: currentResource.name,
+        namespace: currentResource.namespace,
+        schedule: cronJobData?.schedule,
+        suspend: cronJobData?.suspend,
+        concurrencyPolicy: cronJobData?.concurrencyPolicy,
+      });
     }
   };
 
+  const handleViewJobsForCronJob = () => {
+    if (!currentResource || !isCronJob || !cronJobData) return;
+    setJobOwnerFilter(cronJobData.name);
+    setJobsViewMode("jobs");
+    loadJobs(cronJobData.namespace);
+    openTab({ id: "jobs", title: "Jobs & CronJobs", closable: true });
+    toast.info(`Showing Jobs owned by CronJob '${cronJobData.name}'`);
+    closeInspector();
+  };
+
+  const handleToggleCronJobSuspend = () => {
+    if (!currentResource || !isCronJob || !cronJobData) return;
+    openWorkloadAction({
+      kind: "CronJob",
+      action: cronJobData.suspend ? "resume" : "suspend",
+      name: currentResource.name,
+      namespace: currentResource.namespace,
+      schedule: cronJobData.schedule,
+      suspend: cronJobData.suspend,
+      concurrencyPolicy: cronJobData.concurrencyPolicy,
+    });
+  };
+
+  const handleTriggerCronJob = () => {
+    if (!currentResource || !isCronJob || !cronJobData) return;
+    openWorkloadAction({
+      kind: "CronJob",
+      action: "trigger",
+      name: currentResource.name,
+      namespace: currentResource.namespace,
+      schedule: cronJobData.schedule,
+      suspend: cronJobData.suspend,
+      concurrencyPolicy: cronJobData.concurrencyPolicy,
+    });
+  };
+
+  const hasWorkloadConditions = isDeployment || isReplicaSet || isStatefulSet || isDaemonSet || isJob;
+  const workloadInspectorTabs = [
+    { id: "overview" as const, label: "Overview", icon: LayoutDashboard, count: null },
+    ...(hasWorkloadConditions
+      ? [{ id: "conditions" as const, label: "Conditions", icon: HeartPulse, count: workloadConditions.length }]
+      : []),
+    { id: "yaml" as const, label: "YAML", icon: FileCode, count: null },
+  ];
   const inspectorTabs = isWorkload
-    ? [
-        { id: "overview" as const, label: "Overview", icon: LayoutDashboard, count: null },
-        { id: "conditions" as const, label: "Conditions", icon: HeartPulse, count: workloadConditions.length },
-        { id: "yaml" as const, label: "YAML", icon: FileCode, count: null },
-      ]
+    ? workloadInspectorTabs
     : [
         { id: "overview" as const, label: "Overview", icon: LayoutDashboard, count: null },
         { id: "containers" as const, label: "Containers", icon: Box, count: podData?.containers?.length || 0 },
@@ -453,12 +663,28 @@ export function ResourceInspectorDrawer() {
           isNode={isNode}
           isDeployment={isDeployment}
           isReplicaSet={isReplicaSet}
+          isStatefulSet={isStatefulSet}
+          isDaemonSet={isDaemonSet}
+          isJob={isJob}
+          isCronJob={isCronJob}
           nodeData={nodeData}
           podData={podData}
-          onViewPods={handleViewPodsForWorkload}
-          onScaleWorkload={handleScaleWorkload}
-          onRestartWorkload={isDeployment ? handleRestartWorkload : undefined}
+          onViewPods={isCronJob ? undefined : handleViewPodsForWorkload}
+          onViewJobs={isCronJob ? handleViewJobsForCronJob : undefined}
+          onScaleWorkload={
+            isDeployment || isReplicaSet || isStatefulSet
+              ? handleScaleWorkload
+              : undefined
+          }
+          onRestartWorkload={
+            isDeployment || isStatefulSet || isDaemonSet
+              ? handleRestartWorkload
+              : undefined
+          }
           onDeleteWorkload={handleDeleteWorkload}
+          onToggleCronJobSuspend={isCronJob ? handleToggleCronJobSuspend : undefined}
+          onTriggerCronJob={isCronJob ? handleTriggerCronJob : undefined}
+          cronJobSuspended={cronJobData?.suspend ?? false}
           onClose={closeInspector}
           onOpenLogsModal={openLogsModal}
           onOpenExecModal={openExecModal}
@@ -468,7 +694,7 @@ export function ResourceInspectorDrawer() {
 
         {/* Segmented Tabs Bar (Pods and Workloads) */}
         {!isNode && (
-          <div className="h-11 border-b border-[var(--border)] px-4 flex items-center bg-[var(--surface)] shrink-0 overflow-x-auto scrollbar-none">
+          <div className="h-11 border-b border-[var(--border)] px-2 sm:px-4 flex items-center bg-[var(--surface)] shrink-0 overflow-x-auto scrollbar-none">
             <div className="flex items-center gap-1 p-0.5 rounded-lg bg-black/[0.04] dark:bg-white/[0.05] border border-[var(--border)] text-xs select-none">
               {inspectorTabs.map((t) => {
                 const Icon = t.icon;
@@ -514,7 +740,7 @@ export function ResourceInspectorDrawer() {
         )}
 
         {/* Drawer Content */}
-        <div className="flex-1 overflow-y-auto p-4 space-y-4">
+        <div className="flex-1 overflow-y-auto p-3 sm:p-4 space-y-4">
           {isNode && nodeData ? (
             <InspectorNodeOverview
               nodeData={nodeData}
@@ -527,19 +753,49 @@ export function ResourceInspectorDrawer() {
             <>
               {isWorkload ? (
                 <>
-                  {activeTab === "overview" && (
-                    <InspectorWorkloadOverview
-                      currentResource={currentResource}
-                      deployment={deploymentData}
-                      replicaSet={replicaSetData}
-                      onViewPods={handleViewPodsForWorkload}
-                      onScale={handleScaleWorkload}
-                      onRestart={isDeployment ? handleRestartWorkload : undefined}
-                      onDelete={handleDeleteWorkload}
-                    />
-                  )}
+                  {activeTab === "overview" &&
+                    (isDeployment || isReplicaSet || isStatefulSet ? (
+                      <InspectorWorkloadOverview
+                        currentResource={currentResource}
+                        deployment={deploymentData}
+                        replicaSet={replicaSetData}
+                        statefulSet={statefulSetData}
+                        onViewPods={handleViewPodsForWorkload}
+                        onScale={handleScaleWorkload}
+                        onRestart={
+                          isDeployment || isStatefulSet
+                            ? handleRestartWorkload
+                            : undefined
+                        }
+                        onDelete={handleDeleteWorkload}
+                      />
+                    ) : isDaemonSet && daemonSetData ? (
+                      <InspectorDaemonSetOverview
+                        currentResource={currentResource}
+                        daemonSet={daemonSetData}
+                        onViewPods={handleViewPodsForWorkload}
+                        onRestart={handleRestartWorkload}
+                        onDelete={handleDeleteWorkload}
+                      />
+                    ) : isJob && jobData ? (
+                      <InspectorJobOverview
+                        currentResource={currentResource}
+                        job={jobData}
+                        onViewPods={handleViewPodsForWorkload}
+                        onDelete={handleDeleteWorkload}
+                      />
+                    ) : isCronJob && cronJobData ? (
+                      <InspectorCronJobOverview
+                        currentResource={currentResource}
+                        cronJob={cronJobData}
+                        onViewJobs={handleViewJobsForCronJob}
+                        onTrigger={handleTriggerCronJob}
+                        onToggleSuspend={handleToggleCronJobSuspend}
+                        onDelete={handleDeleteWorkload}
+                      />
+                    ) : null)}
 
-                  {activeTab === "conditions" && (
+                  {activeTab === "conditions" && hasWorkloadConditions && (
                     <InspectorWorkloadConditionsTab
                       conditions={workloadConditions}
                       kind={currentResource.kind}

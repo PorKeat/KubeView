@@ -12,6 +12,7 @@ import (
 	"time"
 
 	appsv1 "k8s.io/api/apps/v1"
+	batchv1 "k8s.io/api/batch/v1"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -57,6 +58,8 @@ type WorkloadsSummary struct {
 	ReplicaSets  WorkloadControllerHealth `json:"replicaSets"`
 	StatefulSets WorkloadControllerHealth `json:"statefulSets"`
 	DaemonSets   WorkloadControllerHealth `json:"daemonSets"`
+	Jobs         WorkloadControllerHealth `json:"jobs"`
+	CronJobs     WorkloadControllerHealth `json:"cronJobs"`
 }
 
 type ClusterOverviewResult struct {
@@ -153,20 +156,22 @@ func (m *Manager) fetchClusterOverviewRaw(ctx context.Context, contextName, targ
 	}
 
 	var (
-		nodeList   *corev1.NodeList
-		nodeErr    error
-		podList    *corev1.PodList
-		podErr     error
-		eventList  *corev1.EventList
-		metricsRaw []byte
-		depsList   *appsv1.DeploymentList
-		rssList    *appsv1.ReplicaSetList
-		stssList   *appsv1.StatefulSetList
-		dssList    *appsv1.DaemonSetList
-		wg         sync.WaitGroup
+		nodeList     *corev1.NodeList
+		nodeErr      error
+		podList      *corev1.PodList
+		podErr       error
+		eventList    *corev1.EventList
+		metricsRaw   []byte
+		depsList     *appsv1.DeploymentList
+		rssList      *appsv1.ReplicaSetList
+		stssList     *appsv1.StatefulSetList
+		dssList      *appsv1.DaemonSetList
+		jobsList     *batchv1.JobList
+		cronJobsList *batchv1.CronJobList
+		wg           sync.WaitGroup
 	)
 
-	wg.Add(8)
+	wg.Add(10)
 
 	// 1. Fetch all Nodes (parallel)
 	go func() {
@@ -227,6 +232,18 @@ func (m *Manager) fetchClusterOverviewRaw(ctx context.Context, contextName, targ
 	go func() {
 		defer wg.Done()
 		rssList, _ = client.AppsV1().ReplicaSets(targetNs).List(ctx, metav1.ListOptions{})
+	}()
+
+	// 9. Jobs (scoped if namespace specified)
+	go func() {
+		defer wg.Done()
+		jobsList, _ = client.BatchV1().Jobs(targetNs).List(ctx, metav1.ListOptions{})
+	}()
+
+	// 10. CronJobs (scoped if namespace specified)
+	go func() {
+		defer wg.Done()
+		cronJobsList, _ = client.BatchV1().CronJobs(targetNs).List(ctx, metav1.ListOptions{})
 	}()
 
 	wg.Wait()
@@ -621,6 +638,28 @@ func (m *Manager) fetchClusterOverviewRaw(ctx context.Context, contextName, targ
 			} else {
 				workloads.ReplicaSets.Degraded++
 				workloads.ReplicaSets.UnreadyList = append(workloads.ReplicaSets.UnreadyList, fmt.Sprintf("%s/%s (%d/%d)", rs.Namespace, rs.Name, rs.Status.ReadyReplicas, desired))
+			}
+		}
+	}
+
+	if jobsList != nil {
+		workloads.Jobs.Total = len(jobsList.Items)
+		for i := range jobsList.Items {
+			switch resolveJobStatus(&jobsList.Items[i]) {
+			case "Complete", "Running", "Pending":
+				workloads.Jobs.Ready++
+			case "Failed":
+				workloads.Jobs.Degraded++
+			}
+		}
+	}
+
+	if cronJobsList != nil {
+		workloads.CronJobs.Total = len(cronJobsList.Items)
+		for i := range cronJobsList.Items {
+			cj := &cronJobsList.Items[i]
+			if cj.Spec.Suspend == nil || !*cj.Spec.Suspend {
+				workloads.CronJobs.Ready++
 			}
 		}
 	}

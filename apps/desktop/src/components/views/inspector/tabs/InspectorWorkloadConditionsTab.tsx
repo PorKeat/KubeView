@@ -17,6 +17,46 @@ export interface InspectorWorkloadConditionsTabProps {
   kind: string;
 }
 
+type ConditionTone = "critical" | "warning" | "healthy" | "muted";
+
+function getConditionTone(condition: WorkloadConditionLike): ConditionTone {
+  const failureType = ["ReplicaFailure", "Failed", "FailureTarget"].includes(condition.type);
+  if (condition.status === "True") {
+    if (failureType) return "critical";
+    if (condition.type === "Progressing" || condition.type === "Suspended") return "warning";
+    return "healthy";
+  }
+  if (condition.status === "False") {
+    if (failureType) return "healthy";
+    if (condition.type === "Suspended") return "healthy";
+    if (condition.type === "Progressing") {
+      const reason = (condition.reason ?? "").toLowerCase();
+      return /fail|deadline|error|backoff/.test(reason) ? "critical" : "healthy";
+    }
+    return "critical";
+  }
+  return "muted";
+}
+
+const toneClasses: Record<ConditionTone, { icon: string; badge: string }> = {
+  critical: {
+    icon: "text-rose-500",
+    badge: "bg-rose-500/15 text-rose-700 dark:text-rose-400 border-rose-500/25",
+  },
+  warning: {
+    icon: "text-amber-500",
+    badge: "bg-amber-500/15 text-amber-700 dark:text-amber-400 border-amber-500/25",
+  },
+  healthy: {
+    icon: "text-emerald-500",
+    badge: "bg-emerald-500/15 text-emerald-700 dark:text-emerald-400 border-emerald-500/25",
+  },
+  muted: {
+    icon: "text-[var(--muted)]",
+    badge: "bg-black/5 dark:bg-white/5 text-[var(--muted)] border-[var(--border)]",
+  },
+};
+
 export function InspectorWorkloadConditionsTab({
   conditions,
   kind,
@@ -34,13 +74,13 @@ export function InspectorWorkloadConditionsTab({
   return (
     <div className="space-y-2.5 text-xs">
       {conditions.map((condition) => {
-        const isFalse =
-          condition.type === "ReplicaFailure"
-            ? condition.status === "True"
-            : condition.status === "False";
-        const isProgressing =
-          condition.type === "Progressing" && condition.status === "True";
-        const Icon = isFalse ? AlertCircle : isProgressing ? Clock : CheckCircle2;
+        const tone = getConditionTone(condition);
+        const Icon =
+          tone === "critical"
+            ? AlertCircle
+            : tone === "warning" || tone === "muted"
+              ? Clock
+              : CheckCircle2;
 
         return (
           <div
@@ -49,16 +89,7 @@ export function InspectorWorkloadConditionsTab({
           >
             <div className="space-y-1 min-w-0 flex-1">
               <div className="flex items-center gap-2">
-                <Icon
-                  className={cn(
-                    "w-4 h-4 shrink-0",
-                    isFalse
-                      ? "text-rose-500"
-                      : isProgressing
-                        ? "text-amber-500"
-                        : "text-emerald-500",
-                  )}
-                />
+                <Icon className={cn("w-4 h-4 shrink-0", toneClasses[tone].icon)} />
                 <span className="font-semibold text-[var(--foreground)] font-mono text-xs">
                   {condition.type}
                 </span>
@@ -75,19 +106,14 @@ export function InspectorWorkloadConditionsTab({
               )}
               {condition.lastTransitionTime && (
                 <span className="text-[9px] text-[var(--muted)]/70 pl-6 block font-mono">
-                  Transitioned:{" "}
-                  {new Date(condition.lastTransitionTime).toLocaleString()}
+                  Transitioned: {new Date(condition.lastTransitionTime).toLocaleString()}
                 </span>
               )}
             </div>
             <span
               className={cn(
                 "inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] font-semibold font-mono border shrink-0",
-                isFalse
-                  ? "bg-rose-500/15 text-rose-700 dark:text-rose-400 border-rose-500/25"
-                  : isProgressing
-                    ? "bg-amber-500/15 text-amber-700 dark:text-amber-400 border-amber-500/25"
-                    : "bg-emerald-500/15 text-emerald-700 dark:text-emerald-400 border-emerald-500/25",
+                toneClasses[tone].badge,
               )}
             >
               {condition.status}

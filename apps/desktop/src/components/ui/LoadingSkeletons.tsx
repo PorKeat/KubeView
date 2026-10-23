@@ -110,19 +110,19 @@ export function TableSkeleton({
  */
 export function OverviewSkeleton({ className }: { className?: string }) {
   return (
-    <div className={cn("p-5 space-y-5 select-none animate-in fade-in duration-300", className)}>
+    <div className={cn("p-3 sm:p-5 space-y-5 select-none animate-in fade-in duration-300", className)}>
       {/* 1. Hero Banner Skeleton */}
       <div className="p-5 rounded-2xl glass-panel border border-[var(--border)] relative overflow-hidden">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-4">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <div className="flex min-w-0 items-center gap-3 sm:gap-4">
             <SkeletonCircle size={48} className="rounded-2xl" />
             <div className="space-y-2">
-              <div className="flex items-center gap-2.5">
+              <div className="flex flex-wrap items-center gap-2.5">
                 <Skeleton className="h-5 w-36 rounded" />
                 <SkeletonBadge className="w-24 h-5" />
                 <SkeletonBadge className="w-20 h-5" />
               </div>
-              <div className="flex items-center gap-3">
+              <div className="flex flex-wrap items-center gap-2 sm:gap-3">
                 <Skeleton className="h-3 w-28 rounded" />
                 <Skeleton className="h-3 w-16 rounded" />
                 <Skeleton className="h-3 w-36 rounded" />
@@ -138,7 +138,7 @@ export function OverviewSkeleton({ className }: { className?: string }) {
       </div>
 
       {/* 2. Four Capacity Radial Cards */}
-      <div className="grid grid-cols-4 gap-3.5">
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 sm:gap-3.5 lg:grid-cols-4">
         {Array.from({ length: 4 }).map((_, i) => (
           <div key={i} className="glass-card p-4 rounded-xl space-y-3">
             <div className="flex justify-between items-start">
@@ -168,7 +168,7 @@ export function OverviewSkeleton({ className }: { className?: string }) {
           <Skeleton className="h-3 w-32 rounded" />
         </div>
 
-        <div className="grid grid-cols-3 gap-3">
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
           {Array.from({ length: 3 }).map((_, i) => (
             <div key={i} className="p-3.5 rounded-xl border border-[var(--border)] bg-black/[0.03] dark:bg-black/30 space-y-3">
               <div className="flex justify-between items-center">
@@ -191,13 +191,13 @@ export function OverviewSkeleton({ className }: { className?: string }) {
       </div>
 
       {/* 4. Diagnostic & Events Grid Skeleton */}
-      <div className="grid grid-cols-3 gap-3.5">
-        <div className="col-span-2 p-4 rounded-xl glass-panel border border-[var(--border)] space-y-3">
+      <div className="grid grid-cols-1 gap-3.5 lg:grid-cols-3">
+        <div className="lg:col-span-2 p-4 rounded-xl glass-panel border border-[var(--border)] space-y-3">
           <div className="flex justify-between items-center">
             <Skeleton className="h-3.5 w-44 rounded" />
             <Skeleton className="h-3 w-24 rounded" />
           </div>
-          <div className="grid grid-cols-2 gap-2.5">
+          <div className="grid grid-cols-1 gap-2.5 sm:grid-cols-2">
             {Array.from({ length: 4 }).map((_, i) => (
               <div key={i} className="p-3 rounded-lg border border-[var(--border)] bg-black/[0.03] dark:bg-black/20 space-y-2">
                 <div className="flex justify-between items-center">

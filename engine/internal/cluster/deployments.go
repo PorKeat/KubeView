@@ -283,6 +283,9 @@ func (m *Manager) ScaleDeployment(ctx context.Context, p DeploymentActionParams)
 	if p.Replicas == nil {
 		return fmt.Errorf("replicas is required")
 	}
+	if *p.Replicas < 0 {
+		return fmt.Errorf("replicas must be zero or greater")
+	}
 
 	client, _, err := m.GetClientForContext(p.ContextName)
 	if err != nil {

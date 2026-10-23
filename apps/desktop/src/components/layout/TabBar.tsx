@@ -17,6 +17,7 @@ import {
   FileCode,
   HardDrive,
   Boxes,
+  Settings,
 } from "lucide-react";
 import { useTabStore, TabItem } from "@/stores/tabStore";
 import { useLayoutStore } from "@/stores/layoutStore";
@@ -43,6 +44,12 @@ export function TabBar() {
         return FileCode;
       case "statefulsets":
         return Database;
+      case "daemonsets":
+        return Cpu;
+      case "jobs":
+        return Clock;
+      case "settings":
+        return Settings;
       default:
         return Boxes;
     }

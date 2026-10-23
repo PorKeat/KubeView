@@ -252,3 +252,59 @@
     transparent 100%
   );
 }
+
+/* ============================================================
+   User Preferences: text scale, fixed-size micro labels, motion
+   ============================================================ */
+html {
+  font-size: 16px;
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+}
+
+html[data-font-size="sm"] { font-size: 14px; }
+html[data-font-size="md"] { font-size: 16px; }
+html[data-font-size="lg"] { font-size: 18px; }
+html[data-font-size="xl"] { font-size: 20px; }
+
+/* Arbitrary pixel text does not follow rem scaling. Keep these labels in
+   proportion with the user's selected base size. */
+html[data-font-size="sm"] .text-\[8px\] { font-size: 7px; }
+html[data-font-size="sm"] .text-\[9px\] { font-size: 8px; }
+html[data-font-size="sm"] .text-\[10px\] { font-size: 9px; }
+html[data-font-size="sm"] .text-\[11px\] { font-size: 10px; }
+html[data-font-size="sm"] .text-\[12px\] { font-size: 11px; }
+html[data-font-size="sm"] .text-\[13px\] { font-size: 12px; }
+
+html[data-font-size="lg"] .text-\[8px\] { font-size: 9px; }
+html[data-font-size="lg"] .text-\[9px\] { font-size: 10px; }
+html[data-font-size="lg"] .text-\[10px\] { font-size: 11px; }
+html[data-font-size="lg"] .text-\[11px\] { font-size: 12px; }
+html[data-font-size="lg"] .text-\[12px\] { font-size: 13px; }
+html[data-font-size="lg"] .text-\[13px\] { font-size: 15px; }
+
+html[data-font-size="xl"] .text-\[8px\] { font-size: 10px; }
+html[data-font-size="xl"] .text-\[9px\] { font-size: 11px; }
+html[data-font-size="xl"] .text-\[10px\] { font-size: 12px; }
+html[data-font-size="xl"] .text-\[11px\] { font-size: 13px; }
+html[data-font-size="xl"] .text-\[12px\] { font-size: 15px; }
+html[data-font-size="xl"] .text-\[13px\] { font-size: 16px; }
+
+/* Explicit accessibility preference, independent of the OS setting. */
+html[data-reduced-motion="true"] *,
+html[data-reduced-motion="true"] *::before,
+html[data-reduced-motion="true"] *::after {
+  animation-duration: 0.01ms !important;
+  animation-iteration-count: 1 !important;
+  transition-duration: 0.01ms !important;
+  scroll-behavior: auto !important;
+}
+
+/* Keep long resource lists usable on touch screens. */
+.scrollbar-none {
+  scrollbar-width: none;
+}
+.scrollbar-none::-webkit-scrollbar {
+  width: 0;
+  height: 0;
+}

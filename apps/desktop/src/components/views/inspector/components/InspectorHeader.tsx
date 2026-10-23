@@ -6,6 +6,9 @@ import {
   Box,
   Layers,
   Repeat,
+  Database,
+  Cpu,
+  Clock,
   Copy,
   Check,
   FileText,
@@ -14,6 +17,9 @@ import {
   SlidersHorizontal,
   Trash2,
   X,
+  Pause,
+  Play,
+  Zap,
 } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
@@ -26,12 +32,20 @@ export interface InspectorHeaderProps {
   isNode: boolean;
   isDeployment?: boolean;
   isReplicaSet?: boolean;
+  isStatefulSet?: boolean;
+  isDaemonSet?: boolean;
+  isJob?: boolean;
+  isCronJob?: boolean;
   nodeData?: NodeSummary;
   podData?: PodSummary;
   onViewPods?: () => void;
+  onViewJobs?: () => void;
   onScaleWorkload?: () => void;
   onRestartWorkload?: () => void;
   onDeleteWorkload?: () => void;
+  onToggleCronJobSuspend?: () => void;
+  onTriggerCronJob?: () => void;
+  cronJobSuspended?: boolean;
   onClose: () => void;
   onOpenLogsModal: (pod: { name: string; namespace: string }) => void;
   onOpenExecModal: (pod: { name: string; namespace: string }) => void;
@@ -44,12 +58,20 @@ export function InspectorHeader({
   isNode,
   isDeployment = false,
   isReplicaSet = false,
+  isStatefulSet = false,
+  isDaemonSet = false,
+  isJob = false,
+  isCronJob = false,
   nodeData,
   podData,
   onViewPods,
+  onViewJobs,
   onScaleWorkload,
   onRestartWorkload,
   onDeleteWorkload,
+  onToggleCronJobSuspend,
+  onTriggerCronJob,
+  cronJobSuspended = false,
   onClose,
   onOpenLogsModal,
   onOpenExecModal,
@@ -57,6 +79,8 @@ export function InspectorHeader({
   onOpenDeleteConfirm,
 }: InspectorHeaderProps) {
   const [copiedTitle, setCopiedTitle] = React.useState(false);
+  const isWorkloadController =
+    isDeployment || isReplicaSet || isStatefulSet || isDaemonSet || isJob;
 
   const handleCopyTitle = () => {
     navigator.clipboard.writeText(currentResource.name);
@@ -71,6 +95,7 @@ export function InspectorHeader({
       case "Active":
       case "Ready":
       case "Healthy":
+      case "Complete":
         return (
           <span className="inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-medium font-mono bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20 shrink-0">
             {status}
@@ -81,6 +106,7 @@ export function InspectorHeader({
       case "Terminating":
       case "Progressing":
       case "Paused":
+      case "Suspended":
         return (
           <span className="inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-medium font-mono bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/25 shrink-0">
             {status}
@@ -89,6 +115,7 @@ export function InspectorHeader({
       case "Completed":
       case "Succeeded":
       case "Scaled Down":
+      case "Idle":
         return (
           <span className="inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-medium font-mono bg-black/[0.04] dark:bg-white/[0.06] text-[var(--muted)] border border-[var(--border)] shrink-0">
             {status}
@@ -104,15 +131,21 @@ export function InspectorHeader({
   };
 
   return (
-    <div className="h-16 border-b border-[var(--border)] px-4 flex items-center justify-between shrink-0 bg-slate-50/80 dark:bg-black/40">
-      <div className="flex items-center gap-3 min-w-0 pr-2">
-        <div className="p-2.5 rounded-xl bg-[var(--surface-hover)] text-[var(--foreground)] border border-[var(--border)] shrink-0">
+    <div className="min-h-16 border-b border-[var(--border)] px-3 sm:px-4 py-2 flex flex-wrap sm:flex-nowrap items-center justify-between gap-2 shrink-0 bg-slate-50/80 dark:bg-black/40">
+      <div className="flex flex-1 items-center gap-2 min-w-0 pr-0 sm:gap-3 sm:pr-2">
+        <div className="p-2 sm:p-2.5 rounded-xl bg-[var(--surface-hover)] text-[var(--foreground)] border border-[var(--border)] shrink-0">
           {isNode ? (
             <Server className="w-5 h-5 text-[var(--accent)]" />
           ) : isDeployment ? (
             <Layers className="w-5 h-5 text-[var(--accent)]" />
           ) : isReplicaSet ? (
             <Repeat className="w-5 h-5 text-[var(--accent)]" />
+          ) : isStatefulSet ? (
+            <Database className="w-5 h-5 text-[var(--accent)]" />
+          ) : isDaemonSet ? (
+            <Cpu className="w-5 h-5 text-[var(--accent)]" />
+          ) : isJob || isCronJob ? (
+            <Clock className="w-5 h-5 text-[var(--accent)]" />
           ) : (
             <Box className="w-5 h-5 text-[var(--accent)]" />
           )}
@@ -122,7 +155,7 @@ export function InspectorHeader({
             <span
               onClick={handleCopyTitle}
               title={`Click to copy: ${currentResource.name}`}
-              className="text-xs font-bold text-[var(--foreground)] truncate font-mono hover:text-[var(--accent)] cursor-pointer transition-colors max-w-[280px] sm:max-w-[340px]"
+              className="text-xs font-bold text-[var(--foreground)] truncate font-mono hover:text-[var(--accent)] cursor-pointer transition-colors max-w-[140px] sm:max-w-[280px] md:max-w-[340px]"
             >
               {currentResource.name}
             </span>
@@ -136,7 +169,6 @@ export function InspectorHeader({
             {renderStatusBadge(currentResource.status)}
           </div>
 
-          {/* Micro-Badges Subheader */}
           <div className="flex flex-wrap items-center gap-1.5 text-[10px] text-[var(--muted)] mt-1 font-mono">
             <span className="px-1.5 py-0.2 rounded font-semibold bg-black/5 dark:bg-white/5 text-[var(--foreground)] border border-[var(--border)]">
               {currentResource.kind}
@@ -177,62 +209,75 @@ export function InspectorHeader({
         </div>
       </div>
 
-      {/* Action Controls Toolbar */}
-      <div className="flex items-center gap-1 shrink-0 bg-black/5 dark:bg-white/5 p-1 rounded-xl border border-[var(--border)]">
-        {isDeployment || isReplicaSet ? (
+      <div className="flex w-full max-w-full items-center justify-end gap-1 overflow-x-auto scrollbar-none rounded-xl border border-[var(--border)] bg-black/5 p-1 shrink-0 sm:w-auto dark:bg-white/5">
+        {isCronJob ? (
           <>
-            <Tooltip content="View Pods">
-              <button
-                onClick={onViewPods}
-                className="p-1.5 rounded-lg hover:bg-[var(--surface-hover)] text-[var(--muted)] hover:text-[var(--foreground)] transition-colors cursor-pointer"
-                aria-label="View Pods"
-              >
-                <Box className="w-4 h-4" />
-              </button>
-            </Tooltip>
-
-            {onScaleWorkload && (
-              <Tooltip content="Scale Replicas">
-                <button
-                  onClick={onScaleWorkload}
-                  className="p-1.5 rounded-lg hover:bg-[var(--surface-hover)] text-[var(--muted)] hover:text-[var(--foreground)] transition-colors cursor-pointer"
-                  aria-label="Scale Replicas"
-                >
-                  <SlidersHorizontal className="w-4 h-4" />
+            {onViewJobs && (
+              <Tooltip content="View Jobs">
+                <button onClick={onViewJobs} className="p-1.5 rounded-lg hover:bg-[var(--surface-hover)] text-[var(--muted)] hover:text-[var(--foreground)] transition-colors cursor-pointer" aria-label="View Jobs">
+                  <Box className="w-4 h-4" />
                 </button>
               </Tooltip>
             )}
-
-            {isDeployment && onRestartWorkload && (
-              <Tooltip content="Restart Rollout">
-                <button
-                  onClick={onRestartWorkload}
-                  className="p-1.5 rounded-lg hover:bg-[var(--surface-hover)] text-[var(--muted)] hover:text-[var(--foreground)] transition-colors cursor-pointer"
-                  aria-label="Restart Rollout"
-                >
-                  <RotateCw className="w-4 h-4" />
+            {onTriggerCronJob && (
+              <Tooltip content="Trigger Now">
+                <button onClick={onTriggerCronJob} className="p-1.5 rounded-lg hover:bg-[var(--surface-hover)] text-[var(--muted)] hover:text-[var(--foreground)] transition-colors cursor-pointer" aria-label="Trigger CronJob Now">
+                  <Zap className="w-4 h-4" />
                 </button>
               </Tooltip>
             )}
-
+            {onToggleCronJobSuspend && (
+              <Tooltip content={cronJobSuspended ? "Resume Schedule" : "Suspend Schedule"}>
+                <button onClick={onToggleCronJobSuspend} className="p-1.5 rounded-lg hover:bg-[var(--surface-hover)] text-[var(--muted)] hover:text-[var(--foreground)] transition-colors cursor-pointer" aria-label={cronJobSuspended ? "Resume Schedule" : "Suspend Schedule"}>
+                  {cronJobSuspended ? <Play className="w-4 h-4" /> : <Pause className="w-4 h-4" />}
+                </button>
+              </Tooltip>
+            )}
             {onDeleteWorkload && (
               <Tooltip content="Delete Workload">
-                <button
-                  onClick={onDeleteWorkload}
-                  className="p-1.5 rounded-lg hover:bg-rose-500/15 text-[var(--muted)] hover:text-rose-500 transition-colors cursor-pointer"
-                  aria-label="Delete Workload"
-                >
+                <button onClick={onDeleteWorkload} className="p-1.5 rounded-lg hover:bg-rose-500/15 text-[var(--muted)] hover:text-rose-500 transition-colors cursor-pointer" aria-label="Delete Workload">
                   <Trash2 className="w-4 h-4" />
                 </button>
               </Tooltip>
             )}
-
             <Tooltip content="Copy Resource Name">
-              <button
-                onClick={handleCopyTitle}
-                className="p-1.5 rounded-lg hover:bg-[var(--surface-hover)] text-[var(--muted)] hover:text-[var(--foreground)] transition-colors cursor-pointer"
-                aria-label="Copy Resource Name"
-              >
+              <button onClick={handleCopyTitle} className="p-1.5 rounded-lg hover:bg-[var(--surface-hover)] text-[var(--muted)] hover:text-[var(--foreground)] transition-colors cursor-pointer" aria-label="Copy Resource Name">
+                <Copy className="w-4 h-4" />
+              </button>
+            </Tooltip>
+          </>
+        ) : isWorkloadController ? (
+          <>
+            {onViewPods && (
+              <Tooltip content="View Pods">
+                <button onClick={onViewPods} className="p-1.5 rounded-lg hover:bg-[var(--surface-hover)] text-[var(--muted)] hover:text-[var(--foreground)] transition-colors cursor-pointer" aria-label="View Pods">
+                  <Box className="w-4 h-4" />
+                </button>
+              </Tooltip>
+            )}
+            {onScaleWorkload && (
+              <Tooltip content="Scale Replicas">
+                <button onClick={onScaleWorkload} className="p-1.5 rounded-lg hover:bg-[var(--surface-hover)] text-[var(--muted)] hover:text-[var(--foreground)] transition-colors cursor-pointer" aria-label="Scale Replicas">
+                  <SlidersHorizontal className="w-4 h-4" />
+                </button>
+              </Tooltip>
+            )}
+            {(isDeployment || isStatefulSet || isDaemonSet) && onRestartWorkload && (
+              <Tooltip content="Restart Rollout">
+                <button onClick={onRestartWorkload} className="p-1.5 rounded-lg hover:bg-[var(--surface-hover)] text-[var(--muted)] hover:text-[var(--foreground)] transition-colors cursor-pointer" aria-label="Restart Rollout">
+                  <RotateCw className="w-4 h-4" />
+                </button>
+              </Tooltip>
+            )}
+            {onDeleteWorkload && (
+              <Tooltip content="Delete Workload">
+                <button onClick={onDeleteWorkload} className="p-1.5 rounded-lg hover:bg-rose-500/15 text-[var(--muted)] hover:text-rose-500 transition-colors cursor-pointer" aria-label="Delete Workload">
+                  <Trash2 className="w-4 h-4" />
+                </button>
+              </Tooltip>
+            )}
+            <Tooltip content="Copy Resource Name">
+              <button onClick={handleCopyTitle} className="p-1.5 rounded-lg hover:bg-[var(--surface-hover)] text-[var(--muted)] hover:text-[var(--foreground)] transition-colors cursor-pointer" aria-label="Copy Resource Name">
                 <Copy className="w-4 h-4" />
               </button>
             </Tooltip>
@@ -240,69 +285,37 @@ export function InspectorHeader({
         ) : !isNode ? (
           <>
             <Tooltip content="View Real-Time Logs">
-              <button
-                onClick={() => onOpenLogsModal({ name: currentResource.name, namespace: currentResource.namespace })}
-                className="p-1.5 rounded-lg hover:bg-[var(--surface-hover)] text-[var(--muted)] hover:text-[var(--foreground)] transition-colors cursor-pointer"
-                aria-label="View Real-Time Logs"
-              >
+              <button onClick={() => onOpenLogsModal({ name: currentResource.name, namespace: currentResource.namespace })} className="p-1.5 rounded-lg hover:bg-[var(--surface-hover)] text-[var(--muted)] hover:text-[var(--foreground)] transition-colors cursor-pointer" aria-label="View Real-Time Logs">
                 <FileText className="w-4 h-4" />
               </button>
             </Tooltip>
-
             <Tooltip content="Interactive Exec Shell">
-              <button
-                onClick={() => onOpenExecModal({ name: currentResource.name, namespace: currentResource.namespace })}
-                className="p-1.5 rounded-lg hover:bg-[var(--surface-hover)] text-[var(--muted)] hover:text-[var(--foreground)] transition-colors cursor-pointer"
-                aria-label="Interactive Exec Shell"
-              >
+              <button onClick={() => onOpenExecModal({ name: currentResource.name, namespace: currentResource.namespace })} className="p-1.5 rounded-lg hover:bg-[var(--surface-hover)] text-[var(--muted)] hover:text-[var(--foreground)] transition-colors cursor-pointer" aria-label="Interactive Exec Shell">
                 <Terminal className="w-4 h-4" />
               </button>
             </Tooltip>
-
             <Tooltip content="Restart Pod">
-              <button
-                onClick={() => onOpenRestartConfirm({ name: currentResource.name, namespace: currentResource.namespace })}
-                className="p-1.5 rounded-lg hover:bg-[var(--surface-hover)] text-[var(--muted)] hover:text-[var(--foreground)] transition-colors cursor-pointer"
-                aria-label="Restart Pod"
-              >
+              <button onClick={() => onOpenRestartConfirm({ name: currentResource.name, namespace: currentResource.namespace })} className="p-1.5 rounded-lg hover:bg-[var(--surface-hover)] text-[var(--muted)] hover:text-[var(--foreground)] transition-colors cursor-pointer" aria-label="Restart Pod">
                 <RotateCw className="w-4 h-4" />
               </button>
             </Tooltip>
-
             <Tooltip content="Delete Pod">
-              <button
-                onClick={() => onOpenDeleteConfirm({ name: currentResource.name, namespace: currentResource.namespace })}
-                className="p-1.5 rounded-lg hover:bg-rose-500/15 text-[var(--muted)] hover:text-rose-500 transition-colors cursor-pointer"
-                aria-label="Delete Pod"
-              >
+              <button onClick={() => onOpenDeleteConfirm({ name: currentResource.name, namespace: currentResource.namespace })} className="p-1.5 rounded-lg hover:bg-rose-500/15 text-[var(--muted)] hover:text-rose-500 transition-colors cursor-pointer" aria-label="Delete Pod">
                 <Trash2 className="w-4 h-4" />
               </button>
             </Tooltip>
           </>
         ) : (
           <Tooltip content="Copy Node Name">
-            <button
-              onClick={() => {
-                navigator.clipboard.writeText(currentResource.name);
-                toast.success(`Node name copied: ${currentResource.name}`);
-              }}
-              className="p-1.5 rounded-lg hover:bg-[var(--surface-hover)] text-[var(--muted)] hover:text-[var(--foreground)] transition-colors cursor-pointer"
-              aria-label="Copy Node Name"
-            >
+            <button onClick={() => { navigator.clipboard.writeText(currentResource.name); toast.success(`Node name copied: ${currentResource.name}`); }} className="p-1.5 rounded-lg hover:bg-[var(--surface-hover)] text-[var(--muted)] hover:text-[var(--foreground)] transition-colors cursor-pointer" aria-label="Copy Node Name">
               <Copy className="w-4 h-4" />
             </button>
           </Tooltip>
         )}
 
         <div className="h-4 w-[1px] bg-[var(--border)] mx-0.5" />
-
         <Tooltip content="Close drawer" shortcut="Esc">
-          <button
-            onClick={onClose}
-            data-testid="inspector-close-btn"
-            aria-label="Close drawer (Escape)"
-            className="p-1.5 rounded-lg hover:bg-[var(--surface-hover)] text-[var(--muted)] hover:text-[var(--foreground)] transition-colors cursor-pointer focus-visible:ring-2 focus-visible:ring-[var(--accent)] focus-visible:outline-hidden"
-          >
+          <button onClick={onClose} data-testid="inspector-close-btn" aria-label="Close drawer (Escape)" className="p-1.5 rounded-lg hover:bg-[var(--surface-hover)] text-[var(--muted)] hover:text-[var(--foreground)] transition-colors cursor-pointer focus-visible:ring-2 focus-visible:ring-[var(--accent)] focus-visible:outline-hidden">
             <X className="w-4 h-4" aria-hidden="true" />
           </button>
         </Tooltip>
