@@ -8,3 +8,6 @@ overrides:
 onlyBuiltDependencies:
   - lefthook
   - unrs-resolver
+
+# pnpm 11 fails on ignored build scripts in CI; allowed builds are listed above.
+strictDepBuilds: false
