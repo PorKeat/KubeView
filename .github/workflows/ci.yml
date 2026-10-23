@@ -40,7 +40,7 @@ jobs:
       - run: go -C engine tool cover -func=coverage.out | tee -a "$GITHUB_STEP_SUMMARY"
       - run: go -C engine vet ./...
       - run: test -z "$(gofmt -l engine)"
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         if: always()
         with:
           name: go-coverage
