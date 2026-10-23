@@ -85,13 +85,16 @@ export function PodRestartModal() {
             </h3>
             {isBulk ? (
               <p className="text-xs text-[var(--muted)] mt-1 leading-relaxed">
-                You are about to rolling-restart <strong className="text-[var(--foreground)] font-mono">{targetPods.length}</strong> pods across the cluster.
+                You are about to restart{" "}
+                <strong className="text-[var(--foreground)] font-mono">{targetPods.length}</strong>{" "}
+                pods by deleting and recreating them.
               </p>
             ) : (
               <p className="text-xs text-[var(--muted)] mt-1 leading-relaxed">
                 Are you sure you want to restart pod{" "}
                 <strong className="text-[var(--foreground)] font-mono">{restartConfirmPod?.name}</strong>{" "}
                 in namespace <strong className="text-[var(--foreground)] font-mono">{restartConfirmPod?.namespace}</strong>?
+                KubeView deletes the pod and lets its controller recreate it.
               </p>
             )}
           </div>
@@ -113,7 +116,10 @@ export function PodRestartModal() {
 
         <div className="p-3 rounded-xl bg-cyan-500/10 border border-cyan-500/20 text-cyan-600 dark:text-cyan-400 text-xs">
           <p className="leading-relaxed text-[11px]">
-            Kubernetes controllers (Deployments, StatefulSets, DaemonSets) will recreate fresh pod instances with clean memory space and restart containers automatically.
+            Kubernetes has no direct pod restart command. KubeView deletes each pod:
+            pods owned by a Deployment, ReplicaSet, StatefulSet, or DaemonSet are
+            recreated by that controller, while standalone pods are recreated from
+            their existing spec.
           </p>
         </div>
 

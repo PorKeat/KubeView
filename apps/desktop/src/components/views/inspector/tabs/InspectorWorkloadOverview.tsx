@@ -88,10 +88,10 @@ export function InspectorWorkloadOverview({
             label="Scale"
             onClick={onScale}
           />
-          {onRestart && (
+          {isDeployment && onRestart && (
             <ActionButton
               icon={RotateCw}
-              label={isDeployment ? "Restart Rollout" : "Restart Owner"}
+              label="Restart Rollout"
               onClick={onRestart}
             />
           )}
@@ -102,6 +102,16 @@ export function InspectorWorkloadOverview({
             danger
           />
         </div>
+
+        {!isDeployment && replicaSet!.ownerDeployment && (
+          <div className="p-2.5 rounded-xl border border-blue-500/20 bg-blue-500/5 text-[11px] leading-relaxed text-[var(--muted)]">
+            Replicas are managed by Deployment{" "}
+            <strong className="text-[var(--foreground)] font-mono">
+              {replicaSet!.ownerDeployment}
+            </strong>. Scaling this ReplicaSet directly may be reconciled back
+            by the Deployment controller.
+          </div>
+        )}
 
         <div className="grid grid-cols-2 sm:grid-cols-5 gap-2">
           <ReplicaTile label="Desired" value={desired} />

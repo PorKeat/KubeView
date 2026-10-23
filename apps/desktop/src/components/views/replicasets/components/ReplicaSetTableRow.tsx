@@ -10,11 +10,14 @@ import {
   Box,
   Code2,
   Repeat,
+  SlidersHorizontal,
   Tag,
   Layers,
+  Trash2,
 } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
+import { useClusterStore } from "@/stores/clusterStore";
 import type { ReplicaSetSummary } from "@kubeview/contracts";
 import { StatusBeacon, Tooltip } from "@/components/ui";
 import {
@@ -33,6 +36,9 @@ export function ReplicaSetTableRow({
   onViewPods,
   onRowClick,
 }: ReplicaSetTableRowProps) {
+  const openWorkloadAction = useClusterStore(
+    (state) => state.openWorkloadAction,
+  );
   const [copiedName, setCopiedName] = React.useState(false);
   const [copiedCommand, setCopiedCommand] = React.useState<string | null>(null);
   const [isExpanded, setIsExpanded] = React.useState(false);
@@ -62,7 +68,7 @@ export function ReplicaSetTableRow({
     if (!showActionMenu && actionButtonRef.current) {
       const rect = actionButtonRef.current.getBoundingClientRect();
       const spaceBelow = window.innerHeight - rect.bottom;
-      setOpenUpwards(spaceBelow < 260);
+      setOpenUpwards(spaceBelow < 420);
     }
     setShowActionMenu((prev) => !prev);
     setShowKubectlSubmenu(false);
@@ -88,6 +94,34 @@ export function ReplicaSetTableRow({
         ? "text-rose-500 font-semibold"
         : "text-amber-500 font-medium";
 
+  const closeRowActionMenu = () => {
+    setShowActionMenu(false);
+    setShowKubectlSubmenu(false);
+  };
+
+  const handleScaleWorkload = () => {
+    closeRowActionMenu();
+    openWorkloadAction({
+      kind: "ReplicaSet",
+      action: "scale",
+      name: item.name,
+      namespace: item.namespace,
+      replicas: desired,
+      ownerDeployment: item.ownerDeployment,
+    });
+  };
+
+  const handleDeleteWorkload = () => {
+    closeRowActionMenu();
+    openWorkloadAction({
+      kind: "ReplicaSet",
+      action: "delete",
+      name: item.name,
+      namespace: item.namespace,
+      ownerDeployment: item.ownerDeployment,
+    });
+  };
+
   const kubectlCommands = [
     {
       label: "Describe ReplicaSet",
@@ -95,16 +129,8 @@ export function ReplicaSetTableRow({
     },
     {
       label: "Scale Replicas",
-      command: `kubectl scale replicaset ${item.name} --replicas=${Math.max(1, desired)} -n ${item.namespace}`,
+      command: `kubectl scale replicaset ${item.name} --replicas=${desired} -n ${item.namespace}`,
     },
-    ...(item.ownerDeployment
-      ? [
-          {
-            label: "Restart Owner Deployment",
-            command: `kubectl rollout restart deployment/${item.ownerDeployment} -n ${item.namespace}`,
-          },
-        ]
-      : []),
     {
       label: "Delete ReplicaSet",
       command: `kubectl delete replicaset ${item.name} -n ${item.namespace}`,
@@ -266,7 +292,7 @@ export function ReplicaSetTableRow({
                   transition={{ type: "spring", stiffness: 450, damping: 30, mass: 0.8 }}
                   onClick={(event) => event.stopPropagation()}
                   className={cn(
-                    "absolute z-50 w-64 p-1.5 rounded-xl bg-[var(--surface)] border border-[var(--border)] shadow-2xl backdrop-blur-md text-left",
+                    "absolute z-50 w-72 p-1.5 rounded-xl bg-[var(--surface)] border border-[var(--border)] shadow-2xl backdrop-blur-md text-left",
                     openUpwards
                       ? "bottom-full mb-1.5 right-0 origin-bottom-right"
                       : "top-full mt-1.5 right-0 origin-top-right",
@@ -293,6 +319,32 @@ export function ReplicaSetTableRow({
                       <Box className="w-3.5 h-3.5 text-[var(--muted)] group-hover/act:text-[var(--foreground)]" />
                       <span>View Pods</span>
                     </button>
+                  </div>
+
+                  <div className="my-1 border-t border-[var(--border)]/60" />
+
+                  <div className="space-y-0.5">
+                    <RowAction
+                      icon={SlidersHorizontal}
+                      title="Scale Replicas"
+                      detail={
+                        item.ownerDeployment
+                          ? "Set replicas; the owner Deployment may reconcile it back"
+                          : "Set replicas; the controller adds or removes pods"
+                      }
+                      onClick={handleScaleWorkload}
+                    />
+                    <RowAction
+                      icon={Trash2}
+                      title="Delete ReplicaSet"
+                      detail={
+                        item.ownerDeployment
+                          ? "Delete its pods; the owner Deployment may recreate it"
+                          : "Delete this ReplicaSet and its pods"
+                      }
+                      onClick={handleDeleteWorkload}
+                      danger
+                    />
                   </div>
 
                   <div className="my-1 border-t border-[var(--border)]/60" />
@@ -384,8 +436,14 @@ export function ReplicaSetTableRow({
                     </span>
                   )}
                   {item.ownerDeployment && (
-                    <span className="px-1.5 py-0.5 rounded text-[10px] font-mono bg-blue-500/10 text-blue-600 dark:text-blue-400 border border-blue-500/20">
-                      Deployment: {item.ownerDeployment}
+                    <span
+                      title={item.ownerDeployment}
+                      className="inline-flex max-w-full min-w-0 items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-mono bg-blue-500/10 text-blue-600 dark:text-blue-400 border border-blue-500/20"
+                    >
+                      <span className="shrink-0">Deployment:</span>
+                      <span className="truncate max-w-[200px]">
+                        {item.ownerDeployment}
+                      </span>
                     </span>
                   )}
                 </div>
@@ -568,5 +626,56 @@ function ReplicaTile({
         {value}
       </div>
     </div>
+  );
+}
+
+function RowAction({
+  icon: Icon,
+  title,
+  detail,
+  onClick,
+  danger = false,
+}: {
+  icon: React.ElementType;
+  title: string;
+  detail: string;
+  onClick: () => void;
+  danger?: boolean;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className={cn(
+        "w-full flex items-start gap-2.5 px-2.5 py-1.5 rounded-lg text-left transition-colors cursor-pointer group/act",
+        danger
+          ? "hover:bg-rose-500/10"
+          : "hover:bg-black/5 dark:hover:bg-white/[0.06]",
+      )}
+    >
+      <Icon
+        className={cn(
+          "w-3.5 h-3.5 mt-0.5 shrink-0",
+          danger
+            ? "text-rose-500"
+            : "text-[var(--muted)] group-hover/act:text-[var(--foreground)]",
+        )}
+      />
+      <span className="min-w-0">
+        <span
+          className={cn(
+            "block text-[11px] font-medium",
+            danger
+              ? "text-rose-600 dark:text-rose-400"
+              : "text-[var(--foreground)]",
+          )}
+        >
+          {title}
+        </span>
+        <span className="block text-[10px] leading-relaxed text-[var(--muted)]">
+          {detail}
+        </span>
+      </span>
+    </button>
   );
 }

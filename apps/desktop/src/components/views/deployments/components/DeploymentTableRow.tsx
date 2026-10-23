@@ -12,10 +12,14 @@ import {
   Box,
   Code2,
   Layers,
+  RotateCw,
+  SlidersHorizontal,
   Tag,
+  Trash2,
 } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
+import { useClusterStore } from "@/stores/clusterStore";
 import type { DeploymentSummary } from "@kubeview/contracts";
 import { StatusBeacon, Tooltip } from "@/components/ui";
 import {
@@ -41,6 +45,9 @@ export function DeploymentTableRow({
   onRowClick,
 }: DeploymentTableRowProps) {
   const itemKey = `${item.namespace}/${item.name}`;
+  const openWorkloadAction = useClusterStore(
+    (state) => state.openWorkloadAction,
+  );
   const [copiedName, setCopiedName] = React.useState(false);
   const [copiedCommand, setCopiedCommand] = React.useState<string | null>(null);
   const [isExpanded, setIsExpanded] = React.useState(false);
@@ -70,7 +77,7 @@ export function DeploymentTableRow({
     if (!showActionMenu && actionButtonRef.current) {
       const rect = actionButtonRef.current.getBoundingClientRect();
       const spaceBelow = window.innerHeight - rect.bottom;
-      setOpenUpwards(spaceBelow < 280);
+      setOpenUpwards(spaceBelow < 420);
     }
     setShowActionMenu((prev) => !prev);
     setShowKubectlSubmenu(false);
@@ -97,6 +104,42 @@ export function DeploymentTableRow({
         ? "text-rose-500 font-semibold"
         : "text-amber-500 font-medium";
 
+  const closeRowActionMenu = () => {
+    setShowActionMenu(false);
+    setShowKubectlSubmenu(false);
+  };
+
+  const handleScaleWorkload = () => {
+    closeRowActionMenu();
+    openWorkloadAction({
+      kind: "Deployment",
+      action: "scale",
+      name: item.name,
+      namespace: item.namespace,
+      replicas: desired,
+    });
+  };
+
+  const handleRestartWorkload = () => {
+    closeRowActionMenu();
+    openWorkloadAction({
+      kind: "Deployment",
+      action: "restart",
+      name: item.name,
+      namespace: item.namespace,
+    });
+  };
+
+  const handleDeleteWorkload = () => {
+    closeRowActionMenu();
+    openWorkloadAction({
+      kind: "Deployment",
+      action: "delete",
+      name: item.name,
+      namespace: item.namespace,
+    });
+  };
+
   const kubectlCommands = [
     {
       label: "Describe Deployment",
@@ -112,7 +155,7 @@ export function DeploymentTableRow({
     },
     {
       label: "Scale Replicas",
-      command: `kubectl scale deployment ${item.name} --replicas=${Math.max(1, desired)} -n ${item.namespace}`,
+      command: `kubectl scale deployment ${item.name} --replicas=${desired} -n ${item.namespace}`,
     },
     {
       label: "Delete Deployment",
@@ -315,7 +358,7 @@ export function DeploymentTableRow({
                   }}
                   onClick={(event) => event.stopPropagation()}
                   className={cn(
-                    "absolute z-50 w-64 p-1.5 rounded-xl bg-[var(--surface)] border border-[var(--border)] shadow-2xl backdrop-blur-md text-left",
+                    "absolute z-50 w-72 p-1.5 rounded-xl bg-[var(--surface)] border border-[var(--border)] shadow-2xl backdrop-blur-md text-left",
                     openUpwards
                       ? "bottom-full mb-1.5 right-0 origin-bottom-right"
                       : "top-full mt-1.5 right-0 origin-top-right",
@@ -342,6 +385,30 @@ export function DeploymentTableRow({
                       <Box className="w-3.5 h-3.5 text-[var(--muted)] group-hover/act:text-[var(--foreground)]" />
                       <span>View Pods</span>
                     </button>
+                  </div>
+
+                  <div className="my-1 border-t border-[var(--border)]/60" />
+
+                  <div className="space-y-0.5">
+                    <RowAction
+                      icon={SlidersHorizontal}
+                      title="Scale Replicas"
+                      detail="Set spec.replicas without deleting the Deployment"
+                      onClick={handleScaleWorkload}
+                    />
+                    <RowAction
+                      icon={RotateCw}
+                      title="Restart Rollout"
+                      detail="Patch the pod template and roll pods by strategy"
+                      onClick={handleRestartWorkload}
+                    />
+                    <RowAction
+                      icon={Trash2}
+                      title="Delete Deployment"
+                      detail="Cascade delete its ReplicaSets and Pods"
+                      onClick={handleDeleteWorkload}
+                      danger
+                    />
                   </div>
 
                   <div className="my-1 border-t border-[var(--border)]/60" />
@@ -612,5 +679,56 @@ function ReplicaTile({
         {value}
       </div>
     </div>
+  );
+}
+
+function RowAction({
+  icon: Icon,
+  title,
+  detail,
+  onClick,
+  danger = false,
+}: {
+  icon: React.ElementType;
+  title: string;
+  detail: string;
+  onClick: () => void;
+  danger?: boolean;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className={cn(
+        "w-full flex items-start gap-2.5 px-2.5 py-1.5 rounded-lg text-left transition-colors cursor-pointer group/act",
+        danger
+          ? "hover:bg-rose-500/10"
+          : "hover:bg-black/5 dark:hover:bg-white/[0.06]",
+      )}
+    >
+      <Icon
+        className={cn(
+          "w-3.5 h-3.5 mt-0.5 shrink-0",
+          danger
+            ? "text-rose-500"
+            : "text-[var(--muted)] group-hover/act:text-[var(--foreground)]",
+        )}
+      />
+      <span className="min-w-0">
+        <span
+          className={cn(
+            "block text-[11px] font-medium",
+            danger
+              ? "text-rose-600 dark:text-rose-400"
+              : "text-[var(--foreground)]",
+          )}
+        >
+          {title}
+        </span>
+        <span className="block text-[10px] leading-relaxed text-[var(--muted)]">
+          {detail}
+        </span>
+      </span>
+    </button>
   );
 }

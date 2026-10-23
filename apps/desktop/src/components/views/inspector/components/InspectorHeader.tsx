@@ -203,12 +203,12 @@ export function InspectorHeader({
               </Tooltip>
             )}
 
-            {onRestartWorkload && (
-              <Tooltip content={isReplicaSet ? "Restart Owner Deployment" : "Restart Rollout"}>
+            {isDeployment && onRestartWorkload && (
+              <Tooltip content="Restart Rollout">
                 <button
                   onClick={onRestartWorkload}
                   className="p-1.5 rounded-lg hover:bg-[var(--surface-hover)] text-[var(--muted)] hover:text-[var(--foreground)] transition-colors cursor-pointer"
-                  aria-label={isReplicaSet ? "Restart Owner Deployment" : "Restart Rollout"}
+                  aria-label="Restart Rollout"
                 >
                   <RotateCw className="w-4 h-4" />
                 </button>

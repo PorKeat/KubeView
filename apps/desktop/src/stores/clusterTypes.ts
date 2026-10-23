@@ -45,16 +45,27 @@ export interface PodModalTarget {
   container?: string;
 }
 
-export type WorkloadActionType = "scale" | "restart" | "delete";
-
-export interface WorkloadActionRequest {
-  kind: "Deployment" | "ReplicaSet";
-  action: WorkloadActionType;
-  name: string;
-  namespace: string;
-  replicas?: number;
-  ownerDeployment?: string;
-}
+/**
+ * Workload actions mirror kubectl semantics.
+ * Deployments support scale, rollout restart, and delete.
+ * ReplicaSets support scale and delete; kubectl has no ReplicaSet restart.
+ */
+export type WorkloadActionRequest =
+  | {
+      kind: "Deployment";
+      action: "scale" | "restart" | "delete";
+      name: string;
+      namespace: string;
+      replicas?: number;
+    }
+  | {
+      kind: "ReplicaSet";
+      action: "scale" | "delete";
+      name: string;
+      namespace: string;
+      replicas?: number;
+      ownerDeployment?: string;
+    };
 
 export interface ClusterState {
   currentContext: string;

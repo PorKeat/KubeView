@@ -349,39 +349,59 @@ export function ResourceInspectorDrawer() {
   };
 
   const handleScaleWorkload = () => {
-    if (!currentResource || !isWorkload) return;
-    openWorkloadAction({
-      kind: currentResource.kind as "Deployment" | "ReplicaSet",
-      action: "scale",
-      name: currentResource.name,
-      namespace: currentResource.namespace,
-      replicas:
-        deploymentData?.desiredReplicas ??
-        replicaSetData?.desiredReplicas ??
-        1,
-    });
+    if (!currentResource) return;
+    if (isDeployment) {
+      openWorkloadAction({
+        kind: "Deployment",
+        action: "scale",
+        name: currentResource.name,
+        namespace: currentResource.namespace,
+        replicas: deploymentData?.desiredReplicas ?? 1,
+      });
+      return;
+    }
+    if (isReplicaSet) {
+      openWorkloadAction({
+        kind: "ReplicaSet",
+        action: "scale",
+        name: currentResource.name,
+        namespace: currentResource.namespace,
+        replicas: replicaSetData?.desiredReplicas ?? 1,
+        ownerDeployment: replicaSetData?.ownerDeployment,
+      });
+    }
   };
 
   const handleRestartWorkload = () => {
-    if (!currentResource || !isWorkload) return;
+    if (!currentResource || !isDeployment) return;
     openWorkloadAction({
-      kind: currentResource.kind as "Deployment" | "ReplicaSet",
+      kind: "Deployment",
       action: "restart",
       name: currentResource.name,
       namespace: currentResource.namespace,
-      ownerDeployment: replicaSetData?.ownerDeployment,
     });
   };
 
   const handleDeleteWorkload = () => {
-    if (!currentResource || !isWorkload) return;
-    openWorkloadAction({
-      kind: currentResource.kind as "Deployment" | "ReplicaSet",
-      action: "delete",
-      name: currentResource.name,
-      namespace: currentResource.namespace,
-      ownerDeployment: replicaSetData?.ownerDeployment,
-    });
+    if (!currentResource) return;
+    if (isDeployment) {
+      openWorkloadAction({
+        kind: "Deployment",
+        action: "delete",
+        name: currentResource.name,
+        namespace: currentResource.namespace,
+      });
+      return;
+    }
+    if (isReplicaSet) {
+      openWorkloadAction({
+        kind: "ReplicaSet",
+        action: "delete",
+        name: currentResource.name,
+        namespace: currentResource.namespace,
+        ownerDeployment: replicaSetData?.ownerDeployment,
+      });
+    }
   };
 
   const inspectorTabs = isWorkload
@@ -437,12 +457,7 @@ export function ResourceInspectorDrawer() {
           podData={podData}
           onViewPods={handleViewPodsForWorkload}
           onScaleWorkload={handleScaleWorkload}
-          onRestartWorkload={
-            isDeployment ||
-            (isReplicaSet && Boolean(replicaSetData?.ownerDeployment))
-              ? handleRestartWorkload
-              : undefined
-          }
+          onRestartWorkload={isDeployment ? handleRestartWorkload : undefined}
           onDeleteWorkload={handleDeleteWorkload}
           onClose={closeInspector}
           onOpenLogsModal={openLogsModal}
@@ -519,12 +534,7 @@ export function ResourceInspectorDrawer() {
                       replicaSet={replicaSetData}
                       onViewPods={handleViewPodsForWorkload}
                       onScale={handleScaleWorkload}
-                      onRestart={
-                        isDeployment ||
-                        (isReplicaSet && Boolean(replicaSetData?.ownerDeployment))
-                          ? handleRestartWorkload
-                          : undefined
-                      }
+                      onRestart={isDeployment ? handleRestartWorkload : undefined}
                       onDelete={handleDeleteWorkload}
                     />
                   )}
