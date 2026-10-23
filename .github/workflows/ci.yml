@@ -30,7 +30,8 @@ jobs:
         with:
           go-version-file: engine/go.mod
           cache-dependency-path: engine/go.sum
-      - run: pnpm install --frozen-lockfile
+      - run: pnpm install --frozen-lockfile --config.strictDepBuilds=false
+      - run: pnpm rebuild lefthook unrs-resolver
       - run: pnpm build:contracts
       - run: pnpm format:check
       - run: pnpm --filter @kubeview/desktop typecheck
@@ -87,7 +88,7 @@ jobs:
         with:
           go-version-file: engine/go.mod
           cache-dependency-path: engine/go.sum
-      - run: pnpm install --frozen-lockfile
+      - run: pnpm install --frozen-lockfile --config.strictDepBuilds=false
       - run: pnpm audit --prod --audit-level=high
       - run: go run golang.org/x/vuln/cmd/govulncheck@latest ./...
         working-directory: engine
