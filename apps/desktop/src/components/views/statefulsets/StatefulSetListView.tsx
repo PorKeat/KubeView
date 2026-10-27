@@ -1,37 +1,23 @@
 "use client";
 
-import { sortableHeaderProps } from "@/lib/sortableHeader";
-
 import * as React from "react";
-import { motion } from "motion/react";
-import {
-  ArrowUpDown,
-  ArrowUp,
-  ArrowDown,
-  Database,
-  ChevronLeft,
-  ChevronRight,
-  ChevronsLeft,
-  ChevronsRight,
-  RefreshCw,
-  Globe,
-  CheckSquare,
-  MinusSquare,
-  Square,
-  RotateCw,
-  Trash2,
-} from "lucide-react";
+import { Database, RotateCw, Trash2 } from "lucide-react";
 import { toast } from "sonner";
-import { cn } from "@/lib/utils";
 import { formatLabelSelector } from "@/lib/labelSelector";
 import { useClusterStore } from "@/stores/clusterStore";
 import { useSettingsStore } from "@/stores/settingsStore";
 import { useTabStore } from "@/stores/tabStore";
 import type { StatefulSetSummary } from "@kubeview/contracts";
-import { TableSkeleton, EmptyState, Tooltip } from "@/components/ui";
+import { TableSkeleton, EmptyState } from "@/components/ui";
 
 import { StatefulSetTableToolbar } from "./components/StatefulSetTableToolbar";
 import { StatefulSetTableRow } from "./components/StatefulSetTableRow";
+import { StatefulSetEmptyState } from "./components/StatefulSetEmptyState";
+import { StatefulSetPaginationFooter } from "./components/StatefulSetPaginationFooter";
+import {
+  StatefulSetTableHeader,
+  type StatefulSetSortField,
+} from "./components/StatefulSetTableHeader";
 import { BulkWorkloadToolbar } from "@/components/views/shared/BulkWorkloadToolbar";
 import { useWorkloadSelection } from "@/components/views/shared/useWorkloadSelection";
 import {
@@ -39,8 +25,6 @@ import {
   statefulSetMatchesStatus,
   type StatefulSetStatusFilter,
 } from "./lib/statefulSetStatus";
-
-type SortField = "name" | "namespace" | "status" | "ready" | "age";
 
 const getStatefulSetKey = (item: StatefulSetSummary) =>
   `${item.namespace}/${item.name}`;
@@ -70,7 +54,8 @@ export function StatefulSetListView() {
   const deferredSearch = React.useDeferredValue(search);
   const [statusFilter, setStatusFilter] =
     React.useState<StatefulSetStatusFilter>("all");
-  const [sortField, setSortField] = React.useState<SortField>("name");
+  const [sortField, setSortField] =
+    React.useState<StatefulSetSortField>("name");
   const [sortAsc, setSortAsc] = React.useState(true);
   const defaultPageSize = useSettingsStore((s) => s.defaultPageSize);
   const [pageSize, setPageSize] = React.useState<number>(defaultPageSize);
@@ -102,7 +87,7 @@ export function StatefulSetListView() {
     toast.info("Refreshed StatefulSet telemetry");
   };
 
-  const handleSort = (field: SortField) => {
+  const handleSort = (field: StatefulSetSortField) => {
     if (sortField === field) {
       setSortAsc(!sortAsc);
     } else {
@@ -210,17 +195,6 @@ export function StatefulSetListView() {
     );
   };
 
-  const renderSortIndicator = (field: SortField) => {
-    if (sortField === field) {
-      return sortAsc ? (
-        <ArrowUp className="w-3 h-3 text-[var(--accent)]" />
-      ) : (
-        <ArrowDown className="w-3 h-3 text-[var(--accent)]" />
-      );
-    }
-    return <ArrowUpDown className="w-3 h-3 opacity-30" />;
-  };
-
   const totalStatefulSets = totalStatefulSetsCount || statefulSets.length;
   const isFiltered = search.trim() !== "" || statusFilter !== "all";
   const scopedStatefulSets =
@@ -284,233 +258,33 @@ export function StatefulSetListView() {
       (isStatefulSetsLoading && filteredItems.length === 0) ? (
         <TableSkeleton rows={10} columns={10} />
       ) : sortedItems.length === 0 ? (
-        <div className="flex-1 overflow-y-auto min-h-0 flex flex-col justify-center">
-          <EmptyState
-            variant={
-              (statusFilter === "degraded" ||
-                statusFilter === "progressing" ||
-                statusFilter === "scaleddown") &&
-              !search
-                ? "healthy"
-                : isFiltered
-                  ? "search"
-                  : "empty"
-            }
-            title={
-              statusFilter === "degraded" && !search
-                ? "All StatefulSets Healthy"
-                : statusFilter === "progressing" && !search
-                  ? "All StatefulSets Settled"
-                  : statusFilter === "scaleddown" && !search
-                    ? "No Scaled Down StatefulSets"
-                    : isFiltered
-                      ? `No statefulsets match filter "${search || statusFilter}"`
-                      : currentNamespace !== "all"
-                        ? `No statefulsets in "${currentNamespace}"`
-                        : "No StatefulSets Found"
-            }
-            description={
-              statusFilter === "degraded" && !search
-                ? `All ${scopedStatefulSets} statefulsets in ${
-                    currentNamespace === "all"
-                      ? "all cluster namespaces"
-                      : `namespace "${currentNamespace}"`
-                  } report ready replicas.`
-                : statusFilter === "progressing" && !search
-                  ? `Zero active StatefulSet transitions. All ${scopedStatefulSets} statefulsets in ${
-                      currentNamespace === "all"
-                        ? "all cluster namespaces"
-                        : `namespace "${currentNamespace}"`
-                    } have converged on their desired revision.`
-                  : isFiltered
-                    ? `0 of ${scopedStatefulSets} statefulsets in ${
-                        currentNamespace === "all"
-                          ? "all namespaces"
-                          : `namespace "${currentNamespace}"`
-                      } match your active search or status criteria.`
-                    : currentNamespace !== "all"
-                      ? `Namespace "${currentNamespace}" currently holds zero statefulsets. ${statefulSets.length} statefulsets are active in other namespaces.`
-                      : "No StatefulSets are present in the connected cluster. StatefulSets provide stable pod identity and persistent storage for stateful applications."
-            }
-            scopeBadge={
-              isFiltered
-                ? search
-                  ? `Query: "${search}"`
-                  : `Status: ${statusFilter}`
-                : `Namespace: ${currentNamespace}`
-            }
-            codeSnippet={
-              !isFiltered
-                ? `kubectl get statefulsets -n ${
-                    currentNamespace === "all" ? "default" : currentNamespace
-                  }`
-                : undefined
-            }
-            suggestions={
-              !isFiltered && currentNamespace !== "all"
-                ? Object.entries(namespaceCounts)
-                    .filter(([ns]) => ns !== currentNamespace && ns !== "all")
-                    .sort((a, b) => b[1] - a[1])
-                    .slice(0, 4)
-                    .map(([ns, count]) => ({
-                      label: `${ns} (${count})`,
-                      onClick: () => setCurrentNamespace(ns),
-                    }))
-                : undefined
-            }
-            action={
-              isFiltered
-                ? {
-                    label: "Clear Filters",
-                    icon: <RefreshCw className="w-3.5 h-3.5" />,
-                    onClick: () => {
-                      setSearch("");
-                      setStatusFilter("all");
-                    },
-                  }
-                : currentNamespace !== "all"
-                  ? {
-                      label: `View All Namespaces (${statefulSets.length})`,
-                      icon: <Globe className="w-3.5 h-3.5" />,
-                      onClick: () => setCurrentNamespace("all"),
-                    }
-                  : {
-                      label: "Reload StatefulSets",
-                      icon: <RefreshCw className="w-3.5 h-3.5" />,
-                      onClick: () => loadStatefulSets(currentNamespace),
-                    }
-            }
-            secondaryAction={
-              currentNamespace !== "all" && isFiltered
-                ? {
-                    label: "Search All Namespaces",
-                    icon: <Globe className="w-3.5 h-3.5" />,
-                    onClick: () => setCurrentNamespace("all"),
-                  }
-                : !isFiltered && currentNamespace !== "all"
-                  ? {
-                      label: "Reload StatefulSets",
-                      icon: <RefreshCw className="w-3.5 h-3.5" />,
-                      onClick: () => loadStatefulSets(currentNamespace),
-                    }
-                  : undefined
-            }
-          />
-        </div>
+        <StatefulSetEmptyState
+          statusFilter={statusFilter}
+          search={search}
+          isFiltered={isFiltered}
+          currentNamespace={currentNamespace}
+          scopedStatefulSetCount={scopedStatefulSets}
+          statefulSetCount={statefulSets.length}
+          namespaceCounts={namespaceCounts}
+          onClearFilters={() => {
+            setSearch("");
+            setStatusFilter("all");
+          }}
+          onSelectNamespace={setCurrentNamespace}
+          onReload={() => loadStatefulSets(currentNamespace)}
+        />
       ) : (
         <div className="flex-1 overflow-auto min-h-0">
           <table className="w-full min-w-[1040px] text-left text-xs border-collapse table-fixed">
-            <thead className="sticky top-0 bg-[var(--surface)] z-10 border-b border-[var(--border)] select-none">
-              <tr className="text-[11px] font-semibold text-[var(--muted)] uppercase tracking-wider h-8">
-                <th className="w-8 px-2 text-center">
-                  <Tooltip
-                    content={
-                      selection.isPageAllSelected
-                        ? "Deselect all on page"
-                        : "Select all on page"
-                    }
-                  >
-                    <button
-                      onClick={selection.toggleSelectAll}
-                      className="text-[var(--muted)] hover:text-[var(--foreground)] flex items-center justify-center cursor-pointer"
-                      aria-label={
-                        selection.isPageAllSelected
-                          ? "Deselect all on page"
-                          : "Select all on page"
-                      }
-                    >
-                      {selection.isPageAllSelected ? (
-                        <CheckSquare className="w-3.5 h-3.5 text-[var(--accent)]" />
-                      ) : selection.isPageSomeSelected ||
-                        selection.selectedItems.size > 0 ? (
-                        <MinusSquare className="w-3.5 h-3.5 text-[var(--accent)]" />
-                      ) : (
-                        <Square className="w-3.5 h-3.5" />
-                      )}
-                    </button>
-                  </Tooltip>
-                </th>
-
-                <th
-                  {...sortableHeaderProps({
-                    field: "name",
-                    activeField: sortField,
-                    ascending: sortAsc,
-                    onSort: handleSort,
-                  })}
-                  className="w-48 sm:w-56 md:w-64 py-1 px-3 cursor-pointer hover:text-[var(--foreground)] transition-colors min-w-0"
-                >
-                  <div className="flex items-center gap-1">
-                    <span>Name</span>
-                    {renderSortIndicator("name")}
-                  </div>
-                </th>
-                <th
-                  {...sortableHeaderProps({
-                    field: "namespace",
-                    activeField: sortField,
-                    ascending: sortAsc,
-                    onSort: handleSort,
-                  })}
-                  className="w-24 sm:w-28 py-1 px-3 cursor-pointer hover:text-[var(--foreground)] transition-colors"
-                >
-                  <div className="flex items-center gap-1">
-                    <span>Namespace</span>
-                    {renderSortIndicator("namespace")}
-                  </div>
-                </th>
-                <th
-                  {...sortableHeaderProps({
-                    field: "status",
-                    activeField: sortField,
-                    ascending: sortAsc,
-                    onSort: handleSort,
-                  })}
-                  className="w-24 sm:w-28 py-1 px-3 cursor-pointer hover:text-[var(--foreground)] transition-colors"
-                >
-                  <div className="flex items-center gap-1">
-                    <span>Status</span>
-                    {renderSortIndicator("status")}
-                  </div>
-                </th>
-                <th className="w-16 py-1 px-3">Desired</th>
-                <th className="w-16 py-1 px-3">Current</th>
-                <th
-                  {...sortableHeaderProps({
-                    field: "ready",
-                    activeField: sortField,
-                    ascending: sortAsc,
-                    onSort: handleSort,
-                  })}
-                  className="w-16 py-1 px-3 cursor-pointer hover:text-[var(--foreground)] transition-colors"
-                >
-                  <div className="flex items-center gap-1">
-                    <span>Ready</span>
-                    {renderSortIndicator("ready")}
-                  </div>
-                </th>
-                <th className="w-16 py-1 px-3">Updated</th>
-                <th className="w-36 py-1 px-3">Service</th>
-                <th
-                  {...sortableHeaderProps({
-                    field: "age",
-                    activeField: sortField,
-                    ascending: sortAsc,
-                    onSort: handleSort,
-                  })}
-                  className="w-14 sm:w-16 py-1 px-3 cursor-pointer hover:text-[var(--foreground)] transition-colors"
-                >
-                  <div className="flex items-center gap-1">
-                    <span>Age</span>
-                    {renderSortIndicator("age")}
-                  </div>
-                </th>
-                <th
-                  className="w-9 py-1 px-2 text-right"
-                  aria-label="Actions"
-                ></th>
-              </tr>
-            </thead>
+            <StatefulSetTableHeader
+              sortField={sortField}
+              sortAsc={sortAsc}
+              onSort={handleSort}
+              selectedItemsCount={selection.selectedItems.size}
+              isPageAllSelected={selection.isPageAllSelected}
+              isPageSomeSelected={selection.isPageSomeSelected}
+              onToggleSelectAll={selection.toggleSelectAll}
+            />
             <tbody className="divide-y divide-[var(--border)]">
               {paginatedItems.map((item) => (
                 <StatefulSetTableRow
@@ -537,183 +311,20 @@ export function StatefulSetListView() {
         </div>
       )}
 
-      <div className="min-h-10 border-t border-[var(--border)] px-2 sm:px-4 py-1.5 flex flex-wrap items-center justify-between text-[11px] text-[var(--muted)] bg-[var(--surface)]/90 backdrop-blur-xs shrink-0 gap-2 sm:gap-4">
-        <div className="flex min-w-0 max-w-full items-center gap-2 truncate">
-          <span>
-            Showing{" "}
-            <span className="text-[var(--foreground)] font-mono font-medium">
-              {sortedItems.length === 0
-                ? "0"
-                : pageSize > 0
-                  ? `${(safeCurrentPage - 1) * pageSize + 1}–${Math.min(
-                      safeCurrentPage * pageSize,
-                      sortedItems.length,
-                    )}`
-                  : `1–${sortedItems.length}`}
-            </span>{" "}
-            of{" "}
-            <span className="text-[var(--foreground)] font-mono font-medium">
-              {sortedItems.length}
-            </span>{" "}
-            items
-          </span>
-          <span className="text-[var(--muted)]/40">·</span>
-          <div className="inline-flex items-center gap-1">
-            <span className="text-[var(--muted)]">namespace:</span>
-            <span className="font-mono font-medium text-[var(--foreground)] px-1.5 py-0.5 rounded bg-black/5 dark:bg-white/5 border border-[var(--border)] text-[10px]">
-              {currentNamespace}
-            </span>
-          </div>
-          {sortedItems.length !== scopedStatefulSets && (
-            <span className="text-[10px] text-[var(--muted)] opacity-70">
-              (filtered from {scopedStatefulSets} total)
-            </span>
-          )}
-          {currentNamespace !== "all" && (
-            <>
-              <span className="text-[var(--muted)]/40">·</span>
-              <span className="text-[10px] text-[var(--muted)]">
-                {totalStatefulSets} total statefulsets
-              </span>
-            </>
-          )}
-        </div>
-
-        <div className="flex flex-wrap items-center gap-2 shrink-0 sm:gap-4">
-          <div className="flex items-center gap-1.5">
-            <span className="text-[10px] uppercase tracking-wider text-[var(--muted)] font-medium">
-              Rows:
-            </span>
-            <div className="inline-flex items-center rounded-lg border border-[var(--border)] bg-black/5 dark:bg-white/[0.04] p-0.5 relative">
-              {[50, 100, 250, 0].map((size) => {
-                const isSelected = pageSize === size;
-                return (
-                  <button
-                    key={size}
-                    type="button"
-                    aria-pressed={isSelected}
-                    data-testid={`page-size-${size}`}
-                    onClick={() => {
-                      setPageSize(size);
-                      setCurrentPage(1);
-                    }}
-                    className={cn(
-                      "relative px-2 py-0.5 rounded-md text-[10px] font-mono transition-colors cursor-pointer select-none",
-                      isSelected
-                        ? "text-[var(--foreground)] font-semibold"
-                        : "text-[var(--muted)] hover:text-[var(--foreground)]",
-                    )}
-                  >
-                    {isSelected && (
-                      <motion.span
-                        layoutId="statefulSetPageSizeIndicator"
-                        className="absolute inset-0 rounded-md bg-[var(--surface-active)] dark:bg-white/10 shadow-xs border border-[var(--border)]/60"
-                        transition={{
-                          type: "spring",
-                          stiffness: 450,
-                          damping: 32,
-                          mass: 0.8,
-                        }}
-                      />
-                    )}
-                    <span className="relative z-10">
-                      {size === 0 ? "All" : size}
-                    </span>
-                  </button>
-                );
-              })}
-            </div>
-          </div>
-
-          {pageSize > 0 && totalPages > 1 && (
-            <div className="flex items-center gap-2">
-              <span className="font-mono text-[11px] text-[var(--muted)]">
-                Page{" "}
-                <motion.strong
-                  key={safeCurrentPage}
-                  initial={{ opacity: 0.4, y: -2 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.15 }}
-                  className="text-[var(--foreground)] font-semibold inline-block min-w-[12px] text-center"
-                >
-                  {safeCurrentPage}
-                </motion.strong>{" "}
-                of{" "}
-                <strong className="text-[var(--foreground)] font-semibold">
-                  {totalPages}
-                </strong>
-              </span>
-
-              <div className="flex items-center gap-1">
-                <Tooltip content="First page" disabled={safeCurrentPage <= 1}>
-                  <motion.button
-                    whileHover={{ scale: 1.05 }}
-                    whileTap={{ scale: 0.92 }}
-                    disabled={safeCurrentPage <= 1}
-                    onClick={() => setCurrentPage(1)}
-                    className="w-6.5 h-6.5 inline-flex items-center justify-center rounded-md border border-[var(--border)]/80 bg-[var(--surface)] hover:bg-[var(--surface-hover)] text-[var(--muted)] hover:text-[var(--foreground)] disabled:opacity-25 disabled:pointer-events-none transition-colors cursor-pointer"
-                    aria-label="First page"
-                  >
-                    <ChevronsLeft className="w-3.5 h-3.5" />
-                  </motion.button>
-                </Tooltip>
-
-                <Tooltip
-                  content="Previous page"
-                  disabled={safeCurrentPage <= 1}
-                >
-                  <motion.button
-                    whileHover={{ scale: 1.05 }}
-                    whileTap={{ scale: 0.92 }}
-                    disabled={safeCurrentPage <= 1}
-                    onClick={() =>
-                      setCurrentPage((page) => Math.max(1, page - 1))
-                    }
-                    className="w-6.5 h-6.5 inline-flex items-center justify-center rounded-md border border-[var(--border)]/80 bg-[var(--surface)] hover:bg-[var(--surface-hover)] text-[var(--muted)] hover:text-[var(--foreground)] disabled:opacity-25 disabled:pointer-events-none transition-colors cursor-pointer"
-                    aria-label="Previous page"
-                  >
-                    <ChevronLeft className="w-3.5 h-3.5" />
-                  </motion.button>
-                </Tooltip>
-
-                <Tooltip
-                  content="Next page"
-                  disabled={safeCurrentPage >= totalPages}
-                >
-                  <motion.button
-                    whileHover={{ scale: 1.05 }}
-                    whileTap={{ scale: 0.92 }}
-                    disabled={safeCurrentPage >= totalPages}
-                    onClick={() =>
-                      setCurrentPage((page) => Math.min(totalPages, page + 1))
-                    }
-                    className="w-6.5 h-6.5 inline-flex items-center justify-center rounded-md border border-[var(--border)]/80 bg-[var(--surface)] hover:bg-[var(--surface-hover)] text-[var(--muted)] hover:text-[var(--foreground)] disabled:opacity-25 disabled:pointer-events-none transition-colors cursor-pointer"
-                    aria-label="Next page"
-                  >
-                    <ChevronRight className="w-3.5 h-3.5" />
-                  </motion.button>
-                </Tooltip>
-
-                <Tooltip
-                  content="Last page"
-                  disabled={safeCurrentPage >= totalPages}
-                >
-                  <motion.button
-                    whileHover={{ scale: 1.05 }}
-                    whileTap={{ scale: 0.92 }}
-                    disabled={safeCurrentPage >= totalPages}
-                    onClick={() => setCurrentPage(totalPages)}
-                    className="w-6.5 h-6.5 inline-flex items-center justify-center rounded-md border border-[var(--border)]/80 bg-[var(--surface)] hover:bg-[var(--surface-hover)] text-[var(--muted)] hover:text-[var(--foreground)] disabled:opacity-25 disabled:pointer-events-none transition-colors cursor-pointer"
-                    aria-label="Last page"
-                  >
-                    <ChevronsRight className="w-3.5 h-3.5" />
-                  </motion.button>
-                </Tooltip>
-              </div>
-            </div>
-          )}
-        </div>
-      </div>
+      <StatefulSetPaginationFooter
+        pageSize={pageSize}
+        onPageSizeChange={(size) => {
+          setPageSize(size);
+          setCurrentPage(1);
+        }}
+        safeCurrentPage={safeCurrentPage}
+        totalPages={totalPages}
+        onPageChange={setCurrentPage}
+        sortedItemsCount={sortedItems.length}
+        scopedStatefulSetCount={scopedStatefulSets}
+        totalStatefulSets={totalStatefulSets}
+        currentNamespace={currentNamespace}
+      />
     </div>
   );
 }

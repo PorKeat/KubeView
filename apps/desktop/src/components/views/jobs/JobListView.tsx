@@ -1,31 +1,19 @@
 "use client";
 
-import { sortableHeaderProps } from "@/lib/sortableHeader";
-
 import * as React from "react";
-import {
-  ArrowUpDown,
-  ArrowUp,
-  ArrowDown,
-  Clock,
-  RefreshCw,
-  ChevronLeft,
-  ChevronRight,
-  CheckSquare,
-  MinusSquare,
-  Square,
-  Trash2,
-} from "lucide-react";
+import { Clock, Trash2 } from "lucide-react";
 import { toast } from "sonner";
-import { cn } from "@/lib/utils";
 import { formatLabelSelector } from "@/lib/labelSelector";
 import { useClusterStore } from "@/stores/clusterStore";
 import { useSettingsStore } from "@/stores/settingsStore";
 import { useTabStore } from "@/stores/tabStore";
 import type { JobSummary } from "@kubeview/contracts";
-import { EmptyState, TableSkeleton, Tooltip } from "@/components/ui";
+import { EmptyState, TableSkeleton } from "@/components/ui";
 import { JobTableToolbar } from "./components/JobTableToolbar";
 import { JobTableRow } from "./components/JobTableRow";
+import { JobEmptyState } from "./components/JobEmptyState";
+import { JobListFooter } from "./components/JobListFooter";
+import { JobTableHeader, type JobSortField } from "./components/JobTableHeader";
 import { BulkWorkloadToolbar } from "@/components/views/shared/BulkWorkloadToolbar";
 import { useWorkloadSelection } from "@/components/views/shared/useWorkloadSelection";
 import {
@@ -33,8 +21,6 @@ import {
   jobMatchesStatus,
   type JobStatusFilter,
 } from "./lib/jobStatus";
-
-type SortField = "name" | "namespace" | "status" | "age";
 
 const getJobKey = (item: JobSummary) => `${item.namespace}/${item.name}`;
 
@@ -64,7 +50,7 @@ export function JobListView() {
   const deferredSearch = React.useDeferredValue(search);
   const [statusFilter, setStatusFilter] =
     React.useState<JobStatusFilter>("all");
-  const [sortField, setSortField] = React.useState<SortField>("name");
+  const [sortField, setSortField] = React.useState<JobSortField>("name");
   const [sortAsc, setSortAsc] = React.useState(true);
   const defaultPageSize = useSettingsStore((s) => s.defaultPageSize);
   const [pageSize, setPageSize] = React.useState<number>(defaultPageSize);
@@ -90,7 +76,7 @@ export function JobListView() {
     loadJobs(currentNamespace);
     toast.info("Refreshed Job telemetry");
   };
-  const handleSort = (field: SortField) => {
+  const handleSort = (field: JobSortField) => {
     if (sortField === field) setSortAsc(!sortAsc);
     else {
       setSortField(field);
@@ -189,16 +175,6 @@ export function JobListView() {
     );
   };
 
-  const renderSortIndicator = (field: SortField) =>
-    sortField === field ? (
-      sortAsc ? (
-        <ArrowUp className="w-3 h-3 text-[var(--accent)]" />
-      ) : (
-        <ArrowDown className="w-3 h-3 text-[var(--accent)]" />
-      )
-    ) : (
-      <ArrowUpDown className="w-3 h-3 opacity-30" />
-    );
   const isFiltered =
     search.trim() !== "" || statusFilter !== "all" || Boolean(jobOwnerFilter);
   const total = totalJobsCount || jobs.length;
@@ -266,152 +242,32 @@ export function JobListView() {
       {!hasLoadedJobsOnce || (isJobsLoading && filteredItems.length === 0) ? (
         <TableSkeleton rows={8} columns={8} />
       ) : sortedItems.length === 0 ? (
-        <div className="flex-1 overflow-y-auto min-h-0 flex flex-col justify-center">
-          <EmptyState
-            variant={isFiltered ? "search" : "empty"}
-            title={
-              jobOwnerFilter
-                ? `No Jobs for CronJob "${jobOwnerFilter}"`
-                : isFiltered
-                  ? `No jobs match filter "${search || statusFilter}"`
-                  : currentNamespace !== "all"
-                    ? `No jobs in "${currentNamespace}"`
-                    : "No Jobs Found"
-            }
-            description={
-              jobOwnerFilter
-                ? `The selected CronJob has no retained Job history in ${currentNamespace === "all" ? "the cluster" : `namespace "${currentNamespace}"`}.`
-                : isFiltered
-                  ? "No Job matches the active search or status filter."
-                  : currentNamespace !== "all"
-                    ? `Namespace "${currentNamespace}" has no Jobs. ${jobs.length} Jobs are active in other namespaces.`
-                    : "Jobs run pods to completion. They are created manually or by a CronJob."
-            }
-            scopeBadge={
-              isFiltered
-                ? search
-                  ? `Query: "${search}"`
-                  : `Status: ${statusFilter}`
-                : `Namespace: ${currentNamespace}`
-            }
-            action={
-              isFiltered
-                ? {
-                    label: "Clear Filters",
-                    icon: <RefreshCw className="w-3.5 h-3.5" />,
-                    onClick: () => {
-                      setSearch("");
-                      setStatusFilter("all");
-                      setJobOwnerFilter(null);
-                    },
-                  }
-                : {
-                    label: "Reload Jobs",
-                    icon: <RefreshCw className="w-3.5 h-3.5" />,
-                    onClick: () => loadJobs(currentNamespace),
-                  }
-            }
-          />
-        </div>
+        <JobEmptyState
+          jobOwnerFilter={jobOwnerFilter}
+          isFiltered={isFiltered}
+          search={search}
+          statusFilter={statusFilter}
+          currentNamespace={currentNamespace}
+          jobsCount={jobs.length}
+          onClearFilters={() => {
+            setSearch("");
+            setStatusFilter("all");
+            setJobOwnerFilter(null);
+          }}
+          onReload={() => loadJobs(currentNamespace)}
+        />
       ) : (
         <div className="flex-1 overflow-auto min-h-0">
           <table className="w-full min-w-[860px] text-left text-xs border-collapse table-fixed">
-            <thead className="sticky top-0 bg-[var(--surface)] z-10 border-b border-[var(--border)] select-none">
-              <tr className="text-[11px] font-semibold text-[var(--muted)] uppercase tracking-wider h-8">
-                <th className="w-8 px-2 text-center">
-                  <Tooltip
-                    content={
-                      selection.isPageAllSelected
-                        ? "Deselect all on page"
-                        : "Select all on page"
-                    }
-                  >
-                    <button
-                      onClick={selection.toggleSelectAll}
-                      className="text-[var(--muted)] hover:text-[var(--foreground)] flex items-center justify-center cursor-pointer"
-                      aria-label={
-                        selection.isPageAllSelected
-                          ? "Deselect all on page"
-                          : "Select all on page"
-                      }
-                    >
-                      {selection.isPageAllSelected ? (
-                        <CheckSquare className="w-3.5 h-3.5 text-[var(--accent)]" />
-                      ) : selection.isPageSomeSelected ||
-                        selection.selectedItems.size > 0 ? (
-                        <MinusSquare className="w-3.5 h-3.5 text-[var(--accent)]" />
-                      ) : (
-                        <Square className="w-3.5 h-3.5" />
-                      )}
-                    </button>
-                  </Tooltip>
-                </th>
-
-                <th
-                  {...sortableHeaderProps({
-                    field: "name",
-                    activeField: sortField,
-                    ascending: sortAsc,
-                    onSort: handleSort,
-                  })}
-                  className="w-52 sm:w-60 py-1 px-3 cursor-pointer hover:text-[var(--foreground)] transition-colors"
-                >
-                  <div className="flex items-center gap-1">
-                    <span>Name</span>
-                    {renderSortIndicator("name")}
-                  </div>
-                </th>
-                <th
-                  {...sortableHeaderProps({
-                    field: "namespace",
-                    activeField: sortField,
-                    ascending: sortAsc,
-                    onSort: handleSort,
-                  })}
-                  className="w-24 sm:w-28 py-1 px-3 cursor-pointer hover:text-[var(--foreground)] transition-colors"
-                >
-                  <div className="flex items-center gap-1">
-                    <span>Namespace</span>
-                    {renderSortIndicator("namespace")}
-                  </div>
-                </th>
-                <th
-                  {...sortableHeaderProps({
-                    field: "status",
-                    activeField: sortField,
-                    ascending: sortAsc,
-                    onSort: handleSort,
-                  })}
-                  className="w-24 sm:w-28 py-1 px-3 cursor-pointer hover:text-[var(--foreground)] transition-colors"
-                >
-                  <div className="flex items-center gap-1">
-                    <span>Status</span>
-                    {renderSortIndicator("status")}
-                  </div>
-                </th>
-                <th className="w-24 py-1 px-3">Completions</th>
-                <th className="w-20 py-1 px-3">Duration</th>
-                <th className="w-40 py-1 px-3">Owner</th>
-                <th
-                  {...sortableHeaderProps({
-                    field: "age",
-                    activeField: sortField,
-                    ascending: sortAsc,
-                    onSort: handleSort,
-                  })}
-                  className="w-14 sm:w-16 py-1 px-3 cursor-pointer hover:text-[var(--foreground)] transition-colors"
-                >
-                  <div className="flex items-center gap-1">
-                    <span>Age</span>
-                    {renderSortIndicator("age")}
-                  </div>
-                </th>
-                <th
-                  className="w-9 py-1 px-2 text-right"
-                  aria-label="Actions"
-                ></th>
-              </tr>
-            </thead>
+            <JobTableHeader
+              sortField={sortField}
+              sortAsc={sortAsc}
+              onSort={handleSort}
+              selectedItemsCount={selection.selectedItems.size}
+              isPageAllSelected={selection.isPageAllSelected}
+              isPageSomeSelected={selection.isPageSomeSelected}
+              onToggleSelectAll={selection.toggleSelectAll}
+            />
             <tbody className="divide-y divide-[var(--border)]">
               {paginatedItems.map((item) => (
                 <JobTableRow
@@ -435,94 +291,19 @@ export function JobListView() {
           </table>
         </div>
       )}
-      <div className="min-h-10 border-t border-[var(--border)] px-2 sm:px-4 py-1.5 flex flex-wrap items-center justify-between text-[11px] text-[var(--muted)] bg-[var(--surface)]/90 backdrop-blur-xs shrink-0 gap-2 sm:gap-4">
-        <div className="flex min-w-0 max-w-full items-center gap-2 truncate">
-          <span>
-            Showing{" "}
-            <span className="text-[var(--foreground)] font-mono font-medium">
-              {sortedItems.length === 0
-                ? "0"
-                : pageSize > 0
-                  ? `${(safeCurrentPage - 1) * pageSize + 1}–${Math.min(safeCurrentPage * pageSize, sortedItems.length)}`
-                  : `1–${sortedItems.length}`}
-            </span>{" "}
-            of{" "}
-            <span className="text-[var(--foreground)] font-mono font-medium">
-              {sortedItems.length}
-            </span>{" "}
-            items
-          </span>
-          <span className="text-[var(--muted)]/40">·</span>
-          <span className="font-mono">{currentNamespace}</span>
-          {currentNamespace !== "all" && (
-            <>
-              <span className="text-[var(--muted)]/40">·</span>
-              <span className="text-[10px]">{total} total jobs</span>
-            </>
-          )}
-        </div>
-        <div className="flex flex-wrap items-center gap-2 shrink-0 sm:gap-4">
-          <div className="flex items-center gap-1.5">
-            <span className="text-[10px] uppercase tracking-wider text-[var(--muted)] font-medium">
-              Rows:
-            </span>
-            <div className="inline-flex items-center rounded-lg border border-[var(--border)] bg-black/5 dark:bg-white/[0.04] p-0.5">
-              {[50, 100, 250, 0].map((size) => (
-                <button
-                  key={size}
-                  type="button"
-                  aria-pressed={pageSize === size}
-                  data-testid={`page-size-${size}`}
-                  onClick={() => {
-                    setPageSize(size);
-                    setCurrentPage(1);
-                  }}
-                  className={cn(
-                    "px-2 py-0.5 rounded-md text-[10px] font-mono transition-colors cursor-pointer",
-                    pageSize === size
-                      ? "bg-[var(--surface-active)] dark:bg-white/10 text-[var(--foreground)] font-semibold"
-                      : "text-[var(--muted)] hover:text-[var(--foreground)]",
-                  )}
-                >
-                  {size === 0 ? "All" : size}
-                </button>
-              ))}
-            </div>
-          </div>
-          {pageSize > 0 && totalPages > 1 && (
-            <div className="flex items-center gap-1">
-              <span className="font-mono">
-                {safeCurrentPage}/{totalPages}
-              </span>
-              <Tooltip content="Previous page" disabled={safeCurrentPage <= 1}>
-                <button
-                  disabled={safeCurrentPage <= 1}
-                  onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
-                  className="w-6.5 h-6.5 inline-flex items-center justify-center rounded-md border border-[var(--border)]/80 bg-[var(--surface)] hover:bg-[var(--surface-hover)] disabled:opacity-25 disabled:pointer-events-none cursor-pointer"
-                  aria-label="Previous page"
-                >
-                  <ChevronLeft className="w-3.5 h-3.5" />
-                </button>
-              </Tooltip>
-              <Tooltip
-                content="Next page"
-                disabled={safeCurrentPage >= totalPages}
-              >
-                <button
-                  disabled={safeCurrentPage >= totalPages}
-                  onClick={() =>
-                    setCurrentPage((p) => Math.min(totalPages, p + 1))
-                  }
-                  className="w-6.5 h-6.5 inline-flex items-center justify-center rounded-md border border-[var(--border)]/80 bg-[var(--surface)] hover:bg-[var(--surface-hover)] disabled:opacity-25 disabled:pointer-events-none cursor-pointer"
-                  aria-label="Next page"
-                >
-                  <ChevronRight className="w-3.5 h-3.5" />
-                </button>
-              </Tooltip>
-            </div>
-          )}
-        </div>
-      </div>
+      <JobListFooter
+        pageSize={pageSize}
+        onPageSizeChange={(size) => {
+          setPageSize(size);
+          setCurrentPage(1);
+        }}
+        safeCurrentPage={safeCurrentPage}
+        totalPages={totalPages}
+        onPageChange={setCurrentPage}
+        sortedItemsCount={sortedItems.length}
+        totalJobs={total}
+        currentNamespace={currentNamespace}
+      />
     </div>
   );
 }

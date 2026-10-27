@@ -46,7 +46,6 @@ test.describe("KubeView UI - Tab context menu", () => {
 
     const menu = page.locator('[data-testid="tab-context-menu"]');
     await expect(menu).toBeVisible();
-    await expect(servicesTab).toHaveAttribute("aria-selected", "true");
     await page.waitForTimeout(200);
     await page.screenshot({
       path: "/tmp/kubeview-tab-context-menu.png",
@@ -75,6 +74,32 @@ test.describe("KubeView UI - Tab context menu", () => {
     await expect(
       page.getByRole("tab", { name: "Network Policies tab" }),
     ).toHaveCount(0);
+  });
+
+  test("opens the menu without activating the right-clicked tab", async ({
+    page,
+  }) => {
+    await openResourceTab(page, "services");
+    await openResourceTab(page, "endpoints");
+    await openResourceTab(page, "networkpolicies");
+
+    const servicesTab = page.getByRole("tab", { name: "Services tab" });
+    const activeTab = page.getByRole("tab", {
+      name: "Network Policies tab",
+    });
+    await expect(activeTab).toHaveAttribute("aria-selected", "true");
+
+    await servicesTab.click({ button: "right" });
+    await expect(
+      page.locator('[data-testid="tab-context-menu"]'),
+    ).toBeVisible();
+    await expect(servicesTab).toHaveAttribute("aria-selected", "false");
+    await expect(activeTab).toHaveAttribute("aria-selected", "true");
+
+    await page.keyboard.press("Escape");
+    await expect(page.locator('[data-testid="tab-context-menu"]')).toHaveCount(
+      0,
+    );
   });
 
   test("closes tabs to the right", async ({ page }) => {

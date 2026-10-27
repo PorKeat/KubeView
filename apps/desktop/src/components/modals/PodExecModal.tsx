@@ -1,124 +1,16 @@
 "use client";
 
 import * as React from "react";
-import {
-  X,
-  Terminal,
-  Play,
-  RotateCw,
-  Copy,
-  Trash2,
-  Check,
-  Layers,
-  Zap,
-  CornerDownLeft,
-  ArrowUp,
-  ArrowDown,
-  Maximize2,
-  Minimize2,
-  Radio,
-  History,
-  ShieldAlert,
-  FileText,
-} from "lucide-react";
+import { Zap } from "lucide-react";
 import { useClusterStore } from "@/stores/clusterStore";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
-import { CustomSelect } from "@/components/ui/CustomSelect";
-import { Tooltip } from "@/components/ui/Tooltip";
 import { InteractiveTerminal } from "./InteractiveTerminal";
-
-interface CommandHistoryItem {
-  command: string;
-  cwd?: string;
-  timestamp: string;
-  stdout: string;
-  stderr: string;
-  exitCode: number;
-  durationMs: number;
-}
-
-function formatAnsiOutput(raw: string): React.ReactNode {
-  if (!raw) return null;
-
-  // 1. Strip screen-clear, cursor positions, private modes, and stray control brackets (\x1b[H\x1b[J, [H, [J, \x1b[2J, \x1b[K, etc.)
-  const cleaned = raw
-    .replace(/\x1b\[[0-9;]*[A-HJKSTf]/g, "")
-    .replace(/\[[HJKSTf]/g, "")
-    .replace(/\x1b\[\?[0-9;]*[a-zA-Z]/g, "")
-    .replace(/\x1b\][^\x07\x1b]*(\x07|\x1b\\)/g, "")
-    .replace(/\r\n/g, "\n")
-    .replace(/\r/g, "\n");
-
-  const parts = cleaned.split(/(\x1b\[[0-9;]*m)/g);
-  if (parts.length <= 1) {
-    return cleaned;
-  }
-
-  const elements: React.ReactNode[] = [];
-  let activeStyles: string[] = [];
-
-  for (let i = 0; i < parts.length; i++) {
-    const part = parts[i];
-    if (!part) continue;
-
-    const match = part.match(/^\x1b\[([0-9;]*)m$/);
-    if (match) {
-      const codeStr = match[1] || "0";
-      const codes = codeStr.split(";").map(Number);
-      for (const code of codes) {
-        if (code === 0) {
-          activeStyles = [];
-        } else if (code === 1) {
-          activeStyles.push("font-bold text-white");
-        } else if (code === 2) {
-          activeStyles.push("opacity-70");
-        } else if (code === 3) {
-          activeStyles.push("italic");
-        } else if (code === 4) {
-          activeStyles.push("underline");
-        } else if (code === 30) {
-          activeStyles = activeStyles.filter((s) => !s.startsWith("text-"));
-          activeStyles.push("text-slate-900 dark:text-slate-400");
-        } else if (code === 31 || code === 91) {
-          activeStyles = activeStyles.filter((s) => !s.startsWith("text-"));
-          activeStyles.push("text-rose-400");
-        } else if (code === 32 || code === 92) {
-          activeStyles = activeStyles.filter((s) => !s.startsWith("text-"));
-          activeStyles.push("text-emerald-400");
-        } else if (code === 33 || code === 93) {
-          activeStyles = activeStyles.filter((s) => !s.startsWith("text-"));
-          activeStyles.push("text-amber-300");
-        } else if (code === 34 || code === 94) {
-          activeStyles = activeStyles.filter((s) => !s.startsWith("text-"));
-          activeStyles.push("text-sky-400");
-        } else if (code === 35 || code === 95) {
-          activeStyles = activeStyles.filter((s) => !s.startsWith("text-"));
-          activeStyles.push("text-purple-400");
-        } else if (code === 36 || code === 96) {
-          activeStyles = activeStyles.filter((s) => !s.startsWith("text-"));
-          activeStyles.push("text-cyan-400");
-        } else if (code === 37 || code === 97) {
-          activeStyles = activeStyles.filter((s) => !s.startsWith("text-"));
-          activeStyles.push("text-slate-200");
-        }
-      }
-    } else {
-      elements.push(
-        <span
-          key={i}
-          className={
-            activeStyles.length > 0 ? activeStyles.join(" ") : undefined
-          }
-        >
-          {part}
-        </span>,
-      );
-    }
-  }
-
-  return elements;
-}
+import { PodExecHeader, type PodExecMode } from "./PodExecHeader";
+import {
+  PodExecHistoryView,
+  type CommandHistoryItem,
+} from "./PodExecHistoryView";
 
 const QUICK_COMMANDS = [
   { label: "Directory", cmd: "ls -la" },
@@ -146,9 +38,7 @@ export function PodExecModal() {
   const [selectedContainer, setSelectedContainer] = React.useState<string>("");
   const [cwd, setCwd] = React.useState<string>("");
   const [shell, setShell] = React.useState<string>("auto");
-  const [execMode, setExecMode] = React.useState<"interactive" | "history">(
-    "interactive",
-  );
+  const [execMode, setExecMode] = React.useState<PodExecMode>("interactive");
   const [quickCmdToInsert, setQuickCmdToInsert] = React.useState<string>("");
   const [inputCommand, setInputCommand] = React.useState<string>("");
   const [history, setHistory] = React.useState<CommandHistoryItem[]>([]);
@@ -412,6 +302,13 @@ export function PodExecModal() {
     setTimeout(() => setCopied(false), 2000);
   };
 
+  const handleInputChange = (value: string) => {
+    setInputCommand(value);
+    if (historyIndex === -1) {
+      setDraftCommand(value);
+    }
+  };
+
   return (
     <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 bg-black/60 backdrop-blur-md animate-in fade-in duration-150">
       <div
@@ -423,128 +320,21 @@ export function PodExecModal() {
         )}
       >
         {/* Header */}
-        <div className="min-h-14 border-b border-[var(--border)] px-3 sm:px-4 py-2 flex flex-wrap sm:flex-nowrap items-center justify-between shrink-0 bg-slate-50/80 dark:bg-black/30 gap-2">
-          <div className="flex flex-1 items-center gap-2 sm:gap-3 min-w-0">
-            <div className="p-2 rounded-lg bg-[var(--accent)]/15 text-[var(--accent)] border border-[var(--accent)]/20 shadow-xs shrink-0">
-              <Terminal className="w-4 h-4" />
-            </div>
-            <div className="flex items-center gap-2 min-w-0">
-              <span className="text-xs font-semibold text-[var(--foreground)] truncate font-mono">
-                {execModalPod.name}
-              </span>
-              <span className="hidden sm:inline-flex px-2 py-0.5 rounded-full text-[10px] font-mono bg-black/[0.05] dark:bg-white/[0.08] text-[var(--muted)] border border-[var(--border)]">
-                ns: {execModalPod.namespace}
-              </span>
-              <span className="hidden sm:inline-flex items-center px-2 py-0.5 rounded-md text-[9px] font-semibold font-mono bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border border-emerald-500/30">
-                {execMode === "interactive" ? "WebSocket PTY" : "SPDY Exec"}
-              </span>
-            </div>
-          </div>
-
-          <div className="flex max-w-full items-center gap-2 overflow-x-auto shrink-0 scrollbar-none">
-            {/* Mode Switcher Tabs */}
-            <div className="flex items-center bg-black/[0.04] dark:bg-white/[0.06] p-0.5 rounded-lg border border-[var(--border)] text-[11px] font-medium mr-1">
-              <button
-                onClick={() => setExecMode("interactive")}
-                aria-label="Interactive Shell"
-                className={cn(
-                  "flex items-center gap-1.5 px-2.5 py-1 rounded-md transition-all cursor-pointer font-mono",
-                  execMode === "interactive"
-                    ? "bg-[var(--surface)] text-[var(--foreground)] shadow-2xs font-semibold"
-                    : "text-[var(--muted)] hover:text-[var(--foreground)]",
-                )}
-              >
-                <Terminal className="w-3.5 h-3.5 text-[var(--accent)]" />
-                <span className="hidden sm:inline">Interactive Shell</span>
-              </button>
-              <button
-                onClick={() => setExecMode("history")}
-                aria-label="Command Runner"
-                className={cn(
-                  "flex items-center gap-1.5 px-2.5 py-1 rounded-md transition-all cursor-pointer font-mono",
-                  execMode === "history"
-                    ? "bg-[var(--surface)] text-[var(--foreground)] shadow-2xs font-semibold"
-                    : "text-[var(--muted)] hover:text-[var(--foreground)]",
-                )}
-              >
-                <History className="w-3.5 h-3.5" />
-                <span className="hidden sm:inline">Command Runner</span>
-              </button>
-            </div>
-
-            {/* Container Selector */}
-            {containerList.length > 1 && (
-              <CustomSelect
-                value={selectedContainer}
-                onChange={setSelectedContainer}
-                options={containerList.map((c) => ({ value: c, label: c }))}
-                icon={<Layers className="w-3.5 h-3.5 text-[#F08A42]" />}
-                placeholder="Container"
-              />
-            )}
-
-            {/* Clear Screen (Command runner mode) */}
-            {execMode === "history" && (
-              <>
-                <Tooltip content="Clear Terminal Output">
-                  <button
-                    onClick={() => setHistory([])}
-                    className="p-1.5 rounded-lg hover:bg-[var(--surface-hover)] text-[var(--muted)] hover:text-[var(--foreground)] transition-colors cursor-pointer"
-                    aria-label="Clear Terminal Output"
-                  >
-                    <Trash2 className="w-4 h-4" />
-                  </button>
-                </Tooltip>
-
-                <Tooltip
-                  content={
-                    copied ? "Copied to clipboard" : "Copy All Terminal Output"
-                  }
-                >
-                  <button
-                    onClick={handleCopyHistory}
-                    className="p-1.5 rounded-lg hover:bg-[var(--surface-hover)] text-[var(--muted)] hover:text-[var(--foreground)] transition-colors cursor-pointer"
-                    aria-label="Copy All Terminal Output"
-                  >
-                    {copied ? (
-                      <Check className="w-4 h-4 text-emerald-500" />
-                    ) : (
-                      <Copy className="w-4 h-4" />
-                    )}
-                  </button>
-                </Tooltip>
-              </>
-            )}
-
-            {/* Maximize / Restore */}
-            <Tooltip
-              content={isMaximized ? "Restore window" : "Maximize window"}
-            >
-              <button
-                onClick={() => setIsMaximized(!isMaximized)}
-                className="p-1.5 rounded-lg hover:bg-[var(--surface-hover)] text-[var(--muted)] hover:text-[var(--foreground)] transition-colors cursor-pointer"
-                aria-label={isMaximized ? "Restore window" : "Maximize window"}
-              >
-                {isMaximized ? (
-                  <Minimize2 className="w-4 h-4" />
-                ) : (
-                  <Maximize2 className="w-4 h-4" />
-                )}
-              </button>
-            </Tooltip>
-
-            {/* Close */}
-            <Tooltip content="Close session" shortcut="Esc">
-              <button
-                onClick={closeExecModal}
-                className="p-1.5 rounded-lg hover:bg-rose-500/10 hover:text-rose-500 text-[var(--muted)] transition-colors cursor-pointer ml-1"
-                aria-label="Close interactive exec session"
-              >
-                <X className="w-4 h-4" />
-              </button>
-            </Tooltip>
-          </div>
-        </div>
+        <PodExecHeader
+          podName={execModalPod.name}
+          namespace={execModalPod.namespace}
+          execMode={execMode}
+          onExecModeChange={setExecMode}
+          containerList={containerList}
+          selectedContainer={selectedContainer}
+          onSelectContainer={setSelectedContainer}
+          copied={copied}
+          onClearHistory={() => setHistory([])}
+          onCopyHistory={handleCopyHistory}
+          isMaximized={isMaximized}
+          onToggleMaximized={() => setIsMaximized(!isMaximized)}
+          onClose={closeExecModal}
+        />
 
         {/* Quick Command Chips */}
         <div className="px-3 sm:px-4 py-2 border-b border-[var(--border)] bg-black/[0.02] dark:bg-black/20 flex items-center gap-1.5 overflow-x-auto shrink-0 text-xs">
@@ -592,180 +382,32 @@ export function PodExecModal() {
             />
           </div>
         ) : (
-          <>
-            {/* Terminal Canvas */}
-            <div className="flex-1 overflow-y-auto bg-slate-950 p-4 font-mono text-[12px] text-slate-200 select-text space-y-4">
-              {history.length === 0 ? (
-                <div className="text-slate-500 text-xs space-y-1.5 border border-slate-900 rounded-xl p-4 bg-slate-900/30">
-                  <p className="text-emerald-400 font-semibold">
-                    Command Runner ready for {execModalPod.name} [
-                    {selectedContainer || "primary"}]
-                  </p>
-                  <p className="text-slate-400">
-                    Type commands below or click quick diagnostic chips above.
-                    Press{" "}
-                    <kbd className="px-1.5 py-0.5 rounded bg-slate-800 text-slate-300 border border-slate-700 text-[10px]">
-                      ↑
-                    </kbd>{" "}
-                    and{" "}
-                    <kbd className="px-1.5 py-0.5 rounded bg-slate-800 text-slate-300 border border-slate-700 text-[10px]">
-                      ↓
-                    </kbd>{" "}
-                    to cycle through command history.
-                  </p>
-                </div>
-              ) : (
-                history.map((item, idx) => (
-                  <div key={idx} className="space-y-1.5">
-                    <div className="flex items-center justify-between text-[11px] text-slate-500 border-b border-slate-800/80 pb-1">
-                      <div className="flex items-center gap-2">
-                        <span className="text-emerald-400 font-semibold font-mono">
-                          root@
-                          {(selectedContainer || execModalPod.name).slice(
-                            0,
-                            16,
-                          )}
-                          :{item.cwd || "~"}#
-                        </span>
-                        <span className="text-white font-semibold">
-                          {item.command}
-                        </span>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <span
-                          className={cn(
-                            "px-1.5 py-0.2 rounded text-[10px] font-bold font-mono",
-                            item.exitCode === 0
-                              ? "bg-emerald-500/20 text-emerald-400"
-                              : "bg-rose-500/20 text-rose-400",
-                          )}
-                        >
-                          exit {item.exitCode}
-                        </span>
-                        <span>{item.durationMs}ms</span>
-                        <span>{item.timestamp}</span>
-                      </div>
-                    </div>
-
-                    {item.stdout && (
-                      <pre className="text-slate-300 whitespace-pre-wrap break-all leading-relaxed pl-2 font-mono text-[12px]">
-                        {formatAnsiOutput(item.stdout)}
-                      </pre>
-                    )}
-
-                    {item.stderr && (
-                      <div className="space-y-2">
-                        <pre className="text-rose-400 whitespace-pre-wrap break-all leading-relaxed pl-2 font-mono text-[12px] bg-rose-950/20 p-2.5 rounded-lg border border-rose-900/30">
-                          {formatAnsiOutput(item.stderr)}
-                        </pre>
-
-                        {(item.stderr.includes("Distroless") ||
-                          item.stderr.includes("no such file or directory") ||
-                          item.stderr.includes("OCI runtime exec failed")) && (
-                          <div className="flex flex-wrap items-center gap-2 pl-2 pt-1 text-xs">
-                            {containerList
-                              .filter(
-                                (c) =>
-                                  c !==
-                                  (selectedContainer || execModalPod.container),
-                              )
-                              .map((otherC) => (
-                                <button
-                                  key={otherC}
-                                  onClick={() => setSelectedContainer(otherC)}
-                                  className="px-2.5 py-1 rounded-md bg-amber-500/15 text-amber-400 hover:bg-amber-500/25 border border-amber-500/30 transition-colors font-mono text-[11px] cursor-pointer flex items-center gap-1.5"
-                                >
-                                  <Layers className="w-3 h-3" />
-                                  <span>Switch to: {otherC}</span>
-                                </button>
-                              ))}
-
-                            <button
-                              onClick={() => {
-                                const cmd = `kubectl debug -it -n ${execModalPod.namespace} ${execModalPod.name} --image=busybox --target=${selectedContainer || execModalPod.container || "main"}`;
-                                navigator.clipboard.writeText(cmd);
-                                toast.success(
-                                  "Debug command copied to clipboard",
-                                );
-                              }}
-                              className="px-2.5 py-1 rounded-md bg-white/[0.08] hover:bg-white/[0.15] text-slate-200 border border-white/[0.1] transition-colors font-mono text-[11px] cursor-pointer flex items-center gap-1.5"
-                              title="Copy ephemeral debug command"
-                            >
-                              <Copy className="w-3 h-3" />
-                              <span>Copy kubectl debug</span>
-                            </button>
-
-                            <button
-                              onClick={() => {
-                                openLogsModal({
-                                  name: execModalPod.name,
-                                  namespace: execModalPod.namespace,
-                                  container:
-                                    selectedContainer ||
-                                    execModalPod.container ||
-                                    undefined,
-                                });
-                                closeExecModal();
-                              }}
-                              className="px-2.5 py-1 rounded-md bg-[var(--accent)] hover:bg-[var(--accent-hover)] text-white transition-colors font-mono text-[11px] cursor-pointer flex items-center gap-1.5"
-                            >
-                              <FileText className="w-3 h-3" />
-                              <span>View Logs</span>
-                            </button>
-                          </div>
-                        )}
-                      </div>
-                    )}
-                  </div>
-                ))
-              )}
-
-              {isExecuting && (
-                <div className="flex items-center gap-2 text-[var(--accent)] text-xs animate-pulse font-mono">
-                  <RotateCw className="w-3.5 h-3.5 animate-spin" />
-                  <span>Executing in pod container...</span>
-                </div>
-              )}
-
-              <div ref={outputEndRef} />
-            </div>
-
-            {/* Input Bar */}
-            <div className="h-12 border-t border-[var(--border)] px-4 flex items-center gap-2.5 bg-[var(--surface)] shrink-0">
-              <span className="text-emerald-500 font-mono font-bold text-xs shrink-0 select-none">
-                root@
-                {(selectedContainer || execModalPod.container || "app").slice(
-                  0,
-                  16,
-                )}
-                :{cwd || "~"}#
-              </span>
-              <input
-                ref={inputRef}
-                type="text"
-                placeholder="Type command (e.g. ls -la, ps aux, cat config.json)... Press ↑/↓ for history"
-                value={inputCommand}
-                onChange={(e) => {
-                  setInputCommand(e.target.value);
-                  if (historyIndex === -1) {
-                    setDraftCommand(e.target.value);
-                  }
-                }}
-                onKeyDown={handleKeyDown}
-                disabled={isExecuting}
-                className="flex-1 bg-transparent text-xs font-mono text-[var(--foreground)] placeholder-[var(--muted)] focus:outline-hidden"
-              />
-
-              <button
-                onClick={() => handleRunCommand()}
-                disabled={isExecuting || !inputCommand.trim()}
-                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[var(--accent)] hover:bg-[var(--accent-hover)] text-white text-xs font-medium disabled:opacity-50 cursor-pointer shadow-xs transition-all"
-              >
-                <span>Run</span>
-                <CornerDownLeft className="w-3 h-3" />
-              </button>
-            </div>
-          </>
+          <PodExecHistoryView
+            podName={execModalPod.name}
+            namespace={execModalPod.namespace}
+            defaultContainer={execModalPod.container}
+            selectedContainer={selectedContainer}
+            containerList={containerList}
+            onSelectContainer={setSelectedContainer}
+            history={history}
+            isExecuting={isExecuting}
+            cwd={cwd}
+            outputEndRef={outputEndRef}
+            inputRef={inputRef}
+            inputCommand={inputCommand}
+            onInputChange={handleInputChange}
+            onInputKeyDown={handleKeyDown}
+            onRunCommand={() => handleRunCommand()}
+            onOpenLogs={() => {
+              openLogsModal({
+                name: execModalPod.name,
+                namespace: execModalPod.namespace,
+                container:
+                  selectedContainer || execModalPod.container || undefined,
+              });
+              closeExecModal();
+            }}
+          />
         )}
       </div>
     </div>

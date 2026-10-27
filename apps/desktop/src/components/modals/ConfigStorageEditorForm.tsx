@@ -4,14 +4,12 @@ import * as React from "react";
 import {
   AlertTriangle,
   Eye,
-  EyeOff,
   FileCode,
   FolderLock,
   LockKeyhole,
   Plus,
   RefreshCw,
   Save,
-  Trash2,
   X,
 } from "lucide-react";
 import { toast } from "sonner";
@@ -22,9 +20,16 @@ import type {
   ConfigMapSummary,
   ConfigStorageUpdateResult,
   SecretEditData,
-  SecretEditEntry,
   SecretSummary,
 } from "@kubeview/contracts";
+import { ConfigStorageEditorEntry } from "./ConfigStorageEditorEntry";
+import {
+  entriesFromMap,
+  entriesFromSecret,
+  makeEntry,
+  validateEntries,
+  type EditableEntry,
+} from "./configStorageEditorUtils";
 
 export type ConfigStorageEditorTarget = {
   kind: "ConfigMap" | "Secret";
@@ -34,122 +39,6 @@ export type ConfigStorageEditorTarget = {
   immutable?: boolean;
   summary?: ConfigMapSummary | SecretSummary;
 };
-
-interface EditableEntry {
-  id: string;
-  key: string;
-  value: string;
-  binary: boolean;
-}
-
-const KEY_PATTERN = /^[-._a-zA-Z0-9]+$/;
-const MAX_SIZE = 1 << 20;
-
-function makeId() {
-  return `${Date.now()}-${Math.random().toString(36).slice(2)}`;
-}
-
-function makeEntry(key = "", value = "", binary = false): EditableEntry {
-  return { id: makeId(), key, value, binary };
-}
-
-function entriesFromMap(data: Record<string, string>): EditableEntry[] {
-  return Object.entries(data)
-    .sort(([left], [right]) => left.localeCompare(right))
-    .map(([key, value]) => makeEntry(key, value));
-}
-
-function entriesFromSecret(entries: SecretEditEntry[]): EditableEntry[] {
-  return [...entries]
-    .sort((left, right) => left.key.localeCompare(right.key))
-    .map((entry) => makeEntry(entry.key, entry.value, entry.binary));
-}
-
-function valueBytes(entry: EditableEntry): number {
-  if (!entry.binary) return new TextEncoder().encode(entry.value).length;
-  try {
-    return atob(entry.value).length;
-  } catch {
-    return -1;
-  }
-}
-
-function validateEntries(
-  entries: EditableEntry[],
-  binaryData: Record<string, string>,
-): string | null {
-  const keys = new Set<string>();
-  let total = 0;
-  for (const entry of entries) {
-    const key = entry.key.trim();
-    if (!key) return "Every data entry needs a key.";
-    if (!KEY_PATTERN.test(key)) {
-      return `Key "${key}" may only contain letters, numbers, dots, dashes, and underscores.`;
-    }
-    if (keys.has(key)) return `Duplicate key "${key}".`;
-    keys.add(key);
-    const bytes = valueBytes(entry);
-    if (bytes < 0) return `Value for "${key}" is not valid base64.`;
-    total += key.length + bytes;
-  }
-  for (const [key, value] of Object.entries(binaryData)) {
-    try {
-      total += key.length + atob(value).length;
-    } catch {
-      return `Binary data for "${key}" is invalid.`;
-    }
-  }
-  if (total > MAX_SIZE) {
-    return "Data is larger than the Kubernetes 1 MiB limit.";
-  }
-  return null;
-}
-
-function AutoGrowTextarea({
-  value,
-  onChange,
-  disabled,
-  masked,
-  ariaLabel,
-  testId,
-}: {
-  value: string;
-  onChange: (event: React.ChangeEvent<HTMLTextAreaElement>) => void;
-  disabled: boolean;
-  masked: boolean;
-  ariaLabel: string;
-  testId: string;
-}) {
-  const ref = React.useRef<HTMLTextAreaElement>(null);
-
-  React.useLayoutEffect(() => {
-    const element = ref.current;
-    if (!element) return;
-    element.style.height = "auto";
-    const nextHeight = Math.min(360, Math.max(64, element.scrollHeight));
-    element.style.height = `${nextHeight}px`;
-    element.style.overflowY = element.scrollHeight > 360 ? "auto" : "hidden";
-  }, [value, masked]);
-
-  return (
-    <textarea
-      ref={ref}
-      value={value}
-      onChange={onChange}
-      disabled={disabled}
-      rows={2}
-      spellCheck={false}
-      aria-label={ariaLabel}
-      data-testid={testId}
-      style={
-        masked
-          ? ({ WebkitTextSecurity: "disc" } as React.CSSProperties)
-          : undefined
-      }
-      className="min-h-16 max-h-[360px] w-full resize-none border-0 bg-transparent px-3 py-2.5 font-mono text-[11px] leading-5 text-[var(--foreground)] outline-hidden focus:ring-0 disabled:opacity-60"
-    />
-  );
-}
 
 export function ConfigStorageEditorForm({
   target,
@@ -271,6 +160,13 @@ export function ConfigStorageEditorForm({
   const removeEntry = (id: string) => {
     setEntries((previous) => previous.filter((entry) => entry.id !== id));
     setDirty(true);
+  };
+
+  const toggleEntryVisibility = (id: string) => {
+    setVisibleValues((previous) => ({
+      ...previous,
+      [id]: !previous[id],
+    }));
   };
 
   const revealSecret = async () => {
@@ -454,101 +350,19 @@ export function ConfigStorageEditorForm({
             </div>
 
             <div className="space-y-2">
-              {entries.map((entry, index) => {
-                const visible = Boolean(visibleValues[entry.id]);
-                const lineCount = entry.value
-                  ? entry.value.split("\n").length
-                  : 1;
-                return (
-                  <div
-                    key={entry.id}
-                    className="rounded-xl border border-[var(--border)] bg-[var(--surface)]/40 p-3 transition-colors focus-within:border-[var(--accent)]/50"
-                  >
-                    <div className="flex flex-wrap items-start gap-2">
-                      <div className="min-w-0 flex-1">
-                        <label
-                          htmlFor={`config-storage-key-${index}`}
-                          className="mb-1 block text-[9px] font-mono uppercase tracking-wider text-[var(--muted)]"
-                        >
-                          Key
-                        </label>
-                        <input
-                          id={`config-storage-key-${index}`}
-                          value={entry.key}
-                          onChange={(event) =>
-                            updateEntry(entry.id, { key: event.target.value })
-                          }
-                          disabled={immutable}
-                          placeholder="Key"
-                          aria-label={`Key ${index + 1}`}
-                          data-testid={`config-storage-key-${index}`}
-                          className="h-9 w-full min-w-0 rounded-lg border border-[var(--border)] bg-[var(--background)] px-2.5 font-mono text-xs text-[var(--foreground)] outline-hidden transition-colors focus:border-[var(--accent)] focus:ring-1 focus:ring-[var(--accent)]/30 disabled:opacity-60"
-                        />
-                      </div>
-                      <div className="flex items-center gap-1 pt-4">
-                        {entry.binary && (
-                          <span className="rounded border border-[var(--border)] bg-black/5 px-1.5 py-0.5 font-mono text-[9px] text-[var(--muted)] dark:bg-white/5">
-                            base64
-                          </span>
-                        )}
-                        <button
-                          type="button"
-                          onClick={() => removeEntry(entry.id)}
-                          disabled={immutable}
-                          className="cursor-pointer rounded-lg p-1.5 text-[var(--muted)] transition-colors hover:bg-rose-500/10 hover:text-rose-500 disabled:opacity-40"
-                          aria-label={`Remove ${entry.key || "entry"}`}
-                        >
-                          <Trash2 className="h-3.5 w-3.5" />
-                        </button>
-                      </div>
-                    </div>
-
-                    <div className="mt-2 overflow-hidden rounded-lg border border-[var(--border)] bg-[var(--background)] focus-within:border-[var(--accent)]/50">
-                      <div className="flex items-center justify-between gap-2 border-b border-[var(--border)] px-2.5 py-1.5">
-                        <span className="text-[9px] font-mono uppercase tracking-wider text-[var(--muted)]">
-                          Value
-                        </span>
-                        <div className="flex items-center gap-2">
-                          <span className="font-mono text-[9px] text-[var(--muted)]">
-                            {lineCount} line{lineCount === 1 ? "" : "s"}
-                          </span>
-                          {isSecret && (
-                            <button
-                              type="button"
-                              onClick={() =>
-                                setVisibleValues((previous) => ({
-                                  ...previous,
-                                  [entry.id]: !previous[entry.id],
-                                }))
-                              }
-                              className="cursor-pointer rounded p-0.5 text-[var(--muted)] hover:text-[var(--foreground)]"
-                              aria-label={visible ? "Hide value" : "Show value"}
-                            >
-                              {visible ? (
-                                <EyeOff className="h-3.5 w-3.5" />
-                              ) : (
-                                <Eye className="h-3.5 w-3.5" />
-                              )}
-                            </button>
-                          )}
-                        </div>
-                      </div>
-                      <AutoGrowTextarea
-                        value={entry.value}
-                        onChange={(event) =>
-                          updateEntry(entry.id, {
-                            value: event.target.value,
-                          })
-                        }
-                        disabled={immutable}
-                        masked={isSecret && !visible}
-                        ariaLabel={`Value ${index + 1}`}
-                        testId={`config-storage-value-${index}`}
-                      />
-                    </div>
-                  </div>
-                );
-              })}
+              {entries.map((entry, index) => (
+                <ConfigStorageEditorEntry
+                  key={entry.id}
+                  entry={entry}
+                  index={index}
+                  immutable={immutable}
+                  isSecret={isSecret}
+                  visible={Boolean(visibleValues[entry.id])}
+                  onUpdate={updateEntry}
+                  onRemove={removeEntry}
+                  onToggleVisibility={toggleEntryVisibility}
+                />
+              ))}
             </div>
 
             <div className="flex flex-wrap items-center gap-2">

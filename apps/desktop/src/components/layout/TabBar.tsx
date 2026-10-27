@@ -112,7 +112,6 @@ export function TabBar() {
       x: Math.max(8, x),
       y: Math.max(8, y),
     });
-    setActiveTab(tab.id);
   };
 
   const closeContextMenu = React.useCallback(() => {

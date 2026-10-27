@@ -653,6 +653,146 @@ function resultFor(method: string, params?: JsonRecord): unknown {
       return fleetOverview;
     case "pods.list":
       return { items: [pod], totalCount: 1 };
+    case "pods.diagnose":
+      return {
+        contextName: "mock-cluster",
+        namespace: "production",
+        podName: "web-1",
+        generatedAt: now,
+        severity: "critical",
+        issueType: "crash",
+        healthy: false,
+        title: "CrashLoopBackOff",
+        summary: "Container 'web' is crash-looping with 5 restart(s).",
+        rootCause:
+          "Application process in container 'web' repeatedly crashes on startup. Previous logs contain panic: failed to connect to database.",
+        ownerKind: "Deployment",
+        ownerName: "web",
+        nodeName: "worker-1",
+        conditions: [
+          {
+            type: "Ready",
+            status: "False",
+            lastTransitionTime: now,
+            reason: "ContainersNotReady",
+            message: "containers with unready status: [web]",
+          },
+        ],
+        containers: [
+          {
+            name: "web",
+            image: "example/web:v1",
+            ready: false,
+            restartCount: 5,
+            state: "Waiting",
+            stateReason: "CrashLoopBackOff",
+            stateMessage: "back-off 5m0s restarting failed container=web",
+            exitCode: 1,
+            lastTerminatedReason: "Error",
+            lastTerminatedMessage: "failed to connect to database",
+            requests: { cpu: "100m", memory: "128Mi" },
+            limits: { cpu: "500m", memory: "256Mi" },
+            metricsAvailable: false,
+            probes: [
+              {
+                kind: "readiness",
+                configured: true,
+                handler: "HTTP /healthz:8080",
+                initialDelaySeconds: 5,
+                timeoutSeconds: 1,
+                periodSeconds: 10,
+                failureThreshold: 3,
+                status: "fail",
+                message:
+                  'Readiness probe failed: Get "http://10.244.1.10:8080/healthz": connection refused',
+              },
+            ],
+            logExcerpt:
+              "panic: failed to connect to database\n\tat main.main (main.go:42)",
+            logSource: "previous",
+          },
+        ],
+        events: [
+          {
+            type: "Warning",
+            reason: "BackOff",
+            message: "Back-off restarting failed container web",
+            count: 5,
+            lastTimestamp: now,
+            source: "kubelet",
+            involvedObjectKind: "Pod",
+            involvedObjectName: "web-1",
+            involvedObjectNamespace: "production",
+          },
+        ],
+        evidence: [
+          {
+            id: "condition-ready",
+            label: "Ready",
+            status: "fail",
+            summary: "Ready=False",
+            details: [
+              "ContainersNotReady: containers with unready status: [web]",
+            ],
+          },
+          {
+            id: "container-web",
+            label: "Container web",
+            status: "fail",
+            summary: "Waiting · ready=false · restarts=5",
+            details: ["reason: CrashLoopBackOff", "last exit code: 1"],
+          },
+          {
+            id: "logs-web",
+            label: "Logs web",
+            status: "warning",
+            summary: "Previous logs captured",
+            details: ["panic: failed to connect to database"],
+          },
+          {
+            id: "event-BackOff",
+            label: "BackOff",
+            status: "fail",
+            summary: "Back-off restarting failed container web",
+            details: ["kubelet · count=5"],
+          },
+        ],
+        suggestedCommands: [
+          {
+            label: "Describe pod",
+            command: "kubectl describe pod -n production web-1",
+            description: "Show scheduler, container, probe, and event details.",
+          },
+          {
+            label: "Previous logs · web",
+            command:
+              "kubectl logs -n production web-1 -c web --previous --tail=200",
+            description: "Inspect logs from the last terminated instance.",
+          },
+          {
+            label: "Pod events",
+            command:
+              "kubectl get events -n production --field-selector involvedObject.name=web-1 --sort-by=.lastTimestamp",
+            description: "List the latest events for this pod.",
+          },
+        ],
+        suggestedFixes: [
+          {
+            id: "inspect-crash-logs",
+            title: "Inspect previous container logs",
+            description:
+              "Use the previous log excerpt and stack trace to identify the startup failure.",
+            severity: "critical",
+          },
+          {
+            id: "check-startup-dependencies",
+            title: "Check startup dependencies",
+            description:
+              "Confirm environment variables, database connectivity, and startup probes are valid.",
+            severity: "warning",
+          },
+        ],
+      };
     case "pods.events":
       return { events: [] };
     case "networking.counts":
