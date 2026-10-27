@@ -166,6 +166,8 @@ export function ClusterOverviewView() {
         version: n.version,
         architecture: n.architecture,
         internalIP: n.internalIP,
+        podCIDR: n.podCIDR,
+        podCIDRs: n.podCIDRs,
         cpuCapacity: n.cpuCapacity,
         cpuAllocated: n.cpuAllocated,
         cpuPercent: n.cpuPercent,

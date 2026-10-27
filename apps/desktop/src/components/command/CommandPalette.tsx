@@ -9,7 +9,12 @@ import {
   Cpu,
   Clock,
   Network,
+  Radio,
+  Globe,
+  ArrowLeftRight,
+  Radar,
   Database,
+  HardDrive,
   LayoutDashboard,
   Sun,
   Moon,
@@ -23,6 +28,9 @@ import {
   Shield,
   Search,
   Settings,
+  Users,
+  Key,
+  Boxes,
 } from "lucide-react";
 import { useLayoutStore } from "@/stores/layoutStore";
 import { useTabStore } from "@/stores/tabStore";
@@ -110,6 +118,16 @@ export function CommandPalette() {
               className="text-[10px] font-semibold text-[var(--muted)] px-2 py-1 uppercase tracking-wider"
             >
               <Command.Item
+                onSelect={() => navigateTo("fleet", "All Clusters")}
+                className="flex items-center gap-2.5 px-2.5 py-2 rounded-md cursor-pointer hover:bg-[var(--surface-hover)] text-[var(--foreground)] transition-colors"
+              >
+                <Server className="w-4 h-4 text-[var(--accent)]" />
+                <span>All Clusters</span>
+                <span className="ml-auto font-mono text-[10px] text-[var(--muted)]">
+                  {availableContexts.length}
+                </span>
+              </Command.Item>
+              <Command.Item
                 onSelect={() => navigateTo("overview", "Cluster Overview")}
                 className="flex items-center gap-2.5 px-2.5 py-2 rounded-md cursor-pointer hover:bg-[var(--surface-hover)] text-[var(--foreground)] transition-colors"
               >
@@ -159,40 +177,123 @@ export function CommandPalette() {
                 <span>Jobs &amp; CronJobs</span>
               </Command.Item>
               <Command.Item
-                disabled
-                className="flex items-center justify-between px-2.5 py-2 rounded-md opacity-40 cursor-not-allowed text-[var(--muted)]"
+                onSelect={() => navigateTo("services", "Services")}
+                className="flex items-center gap-2.5 px-2.5 py-2 rounded-md cursor-pointer hover:bg-[var(--surface-hover)] text-[var(--foreground)] transition-colors"
               >
-                <div className="flex items-center gap-2.5">
-                  <Network className="w-4 h-4 text-purple-500 dark:text-purple-400" />
-                  <span>Services & Networking</span>
-                </div>
-                <span className="text-[9px] font-mono px-1.5 py-0.5 rounded bg-black/[0.04] dark:bg-white/[0.05] border border-[var(--border)]">
-                  Soon
-                </span>
+                <Network className="w-4 h-4 text-purple-500 dark:text-purple-400" />
+                <span>Services</span>
               </Command.Item>
               <Command.Item
-                disabled
-                className="flex items-center justify-between px-2.5 py-2 rounded-md opacity-40 cursor-not-allowed text-[var(--muted)]"
+                onSelect={() => navigateTo("endpoints", "Endpoints")}
+                className="flex items-center gap-2.5 px-2.5 py-2 rounded-md cursor-pointer hover:bg-[var(--surface-hover)] text-[var(--foreground)] transition-colors"
               >
-                <div className="flex items-center gap-2.5">
-                  <FileCode className="w-4 h-4 text-amber-500 dark:text-amber-400" />
-                  <span>ConfigMaps</span>
-                </div>
-                <span className="text-[9px] font-mono px-1.5 py-0.5 rounded bg-black/[0.04] dark:bg-white/[0.05] border border-[var(--border)]">
-                  Soon
-                </span>
+                <Radio className="w-4 h-4 text-cyan-500 dark:text-cyan-400" />
+                <span>Endpoints</span>
               </Command.Item>
               <Command.Item
-                disabled
-                className="flex items-center justify-between px-2.5 py-2 rounded-md opacity-40 cursor-not-allowed text-[var(--muted)]"
+                onSelect={() => navigateTo("ingresses", "Ingresses & Gateways")}
+                className="flex items-center gap-2.5 px-2.5 py-2 rounded-md cursor-pointer hover:bg-[var(--surface-hover)] text-[var(--foreground)] transition-colors"
               >
-                <div className="flex items-center gap-2.5">
-                  <FolderLock className="w-4 h-4 text-rose-500 dark:text-rose-400" />
-                  <span>Secrets (Redacted)</span>
-                </div>
-                <span className="text-[9px] font-mono px-1.5 py-0.5 rounded bg-black/[0.04] dark:bg-white/[0.05] border border-[var(--border)]">
-                  Soon
-                </span>
+                <Globe className="w-4 h-4 text-emerald-500 dark:text-emerald-400" />
+                <span>Ingresses &amp; Gateways</span>
+              </Command.Item>
+              <Command.Item
+                onSelect={() =>
+                  navigateTo("networkpolicies", "Network Policies")
+                }
+                className="flex items-center gap-2.5 px-2.5 py-2 rounded-md cursor-pointer hover:bg-[var(--surface-hover)] text-[var(--foreground)] transition-colors"
+              >
+                <Shield className="w-4 h-4 text-rose-500 dark:text-rose-400" />
+                <span>Network Policies</span>
+              </Command.Item>
+              <Command.Item
+                onSelect={() => navigateTo("portforwards", "Port Forwards")}
+                className="flex items-center gap-2.5 px-2.5 py-2 rounded-md cursor-pointer hover:bg-[var(--surface-hover)] text-[var(--foreground)] transition-colors"
+              >
+                <ArrowLeftRight className="w-4 h-4 text-amber-500 dark:text-amber-400" />
+                <span>Port Forwards</span>
+              </Command.Item>
+              <Command.Item
+                onSelect={() => navigateTo("cilium", "Network Observability")}
+                className="flex items-center gap-2.5 px-2.5 py-2 rounded-md cursor-pointer hover:bg-[var(--surface-hover)] text-[var(--foreground)] transition-colors"
+                value="Network Observability Cilium Hubble Calico Antrea Flannel"
+              >
+                <Radar className="w-4 h-4 text-emerald-500 dark:text-emerald-400" />
+                <span>Network Observability</span>
+              </Command.Item>
+              <Command.Item
+                onSelect={() => {
+                  setCurrentNamespace("all");
+                  navigateTo("configmaps", "ConfigMaps");
+                }}
+                value="ConfigMaps config maps configuration"
+                className="flex items-center gap-2.5 px-2.5 py-2 rounded-md cursor-pointer hover:bg-[var(--surface-hover)] text-[var(--foreground)] transition-colors"
+              >
+                <FileCode className="w-4 h-4 text-amber-500 dark:text-amber-400" />
+                <span>ConfigMaps</span>
+              </Command.Item>
+              <Command.Item
+                onSelect={() => {
+                  setCurrentNamespace("all");
+                  navigateTo("secrets", "Secrets");
+                }}
+                value="Secrets redacted credentials"
+                className="flex items-center gap-2.5 px-2.5 py-2 rounded-md cursor-pointer hover:bg-[var(--surface-hover)] text-[var(--foreground)] transition-colors"
+              >
+                <FolderLock className="w-4 h-4 text-rose-500 dark:text-rose-400" />
+                <span>Secrets (Redacted)</span>
+              </Command.Item>
+              <Command.Item
+                onSelect={() => {
+                  setCurrentNamespace("all");
+                  navigateTo("persistentvolumes", "Persistent Volumes");
+                }}
+                value="Persistent Volumes storage pv"
+                className="flex items-center gap-2.5 px-2.5 py-2 rounded-md cursor-pointer hover:bg-[var(--surface-hover)] text-[var(--foreground)] transition-colors"
+              >
+                <HardDrive className="w-4 h-4 text-sky-500 dark:text-sky-400" />
+                <span>Persistent Volumes</span>
+              </Command.Item>
+              <Command.Item
+                onSelect={() => {
+                  setCurrentNamespace("all");
+                  navigateTo("storageclasses", "Storage Classes");
+                }}
+                value="Storage Classes storageclass provisioning"
+                className="flex items-center gap-2.5 px-2.5 py-2 rounded-md cursor-pointer hover:bg-[var(--surface-hover)] text-[var(--foreground)] transition-colors"
+              >
+                <Database className="w-4 h-4 text-violet-500 dark:text-violet-400" />
+                <span>Storage Classes</span>
+              </Command.Item>
+              <Command.Item
+                onSelect={() => {
+                  setCurrentNamespace("all");
+                  navigateTo("serviceaccounts", "Service Accounts");
+                }}
+                value="Service Accounts identity workload"
+                className="flex items-center gap-2.5 px-2.5 py-2 rounded-md cursor-pointer hover:bg-[var(--surface-hover)] text-[var(--foreground)] transition-colors"
+              >
+                <Users className="w-4 h-4 text-sky-500 dark:text-sky-400" />
+                <span>Service Accounts</span>
+              </Command.Item>
+              <Command.Item
+                onSelect={() => {
+                  setCurrentNamespace("all");
+                  navigateTo("rbac", "Roles & Bindings");
+                }}
+                value="Roles Bindings RBAC permissions ClusterRole"
+                className="flex items-center gap-2.5 px-2.5 py-2 rounded-md cursor-pointer hover:bg-[var(--surface-hover)] text-[var(--foreground)] transition-colors"
+              >
+                <Key className="w-4 h-4 text-amber-500 dark:text-amber-400" />
+                <span>Roles &amp; Bindings</span>
+              </Command.Item>
+              <Command.Item
+                onSelect={() => navigateTo("crds", "Custom Resources")}
+                value="Custom Resources CRD definitions API"
+                className="flex items-center gap-2.5 px-2.5 py-2 rounded-md cursor-pointer hover:bg-[var(--surface-hover)] text-[var(--foreground)] transition-colors"
+              >
+                <Boxes className="w-4 h-4 text-violet-500 dark:text-violet-400" />
+                <span>Custom Resources</span>
               </Command.Item>
             </Command.Group>
 

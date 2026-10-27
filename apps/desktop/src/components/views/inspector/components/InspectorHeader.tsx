@@ -12,6 +12,9 @@ import {
   Copy,
   Check,
   FileText,
+  FileCode,
+  FolderLock,
+  HardDrive,
   Terminal,
   RotateCw,
   SlidersHorizontal,
@@ -20,6 +23,13 @@ import {
   Pause,
   Play,
   Zap,
+  Network,
+  Radio,
+  Globe,
+  Shield,
+  Waypoints,
+  Users,
+  Boxes,
 } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
@@ -36,6 +46,9 @@ export interface InspectorHeaderProps {
   isDaemonSet?: boolean;
   isJob?: boolean;
   isCronJob?: boolean;
+  isNetworkingResource?: boolean;
+  isConfigStorageResource?: boolean;
+  isAccessResource?: boolean;
   nodeData?: NodeSummary;
   podData?: PodSummary;
   onViewPods?: () => void;
@@ -62,6 +75,9 @@ export function InspectorHeader({
   isDaemonSet = false,
   isJob = false,
   isCronJob = false,
+  isNetworkingResource = false,
+  isConfigStorageResource = false,
+  isAccessResource = false,
   nodeData,
   podData,
   onViewPods,
@@ -81,6 +97,16 @@ export function InspectorHeader({
   const [copiedTitle, setCopiedTitle] = React.useState(false);
   const isWorkloadController =
     isDeployment || isReplicaSet || isStatefulSet || isDaemonSet || isJob;
+  const NetworkingIcon =
+    currentResource.kind === "Service"
+      ? Network
+      : currentResource.kind === "Endpoints"
+        ? Radio
+        : currentResource.kind === "Ingress"
+          ? Globe
+          : currentResource.kind === "NetworkPolicy"
+            ? Shield
+            : Waypoints;
 
   const handleCopyTitle = () => {
     navigator.clipboard.writeText(currentResource.name);
@@ -95,7 +121,11 @@ export function InspectorHeader({
       case "Active":
       case "Ready":
       case "Healthy":
+      case "Automount on":
+      case "Role":
       case "Complete":
+      case "Programmed":
+      case "Accepted":
         return (
           <span className="inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-medium font-mono bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20 shrink-0">
             {status}
@@ -107,6 +137,16 @@ export function InspectorHeader({
       case "Progressing":
       case "Paused":
       case "Suspended":
+      case "Not Ready":
+      case "No Endpoints":
+      case "Immutable":
+      case "Released":
+      case "Available":
+      case "Unknown":
+      case "Automount off":
+      case "Binding":
+      case "Namespaced":
+      case "Cluster":
         return (
           <span className="inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-medium font-mono bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/25 shrink-0">
             {status}
@@ -116,6 +156,16 @@ export function InspectorHeader({
       case "Succeeded":
       case "Scaled Down":
       case "Idle":
+      case "Empty":
+      case "Ingress":
+      case "Egress":
+      case "Ingress + Egress":
+      case "ClusterIP":
+      case "NodePort":
+      case "LoadBalancer":
+      case "ExternalName":
+      case "Bound":
+      case "Default":
         return (
           <span className="inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-medium font-mono bg-black/[0.04] dark:bg-white/[0.06] text-[var(--muted)] border border-[var(--border)] shrink-0">
             {status}
@@ -134,7 +184,27 @@ export function InspectorHeader({
     <div className="min-h-16 border-b border-[var(--border)] px-3 sm:px-4 py-2 flex flex-wrap sm:flex-nowrap items-center justify-between gap-2 shrink-0 bg-slate-50/80 dark:bg-black/40">
       <div className="flex flex-1 items-center gap-2 min-w-0 pr-0 sm:gap-3 sm:pr-2">
         <div className="p-2 sm:p-2.5 rounded-xl bg-[var(--surface-hover)] text-[var(--foreground)] border border-[var(--border)] shrink-0">
-          {isNode ? (
+          {isAccessResource ? (
+            currentResource.kind === "ServiceAccount" ? (
+              <Users className="w-5 h-5 text-[var(--accent)]" />
+            ) : currentResource.kind === "CustomResourceDefinition" ? (
+              <Boxes className="w-5 h-5 text-[var(--accent)]" />
+            ) : (
+              <Shield className="w-5 h-5 text-[var(--accent)]" />
+            )
+          ) : isConfigStorageResource ? (
+            currentResource.kind === "ConfigMap" ? (
+              <FileCode className="w-5 h-5 text-[var(--accent)]" />
+            ) : currentResource.kind === "Secret" ? (
+              <FolderLock className="w-5 h-5 text-[var(--accent)]" />
+            ) : currentResource.kind === "PersistentVolume" ? (
+              <HardDrive className="w-5 h-5 text-[var(--accent)]" />
+            ) : (
+              <Database className="w-5 h-5 text-[var(--accent)]" />
+            )
+          ) : isNetworkingResource ? (
+            <NetworkingIcon className="w-5 h-5 text-[var(--accent)]" />
+          ) : isNode ? (
             <Server className="w-5 h-5 text-[var(--accent)]" />
           ) : isDeployment ? (
             <Layers className="w-5 h-5 text-[var(--accent)]" />
@@ -211,7 +281,7 @@ export function InspectorHeader({
                 <div className="flex items-center gap-1">
                   <span>ns:</span>
                   <strong className="text-[var(--foreground)]">
-                    {currentResource.namespace}
+                    {currentResource.namespace || "Cluster Scope"}
                   </strong>
                 </div>
                 {podData?.nodeName && (
@@ -232,7 +302,17 @@ export function InspectorHeader({
       </div>
 
       <div className="flex w-full max-w-full items-center justify-end gap-1 overflow-x-auto scrollbar-none rounded-xl border border-[var(--border)] bg-black/5 p-1 shrink-0 sm:w-auto dark:bg-white/5">
-        {isCronJob ? (
+        {isNetworkingResource || isConfigStorageResource || isAccessResource ? (
+          <Tooltip content="Copy Resource Name">
+            <button
+              onClick={handleCopyTitle}
+              className="p-1.5 rounded-lg hover:bg-[var(--surface-hover)] text-[var(--muted)] hover:text-[var(--foreground)] transition-colors cursor-pointer"
+              aria-label="Copy Resource Name"
+            >
+              <Copy className="w-4 h-4" />
+            </button>
+          </Tooltip>
+        ) : isCronJob ? (
           <>
             {onViewJobs && (
               <Tooltip content="View Jobs">

@@ -14,10 +14,29 @@ import type {
   DaemonSetSummary,
   JobSummary,
   CronJobSummary,
+  ServiceSummary,
+  EndpointsSummary,
+  IngressSummary,
+  GatewayResourceSummary,
+  NetworkPolicySummary,
+  ConfigMapSummary,
+  SecretSummary,
+  PersistentVolumeSummary,
+  StorageClassSummary,
+  ServiceAccountSummary,
+  RBACResourceSummary,
+  CRDSummary,
 } from "@kubeview/contracts";
 import { toast } from "sonner";
 import { motion } from "motion/react";
-import { LayoutDashboard, Box, HeartPulse, Bell, FileCode } from "lucide-react";
+import {
+  LayoutDashboard,
+  Box,
+  HeartPulse,
+  Bell,
+  FileCode,
+  Pencil,
+} from "lucide-react";
 import { cn } from "@/lib/utils";
 
 import { InspectorHeader } from "./components/InspectorHeader";
@@ -31,6 +50,17 @@ import { InspectorWorkloadOverview } from "./tabs/InspectorWorkloadOverview";
 import { InspectorDaemonSetOverview } from "./tabs/InspectorDaemonSetOverview";
 import { InspectorJobOverview } from "./tabs/InspectorJobOverview";
 import { InspectorCronJobOverview } from "./tabs/InspectorCronJobOverview";
+import { InspectorNetworkingOverview } from "./tabs/InspectorNetworkingOverview";
+import { ConfigStorageEditorForm } from "@/components/modals/ConfigStorageEditorForm";
+import {
+  InspectorConfigStorageOverview,
+  type ConfigStorageData,
+} from "./tabs/InspectorConfigStorageOverview";
+import {
+  InspectorAccessOverview,
+  type AccessResourceData,
+} from "./tabs/InspectorAccessOverview";
+import { InspectorCRDInstances } from "./tabs/InspectorCRDInstances";
 import {
   InspectorWorkloadConditionsTab,
   type WorkloadConditionLike,
@@ -130,8 +160,23 @@ export function ResourceInspectorDrawer() {
     getDaemonSetYaml,
     getJobYaml,
     getCronJobYaml,
+    getServiceYaml,
+    getEndpointsYaml,
+    getIngressYaml,
+    getGatewayResourceYaml,
+    getNetworkPolicyYaml,
+    loadConfigMaps,
+    loadSecrets,
+    getConfigMapYaml,
+    getSecretYaml,
+    getPersistentVolumeYaml,
+    getStorageClassYaml,
+    getServiceAccountYaml,
+    getRBACResourceYaml,
+    getCRDYaml,
     getPodEvents,
     pods,
+    clusterOverview,
     loadPods,
     loadJobs,
     setCurrentNamespace,
@@ -146,7 +191,13 @@ export function ResourceInspectorDrawer() {
   const { openTab } = useTabStore();
 
   const [activeTab, setActiveTab] = React.useState<
-    "overview" | "containers" | "conditions" | "events" | "yaml"
+    | "overview"
+    | "edit"
+    | "instances"
+    | "containers"
+    | "conditions"
+    | "events"
+    | "yaml"
   >("overview");
   const [copiedYaml, setCopiedYaml] = React.useState(false);
   const [liveYaml, setLiveYaml] = React.useState<string>("");
@@ -192,6 +243,21 @@ export function ResourceInspectorDrawer() {
   const isDaemonSet = currentResource?.kind === "DaemonSet";
   const isJob = currentResource?.kind === "Job";
   const isCronJob = currentResource?.kind === "CronJob";
+  const isConfigMap = currentResource?.kind === "ConfigMap";
+  const isSecret = currentResource?.kind === "Secret";
+  const isPersistentVolume = currentResource?.kind === "PersistentVolume";
+  const isStorageClass = currentResource?.kind === "StorageClass";
+  const isConfigStorageResource =
+    isConfigMap || isSecret || isPersistentVolume || isStorageClass;
+  const canEditConfigStorage = isConfigMap || isSecret;
+  const isServiceAccount = currentResource?.kind === "ServiceAccount";
+  const isRBACResource =
+    currentResource?.kind === "Role" ||
+    currentResource?.kind === "ClusterRole" ||
+    currentResource?.kind === "RoleBinding" ||
+    currentResource?.kind === "ClusterRoleBinding";
+  const isCRD = currentResource?.kind === "CustomResourceDefinition";
+  const isAccessResource = isServiceAccount || isRBACResource || isCRD;
   const isWorkload =
     isDeployment ||
     isReplicaSet ||
@@ -199,12 +265,48 @@ export function ResourceInspectorDrawer() {
     isDaemonSet ||
     isJob ||
     isCronJob;
+  const isNetworkingResource =
+    currentResource?.kind === "Service" ||
+    currentResource?.kind === "Endpoints" ||
+    currentResource?.kind === "Ingress" ||
+    currentResource?.kind === "GatewayClass" ||
+    currentResource?.kind === "Gateway" ||
+    currentResource?.kind === "HTTPRoute" ||
+    currentResource?.kind === "GRPCRoute" ||
+    currentResource?.kind === "NetworkPolicy";
   const podData =
-    !isNode && !isWorkload
+    !isNode &&
+    !isWorkload &&
+    !isNetworkingResource &&
+    !isConfigStorageResource &&
+    !isAccessResource
       ? (currentResource?.data as unknown as PodSummary | undefined)
       : undefined;
+  const networkingData = isNetworkingResource
+    ? (currentResource?.data as unknown as
+        | ServiceSummary
+        | EndpointsSummary
+        | IngressSummary
+        | GatewayResourceSummary
+        | NetworkPolicySummary
+        | undefined)
+    : undefined;
+  const configStorageData = isConfigStorageResource
+    ? (currentResource?.data as unknown as ConfigStorageData | undefined)
+    : undefined;
+  const editableConfigStorageData =
+    isConfigMap || isSecret
+      ? (configStorageData as ConfigMapSummary | SecretSummary | undefined)
+      : undefined;
+  const accessData = isAccessResource
+    ? (currentResource?.data as unknown as AccessResourceData | undefined)
+    : undefined;
   const nodeData = isNode
     ? (currentResource?.data as unknown as NodeSummary | undefined)
+    : undefined;
+  const podNodeCIDR = podData?.nodeName
+    ? clusterOverview?.nodes?.find((node) => node.name === podData.nodeName)
+        ?.podCIDR
     : undefined;
   const deploymentData = isDeployment
     ? (currentResource?.data as unknown as DeploymentSummary | undefined)
@@ -234,8 +336,17 @@ export function ResourceInspectorDrawer() {
 
   // Reset to the overview tab whenever a different resource is inspected.
   React.useEffect(() => {
-    setActiveTab("overview");
-  }, [currentResource?.kind, currentResource?.name]);
+    setActiveTab(
+      currentResource?.initialTab === "edit" && canEditConfigStorage
+        ? "edit"
+        : "overview",
+    );
+  }, [
+    currentResource?.kind,
+    currentResource?.name,
+    currentResource?.initialTab,
+    canEditConfigStorage,
+  ]);
 
   // Filter pods running on the currently inspected node
   const nodePods = React.useMemo(() => {
@@ -267,19 +378,51 @@ export function ResourceInspectorDrawer() {
           pods.find((p) => p.name === currentResource.name)?.namespace ||
           "default";
 
-    const fetchManifest = isDeployment
-      ? getDeploymentYaml(currentResource.name, resolvedNs)
-      : isReplicaSet
-        ? getReplicaSetYaml(currentResource.name, resolvedNs)
-        : isStatefulSet
-          ? getStatefulSetYaml(currentResource.name, resolvedNs)
-          : isDaemonSet
-            ? getDaemonSetYaml(currentResource.name, resolvedNs)
-            : isJob
-              ? getJobYaml(currentResource.name, resolvedNs)
-              : isCronJob
-                ? getCronJobYaml(currentResource.name, resolvedNs)
-                : getPodYaml(currentResource.name, resolvedNs);
+    const fetchManifest = isAccessResource
+      ? isServiceAccount
+        ? getServiceAccountYaml(currentResource.name, resolvedNs)
+        : isRBACResource
+          ? getRBACResourceYaml(
+              currentResource.kind,
+              currentResource.name,
+              resolvedNs,
+            )
+          : getCRDYaml(currentResource.name)
+      : isConfigStorageResource
+        ? currentResource.kind === "ConfigMap"
+          ? getConfigMapYaml(currentResource.name, resolvedNs)
+          : currentResource.kind === "Secret"
+            ? getSecretYaml(currentResource.name, resolvedNs)
+            : currentResource.kind === "PersistentVolume"
+              ? getPersistentVolumeYaml(currentResource.name)
+              : getStorageClassYaml(currentResource.name)
+        : isNetworkingResource
+          ? currentResource.kind === "Service"
+            ? getServiceYaml(currentResource.name, resolvedNs)
+            : currentResource.kind === "Endpoints"
+              ? getEndpointsYaml(currentResource.name, resolvedNs)
+              : currentResource.kind === "Ingress"
+                ? getIngressYaml(currentResource.name, resolvedNs)
+                : currentResource.kind === "NetworkPolicy"
+                  ? getNetworkPolicyYaml(currentResource.name, resolvedNs)
+                  : getGatewayResourceYaml(
+                      currentResource.kind,
+                      currentResource.name,
+                      resolvedNs,
+                    )
+          : isDeployment
+            ? getDeploymentYaml(currentResource.name, resolvedNs)
+            : isReplicaSet
+              ? getReplicaSetYaml(currentResource.name, resolvedNs)
+              : isStatefulSet
+                ? getStatefulSetYaml(currentResource.name, resolvedNs)
+                : isDaemonSet
+                  ? getDaemonSetYaml(currentResource.name, resolvedNs)
+                  : isJob
+                    ? getJobYaml(currentResource.name, resolvedNs)
+                    : isCronJob
+                      ? getCronJobYaml(currentResource.name, resolvedNs)
+                      : getPodYaml(currentResource.name, resolvedNs);
 
     fetchManifest
       .then((yamlStr) => {
@@ -324,6 +467,23 @@ export function ResourceInspectorDrawer() {
     getDaemonSetYaml,
     getJobYaml,
     getCronJobYaml,
+    isNetworkingResource,
+    isAccessResource,
+    isServiceAccount,
+    isRBACResource,
+    getServiceAccountYaml,
+    getRBACResourceYaml,
+    getCRDYaml,
+    isConfigStorageResource,
+    getConfigMapYaml,
+    getSecretYaml,
+    getPersistentVolumeYaml,
+    getStorageClassYaml,
+    getServiceYaml,
+    getEndpointsYaml,
+    getIngressYaml,
+    getGatewayResourceYaml,
+    getNetworkPolicyYaml,
   ]);
 
   React.useEffect(() => {
@@ -346,7 +506,10 @@ export function ResourceInspectorDrawer() {
       currentResource &&
       activeTab === "events" &&
       !isNode &&
-      !isWorkload
+      !isWorkload &&
+      !isNetworkingResource &&
+      !isConfigStorageResource &&
+      !isAccessResource
     ) {
       setIsLoadingEvents(true);
       getPodEvents(currentResource.name, currentResource.namespace)
@@ -366,6 +529,9 @@ export function ResourceInspectorDrawer() {
     getPodEvents,
     isNode,
     isWorkload,
+    isNetworkingResource,
+    isConfigStorageResource,
+    isAccessResource,
   ]);
 
   // Close on Escape key, but only when no modal or palette above the drawer
@@ -687,35 +853,75 @@ export function ResourceInspectorDrawer() {
       : []),
     { id: "yaml" as const, label: "YAML", icon: FileCode, count: null },
   ];
-  const inspectorTabs = isWorkload
-    ? workloadInspectorTabs
-    : [
+  const inspectorTabs = isConfigStorageResource
+    ? [
         {
           id: "overview" as const,
           label: "Overview",
           icon: LayoutDashboard,
           count: null,
         },
-        {
-          id: "containers" as const,
-          label: "Containers",
-          icon: Box,
-          count: podData?.containers?.length || 0,
-        },
-        {
-          id: "conditions" as const,
-          label: "Conditions",
-          icon: HeartPulse,
-          count: podData?.conditions?.length || 0,
-        },
-        {
-          id: "events" as const,
-          label: "Events",
-          icon: Bell,
-          count: liveEvents.length > 0 ? liveEvents.length : null,
-        },
+        ...(canEditConfigStorage
+          ? [
+              {
+                id: "edit" as const,
+                label: "Edit",
+                icon: Pencil,
+                count: null,
+              },
+            ]
+          : []),
         { id: "yaml" as const, label: "YAML", icon: FileCode, count: null },
-      ];
+      ]
+    : isAccessResource
+      ? [
+          {
+            id: "overview" as const,
+            label: "Overview",
+            icon: LayoutDashboard,
+            count: null,
+          },
+          ...(isCRD
+            ? [
+                {
+                  id: "instances" as const,
+                  label: "Instances",
+                  icon: Box,
+                  count: null,
+                },
+              ]
+            : []),
+          { id: "yaml" as const, label: "YAML", icon: FileCode, count: null },
+        ]
+      : isWorkload || isNetworkingResource
+        ? workloadInspectorTabs
+        : [
+            {
+              id: "overview" as const,
+              label: "Overview",
+              icon: LayoutDashboard,
+              count: null,
+            },
+            {
+              id: "containers" as const,
+              label: "Containers",
+              icon: Box,
+              count: podData?.containers?.length || 0,
+            },
+            {
+              id: "conditions" as const,
+              label: "Conditions",
+              icon: HeartPulse,
+              count: podData?.conditions?.length || 0,
+            },
+            {
+              id: "events" as const,
+              label: "Events",
+              icon: Bell,
+              count: liveEvents.length > 0 ? liveEvents.length : null,
+            },
+            { id: "yaml" as const, label: "YAML", icon: FileCode, count: null },
+          ];
 
   return (
     <div
@@ -752,6 +958,9 @@ export function ResourceInspectorDrawer() {
         <InspectorHeader
           currentResource={currentResource}
           isNode={isNode}
+          isNetworkingResource={isNetworkingResource}
+          isConfigStorageResource={isConfigStorageResource}
+          isAccessResource={isAccessResource}
           isDeployment={isDeployment}
           isReplicaSet={isReplicaSet}
           isStatefulSet={isStatefulSet}
@@ -853,6 +1062,90 @@ export function ResourceInspectorDrawer() {
               onInspectPod={openInspector}
               onViewAllPods={handleViewAllPods}
             />
+          ) : isAccessResource ? (
+            <>
+              {activeTab === "overview" && accessData && (
+                <InspectorAccessOverview
+                  currentResource={currentResource}
+                  data={accessData}
+                />
+              )}
+              {isCRD && activeTab === "instances" && accessData && (
+                <InspectorCRDInstances crd={accessData as CRDSummary} />
+              )}
+              {activeTab === "yaml" && (
+                <InspectorYamlTab
+                  yaml={liveYaml}
+                  isLoading={isLoadingYaml}
+                  onCopy={copyYaml}
+                  onDownload={downloadYaml}
+                  onRetry={handleReloadYaml}
+                  copiedYaml={copiedYaml}
+                  resourceName={currentResource?.name}
+                />
+              )}
+            </>
+          ) : isConfigStorageResource ? (
+            <>
+              {activeTab === "edit" && editableConfigStorageData && (
+                <ConfigStorageEditorForm
+                  target={{
+                    kind: isConfigMap ? "ConfigMap" : "Secret",
+                    name: currentResource.name,
+                    namespace: currentResource.namespace,
+                    status: currentResource.status,
+                    immutable: editableConfigStorageData.immutable,
+                    summary: editableConfigStorageData,
+                  }}
+                  onClose={closeInspector}
+                  onSaved={() => {
+                    if (isConfigMap) {
+                      void loadConfigMaps(currentResource.namespace);
+                    } else {
+                      void loadSecrets(currentResource.namespace);
+                    }
+                  }}
+                />
+              )}
+              {activeTab === "overview" && configStorageData && (
+                <InspectorConfigStorageOverview
+                  currentResource={currentResource}
+                  data={configStorageData}
+                />
+              )}
+              {activeTab === "yaml" && (
+                <InspectorYamlTab
+                  yaml={liveYaml}
+                  isLoading={isLoadingYaml}
+                  onCopy={copyYaml}
+                  onDownload={downloadYaml}
+                  onRetry={handleReloadYaml}
+                  copiedYaml={copiedYaml}
+                  resourceName={currentResource?.name}
+                />
+              )}
+            </>
+          ) : isNetworkingResource ? (
+            <>
+              {activeTab === "overview" && networkingData && (
+                <InspectorNetworkingOverview
+                  currentResource={currentResource}
+                  data={networkingData}
+                />
+              )}
+
+              {activeTab === "yaml" && (
+                <InspectorYamlTab
+                  yaml={liveYaml}
+                  isLoading={isLoadingYaml}
+                  onCopy={copyYaml}
+                  onDownload={downloadYaml}
+                  onRetry={handleReloadYaml}
+                  copiedYaml={copiedYaml}
+                  resourceName={currentResource?.name}
+                />
+              )}
+            </>
           ) : (
             <>
               {isWorkload ? (
@@ -912,6 +1205,7 @@ export function ResourceInspectorDrawer() {
                     <InspectorPodOverview
                       currentResource={currentResource}
                       podData={podData}
+                      nodePodCIDR={podNodeCIDR}
                       onOpenLogsModal={openLogsModal}
                       onOpenExecModal={openExecModal}
                     />

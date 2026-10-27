@@ -17,6 +17,9 @@ import { PodRestartModal } from "@/components/modals/PodRestartModal";
 import { WorkloadActionModal } from "@/components/modals/WorkloadActionModal";
 import { BulkWorkloadActionModal } from "@/components/modals/BulkWorkloadActionModal";
 import { EndpointEditModal } from "@/components/modals/EndpointEditModal";
+import { ResourceEditorModal } from "@/components/modals/ResourceEditorModal";
+import { DeleteResourceModal } from "@/components/modals/DeleteResourceModal";
+import { ServiceDiagnosticsModal } from "@/components/modals/ServiceDiagnosticsModal";
 
 import { useClusterStore } from "@/stores/clusterStore";
 import { useSettingsStore } from "@/stores/settingsStore";
@@ -101,6 +104,9 @@ export function AppShell() {
       <WorkloadActionModal />
       <BulkWorkloadActionModal />
       <EndpointEditModal />
+      <ResourceEditorModal />
+      <DeleteResourceModal />
+      <ServiceDiagnosticsModal />
 
       {/* 8. Initial High-Tech Splash Screen Overlay */}
       <SplashScreen />

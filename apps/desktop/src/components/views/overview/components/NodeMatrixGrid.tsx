@@ -114,6 +114,14 @@ export function NodeMatrixGrid({
                     </button>
                   )}
                 </div>
+                {n.podCIDR && (
+                  <div className="text-[10px] font-mono text-[var(--muted)]">
+                    podCIDR:{" "}
+                    <span className="text-[var(--foreground)]">
+                      {n.podCIDR}
+                    </span>
+                  </div>
+                )}
               </div>
 
               <span

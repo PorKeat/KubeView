@@ -22,6 +22,7 @@ test.describe("KubeView UI - Accessibility & Keyboard Navigation (WCAG AA)", () 
   test("context switcher dropdown and search input are fully keyboard navigable", async ({
     page,
   }) => {
+    test.setTimeout(60000);
     const trigger = page.locator('[data-testid="context-switcher-trigger"]');
     await trigger.focus();
     await expect(trigger).toBeFocused();
@@ -52,6 +53,45 @@ test.describe("KubeView UI - Accessibility & Keyboard Navigation (WCAG AA)", () 
 
     // Context should switch
     await expect(trigger).toContainText("mailconfig", { timeout: 10000 });
+    await page.waitForFunction(
+      () =>
+        /status connected/i.test(
+          document
+            .querySelector('[data-testid="context-switcher-trigger"]')
+            ?.getAttribute("aria-label") ?? "",
+        ),
+      undefined,
+      { timeout: 15000 },
+    );
+
+    // The engine's active context is global. Restore the primary cluster so
+    // later live specs see the data they expect. Clearing the search is
+    // required because the dropdown keeps its filter between openings.
+    await trigger.click();
+    const contextSearch = page.locator(
+      'input[aria-label="Filter cluster contexts"]',
+    );
+    await expect(contextSearch).toBeVisible({ timeout: 5000 });
+    await contextSearch.fill("");
+    await page
+      .locator('[data-testid="context-item"]')
+      .filter({ hasText: "kubernetes-admin@kubekey" })
+      .filter({ hasNotText: "mailconfig" })
+      .first()
+      .click();
+    await expect(trigger).not.toContainText("(mailconfig)", {
+      timeout: 15000,
+    });
+    await page.waitForFunction(
+      () =>
+        /status connected/i.test(
+          document
+            .querySelector('[data-testid="context-switcher-trigger"]')
+            ?.getAttribute("aria-label") ?? "",
+        ),
+      undefined,
+      { timeout: 15000 },
+    );
   });
 
   test("cluster overview interactive elements support full keyboard interaction", async ({

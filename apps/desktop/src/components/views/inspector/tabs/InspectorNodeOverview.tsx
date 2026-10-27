@@ -123,6 +123,16 @@ export function InspectorNodeOverview({
           </div>
           <div>
             <span className="text-[var(--muted)] block text-[10px] font-mono">
+              Pod CIDR
+            </span>
+            <span className="font-mono text-[var(--foreground)] font-medium">
+              {nodeData.podCIDR ||
+                (nodeData.podCIDRs && nodeData.podCIDRs.join(", ")) ||
+                "-"}
+            </span>
+          </div>
+          <div>
+            <span className="text-[var(--muted)] block text-[10px] font-mono">
               Architecture
             </span>
             <span className="font-mono text-[var(--foreground)] font-medium">

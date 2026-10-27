@@ -101,5 +101,28 @@ test.describe("KubeView UI - Cluster Context Switcher & Configuration", () => {
       "kubernetes-admin@kubekey (mailconfig)",
       { timeout: 10000 },
     );
+
+    // The engine keeps the active context globally. Restore the primary
+    // cluster so subsequent live specs and the running app remain deterministic.
+    await trigger.click();
+    await page
+      .locator('[data-testid="context-item"]')
+      .filter({ hasText: "kubernetes-admin@kubekey" })
+      .filter({ hasNotText: "mailconfig" })
+      .first()
+      .click();
+    await expect(trigger).not.toContainText("(mailconfig)", {
+      timeout: 15000,
+    });
+    await page.waitForFunction(
+      () =>
+        /status connected/i.test(
+          document
+            .querySelector('[data-testid="context-switcher-trigger"]')
+            ?.getAttribute("aria-label") ?? "",
+        ),
+      undefined,
+      { timeout: 15000 },
+    );
   });
 });

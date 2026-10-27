@@ -3,6 +3,7 @@
 import * as React from "react";
 import { RotateCw, ShieldCheck, ChevronRight } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { OverviewViewSwitch } from "./OverviewViewSwitch";
 
 export interface ClusterOverviewHeaderProps {
   currentContext: string;
@@ -103,6 +104,8 @@ export function ClusterOverviewHeader({
 
       {/* Right: Operational Controls Toolbar */}
       <div className="flex items-center gap-2 shrink-0 flex-wrap">
+        <OverviewViewSwitch active="single" />
+
         {/* Diagnostics Button */}
         <button
           type="button"

@@ -32,6 +32,7 @@ import {
 export interface InspectorPodOverviewProps {
   currentResource: SelectedResource;
   podData: PodSummary | undefined;
+  nodePodCIDR?: string;
   onOpenLogsModal?: (pod: {
     name: string;
     namespace: string;
@@ -47,6 +48,7 @@ export interface InspectorPodOverviewProps {
 export function InspectorPodOverview({
   currentResource,
   podData,
+  nodePodCIDR,
   onOpenLogsModal,
   onOpenExecModal,
 }: InspectorPodOverviewProps) {
@@ -279,6 +281,28 @@ export function InspectorPodOverview({
               )}
             </div>
           </div>
+
+          {/* IP Family */}
+          <div>
+            <span className="text-[var(--muted)] block text-[10px]">
+              IP Family
+            </span>
+            <span className="font-mono text-[var(--foreground)] font-medium">
+              {podData?.ip ? (podData.ip.includes(":") ? "IPv6" : "IPv4") : "-"}
+            </span>
+          </div>
+
+          {/* Node Pod CIDR */}
+          {nodePodCIDR && (
+            <div>
+              <span className="text-[var(--muted)] block text-[10px]">
+                Node Pod CIDR
+              </span>
+              <span className="font-mono text-[var(--foreground)] font-medium">
+                {nodePodCIDR}
+              </span>
+            </div>
+          )}
 
           {/* Restarts */}
           <div>

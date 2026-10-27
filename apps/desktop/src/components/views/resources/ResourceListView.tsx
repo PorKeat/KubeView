@@ -580,10 +580,10 @@ export function ResourceListView({ resourceType }: ResourceListViewProps) {
         </div>
       ) : (
         <div className="flex-1 overflow-auto min-h-0">
-          <table className="w-full min-w-[1080px] text-left text-xs border-collapse table-fixed">
+          <table className="w-full min-w-[1080px] xl:min-w-0 text-left text-xs border-collapse table-fixed">
             <thead className="sticky top-0 bg-[var(--surface)] z-10 border-b border-[var(--border)] select-none">
               <tr className="text-[11px] font-semibold text-[var(--muted)] uppercase tracking-wider h-8">
-                <th className="w-8 px-2 text-center">
+                <th className="w-[3%] px-2 text-center">
                   <Tooltip
                     content={
                       isPageAllSelected
@@ -617,7 +617,7 @@ export function ResourceListView({ resourceType }: ResourceListViewProps) {
                     ascending: sortAsc,
                     onSort: handleSort,
                   })}
-                  className="w-48 sm:w-56 md:w-64 py-1 px-3 cursor-pointer hover:text-[var(--foreground)] transition-colors min-w-0"
+                  className="w-[20%] py-1 px-3 cursor-pointer hover:text-[var(--foreground)] transition-colors"
                 >
                   <div className="flex items-center gap-1">
                     <span>Name</span>
@@ -639,7 +639,7 @@ export function ResourceListView({ resourceType }: ResourceListViewProps) {
                     ascending: sortAsc,
                     onSort: handleSort,
                   })}
-                  className="w-24 sm:w-28 py-1 px-3 cursor-pointer hover:text-[var(--foreground)] transition-colors"
+                  className="w-[11%] py-1 px-3 cursor-pointer hover:text-[var(--foreground)] transition-colors"
                 >
                   <div className="flex items-center gap-1">
                     <span>Namespace</span>
@@ -661,7 +661,7 @@ export function ResourceListView({ resourceType }: ResourceListViewProps) {
                     ascending: sortAsc,
                     onSort: handleSort,
                   })}
-                  className="w-24 py-1 px-3 cursor-pointer hover:text-[var(--foreground)] transition-colors"
+                  className="w-[9%] py-1 px-3 cursor-pointer hover:text-[var(--foreground)] transition-colors"
                 >
                   <div className="flex items-center gap-1">
                     <span>Status</span>
@@ -676,7 +676,7 @@ export function ResourceListView({ resourceType }: ResourceListViewProps) {
                     )}
                   </div>
                 </th>
-                <th className="w-16 sm:w-20 py-1 px-3">Ready</th>
+                <th className="w-[6%] py-1 px-3">Ready</th>
                 <th
                   {...sortableHeaderProps({
                     field: "restarts",
@@ -684,7 +684,7 @@ export function ResourceListView({ resourceType }: ResourceListViewProps) {
                     ascending: sortAsc,
                     onSort: handleSort,
                   })}
-                  className="w-24 sm:w-28 py-1 px-3 cursor-pointer hover:text-[var(--foreground)] transition-colors"
+                  className="w-[8%] py-1 px-3 cursor-pointer hover:text-[var(--foreground)] transition-colors"
                 >
                   <div className="flex items-center gap-1">
                     <span>Restarts</span>
@@ -706,7 +706,7 @@ export function ResourceListView({ resourceType }: ResourceListViewProps) {
                     ascending: sortAsc,
                     onSort: handleSort,
                   })}
-                  className="w-28 sm:w-36 py-1 px-3 cursor-pointer hover:text-[var(--foreground)] transition-colors"
+                  className="w-[11%] py-1 px-3 cursor-pointer hover:text-[var(--foreground)] transition-colors"
                 >
                   <div className="flex items-center gap-1">
                     <span>Node</span>
@@ -721,9 +721,9 @@ export function ResourceListView({ resourceType }: ResourceListViewProps) {
                     )}
                   </div>
                 </th>
-                <th className="w-24 sm:w-28 py-1 px-3">IP</th>
-                <th className="w-16 sm:w-20 py-1 px-3">CPU</th>
-                <th className="w-20 sm:w-24 py-1 px-3">Memory</th>
+                <th className="w-[9%] py-1 px-3">IP</th>
+                <th className="w-[6%] py-1 px-3">CPU</th>
+                <th className="w-[7%] py-1 px-3">Memory</th>
                 <th
                   {...sortableHeaderProps({
                     field: "age",
@@ -731,7 +731,7 @@ export function ResourceListView({ resourceType }: ResourceListViewProps) {
                     ascending: sortAsc,
                     onSort: handleSort,
                   })}
-                  className="w-14 sm:w-16 py-1 px-3 cursor-pointer hover:text-[var(--foreground)] transition-colors"
+                  className="w-[5%] py-1 px-3 cursor-pointer hover:text-[var(--foreground)] transition-colors"
                 >
                   <div className="flex items-center gap-1">
                     <span>Age</span>
@@ -747,7 +747,7 @@ export function ResourceListView({ resourceType }: ResourceListViewProps) {
                   </div>
                 </th>
                 <th
-                  className="w-9 py-1 px-2 text-right"
+                  className="w-[5%] py-1 px-2 text-right"
                   aria-label="Actions"
                 ></th>
               </tr>

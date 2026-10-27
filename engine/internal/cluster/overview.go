@@ -25,6 +25,8 @@ type NodeSummary struct {
 	Version            string   `json:"version"`
 	Architecture       string   `json:"architecture"`
 	InternalIP         string   `json:"internalIP"`
+	PodCIDR            string   `json:"podCIDR,omitempty"`
+	PodCIDRs           []string `json:"podCIDRs,omitempty"`
 	CPUCapacity        string   `json:"cpuCapacity"`
 	CPUCores           float64  `json:"cpuCores"`
 	CPUAllocated       string   `json:"cpuAllocated"`
@@ -87,6 +89,7 @@ type ClusterOverviewResult struct {
 	HasMetrics         bool             `json:"hasMetrics"`
 	Nodes              []NodeSummary    `json:"nodes"`
 	WarningEvents      []PodEventItem   `json:"warningEvents"`
+	WarningEventCount  int              `json:"warningEventCount"`
 	Workloads          WorkloadsSummary `json:"workloads"`
 }
 
@@ -493,6 +496,8 @@ func (m *Manager) fetchClusterOverviewRaw(ctx context.Context, contextName, targ
 			Version:            n.Status.NodeInfo.KubeletVersion,
 			Architecture:       n.Status.NodeInfo.Architecture,
 			InternalIP:         internalIP,
+			PodCIDR:            n.Spec.PodCIDR,
+			PodCIDRs:           n.Spec.PodCIDRs,
 			CPUCapacity:        fmt.Sprintf("%.1f Cores", cpuCores),
 			CPUCores:           math.Round(cpuCores*10) / 10,
 			CPUAllocated:       fmt.Sprintf("%dm", nodeAllocatedCpu),
@@ -571,7 +576,8 @@ func (m *Manager) fetchClusterOverviewRaw(ctx context.Context, contextName, targ
 		}
 	}
 
-	// Sort events latest first and take top 10
+	// Sort events latest first and take top 10 for the incident list.
+	warningEventCount := len(warningItems)
 	sort.Slice(warningItems, func(i, j int) bool {
 		return warningItems[i].LastTimestamp > warningItems[j].LastTimestamp
 	})
@@ -689,6 +695,7 @@ func (m *Manager) fetchClusterOverviewRaw(ctx context.Context, contextName, targ
 		HasMetrics:         hasMetrics,
 		Nodes:              nodeSummaries,
 		WarningEvents:      warningItems,
+		WarningEventCount:  warningEventCount,
 		Workloads:          workloads,
 	}
 

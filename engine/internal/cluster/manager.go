@@ -12,6 +12,7 @@ import (
 	"time"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/client-go/dynamic"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/clientcmd"
@@ -37,6 +38,9 @@ type Manager struct {
 	currentContext string
 	clientsets     map[string]kubernetes.Interface
 	restConfigs    map[string]*rest.Config
+	dynamicClients map[string]dynamic.Interface
+	forwardsMu     sync.Mutex
+	forwards       map[string]*portForwardSession
 	overviewCache  map[string]cachedOverview
 	overviewMu     sync.RWMutex
 	overviewCalls  map[string]*overviewCall
@@ -61,11 +65,13 @@ func (m *Manager) InvalidateOverviewCache(contextName string) {
 // NewManager creates a new cluster Manager
 func NewManager(customConfigPath string) (*Manager, error) {
 	mgr := &Manager{
-		configPath:    customConfigPath,
-		clientsets:    make(map[string]kubernetes.Interface),
-		restConfigs:   make(map[string]*rest.Config),
-		overviewCache: make(map[string]cachedOverview),
-		overviewCalls: make(map[string]*overviewCall),
+		configPath:     customConfigPath,
+		clientsets:     make(map[string]kubernetes.Interface),
+		restConfigs:    make(map[string]*rest.Config),
+		dynamicClients: make(map[string]dynamic.Interface),
+		forwards:       make(map[string]*portForwardSession),
+		overviewCache:  make(map[string]cachedOverview),
+		overviewCalls:  make(map[string]*overviewCall),
 	}
 
 	if err := mgr.ReloadConfig(); err != nil {
@@ -167,6 +173,7 @@ func (m *Manager) ReloadConfig() error {
 
 	// Invalidate cached clientsets
 	m.clientsets = make(map[string]kubernetes.Interface)
+	m.dynamicClients = make(map[string]dynamic.Interface)
 	m.restConfigs = make(map[string]*rest.Config)
 
 	return nil

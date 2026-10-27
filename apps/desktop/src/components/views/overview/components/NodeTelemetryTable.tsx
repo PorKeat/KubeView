@@ -34,6 +34,7 @@ export function NodeTelemetryTable({
               <th className="py-2.5 px-3 font-medium">Status</th>
               <th className="py-2.5 px-3 font-medium">Roles</th>
               <th className="py-2.5 px-3 font-medium">Internal IP</th>
+              <th className="py-2.5 px-3 font-medium">Pod CIDR</th>
               <th className="py-2.5 px-3 font-medium text-right">CPU Live</th>
               <th className="py-2.5 px-3 font-medium text-right">CPU Req</th>
               <th className="py-2.5 px-3 font-medium text-right">RAM Live</th>
@@ -91,6 +92,9 @@ export function NodeTelemetryTable({
                   </td>
                   <td className="py-3 px-3 text-[var(--foreground)]">
                     {n.internalIP}
+                  </td>
+                  <td className="py-3 px-3 text-[var(--muted)]">
+                    {n.podCIDR || "-"}
                   </td>
                   <td className="py-3 px-3 text-right">
                     <span className="tabular-nums font-semibold text-emerald-600 dark:text-emerald-400">

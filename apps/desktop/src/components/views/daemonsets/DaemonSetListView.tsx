@@ -374,10 +374,10 @@ export function DaemonSetListView() {
         </div>
       ) : (
         <div className="flex-1 overflow-auto min-h-0">
-          <table className="w-full min-w-[1080px] text-left text-xs border-collapse table-fixed">
+          <table className="w-full min-w-[1080px] xl:min-w-0 text-left text-xs border-collapse table-fixed">
             <thead className="sticky top-0 bg-[var(--surface)] z-10 border-b border-[var(--border)] select-none">
               <tr className="text-[10px] font-semibold text-[var(--muted)] uppercase tracking-wider h-8 whitespace-nowrap">
-                <th className="w-8 px-2 text-center">
+                <th className="w-[3%] px-2 text-center">
                   <Tooltip
                     content={
                       selection.isPageAllSelected
@@ -413,7 +413,7 @@ export function DaemonSetListView() {
                     ascending: sortAsc,
                     onSort: handleSort,
                   })}
-                  className="w-44 sm:w-48 md:w-52 py-1 px-3 cursor-pointer hover:text-[var(--foreground)] transition-colors"
+                  className="w-[17%] py-1 px-3 cursor-pointer hover:text-[var(--foreground)] transition-colors"
                 >
                   <div className="flex items-center gap-1">
                     <span>Name</span>
@@ -427,7 +427,7 @@ export function DaemonSetListView() {
                     ascending: sortAsc,
                     onSort: handleSort,
                   })}
-                  className="w-24 sm:w-28 py-1 px-3 cursor-pointer hover:text-[var(--foreground)] transition-colors"
+                  className="w-[11%] py-1 px-3 cursor-pointer hover:text-[var(--foreground)] transition-colors"
                 >
                   <div className="flex items-center gap-1">
                     <span>Namespace</span>
@@ -441,15 +441,15 @@ export function DaemonSetListView() {
                     ascending: sortAsc,
                     onSort: handleSort,
                   })}
-                  className="w-24 sm:w-28 py-1 px-3 cursor-pointer hover:text-[var(--foreground)] transition-colors"
+                  className="w-[9%] py-1 px-3 cursor-pointer hover:text-[var(--foreground)] transition-colors"
                 >
                   <div className="flex items-center gap-1">
                     <span>Status</span>
                     {renderSortIndicator("status")}
                   </div>
                 </th>
-                <th className="w-20 py-1 px-2">Desired</th>
-                <th className="w-20 py-1 px-2">Current</th>
+                <th className="w-[8%] py-1 px-2">Desired</th>
+                <th className="w-[8%] py-1 px-2">Current</th>
                 <th
                   {...sortableHeaderProps({
                     field: "ready",
@@ -457,16 +457,16 @@ export function DaemonSetListView() {
                     ascending: sortAsc,
                     onSort: handleSort,
                   })}
-                  className="w-20 py-1 px-2 cursor-pointer hover:text-[var(--foreground)] transition-colors"
+                  className="w-[7%] py-1 px-2 cursor-pointer hover:text-[var(--foreground)] transition-colors"
                 >
                   <div className="flex items-center gap-1">
                     <span>Ready</span>
                     {renderSortIndicator("ready")}
                   </div>
                 </th>
-                <th className="w-20 py-1 px-2">Up-to-date</th>
-                <th className="w-20 py-1 px-2">Available</th>
-                <th className="w-32 py-1 px-2">Node Selector</th>
+                <th className="w-[9%] py-1 px-2">Up-to-date</th>
+                <th className="w-[9%] py-1 px-2">Available</th>
+                <th className="w-[10%] py-1 px-2">Node Selector</th>
                 <th
                   {...sortableHeaderProps({
                     field: "age",
@@ -474,7 +474,7 @@ export function DaemonSetListView() {
                     ascending: sortAsc,
                     onSort: handleSort,
                   })}
-                  className="w-14 sm:w-16 py-1 px-3 cursor-pointer hover:text-[var(--foreground)] transition-colors"
+                  className="w-[5%] py-1 px-3 cursor-pointer hover:text-[var(--foreground)] transition-colors"
                 >
                   <div className="flex items-center gap-1">
                     <span>Age</span>
@@ -482,7 +482,7 @@ export function DaemonSetListView() {
                   </div>
                 </th>
                 <th
-                  className="w-9 py-1 px-2 text-right"
+                  className="w-[4%] py-1 px-2 text-right"
                   aria-label="Actions"
                 ></th>
               </tr>

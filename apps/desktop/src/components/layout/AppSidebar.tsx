@@ -12,12 +12,16 @@ import {
   Network,
   Radio,
   Shield,
+  Globe,
+  ArrowLeftRight,
+  Radar,
   FileCode,
   HardDrive,
   Users,
   Key,
   FolderLock,
   Boxes,
+  Server,
   ChevronDown,
   ChevronRight,
   PanelLeftClose,
@@ -39,6 +43,7 @@ import { Tooltip } from "@/components/ui/Tooltip";
 interface NavItem {
   id: string;
   title: string;
+  shortTitle?: string;
   icon: React.ElementType;
   badge?: string | number;
   badgeVariant?: "default" | "warning" | "accent" | "soon";
@@ -98,6 +103,7 @@ export function AppSidebar() {
     useTabStore();
   const { activeSection, setActiveSection } = useSettingsStore();
   const {
+    availableContexts,
     clusterOverview,
     totalPodsCount,
     pods,
@@ -109,6 +115,7 @@ export function AppSidebar() {
     cronJobs,
     totalJobsCount,
     totalCronJobsCount,
+    networkingCounts,
     loadPods,
     loadDeployments,
     loadReplicaSets,
@@ -116,6 +123,17 @@ export function AppSidebar() {
     loadDaemonSets,
     loadJobs,
     loadCronJobs,
+    loadServices,
+    loadEndpoints,
+    loadIngresses,
+    loadGatewayResources,
+    loadNetworkPolicies,
+    loadPortForwards,
+    loadCiliumResources,
+    loadNetworkObservability,
+    loadServiceAccounts,
+    loadRBACResources,
+    loadCRDs,
     setJobOwnerFilter,
     setJobsViewMode,
     setCurrentNamespace,
@@ -168,12 +186,40 @@ export function AppSidebar() {
     clusterOverview?.workloads?.cronJobs?.total ??
     (totalCronJobsCount || cronJobs.length);
   const jobsAndCronJobsCount = jobsCount + cronJobsCount;
+  const serviceCount = networkingCounts?.services ?? 0;
+  const endpointCount = networkingCounts?.endpoints ?? 0;
+  const ingressGatewayCount =
+    (networkingCounts?.ingresses ?? 0) +
+    (networkingCounts?.gatewayResources ?? 0);
+  const networkPolicyCount = networkingCounts?.networkPolicies ?? 0;
+  const activePortForwardCount = networkingCounts?.activePortForwards ?? 0;
+  const configMapCount = networkingCounts?.configMaps ?? 0;
+  const secretCount = networkingCounts?.secrets ?? 0;
+  const persistentVolumeCount = networkingCounts?.persistentVolumes ?? 0;
+  const storageClassCount = networkingCounts?.storageClasses ?? 0;
+  const serviceAccountCount = networkingCounts?.serviceAccounts ?? 0;
+  const rbacCount =
+    (networkingCounts?.roles ?? 0) +
+    (networkingCounts?.clusterRoles ?? 0) +
+    (networkingCounts?.roleBindings ?? 0) +
+    (networkingCounts?.clusterRoleBindings ?? 0);
+  const crdCount = networkingCounts?.crds ?? 0;
 
   const navigationGroups: NavGroup[] = React.useMemo(
     () => [
       {
         category: "Overview",
         items: [
+          {
+            id: "fleet",
+            title: "All Clusters",
+            icon: Server,
+            badge:
+              availableContexts.length > 0
+                ? availableContexts.length
+                : undefined,
+            badgeVariant: "accent",
+          },
           { id: "overview", title: "Cluster Overview", icon: LayoutDashboard },
         ],
       },
@@ -231,33 +277,43 @@ export function AppSidebar() {
             id: "services",
             title: "Services",
             icon: Network,
-            badge: "Soon",
-            badgeVariant: "soon",
-            disabled: true,
+            badge: serviceCount > 0 ? serviceCount : undefined,
+            badgeVariant: "accent",
           },
           {
             id: "endpoints",
             title: "Endpoints",
             icon: Radio,
-            badge: "Soon",
-            badgeVariant: "soon",
-            disabled: true,
+            badge: endpointCount > 0 ? endpointCount : undefined,
+            badgeVariant: "accent",
           },
           {
             id: "ingresses",
             title: "Ingresses & Gateways",
-            icon: Network,
-            badge: "Soon",
-            badgeVariant: "soon",
-            disabled: true,
+            icon: Globe,
+            badge: ingressGatewayCount > 0 ? ingressGatewayCount : undefined,
+            badgeVariant: "accent",
           },
           {
             id: "networkpolicies",
             title: "Network Policies",
             icon: Shield,
-            badge: "Soon",
-            badgeVariant: "soon",
-            disabled: true,
+            badge: networkPolicyCount > 0 ? networkPolicyCount : undefined,
+            badgeVariant: "accent",
+          },
+          {
+            id: "portforwards",
+            title: "Port Forwards",
+            icon: ArrowLeftRight,
+            badge:
+              activePortForwardCount > 0 ? activePortForwardCount : undefined,
+            badgeVariant: "accent",
+          },
+          {
+            id: "cilium",
+            title: "Network Observability",
+            shortTitle: "CNI Observability",
+            icon: Radar,
           },
         ],
       },
@@ -268,33 +324,30 @@ export function AppSidebar() {
             id: "configmaps",
             title: "ConfigMaps",
             icon: FileCode,
-            badge: "Soon",
-            badgeVariant: "soon",
-            disabled: true,
+            badge: configMapCount > 0 ? configMapCount : undefined,
+            badgeVariant: "accent",
           },
           {
             id: "secrets",
             title: "Secrets",
             icon: FolderLock,
-            badge: "Soon",
-            badgeVariant: "soon",
-            disabled: true,
+            badge: secretCount > 0 ? secretCount : undefined,
+            badgeVariant: "accent",
           },
           {
             id: "persistentvolumes",
             title: "Persistent Volumes",
             icon: HardDrive,
-            badge: "Soon",
-            badgeVariant: "soon",
-            disabled: true,
+            badge:
+              persistentVolumeCount > 0 ? persistentVolumeCount : undefined,
+            badgeVariant: "accent",
           },
           {
             id: "storageclasses",
             title: "Storage Classes",
             icon: HardDrive,
-            badge: "Soon",
-            badgeVariant: "soon",
-            disabled: true,
+            badge: storageClassCount > 0 ? storageClassCount : undefined,
+            badgeVariant: "accent",
           },
         ],
       },
@@ -305,36 +358,46 @@ export function AppSidebar() {
             id: "serviceaccounts",
             title: "Service Accounts",
             icon: Users,
-            badge: "Soon",
-            badgeVariant: "soon",
-            disabled: true,
+            badge: serviceAccountCount > 0 ? serviceAccountCount : undefined,
+            badgeVariant: "accent",
           },
           {
             id: "rbac",
             title: "Roles & Bindings",
             icon: Key,
-            badge: "Soon",
-            badgeVariant: "soon",
-            disabled: true,
+            badge: rbacCount > 0 ? rbacCount : undefined,
+            badgeVariant: "accent",
           },
           {
             id: "crds",
             title: "Custom Resources",
             icon: Boxes,
-            badge: "Soon",
-            badgeVariant: "soon",
-            disabled: true,
+            badge: crdCount > 0 ? crdCount : undefined,
+            badgeVariant: "accent",
           },
         ],
       },
     ],
     [
+      availableContexts.length,
       realPodsCount,
       deploymentCount,
       replicaSetCount,
       statefulSetCount,
       daemonSetCount,
       jobsAndCronJobsCount,
+      serviceCount,
+      endpointCount,
+      ingressGatewayCount,
+      networkPolicyCount,
+      activePortForwardCount,
+      configMapCount,
+      secretCount,
+      persistentVolumeCount,
+      storageClassCount,
+      serviceAccountCount,
+      rbacCount,
+      crdCount,
     ],
   );
 
@@ -380,6 +443,68 @@ export function AppSidebar() {
       setJobsViewMode("jobs");
       loadJobs("all");
       loadCronJobs("all");
+    }
+
+    if (item.id === "services") {
+      setCurrentNamespace("all");
+      loadServices("all");
+    }
+
+    if (item.id === "endpoints") {
+      setCurrentNamespace("all");
+      loadEndpoints("all");
+    }
+
+    if (item.id === "ingresses") {
+      setCurrentNamespace("all");
+      loadIngresses("all");
+      loadGatewayResources("all");
+    }
+
+    if (item.id === "networkpolicies") {
+      setCurrentNamespace("all");
+      loadNetworkPolicies("all");
+    }
+
+    if (item.id === "portforwards") {
+      setCurrentNamespace("all");
+      loadPortForwards();
+    }
+
+    if (item.id === "cilium") {
+      setCurrentNamespace("all");
+      loadNetworkObservability();
+      loadCiliumResources("all");
+    }
+
+    if (item.id === "configmaps") {
+      setCurrentNamespace("all");
+    }
+
+    if (item.id === "secrets") {
+      setCurrentNamespace("all");
+    }
+
+    if (item.id === "persistentvolumes") {
+      setCurrentNamespace("all");
+    }
+
+    if (item.id === "storageclasses") {
+      setCurrentNamespace("all");
+    }
+
+    if (item.id === "serviceaccounts") {
+      setCurrentNamespace("all");
+      loadServiceAccounts("all");
+    }
+
+    if (item.id === "rbac") {
+      setCurrentNamespace("all");
+      loadRBACResources("all");
+    }
+
+    if (item.id === "crds") {
+      loadCRDs();
     }
 
     openTab({
@@ -592,7 +717,9 @@ export function AppSidebar() {
                                   )}
                                 />
                                 {!sidebarCollapsed && (
-                                  <span className="truncate">{item.title}</span>
+                                  <span className="truncate">
+                                    {item.shortTitle ?? item.title}
+                                  </span>
                                 )}
                               </div>
 

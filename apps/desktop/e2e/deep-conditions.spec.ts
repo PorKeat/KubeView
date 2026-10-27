@@ -23,7 +23,7 @@ test.describe("KubeView UI - Deep Conditions & Edge Case Verification", () => {
 
     // 1. Connection status and latency
     await expect(footer).toContainText(/Connected/i);
-    await expect(footer).toContainText(/ms\)/i);
+    await expect(footer).toContainText(/\(\d+(?:\.\d+)?\s*(?:ms|s)\)/i);
 
     // 2. Active context without loud candy boxes
     await expect(footer).toContainText("kubernetes-admin@kubekey");

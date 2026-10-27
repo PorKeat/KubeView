@@ -68,12 +68,20 @@ export function StatusBeacon({
     },
   };
 
+  const sizeClasses: Record<NonNullable<StatusBeaconProps["size"]>, string> = {
+    xs: "h-4 px-1.5 text-[10px] rounded",
+    sm: "h-[18px] px-1.5 text-[10px] rounded-md",
+    md: "h-[22px] px-2 text-[11px] rounded-md",
+  };
+
   const current = colorMap[variant];
 
   return (
     <span
+      data-status-beacon={size}
       className={cn(
-        "inline-flex items-center text-xs font-mono font-medium select-none px-2 py-0.5 rounded-md border",
+        "inline-flex items-center whitespace-nowrap leading-none font-mono font-medium select-none border",
+        sizeClasses[size],
         current.bg,
         current.border,
         current.text,
