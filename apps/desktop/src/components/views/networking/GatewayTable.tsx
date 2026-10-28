@@ -3,6 +3,8 @@
 import * as React from "react";
 import { Waypoints } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { resourceTarget } from "@/lib/resourceKinds";
+import { useResourceActions } from "@/components/views/shared/useResourceActions";
 import { useClusterStore } from "@/stores/clusterStore";
 import type { GatewayResourceSummary } from "@kubeview/contracts";
 import {
@@ -25,6 +27,7 @@ export function GatewayTable({
   filter: string;
   setFilter: (filter: string) => void;
 }) {
+  const { createResource } = useResourceActions();
   const {
     gatewayResources,
     totalGatewayResourcesCount,
@@ -34,7 +37,6 @@ export function GatewayTable({
     loadGatewayResources,
     currentNamespace,
     openInspector,
-    openResourceEditor,
     openDeleteResource,
   } = useClusterStore();
 
@@ -211,21 +213,24 @@ export function GatewayTable({
         `kubectl describe ${resource.kind.toLowerCase()} ${resource.name}${resource.namespace ? ` -n ${resource.namespace}` : ""}`
       }
       onEdit={(resource) =>
-        void openResourceEditor({
-          kind: resource.kind as
-            "GatewayClass" | "Gateway" | "HTTPRoute" | "GRPCRoute",
+        openInspector({
+          kind: resource.kind,
           name: resource.name,
           namespace: resource.namespace || "Cluster Scope",
+          status: resource.status,
+          data: resource as unknown as Record<string, unknown>,
+          initialTab: "edit",
         })
       }
-      onDelete={(resource) =>
-        openDeleteResource({
-          kind: resource.kind as
-            "GatewayClass" | "Gateway" | "HTTPRoute" | "GRPCRoute",
-          name: resource.name,
-          namespace: resource.namespace || "Cluster Scope",
-        })
-      }
+      onDelete={(resource) => {
+        const target = resourceTarget(
+          resource.kind,
+          resource.name,
+          resource.namespace,
+        );
+        if (target) openDeleteResource(target);
+      }}
+      onCreate={() => createResource("Gateway", currentNamespace)}
       testIdPrefix="gateways"
       codeCommand={(namespace) => `kubectl get gateways -n ${namespace}`}
       emptyDescription={

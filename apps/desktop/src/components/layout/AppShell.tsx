@@ -20,6 +20,7 @@ import { EndpointEditModal } from "@/components/modals/EndpointEditModal";
 import { ResourceEditorModal } from "@/components/modals/ResourceEditorModal";
 import { DeleteResourceModal } from "@/components/modals/DeleteResourceModal";
 import { ServiceDiagnosticsModal } from "@/components/modals/ServiceDiagnosticsModal";
+import { RbacForbiddenBridge } from "@/components/permissions/RbacForbiddenBridge";
 
 import { useClusterStore } from "@/stores/clusterStore";
 import { useSettingsStore } from "@/stores/settingsStore";
@@ -107,6 +108,7 @@ export function AppShell() {
       <ResourceEditorModal />
       <DeleteResourceModal />
       <ServiceDiagnosticsModal />
+      <RbacForbiddenBridge />
 
       {/* 8. Initial High-Tech Splash Screen Overlay */}
       <SplashScreen />

@@ -44,7 +44,6 @@ func main() {
 	registerCoreHandlers(server, streamSrv)
 	registerClusterHandlers(server, mgr, diagRunner)
 	registerWorkloadHandlers(server, mgr)
-	registerPodDiagnosisHandlers(server, mgr)
 	registerNetworkingHandlers(server, mgr)
 	registerConfigAccessHandlers(server, mgr)
 	registerActionHandlers(server, mgr)
@@ -54,6 +53,18 @@ func main() {
 	}
 	if err := bootstrap.RegisterFleetModule(server, mgr); err != nil {
 		server.Log("Fatal: unable to initialize fleet module: %v", err)
+		os.Exit(1)
+	}
+	if err := bootstrap.RegisterDiagnosisModule(server, mgr); err != nil {
+		server.Log("Fatal: unable to initialize diagnosis module: %v", err)
+		os.Exit(1)
+	}
+	if err := bootstrap.RegisterPermissionsModule(server, mgr); err != nil {
+		server.Log("Fatal: unable to initialize permissions module: %v", err)
+		os.Exit(1)
+	}
+	if err := bootstrap.RegisterResourcesModule(server, mgr); err != nil {
+		server.Log("Fatal: unable to initialize resources module: %v", err)
 		os.Exit(1)
 	}
 

@@ -1,4 +1,4 @@
-package poddiagnosis
+package kubernetes
 
 import (
 	"context"
@@ -13,7 +13,9 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
 
-	"github.com/kubeview/engine/internal/cluster"
+	appdiagnosis "github.com/kubeview/engine/internal/application/diagnosis"
+	legacycluster "github.com/kubeview/engine/internal/cluster"
+	domaindiagnosis "github.com/kubeview/engine/internal/domain/diagnosis"
 )
 
 type containerUsage struct {
@@ -33,25 +35,32 @@ type podMetricsPayload struct {
 	} `json:"items"`
 }
 
-// Diagnose correlates pod state, events, current/previous logs, probe
-// configuration, resource limits, and available metrics into one report.
-func Diagnose(
+// PodDiagnosisAdapter implements the diagnosis evidence port using the legacy
+// manager and client-go. It is the only place where Kubernetes types meet the
+// diagnosis slice.
+type PodDiagnosisAdapter struct {
+	manager *legacycluster.Manager
+}
+
+func NewPodDiagnosisAdapter(manager *legacycluster.Manager) *PodDiagnosisAdapter {
+	return &PodDiagnosisAdapter{manager: manager}
+}
+
+// Collect gathers pod state, events, current/previous logs, probe
+// configuration, resource limits, and available metrics for one pod.
+func (adapter *PodDiagnosisAdapter) Collect(
 	ctx context.Context,
-	mgr *cluster.Manager,
-	params DiagnoseParams,
-) (*Result, error) {
-	namespace := strings.TrimSpace(params.Namespace)
-	podName := strings.TrimSpace(params.PodName)
-	if namespace == "" || podName == "" {
-		return nil, fmt.Errorf("namespace and podName are required")
-	}
+	params appdiagnosis.Params,
+) (*domaindiagnosis.Snapshot, error) {
+	namespace := params.Namespace
+	podName := params.PodName
 
 	contextName := params.ContextName
 	if contextName == "" {
-		contextName = mgr.GetCurrentContext()
+		contextName = adapter.manager.GetCurrentContext()
 	}
 
-	client, _, err := mgr.GetClientForContext(contextName)
+	client, _, err := adapter.manager.GetClientForContext(contextName)
 	if err != nil {
 		return nil, err
 	}
@@ -61,16 +70,71 @@ func Diagnose(
 		return nil, fmt.Errorf("failed to get pod %s/%s: %w", namespace, podName, err)
 	}
 
-	events := []cluster.PodEventItem{}
-	if eventResult, eventErr := mgr.GetPodEvents(ctx, contextName, namespace, podName); eventErr == nil && eventResult != nil {
-		events = eventResult.Events
+	events := []domaindiagnosis.Event{}
+	if eventResult, eventErr := adapter.manager.GetPodEvents(ctx, contextName, namespace, podName); eventErr == nil && eventResult != nil {
+		events = mapEvents(eventResult.Events)
 	}
 
 	usage, metricsAvailable := fetchPodMetrics(ctx, client, namespace, podName)
 	containers := buildContainers(pod, usage, metricsAvailable, events)
-	attachLogs(ctx, mgr, contextName, namespace, podName, containers)
+	attachLogs(ctx, adapter.manager, contextName, namespace, podName, containers)
 
-	return analyzePodDiagnosis(contextName, pod, containers, events, metricsAvailable), nil
+	return &domaindiagnosis.Snapshot{
+		ContextName:      contextName,
+		Pod:              mapPodSnapshot(pod),
+		Containers:       containers,
+		Events:           events,
+		MetricsAvailable: metricsAvailable,
+	}, nil
+}
+
+func mapPodSnapshot(pod *corev1.Pod) domaindiagnosis.PodSnapshot {
+	ownerKind := ""
+	ownerName := ""
+	if len(pod.OwnerReferences) > 0 {
+		ownerKind = pod.OwnerReferences[0].Kind
+		ownerName = pod.OwnerReferences[0].Name
+	}
+
+	conditions := make([]domaindiagnosis.Condition, 0, len(pod.Status.Conditions))
+	for _, condition := range pod.Status.Conditions {
+		conditions = append(conditions, domaindiagnosis.Condition{
+			Type:               string(condition.Type),
+			Status:             string(condition.Status),
+			LastTransitionTime: condition.LastTransitionTime.Time.Format(time.RFC3339),
+			Reason:             condition.Reason,
+			Message:            condition.Message,
+		})
+	}
+
+	return domaindiagnosis.PodSnapshot{
+		Name:       pod.Name,
+		Namespace:  pod.Namespace,
+		Phase:      string(pod.Status.Phase),
+		NodeName:   pod.Spec.NodeName,
+		Conditions: conditions,
+		OwnerKind:  ownerKind,
+		OwnerName:  ownerName,
+	}
+}
+
+func mapEvents(items []legacycluster.PodEventItem) []domaindiagnosis.Event {
+	events := make([]domaindiagnosis.Event, 0, len(items))
+	for _, item := range items {
+		events = append(events, domaindiagnosis.Event{
+			Context:                 item.Context,
+			Type:                    item.Type,
+			Reason:                  item.Reason,
+			Message:                 item.Message,
+			Count:                   item.Count,
+			LastTimestamp:           item.LastTimestamp,
+			Source:                  item.Source,
+			InvolvedObjectKind:      item.InvolvedObjectKind,
+			InvolvedObjectName:      item.InvolvedObjectName,
+			InvolvedObjectNamespace: item.InvolvedObjectNamespace,
+		})
+	}
+	return events
 }
 
 func fetchPodMetrics(
@@ -120,8 +184,8 @@ func buildContainers(
 	pod *corev1.Pod,
 	usage map[string]containerUsage,
 	metricsAvailable bool,
-	events []cluster.PodEventItem,
-) []Container {
+	events []domaindiagnosis.Event,
+) []domaindiagnosis.Container {
 	statuses := make(map[string]corev1.ContainerStatus, len(pod.Status.ContainerStatuses))
 	for _, status := range pod.Status.ContainerStatuses {
 		statuses[status.Name] = status
@@ -131,7 +195,7 @@ func buildContainers(
 		initStatuses[status.Name] = status
 	}
 
-	containers := make([]Container, 0, len(pod.Spec.InitContainers)+len(pod.Spec.Containers))
+	containers := make([]domaindiagnosis.Container, 0, len(pod.Spec.InitContainers)+len(pod.Spec.Containers))
 	for _, spec := range pod.Spec.InitContainers {
 		containers = append(containers, buildContainer(spec, initStatuses[spec.Name], usage, metricsAvailable, events))
 	}
@@ -146,9 +210,9 @@ func buildContainer(
 	status corev1.ContainerStatus,
 	usage map[string]containerUsage,
 	metricsAvailable bool,
-	events []cluster.PodEventItem,
-) Container {
-	container := Container{
+	events []domaindiagnosis.Event,
+) domaindiagnosis.Container {
+	container := domaindiagnosis.Container{
 		Name:             spec.Name,
 		Image:            spec.Image,
 		Requests:         resourceList(spec.Resources.Requests),
@@ -197,25 +261,25 @@ func buildContainer(
 	return container
 }
 
-func resourceList(list corev1.ResourceList) *cluster.ContainerResourceItem {
+func resourceList(list corev1.ResourceList) *domaindiagnosis.ResourceList {
 	if len(list) == 0 {
 		return nil
 	}
-	item := &cluster.ContainerResourceItem{}
+	item := &domaindiagnosis.ResourceList{}
 	if cpu, ok := list[corev1.ResourceCPU]; ok {
-		item.Cpu = cpu.String()
+		item.CPU = cpu.String()
 	}
 	if memory, ok := list[corev1.ResourceMemory]; ok {
 		item.Memory = memory.String()
 	}
-	if item.Cpu == "" && item.Memory == "" {
+	if item.CPU == "" && item.Memory == "" {
 		return nil
 	}
 	return item
 }
 
-func buildProbes(spec corev1.Container, ready bool, events []cluster.PodEventItem) []Probe {
-	probes := make([]Probe, 0, 3)
+func buildProbes(spec corev1.Container, ready bool, events []domaindiagnosis.Event) []domaindiagnosis.Probe {
+	probes := make([]domaindiagnosis.Probe, 0, 3)
 	probes = appendProbe(probes, "readiness", spec.ReadinessProbe, ready, events)
 	probes = appendProbe(probes, "liveness", spec.LivenessProbe, ready, events)
 	probes = appendProbe(probes, "startup", spec.StartupProbe, ready, events)
@@ -223,17 +287,17 @@ func buildProbes(spec corev1.Container, ready bool, events []cluster.PodEventIte
 }
 
 func appendProbe(
-	probes []Probe,
+	probes []domaindiagnosis.Probe,
 	kind string,
 	probe *corev1.Probe,
 	ready bool,
-	events []cluster.PodEventItem,
-) []Probe {
+	events []domaindiagnosis.Event,
+) []domaindiagnosis.Probe {
 	if probe == nil {
 		return probes
 	}
 
-	diagnosis := Probe{
+	diagnosis := domaindiagnosis.Probe{
 		Kind:                kind,
 		Configured:          true,
 		Handler:             probeHandler(probe),
@@ -242,16 +306,16 @@ func appendProbe(
 		PeriodSeconds:       probe.PeriodSeconds,
 		FailureThreshold:    probe.FailureThreshold,
 		SuccessThreshold:    probe.SuccessThreshold,
-		Status:              "warning",
+		Status:              domaindiagnosis.StatusWarning,
 	}
 	if ready {
-		diagnosis.Status = "pass"
+		diagnosis.Status = domaindiagnosis.StatusPass
 	}
 
 	needle := strings.ToLower(kind + " probe failed")
 	for _, event := range events {
 		if strings.Contains(strings.ToLower(event.Message), needle) {
-			diagnosis.Status = "fail"
+			diagnosis.Status = domaindiagnosis.StatusFail
 			diagnosis.Message = event.Message
 			break
 		}
@@ -280,11 +344,11 @@ func probeHandler(probe *corev1.Probe) string {
 
 func attachLogs(
 	ctx context.Context,
-	mgr *cluster.Manager,
+	mgr *legacycluster.Manager,
 	contextName string,
 	namespace string,
 	podName string,
-	containers []Container,
+	containers []domaindiagnosis.Container,
 ) {
 	fetched := 0
 	for index := range containers {
@@ -311,7 +375,7 @@ func attachLogs(
 	}
 }
 
-func needsLogs(container Container) bool {
+func needsLogs(container domaindiagnosis.Container) bool {
 	return !container.Ready ||
 		container.RestartCount > 0 ||
 		container.State != "Running" ||
@@ -320,14 +384,14 @@ func needsLogs(container Container) bool {
 
 func fetchContainerLog(
 	ctx context.Context,
-	mgr *cluster.Manager,
+	mgr *legacycluster.Manager,
 	contextName string,
 	namespace string,
 	podName string,
 	containerName string,
 	previous bool,
 ) (string, string, string) {
-	result, err := mgr.GetPodLogs(ctx, cluster.PodLogsParams{
+	result, err := mgr.GetPodLogs(ctx, legacycluster.PodLogsParams{
 		ContextName: contextName,
 		Namespace:   namespace,
 		PodName:     podName,

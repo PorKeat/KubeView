@@ -1,15 +1,8 @@
 package contexts
 
-type Context struct {
-	Name      string
-	Cluster   string
-	Server    string
-	User      string
-	Namespace string
-	IsCurrent bool
-	Provider  string
-	AuthType  string
-}
+import shared "github.com/kubeview/engine/internal/domain/shared"
+
+type Context = shared.ClusterContext
 
 type ListResult struct {
 	CurrentContext string

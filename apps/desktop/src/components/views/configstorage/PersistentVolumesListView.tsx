@@ -4,6 +4,7 @@ import * as React from "react";
 import { HardDrive } from "lucide-react";
 import type { PersistentVolumeSummary } from "@kubeview/contracts";
 import { useClusterStore } from "@/stores/clusterStore";
+import { useResourceActions } from "../shared/useResourceActions";
 import {
   NetworkingResourcePage,
   type NetworkingColumn,
@@ -13,6 +14,7 @@ import { volumeMatches, volumeStatus } from "./configStorageUtils";
 
 export function PersistentVolumesView() {
   const [filter, setFilter] = React.useState("all");
+  const { editResource, deleteResource, createResource } = useResourceActions();
   const {
     persistentVolumes,
     totalPersistentVolumesCount,
@@ -161,6 +163,17 @@ export function PersistentVolumesView() {
         })
       }
       describeCommand={(item) => `kubectl describe pv ${item.name}`}
+      onEdit={(item) =>
+        editResource(
+          "PersistentVolume",
+          item.name,
+          "",
+          item.status,
+          item as unknown as Record<string, unknown>,
+        )
+      }
+      onDelete={(item) => deleteResource("PersistentVolume", item.name)}
+      onCreate={() => createResource("PersistentVolume")}
       testIdPrefix="persistentvolumes"
       autoRefresh={false}
       clusterScoped

@@ -17,6 +17,7 @@ import {
   HardDrive,
   Users,
   Key,
+  ShieldCheck,
   FolderLock,
   Boxes,
   Server,
@@ -278,6 +279,12 @@ export function buildNavigationGroups(counts: SidebarCounts): NavGroup[] {
           icon: Key,
           badge: rbac > 0 ? rbac : undefined,
           badgeVariant: "accent",
+        },
+        {
+          id: "permissions",
+          title: "Permissions Checker",
+          shortTitle: "Permissions",
+          icon: ShieldCheck,
         },
         {
           id: "crds",

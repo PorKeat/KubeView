@@ -35,6 +35,7 @@ const pages: LivePage[] = [
   { id: "storageclasses", title: "Storage Classes" },
   { id: "serviceaccounts", title: "Service Accounts" },
   { id: "rbac", title: "Roles & Bindings" },
+  { id: "permissions", title: "Permissions Checker" },
   { id: "crds", title: "Custom Resources" },
 ];
 
@@ -234,6 +235,13 @@ test.describe("KubeView live sidebar audit", () => {
           await page.screenshot({ path: `${AUDIT_DIR}/cilium-flows.png` });
           await expectNoBoundary(page);
         }
+      } else if (item.id === "permissions") {
+        await expect(
+          page.locator('[data-testid="permissions-view"]'),
+        ).toBeVisible();
+        await expect(
+          page.locator('[data-testid="permission-effective"]'),
+        ).toBeVisible({ timeout: 15000 });
       } else {
         await exerciseInspector(page, item.id);
 

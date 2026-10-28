@@ -3,6 +3,7 @@
 import * as React from "react";
 import { Shield } from "lucide-react";
 import { useClusterStore } from "@/stores/clusterStore";
+import { useResourceActions } from "../shared/useResourceActions";
 import type { NetworkPolicySummary } from "@kubeview/contracts";
 import {
   NetworkingResourcePage,
@@ -65,6 +66,7 @@ function policyStatus(policy: NetworkPolicySummary) {
 }
 
 export function NetworkPoliciesListView() {
+  const { editResource, deleteResource, createResource } = useResourceActions();
   const {
     networkPolicies,
     totalNetworkPoliciesCount,
@@ -249,6 +251,19 @@ export function NetworkPoliciesListView() {
       describeCommand={(policy) =>
         `kubectl describe networkpolicy ${policy.name} -n ${policy.namespace}`
       }
+      onEdit={(policy) =>
+        editResource(
+          "NetworkPolicy",
+          policy.name,
+          policy.namespace,
+          policy.status,
+          policy as unknown as Record<string, unknown>,
+        )
+      }
+      onDelete={(policy) =>
+        deleteResource("NetworkPolicy", policy.name, policy.namespace)
+      }
+      onCreate={() => createResource("NetworkPolicy", currentNamespace)}
       testIdPrefix="network-policies"
       codeCommand={(namespace) => `kubectl get networkpolicies -n ${namespace}`}
       emptyDescription="NetworkPolicies select pods and declare which ingress and egress traffic is allowed."

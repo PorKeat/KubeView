@@ -3,7 +3,9 @@
 import * as React from "react";
 import {
   AlertTriangle,
+  BadgeCheck,
   FileCode,
+  LockKeyhole,
   RotateCw,
   Save,
   Trash2,
@@ -16,10 +18,15 @@ export function ResourceEditorModal() {
   const {
     resourceEditorTarget,
     resourceEditorYaml,
+    resourceEditorCapabilities,
+    resourceEditorCapabilityWarning,
     isResourceEditorLoading,
     isResourceEditorSaving,
+    isResourceEditorValidating,
+    resourceEditorValidationSuccess,
     resourceEditorError,
     setResourceEditorYaml,
+    validateResourceEditor,
     applyResourceEditor,
     closeResourceEditor,
     openDeleteResource,
@@ -28,20 +35,41 @@ export function ResourceEditorModal() {
   React.useEffect(() => {
     if (!resourceEditorTarget) return;
     const handleKeyDown = (event: KeyboardEvent) => {
-      if (event.key === "Escape" && !isResourceEditorSaving) {
+      if (
+        event.key === "Escape" &&
+        !isResourceEditorSaving &&
+        !isResourceEditorValidating
+      ) {
         closeResourceEditor();
       }
     };
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [resourceEditorTarget, isResourceEditorSaving, closeResourceEditor]);
+  }, [
+    resourceEditorTarget,
+    isResourceEditorSaving,
+    isResourceEditorValidating,
+    closeResourceEditor,
+  ]);
 
   if (!resourceEditorTarget) return null;
 
   const target = resourceEditorTarget;
+  const isCreate = target.mode === "create";
+  const requiredVerb: "create" | "update" = isCreate ? "create" : "update";
+  const canApply =
+    !resourceEditorCapabilities ||
+    resourceEditorCapabilities[requiredVerb] !== false;
+  const canDelete =
+    !isCreate &&
+    (!resourceEditorCapabilities ||
+      resourceEditorCapabilities.delete !== false);
   const lineCount = resourceEditorYaml
     ? resourceEditorYaml.split("\n").length
     : 0;
+  const capabilityReason =
+    resourceEditorCapabilities?.reasons?.[requiredVerb] ||
+    `Your identity is not allowed to ${requiredVerb} this resource.`;
 
   return (
     <div
@@ -56,20 +84,19 @@ export function ResourceEditorModal() {
             </div>
             <div className="min-w-0">
               <h3 className="text-sm font-bold text-[var(--foreground)] tracking-tight">
-                Edit {target.kind} YAML
+                {isCreate ? "Create" : "Edit"} {target.kind}
               </h3>
               <p className="text-[11px] text-[var(--muted)] font-mono truncate">
-                {target.name}
-                {target.namespace && target.namespace !== "Cluster Scope"
-                  ? ` in ${target.namespace}`
-                  : " (cluster-scoped)"}
+                {target.apiVersion} · {target.resource}
+                {target.name ? ` · ${target.name}` : ""}
+                {target.namespace ? ` in ${target.namespace}` : ""}
               </p>
             </div>
           </div>
           <button
             type="button"
             onClick={closeResourceEditor}
-            disabled={isResourceEditorSaving}
+            disabled={isResourceEditorSaving || isResourceEditorValidating}
             className="p-1.5 rounded-lg text-[var(--muted)] hover:text-[var(--foreground)] hover:bg-[var(--surface-hover)] transition-colors cursor-pointer disabled:opacity-40"
             aria-label="Close YAML editor"
           >
@@ -82,6 +109,23 @@ export function ResourceEditorModal() {
             <div className="flex items-start gap-2 rounded-xl border border-rose-500/25 bg-rose-500/10 p-3 text-[11px] text-rose-600 dark:text-rose-400">
               <AlertTriangle className="w-4 h-4 shrink-0 mt-0.5" />
               <span className="leading-relaxed">{resourceEditorError}</span>
+            </div>
+          )}
+
+          {!canApply && (
+            <div className="flex items-start gap-2 rounded-xl border border-amber-500/25 bg-amber-500/10 p-3 text-[11px] text-amber-700 dark:text-amber-400">
+              <LockKeyhole className="w-4 h-4 shrink-0 mt-0.5" />
+              <span className="leading-relaxed">{capabilityReason}</span>
+            </div>
+          )}
+
+          {resourceEditorCapabilityWarning && (
+            <div className="flex items-start gap-2 rounded-xl border border-amber-500/20 bg-amber-500/5 p-3 text-[11px] text-amber-700 dark:text-amber-400">
+              <AlertTriangle className="w-4 h-4 shrink-0 mt-0.5" />
+              <span className="leading-relaxed">
+                Permission lookup unavailable. The API server will still
+                authorize the request. {resourceEditorCapabilityWarning}
+              </span>
             </div>
           )}
 
@@ -115,40 +159,84 @@ export function ResourceEditorModal() {
           <div className="flex items-start gap-2 rounded-xl border border-amber-500/20 bg-amber-500/5 p-2.5 text-[10px] leading-relaxed text-amber-700 dark:text-amber-400">
             <AlertTriangle className="w-3.5 h-3.5 shrink-0 mt-0.5" />
             <span>
-              Applying replaces the live manifest. Kubernetes validates the
-              object server-side; a failed apply leaves the current resource
-              unchanged.
+              Applying{" "}
+              {isCreate ? "creates a new object" : "replaces the live manifest"}
+              . Kubernetes validates the object server-side; a failed apply
+              leaves the current resource unchanged.
             </span>
           </div>
         </div>
 
         <div className="flex flex-wrap items-center justify-between gap-2 border-t border-[var(--border)] bg-[var(--surface)] px-4 py-3 sm:px-5">
-          <button
-            type="button"
-            onClick={() => {
-              closeResourceEditor();
-              openDeleteResource(target);
-            }}
-            disabled={isResourceEditorSaving}
-            className="inline-flex items-center gap-1.5 rounded-lg border border-rose-500/25 bg-rose-500/10 px-3 py-1.5 text-xs font-semibold text-rose-600 dark:text-rose-400 transition-colors hover:bg-rose-500/15 cursor-pointer disabled:opacity-40"
-          >
-            <Trash2 className="w-3.5 h-3.5" />
-            Delete
-          </button>
-          <div className="flex items-center gap-2">
+          {!isCreate ? (
+            <button
+              type="button"
+              data-testid="resource-editor-delete"
+              onClick={() => {
+                closeResourceEditor();
+                openDeleteResource(target);
+              }}
+              disabled={
+                !canDelete ||
+                isResourceEditorSaving ||
+                isResourceEditorValidating
+              }
+              title={
+                canDelete
+                  ? `Delete ${target.kind}`
+                  : resourceEditorCapabilities?.reasons?.delete ||
+                    `Your identity cannot delete ${target.kind}.`
+              }
+              className="inline-flex items-center gap-1.5 rounded-lg border border-rose-500/25 bg-rose-500/10 px-3 py-1.5 text-xs font-semibold text-rose-600 dark:text-rose-400 transition-colors hover:bg-rose-500/15 cursor-pointer disabled:cursor-not-allowed disabled:opacity-40"
+            >
+              <Trash2 className="w-3.5 h-3.5" />
+              Delete
+            </button>
+          ) : (
+            <span />
+          )}
+          <div className="flex flex-wrap items-center gap-2">
+            <button
+              type="button"
+              data-testid="resource-editor-validate"
+              onClick={() => void validateResourceEditor()}
+              disabled={
+                isResourceEditorSaving ||
+                isResourceEditorValidating ||
+                isResourceEditorLoading ||
+                !resourceEditorYaml.trim()
+              }
+              className="inline-flex items-center gap-1.5 rounded-lg border border-[var(--border)] px-3.5 py-1.5 text-xs font-medium text-[var(--foreground)] transition-colors hover:bg-[var(--surface-hover)] cursor-pointer disabled:opacity-40"
+            >
+              {isResourceEditorValidating ? (
+                <RotateCw className="w-3.5 h-3.5 animate-spin" />
+              ) : resourceEditorValidationSuccess ? (
+                <BadgeCheck className="w-3.5 h-3.5 text-emerald-500" />
+              ) : (
+                <BadgeCheck className="w-3.5 h-3.5" />
+              )}
+              {isResourceEditorValidating
+                ? "Validating..."
+                : resourceEditorValidationSuccess
+                  ? "Valid"
+                  : "Validate"}
+            </button>
             <button
               type="button"
               onClick={closeResourceEditor}
-              disabled={isResourceEditorSaving}
+              disabled={isResourceEditorSaving || isResourceEditorValidating}
               className="rounded-lg border border-[var(--border)] px-3.5 py-1.5 text-xs font-medium text-[var(--foreground)] transition-colors hover:bg-[var(--surface-hover)] cursor-pointer disabled:opacity-40"
             >
               Cancel
             </button>
             <button
               type="button"
+              data-testid="resource-editor-apply"
               onClick={() => void applyResourceEditor()}
               disabled={
+                !canApply ||
                 isResourceEditorSaving ||
+                isResourceEditorValidating ||
                 isResourceEditorLoading ||
                 !resourceEditorYaml.trim()
               }
@@ -159,7 +247,11 @@ export function ResourceEditorModal() {
               ) : (
                 <Save className="w-3.5 h-3.5" />
               )}
-              {isResourceEditorSaving ? "Applying..." : "Apply Manifest"}
+              {isResourceEditorSaving
+                ? "Applying..."
+                : isCreate
+                  ? "Create Resource"
+                  : "Apply Manifest"}
             </button>
           </div>
         </div>

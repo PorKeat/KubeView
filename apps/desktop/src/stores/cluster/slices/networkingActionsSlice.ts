@@ -5,14 +5,85 @@ import type {
   ListPortForwardsResult,
   PortForwardRequest,
   PortForwardSession,
+  ResourceApplyResult,
+  ResourceCapabilities,
+  ResourceDeleteResult,
+  ResourceGetResult,
 } from "@kubeview/contracts";
 import { invokeRpc } from "@/lib/ipc";
+import { initialResourceManifest } from "@/lib/resourceKinds";
 import type { ClusterState } from "../types/cluster";
 import type {
   NetworkingActionsSlice,
   ResourceEditorTarget,
   ServiceDiagnosticsTarget,
 } from "../types/networking";
+
+async function reloadResourceKind(
+  get: () => ClusterState,
+  kind: string,
+): Promise<void> {
+  const state = get();
+  const namespace = state.currentNamespace;
+  switch (kind) {
+    case "Ingress":
+      await state.loadIngresses(namespace);
+      break;
+    case "GatewayClass":
+    case "Gateway":
+    case "HTTPRoute":
+    case "GRPCRoute":
+      await state.loadGatewayResources(namespace);
+      break;
+    case "Service":
+      await state.loadServices(namespace);
+      break;
+    case "Endpoints":
+      await state.loadEndpoints(namespace);
+      break;
+    case "NetworkPolicy":
+      await state.loadNetworkPolicies(namespace);
+      break;
+    case "ConfigMap":
+      await state.loadConfigMaps(namespace);
+      break;
+    case "Secret":
+      await state.loadSecrets(namespace);
+      break;
+    case "PersistentVolume":
+      await state.loadPersistentVolumes();
+      break;
+    case "StorageClass":
+      await state.loadStorageClasses();
+      break;
+    case "ServiceAccount":
+      await state.loadServiceAccounts(namespace);
+      break;
+    case "Role":
+    case "ClusterRole":
+    case "RoleBinding":
+    case "ClusterRoleBinding":
+      await state.loadRBACResources(namespace);
+      break;
+    case "CustomResourceDefinition":
+      await state.loadCRDs();
+      break;
+  }
+  if (
+    [
+      "Ingress",
+      "GatewayClass",
+      "Gateway",
+      "HTTPRoute",
+      "GRPCRoute",
+      "Service",
+      "Endpoints",
+      "NetworkPolicy",
+    ].includes(kind)
+  ) {
+    await state.loadNetworkingCounts();
+  }
+}
 
 export const createNetworkingActionsSlice: StateCreator<
   ClusterState,
@@ -25,8 +96,12 @@ export const createNetworkingActionsSlice: StateCreator<
   portForwardsError: null,
   resourceEditorTarget: null,
   resourceEditorYaml: "",
+  resourceEditorCapabilities: null,
+  resourceEditorCapabilityWarning: null,
   isResourceEditorLoading: false,
   isResourceEditorSaving: false,
+  isResourceEditorValidating: false,
+  resourceEditorValidationSuccess: false,
   resourceEditorError: null,
   deleteResourceTarget: null,
   diagnosticsTarget: null,
@@ -85,25 +160,64 @@ export const createNetworkingActionsSlice: StateCreator<
     }
   },
   openResourceEditor: async (target: ResourceEditorTarget) => {
+    const isCreate = target.mode === "create";
     set({
       resourceEditorTarget: target,
-      resourceEditorYaml: "",
+      resourceEditorYaml: isCreate ? initialResourceManifest(target) : "",
+      resourceEditorCapabilities: null,
+      resourceEditorCapabilityWarning: null,
       isResourceEditorLoading: true,
+      isResourceEditorSaving: false,
+      isResourceEditorValidating: false,
+      resourceEditorValidationSuccess: false,
       resourceEditorError: null,
     });
+
+    let capabilityWarning: string | null = null;
+    const capabilityPromise = invokeRpc<ResourceCapabilities>(
+      "resources.capabilities",
+      {
+        contextName: get().currentContext,
+        apiVersion: target.apiVersion,
+        kind: target.kind,
+        resource: target.resource,
+        name: target.name || undefined,
+        namespace: target.namespace || undefined,
+      },
+    ).catch((error) => {
+      capabilityWarning =
+        error instanceof Error ? error.message : String(error);
+      return null;
+    });
+
     try {
-      const yaml =
-        target.kind === "Ingress"
-          ? await get().getIngressYaml(target.name, target.namespace)
-          : await get().getGatewayResourceYaml(
-              target.kind,
-              target.name,
-              target.namespace,
-            );
-      set({ resourceEditorYaml: yaml, isResourceEditorLoading: false });
+      const yamlPromise = isCreate
+        ? Promise.resolve(initialResourceManifest(target))
+        : invokeRpc<ResourceGetResult>("resources.get", {
+            contextName: get().currentContext,
+            apiVersion: target.apiVersion,
+            kind: target.kind,
+            resource: target.resource,
+            name: target.name,
+            namespace: target.namespace || undefined,
+          }).then((result) => result.yaml);
+      const [yaml, capabilities] = await Promise.all([
+        yamlPromise,
+        capabilityPromise,
+      ]);
+      set({
+        resourceEditorYaml: yaml,
+        resourceEditorCapabilities: capabilities,
+        resourceEditorCapabilityWarning: capabilityWarning,
+        isResourceEditorLoading: false,
+      });
     } catch (err) {
       const message = err instanceof Error ? err.message : String(err);
-      set({ isResourceEditorLoading: false, resourceEditorError: message });
+      set({
+        isResourceEditorLoading: false,
+        resourceEditorError: message,
+        resourceEditorCapabilityWarning: capabilityWarning,
+      });
     }
   },
 
@@ -111,34 +225,80 @@ export const createNetworkingActionsSlice: StateCreator<
     set({
       resourceEditorTarget: null,
       resourceEditorYaml: "",
+      resourceEditorCapabilities: null,
+      resourceEditorCapabilityWarning: null,
       resourceEditorError: null,
       isResourceEditorSaving: false,
+      isResourceEditorValidating: false,
+      resourceEditorValidationSuccess: false,
     }),
 
-  setResourceEditorYaml: (yaml) => set({ resourceEditorYaml: yaml }),
+  setResourceEditorYaml: (yaml) =>
+    set({
+      resourceEditorYaml: yaml,
+      resourceEditorValidationSuccess: false,
+    }),
+
+  validateResourceEditor: async () => {
+    const target = get().resourceEditorTarget;
+    if (!target) return;
+    set({ isResourceEditorValidating: true, resourceEditorError: null });
+    try {
+      await invokeRpc<ResourceApplyResult>("resources.apply", {
+        contextName: get().currentContext,
+        yaml: get().resourceEditorYaml,
+        resource: target.resource,
+        dryRun: true,
+        name: target.mode === "create" ? undefined : target.name,
+        namespace:
+          target.mode === "create" ? undefined : target.namespace || undefined,
+      });
+      set({
+        isResourceEditorValidating: false,
+        resourceEditorValidationSuccess: true,
+      });
+      toast.success("Manifest is valid");
+    } catch (err) {
+      const message = err instanceof Error ? err.message : String(err);
+      set({
+        isResourceEditorValidating: false,
+        resourceEditorValidationSuccess: false,
+        resourceEditorError: message,
+      });
+      toast.error(`Validation failed: ${message}`);
+    }
+  },
 
   applyResourceEditor: async () => {
     const target = get().resourceEditorTarget;
     if (!target) return;
+    const capabilities = get().resourceEditorCapabilities;
+    const canWrite =
+      target.mode === "create" ? capabilities?.create : capabilities?.update;
+    if (capabilities && canWrite === false) {
+      set({
+        resourceEditorError:
+          capabilities.reasons?.[
+            target.mode === "create" ? "create" : "update"
+          ] || "Your identity is not allowed to apply this resource.",
+      });
+      return;
+    }
     set({ isResourceEditorSaving: true, resourceEditorError: null });
     try {
-      if (target.kind === "Ingress") {
-        await invokeRpc("ingresses.apply", {
-          contextName: get().currentContext,
-          namespace: target.namespace,
-          yaml: get().resourceEditorYaml,
-        });
-        await get().loadIngresses(get().currentNamespace);
-      } else {
-        await invokeRpc("gatewayresources.apply", {
-          contextName: get().currentContext,
-          namespace: target.namespace,
-          yaml: get().resourceEditorYaml,
-        });
-        await get().loadGatewayResources(get().currentNamespace);
-      }
-      await get().loadNetworkingCounts();
-      toast.success(`${target.kind} ${target.name} applied`);
+      const result = await invokeRpc<ResourceApplyResult>("resources.apply", {
+        contextName: get().currentContext,
+        yaml: get().resourceEditorYaml,
+        resource: target.resource,
+        dryRun: false,
+        name: target.mode === "create" ? undefined : target.name,
+        namespace:
+          target.mode === "create" ? undefined : target.namespace || undefined,
+      });
+      await reloadResourceKind(get, target.kind);
+      toast.success(
+        `${result.kind} ${result.name} ${result.created ? "created" : "updated"}`,
+      );
       get().closeResourceEditor();
     } catch (err) {
       const message = err instanceof Error ? err.message : String(err);
@@ -149,28 +309,23 @@ export const createNetworkingActionsSlice: StateCreator<
 
   openDeleteResource: (target) => set({ deleteResourceTarget: target }),
   closeDeleteResource: () => set({ deleteResourceTarget: null }),
+  refreshResourceKind: async (kind) => {
+    await reloadResourceKind(get, kind);
+  },
 
   confirmDeleteResource: async () => {
     const target = get().deleteResourceTarget;
     if (!target) return;
     try {
-      if (target.kind === "Ingress") {
-        await invokeRpc("ingresses.delete", {
-          contextName: get().currentContext,
-          namespace: target.namespace,
-          name: target.name,
-        });
-        await get().loadIngresses(get().currentNamespace);
-      } else {
-        await invokeRpc("gatewayresources.delete", {
-          contextName: get().currentContext,
-          namespace: target.namespace,
-          kind: target.kind,
-          name: target.name,
-        });
-        await get().loadGatewayResources(get().currentNamespace);
-      }
-      await get().loadNetworkingCounts();
+      await invokeRpc<ResourceDeleteResult>("resources.delete", {
+        contextName: get().currentContext,
+        apiVersion: target.apiVersion,
+        kind: target.kind,
+        resource: target.resource,
+        name: target.name,
+        namespace: target.namespace || undefined,
+      });
+      await reloadResourceKind(get, target.kind);
       toast.success(`${target.kind} ${target.name} deleted`);
       set({ deleteResourceTarget: null });
       get().closeInspector();

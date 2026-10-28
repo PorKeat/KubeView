@@ -11,6 +11,7 @@ import {
   X,
   Pause,
   Play,
+  Pencil,
   Zap,
 } from "lucide-react";
 import { toast } from "sonner";
@@ -38,6 +39,7 @@ export function InspectorHeaderActions({
   onOpenRestartConfirm,
   onOpenDeleteConfirm,
   onCopyTitle,
+  onEditYaml,
 }: {
   currentResource: SelectedResource;
   isNode: boolean;
@@ -59,6 +61,7 @@ export function InspectorHeaderActions({
   onOpenRestartConfirm: (pod: { name: string; namespace: string }) => void;
   onOpenDeleteConfirm: (pod: { name: string; namespace: string }) => void;
   onCopyTitle: () => void;
+  onEditYaml?: () => void;
 }) {
   return (
     <div className="flex w-full max-w-full items-center justify-end gap-1 overflow-x-auto scrollbar-none rounded-xl border border-[var(--border)] bg-black/5 p-1 shrink-0 sm:w-auto dark:bg-white/5">
@@ -269,6 +272,18 @@ export function InspectorHeaderActions({
       )}
 
       <div className="h-4 w-[1px] bg-[var(--border)] mx-0.5" />
+      {onEditYaml && (
+        <Tooltip content="Edit YAML">
+          <button
+            onClick={onEditYaml}
+            data-testid="inspector-edit-yaml"
+            className="p-1.5 rounded-lg hover:bg-[var(--surface-hover)] text-[var(--muted)] hover:text-[var(--foreground)] transition-colors cursor-pointer"
+            aria-label="Edit YAML"
+          >
+            <Pencil className="w-4 h-4" />
+          </button>
+        </Tooltip>
+      )}
       <Tooltip content="Close drawer" shortcut="Esc">
         <button
           onClick={onClose}

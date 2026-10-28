@@ -3,7 +3,7 @@ package bootstrap
 import (
 	"context"
 
-	"github.com/kubeview/engine/internal/adapters/inbound/rpc"
+	contextsrpc "github.com/kubeview/engine/internal/adapters/inbound/rpc/contexts"
 	kubernetesadapter "github.com/kubeview/engine/internal/adapters/outbound/kubernetes"
 	appcontexts "github.com/kubeview/engine/internal/application/contexts"
 	legacycluster "github.com/kubeview/engine/internal/cluster"
@@ -29,6 +29,6 @@ func RegisterContextsModule(
 	if err := service.Validate(); err != nil {
 		return err
 	}
-	rpc.RegisterContextsHandlers(server, service)
+	contextsrpc.RegisterHandlers(server, service)
 	return nil
 }

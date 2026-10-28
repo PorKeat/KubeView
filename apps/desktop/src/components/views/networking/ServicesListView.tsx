@@ -4,6 +4,7 @@ import * as React from "react";
 import { Network } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useClusterStore } from "@/stores/clusterStore";
+import { useResourceActions } from "../shared/useResourceActions";
 import type { ServiceSummary } from "@kubeview/contracts";
 import {
   NetworkingResourcePage,
@@ -86,6 +87,7 @@ function serviceStatus(service: ServiceSummary) {
 }
 
 export function ServicesListView() {
+  const { editResource, deleteResource, createResource } = useResourceActions();
   const {
     services,
     totalServicesCount,
@@ -331,6 +333,19 @@ export function ServicesListView() {
           namespace: service.namespace,
         })
       }
+      onEdit={(service) =>
+        editResource(
+          "Service",
+          service.name,
+          service.namespace,
+          service.status,
+          service as unknown as Record<string, unknown>,
+        )
+      }
+      onDelete={(service) =>
+        deleteResource("Service", service.name, service.namespace)
+      }
+      onCreate={() => createResource("Service", currentNamespace)}
       testIdPrefix="services"
       codeCommand={(namespace) => `kubectl get services -n ${namespace}`}
       emptyDescription="Services expose selected pods through a stable virtual IP, node port, or external load balancer."

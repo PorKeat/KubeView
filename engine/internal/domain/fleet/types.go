@@ -1,23 +1,20 @@
 package fleet
 
-import "time"
+import (
+	"time"
 
-type Status string
-
-const (
-	StatusHealthy  Status = "healthy"
-	StatusDegraded Status = "degraded"
-	StatusOffline  Status = "offline"
+	shared "github.com/kubeview/engine/internal/domain/shared"
 )
 
-type Context struct {
-	Name      string
-	Cluster   string
-	Server    string
-	Provider  string
-	AuthType  string
-	IsCurrent bool
-}
+type Status = shared.HealthStatus
+
+const (
+	StatusHealthy  Status = shared.HealthStatusHealthy
+	StatusDegraded Status = shared.HealthStatusDegraded
+	StatusOffline  Status = shared.HealthStatusOffline
+)
+
+type Context = shared.ClusterContext
 
 type WorkloadBreakdown struct {
 	Deployments  int

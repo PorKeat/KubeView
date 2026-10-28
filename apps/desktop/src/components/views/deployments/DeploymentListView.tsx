@@ -9,6 +9,7 @@ import { useSettingsStore } from "@/stores/settingsStore";
 import { useTabStore } from "@/stores/tabStore";
 import type { DeploymentSummary } from "@kubeview/contracts";
 import { TableSkeleton, EmptyState } from "@/components/ui";
+import { useResourceActions } from "@/components/views/shared/useResourceActions";
 
 import { DeploymentTableToolbar } from "./components/DeploymentTableToolbar";
 import { DeploymentBatchToolbar } from "./components/DeploymentBatchToolbar";
@@ -45,6 +46,7 @@ export function DeploymentListView() {
     autoRefreshInterval,
   } = useClusterStore();
   const { openTab } = useTabStore();
+  const { createResource } = useResourceActions();
 
   const [search, setSearch] = React.useState("");
   const deferredSearch = React.useDeferredValue(search);
@@ -276,6 +278,7 @@ export function DeploymentListView() {
         setStatusFilter={setStatusFilter}
         sortedItemsCount={sortedItems.length}
         handleRefresh={handleRefresh}
+        onCreate={() => createResource("Deployment", currentNamespace)}
         isLoading={isDeploymentsLoading}
       />
 

@@ -11,12 +11,16 @@ import type {
   PortForwardSession,
   ListCiliumResourcesResult,
   HubbleFlowSummary,
+  ResourceCapabilities,
 } from "@kubeview/contracts";
 
 export interface ResourceEditorTarget {
-  kind: "Ingress" | "GatewayClass" | "Gateway" | "HTTPRoute" | "GRPCRoute";
+  apiVersion: string;
+  kind: string;
+  resource: string;
   name: string;
   namespace: string;
+  mode?: "edit" | "create";
 }
 
 export interface ServiceDiagnosticsTarget {
@@ -101,8 +105,12 @@ export interface NetworkingActionsSlice {
   // Networking resource management
   resourceEditorTarget: ResourceEditorTarget | null;
   resourceEditorYaml: string;
+  resourceEditorCapabilities: ResourceCapabilities | null;
+  resourceEditorCapabilityWarning: string | null;
   isResourceEditorLoading: boolean;
   isResourceEditorSaving: boolean;
+  isResourceEditorValidating: boolean;
+  resourceEditorValidationSuccess: boolean;
   resourceEditorError: string | null;
   deleteResourceTarget: ResourceEditorTarget | null;
 
@@ -121,6 +129,8 @@ export interface NetworkingActionsSlice {
   closeResourceEditor: () => void;
   setResourceEditorYaml: (yaml: string) => void;
   applyResourceEditor: () => Promise<void>;
+  validateResourceEditor: () => Promise<void>;
+  refreshResourceKind: (kind: string) => Promise<void>;
   openDeleteResource: (target: ResourceEditorTarget) => void;
   closeDeleteResource: () => void;
   confirmDeleteResource: () => Promise<void>;

@@ -1,29 +1,25 @@
-package poddiagnosis
+package diagnosis
 
 import (
 	"fmt"
 	"strings"
-
-	corev1 "k8s.io/api/core/v1"
-
-	"github.com/kubeview/engine/internal/cluster"
 )
 
 func buildEvidence(
-	pod *corev1.Pod,
+	pod PodSnapshot,
 	containers []Container,
-	events []cluster.PodEventItem,
+	events []Event,
 	resultFinding finding,
 	metricsAvailable bool,
 ) []Evidence {
 	evidence := make([]Evidence, 0, 16)
 
-	for _, condition := range pod.Status.Conditions {
-		status := "pass"
-		if condition.Status != corev1.ConditionTrue {
-			status = "warning"
-			if condition.Type == corev1.PodScheduled || condition.Type == corev1.PodInitialized {
-				status = "fail"
+	for _, condition := range pod.Conditions {
+		status := StatusPass
+		if condition.Status != ConditionTrue {
+			status = StatusWarning
+			if condition.Type == ConditionPodScheduled || condition.Type == ConditionPodInitialized {
+				status = StatusFail
 			}
 		}
 		summary := fmt.Sprintf("%s=%s", condition.Type, condition.Status)
@@ -32,8 +28,8 @@ func buildEvidence(
 			detail = "No condition message."
 		}
 		evidence = append(evidence, Evidence{
-			ID:      "condition-" + strings.ToLower(string(condition.Type)),
-			Label:   string(condition.Type),
+			ID:      "condition-" + strings.ToLower(condition.Type),
+			Label:   condition.Type,
 			Status:  status,
 			Summary: summary,
 			Details: []string{detail},
@@ -41,12 +37,12 @@ func buildEvidence(
 	}
 
 	for _, container := range containers {
-		status := "pass"
+		status := StatusPass
 		if !container.Ready || container.State != "Running" || container.RestartCount > 0 {
-			status = "warning"
+			status = StatusWarning
 		}
-		if container.Name == resultFinding.container && resultFinding.severity == "critical" {
-			status = "fail"
+		if container.Name == resultFinding.container && resultFinding.severity == SeverityCritical {
+			status = StatusFail
 		}
 		summary := fmt.Sprintf("%s · ready=%t · restarts=%d", container.State, container.Ready, container.RestartCount)
 		details := make([]string, 0, 4)
@@ -83,10 +79,10 @@ func buildEvidence(
 		if container.Requests != nil || container.Limits != nil || metricsAvailable {
 			detail := []string{}
 			if container.Requests != nil {
-				detail = append(detail, "requests: CPU "+valueOrDash(container.Requests.Cpu)+", memory "+valueOrDash(container.Requests.Memory))
+				detail = append(detail, "requests: CPU "+valueOrDash(container.Requests.CPU)+", memory "+valueOrDash(container.Requests.Memory))
 			}
 			if container.Limits != nil {
-				detail = append(detail, "limits: CPU "+valueOrDash(container.Limits.Cpu)+", memory "+valueOrDash(container.Limits.Memory))
+				detail = append(detail, "limits: CPU "+valueOrDash(container.Limits.CPU)+", memory "+valueOrDash(container.Limits.Memory))
 			}
 			if metricsAvailable {
 				detail = append(detail, fmt.Sprintf("usage: %dm CPU, %s memory", container.CPUUsageMillicores, humanBytes(container.MemoryUsageBytes)))
@@ -111,7 +107,7 @@ func buildEvidence(
 			evidence = append(evidence, Evidence{
 				ID:      "logs-" + container.Name,
 				Label:   "Logs " + container.Name,
-				Status:  "warning",
+				Status:  StatusWarning,
 				Summary: fmt.Sprintf("%s logs captured", titleCase(container.LogSource)),
 				Details: details,
 			})
@@ -119,9 +115,9 @@ func buildEvidence(
 	}
 
 	for _, event := range events {
-		status := "warning"
-		if event.Type == corev1.EventTypeWarning {
-			status = "fail"
+		status := StatusWarning
+		if event.Type == EventTypeWarning {
+			status = StatusFail
 		}
 		evidence = append(evidence, Evidence{
 			ID:      "event-" + event.Reason + "-" + event.LastTimestamp,
@@ -136,12 +132,12 @@ func buildEvidence(
 
 func resourceStatus(container Container, resultFinding finding) string {
 	if resultFinding.issueType == "oom" && container.Name == resultFinding.container {
-		return "fail"
+		return StatusFail
 	}
 	if container.Limits == nil {
-		return "warning"
+		return StatusWarning
 	}
-	return "pass"
+	return StatusPass
 }
 
 func valueOrDash(value string) string {

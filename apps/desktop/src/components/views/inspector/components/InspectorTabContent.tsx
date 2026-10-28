@@ -22,6 +22,7 @@ import type {
 } from "@kubeview/contracts";
 import { ConfigStorageEditorForm } from "@/components/modals/ConfigStorageEditorForm";
 import { PodTroubleshootingAssistant } from "@/components/views/troubleshooting";
+import { InspectorResourceEditor } from "../tabs/InspectorResourceEditor";
 
 import { InspectorNodeOverview } from "../tabs/InspectorNodeOverview";
 import { InspectorPodOverview } from "../tabs/InspectorPodOverview";
@@ -94,6 +95,7 @@ export interface InspectorTabContentProps {
   onFilterPodsForNode: (nodeName: string) => void;
   onInspectPod: (resource: SelectedResource) => void;
   onViewAllPods: () => void;
+  onEditResource: () => void;
   onViewPods: () => void;
   onScale: () => void;
   onRestart: () => void;
@@ -159,6 +161,7 @@ export function InspectorTabContent({
   onFilterPodsForNode,
   onInspectPod,
   onViewAllPods,
+  onEditResource,
   onViewPods,
   onScale,
   onRestart,
@@ -175,6 +178,14 @@ export function InspectorTabContent({
   onOpenLogsModal,
   onOpenExecModal,
 }: InspectorTabContentProps) {
+  if (activeTab === "edit" && !editableConfigStorageData) {
+    return (
+      <div className="flex-1 min-h-0 overflow-hidden">
+        <InspectorResourceEditor currentResource={currentResource} />
+      </div>
+    );
+  }
+
   return (
     <div className="flex-1 overflow-y-auto p-3 sm:p-4 space-y-4">
       {isNode && nodeData ? (
@@ -254,6 +265,7 @@ export function InspectorTabContent({
             <InspectorNetworkingOverview
               currentResource={currentResource}
               data={networkingData}
+              onEditResource={onEditResource}
             />
           )}
 

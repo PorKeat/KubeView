@@ -52,15 +52,15 @@ test.describe("KubeView UI - Networking Phase 9", () => {
 
     await page.getByRole("button", { name: "Edit web-ingress" }).click();
     await expect(
-      page.locator('[data-testid="resource-editor-modal"]'),
+      page.locator('[data-testid="resource-inspector-drawer"]'),
     ).toBeVisible();
     await expect(
-      page.locator('[data-testid="resource-editor-textarea"]'),
-    ).toHaveValue(/kind: Ingress/);
-    await page.getByRole("button", { name: "Cancel" }).click();
+      page.locator('[data-testid="inspector-resource-editor"]'),
+    ).toBeVisible();
     await expect(
-      page.locator('[data-testid="resource-editor-modal"]'),
-    ).toHaveCount(0);
+      page.locator('[data-testid="inspector-resource-editor-yaml"]'),
+    ).toHaveValue(/kind: Ingress/);
+    await page.locator('[data-testid="inspector-close-btn"]').click();
 
     await page.getByRole("button", { name: "Delete web-ingress" }).click();
     await expect(

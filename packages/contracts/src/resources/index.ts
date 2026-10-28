@@ -7,3 +7,5 @@ export * from "./networking-operations.js";
 export * from "./config-storage.js";
 export * from "./access.js";
 export * from "./pod-diagnosis.js";
+export * from "./permissions.js";
+export * from "./resource-actions.js";

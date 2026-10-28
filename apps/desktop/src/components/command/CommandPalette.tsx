@@ -30,6 +30,7 @@ import {
   Settings,
   Users,
   Key,
+  ShieldCheck,
   Boxes,
 } from "lucide-react";
 import { useLayoutStore } from "@/stores/layoutStore";
@@ -286,6 +287,16 @@ export function CommandPalette() {
               >
                 <Key className="w-4 h-4 text-amber-500 dark:text-amber-400" />
                 <span>Roles &amp; Bindings</span>
+              </Command.Item>
+              <Command.Item
+                onSelect={() =>
+                  navigateTo("permissions", "Permissions Checker")
+                }
+                value="Permissions Checker RBAC access review allowed denied service account"
+                className="flex items-center gap-2.5 px-2.5 py-2 rounded-md cursor-pointer hover:bg-[var(--surface-hover)] text-[var(--foreground)] transition-colors"
+              >
+                <ShieldCheck className="w-4 h-4 text-emerald-500 dark:text-emerald-400" />
+                <span>Permissions Checker</span>
               </Command.Item>
               <Command.Item
                 onSelect={() => navigateTo("crds", "Custom Resources")}

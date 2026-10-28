@@ -1,14 +1,10 @@
-package poddiagnosis
+package diagnosis
 
 import (
 	"fmt"
 	"sort"
 	"strings"
 	"time"
-
-	corev1 "k8s.io/api/core/v1"
-
-	"github.com/kubeview/engine/internal/cluster"
 )
 
 type finding struct {
@@ -20,14 +16,15 @@ type finding struct {
 	container string
 }
 
-func analyzePodDiagnosis(
-	contextName string,
-	pod *corev1.Pod,
-	containers []Container,
-	events []cluster.PodEventItem,
-	metricsAvailable bool,
-) *Result {
-	sortedEvents := append([]cluster.PodEventItem{}, events...)
+// Analyze correlates pod state, events, containers, probes, resources, and
+// logs into one diagnosis. It is pure: all cluster-derived data must arrive
+// through the snapshot.
+func Analyze(snapshot *Snapshot) *Result {
+	if snapshot == nil {
+		return nil
+	}
+
+	sortedEvents := append([]Event{}, snapshot.Events...)
 	sort.SliceStable(sortedEvents, func(i, j int) bool {
 		return sortedEvents[i].LastTimestamp > sortedEvents[j].LastTimestamp
 	})
@@ -35,42 +32,37 @@ func analyzePodDiagnosis(
 		sortedEvents = sortedEvents[:12]
 	}
 
-	resultFinding := detectFinding(pod, containers, sortedEvents)
-	if signal := logSignal(containers); signal != "" {
+	resultFinding := detectFinding(snapshot.Pod, snapshot.Containers, sortedEvents)
+	if signal := logSignal(snapshot.Containers); signal != "" {
 		resultFinding.rootCause += " " + signal
 	}
-	ownerKind, ownerName := podOwner(pod)
-	result := &Result{
-		ContextName:       contextName,
-		Namespace:         pod.Namespace,
-		PodName:           pod.Name,
-		GeneratedAt:       time.Now().UTC().Format(time.RFC3339),
+
+	return &Result{
+		ContextName:       snapshot.ContextName,
+		Namespace:         snapshot.Pod.Namespace,
+		PodName:           snapshot.Pod.Name,
+		GeneratedAt:       time.Now().UTC(),
 		Severity:          resultFinding.severity,
 		IssueType:         resultFinding.issueType,
-		Healthy:           resultFinding.issueType == "healthy",
+		Healthy:           resultFinding.issueType == IssueHealthy,
 		Title:             resultFinding.title,
 		Summary:           resultFinding.summary,
 		RootCause:         resultFinding.rootCause,
-		OwnerKind:         ownerKind,
-		OwnerName:         ownerName,
-		NodeName:          pod.Spec.NodeName,
-		Conditions:        podConditions(pod),
-		Containers:        containers,
+		OwnerKind:         snapshot.Pod.OwnerKind,
+		OwnerName:         snapshot.Pod.OwnerName,
+		NodeName:          snapshot.Pod.NodeName,
+		Conditions:        snapshot.Pod.Conditions,
+		Containers:        snapshot.Containers,
 		Events:            sortedEvents,
-		Evidence:          buildEvidence(pod, containers, sortedEvents, resultFinding, metricsAvailable),
-		SuggestedCommands: buildCommands(pod, containers, resultFinding, metricsAvailable),
-		SuggestedFixes:    buildFixes(pod, containers, resultFinding),
+		Evidence:          buildEvidence(snapshot.Pod, snapshot.Containers, sortedEvents, resultFinding, snapshot.MetricsAvailable),
+		SuggestedCommands: buildCommands(snapshot.Pod, snapshot.Containers, resultFinding, snapshot.MetricsAvailable),
+		SuggestedFixes:    buildFixes(snapshot.Containers, resultFinding),
 	}
-	return result
 }
 
-func detectFinding(
-	pod *corev1.Pod,
-	containers []Container,
-	events []cluster.PodEventItem,
-) finding {
-	if pod.Status.Phase == corev1.PodPending && !conditionTrue(pod, corev1.PodScheduled) {
-		message := conditionMessage(pod, corev1.PodScheduled)
+func detectFinding(pod PodSnapshot, containers []Container, events []Event) finding {
+	if pod.Phase == PhasePending && !conditionTrue(pod.Conditions, ConditionPodScheduled) {
+		message := conditionMessage(pod.Conditions, ConditionPodScheduled)
 		if message == "" {
 			message = eventMessage(events, "FailedScheduling")
 		}
@@ -79,7 +71,7 @@ func detectFinding(
 		}
 		return finding{
 			issueType: "scheduling",
-			severity:  "critical",
+			severity:  SeverityCritical,
 			title:     "Pod Cannot Be Scheduled",
 			summary:   "The pod is Pending because Kubernetes has not assigned it to a node.",
 			rootCause: message,
@@ -100,7 +92,7 @@ func detectFinding(
 			}
 			return finding{
 				issueType: "probe",
-				severity:  "warning",
+				severity:  SeverityWarning,
 				title:     fmt.Sprintf("%s Probe Failing", titleCase(probe.Kind)),
 				summary:   fmt.Sprintf("Container '%s' is running but Kubernetes reports an unhealthy probe.", container.Name),
 				rootCause: message,
@@ -110,29 +102,29 @@ func detectFinding(
 		if container.State == "Running" && !container.Ready {
 			return finding{
 				issueType: "probe",
-				severity:  "warning",
+				severity:  SeverityWarning,
 				title:     "Container Not Ready",
 				summary:   fmt.Sprintf("Container '%s' is running but is excluded from service traffic.", container.Name),
-				rootCause: fmt.Sprintf("The container is running, but its readiness condition is false. Check the readiness probe endpoint and application health."),
+				rootCause: "The container is running, but its readiness condition is false. Check the readiness probe endpoint and application health.",
 				container: container.Name,
 			}
 		}
 	}
 
-	if pod.Status.Phase == corev1.PodFailed {
+	if pod.Phase == PhaseFailed {
 		return finding{
 			issueType: "runtime",
-			severity:  "critical",
+			severity:  SeverityCritical,
 			title:     "Pod Failed",
 			summary:   "The pod reached a terminal Failed phase.",
 			rootCause: "Kubernetes marked the pod as Failed. Inspect the container exit status and the most recent events.",
 		}
 	}
 
-	if pod.Status.Phase == corev1.PodPending {
+	if pod.Phase == PhasePending {
 		return finding{
 			issueType: "pending",
-			severity:  "warning",
+			severity:  SeverityWarning,
 			title:     "Pod Is Still Starting",
 			summary:   "The pod has been scheduled but is not ready yet.",
 			rootCause: "Container initialization is still in progress. Check image pulls, volume mounts, and init container logs if this persists.",
@@ -140,8 +132,8 @@ func detectFinding(
 	}
 
 	return finding{
-		issueType: "healthy",
-		severity:  "healthy",
+		issueType: IssueHealthy,
+		severity:  SeverityHealthy,
 		title:     "No Active Failure Detected",
 		summary:   "The pod is running and all containers are ready.",
 		rootCause: "No failure indicators were found in pod status, conditions, events, probes, or recent logs.",
@@ -160,7 +152,7 @@ func containerIssue(container Container) *finding {
 		}
 		return &finding{
 			issueType: "oom",
-			severity:  "critical",
+			severity:  SeverityCritical,
 			title:     "Out Of Memory (OOMKilled)",
 			summary:   fmt.Sprintf("Container '%s' was killed after exceeding its memory limit.", container.Name),
 			rootCause: fmt.Sprintf("%s Memory limit: %s.", message, limit),
@@ -176,7 +168,7 @@ func containerIssue(container Container) *finding {
 		}
 		return &finding{
 			issueType: "image",
-			severity:  "critical",
+			severity:  SeverityCritical,
 			title:     "Image Pull Failure",
 			summary:   fmt.Sprintf("Container '%s' cannot start because its image is unavailable.", container.Name),
 			rootCause: message,
@@ -191,7 +183,7 @@ func containerIssue(container Container) *finding {
 		}
 		return &finding{
 			issueType: "config",
-			severity:  "critical",
+			severity:  SeverityCritical,
 			title:     "Container Configuration Error",
 			summary:   fmt.Sprintf("Container '%s' could not be created.", container.Name),
 			rootCause: message,
@@ -206,7 +198,7 @@ func containerIssue(container Container) *finding {
 		}
 		return &finding{
 			issueType: "crash",
-			severity:  "critical",
+			severity:  SeverityCritical,
 			title:     "CrashLoopBackOff",
 			summary:   fmt.Sprintf("Container '%s' is crash-looping with %d restart(s).", container.Name, container.RestartCount),
 			rootCause: message,
@@ -221,7 +213,7 @@ func containerIssue(container Container) *finding {
 		}
 		return &finding{
 			issueType: "runtime",
-			severity:  "critical",
+			severity:  SeverityCritical,
 			title:     "Container Execution Failure",
 			summary:   fmt.Sprintf("Container '%s' terminated with a non-zero exit code.", container.Name),
 			rootCause: message,
@@ -252,7 +244,7 @@ func lastMessage(container Container) string {
 
 func firstFailingProbe(probes []Probe) *Probe {
 	for index := range probes {
-		if probes[index].Status == "fail" {
+		if probes[index].Status == StatusFail {
 			return &probes[index]
 		}
 	}
@@ -282,27 +274,6 @@ func logSignal(containers []Container) string {
 	return ""
 }
 
-func podConditions(pod *corev1.Pod) []cluster.PodConditionItem {
-	conditions := make([]cluster.PodConditionItem, 0, len(pod.Status.Conditions))
-	for _, condition := range pod.Status.Conditions {
-		conditions = append(conditions, cluster.PodConditionItem{
-			Type:               string(condition.Type),
-			Status:             string(condition.Status),
-			LastTransitionTime: condition.LastTransitionTime.Time.Format(time.RFC3339),
-			Reason:             condition.Reason,
-			Message:            condition.Message,
-		})
-	}
-	return conditions
-}
-
-func podOwner(pod *corev1.Pod) (string, string) {
-	if len(pod.OwnerReferences) == 0 {
-		return "", ""
-	}
-	return pod.OwnerReferences[0].Kind, pod.OwnerReferences[0].Name
-}
-
 func supportsRolloutRestart(kind string) bool {
 	switch kind {
 	case "Deployment", "StatefulSet", "DaemonSet":
@@ -321,17 +292,17 @@ func containerByName(containers []Container, name string) *Container {
 	return nil
 }
 
-func conditionTrue(pod *corev1.Pod, conditionType corev1.PodConditionType) bool {
-	for _, condition := range pod.Status.Conditions {
+func conditionTrue(conditions []Condition, conditionType string) bool {
+	for _, condition := range conditions {
 		if condition.Type == conditionType {
-			return condition.Status == corev1.ConditionTrue
+			return condition.Status == ConditionTrue
 		}
 	}
 	return false
 }
 
-func conditionMessage(pod *corev1.Pod, conditionType corev1.PodConditionType) string {
-	for _, condition := range pod.Status.Conditions {
+func conditionMessage(conditions []Condition, conditionType string) string {
+	for _, condition := range conditions {
 		if condition.Type == conditionType && condition.Message != "" {
 			return condition.Message
 		}
@@ -339,7 +310,7 @@ func conditionMessage(pod *corev1.Pod, conditionType corev1.PodConditionType) st
 	return ""
 }
 
-func eventMessage(events []cluster.PodEventItem, reason string) string {
+func eventMessage(events []Event, reason string) string {
 	for _, event := range events {
 		if strings.EqualFold(event.Reason, reason) && event.Message != "" {
 			return event.Message

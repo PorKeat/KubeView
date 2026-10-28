@@ -53,7 +53,6 @@ func TestDomainAndApplicationImportBoundaries(t *testing.T) {
 				"github.com/kubeview/engine/internal/adapters/outbound",
 				"github.com/kubeview/engine/internal/cluster",
 				"github.com/kubeview/engine/internal/bootstrap",
-				"github.com/kubeview/engine/internal/poddiagnosis",
 			},
 		},
 	}

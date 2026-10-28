@@ -8,6 +8,29 @@ import type {
 const MOCK_MODE = process.env.NEXT_PUBLIC_KUBEVIEW_MOCK === "1";
 const RPC_TIMEOUT_MS = 30_000;
 
+function notifyForbidden(
+  method: string,
+  params: unknown,
+  error: unknown,
+): void {
+  if (typeof window === "undefined" || method.startsWith("access.")) return;
+  const record = error as { code?: unknown; message?: unknown } | null;
+  if (record?.code !== "K8S_FORBIDDEN") return;
+  window.dispatchEvent(
+    new CustomEvent("kubeview:forbidden", {
+      detail: {
+        method,
+        params: params as Record<string, unknown> | undefined,
+        code: record.code,
+        message:
+          typeof record.message === "string"
+            ? record.message
+            : "Permission denied",
+      },
+    }),
+  );
+}
+
 export function isTauri(): boolean {
   if (typeof window === "undefined") return false;
   return "__TAURI_INTERNALS__" in window || "__TAURI__" in window;
@@ -27,6 +50,7 @@ export async function invokeRpc<T>(
       return result;
     } catch (err: unknown) {
       console.warn(`[IPC] RPC Error for '${method}':`, err);
+      notifyForbidden(method, params, err);
       throw err;
     }
   }
@@ -62,6 +86,7 @@ export async function invokeRpc<T>(
         `KubeView engine request failed with HTTP ${res.status}`,
     ) as Error & { code?: unknown };
     error.code = data?.error?.code;
+    notifyForbidden(method, params, error);
     throw error;
   }
   if (data?.result !== undefined) {

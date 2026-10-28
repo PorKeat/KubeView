@@ -80,8 +80,8 @@ export function DeleteResourceModal() {
           <div className="flex items-start gap-2 rounded-xl border border-amber-500/20 bg-amber-500/10 p-3 text-[11px] leading-relaxed text-amber-700 dark:text-amber-400">
             <AlertTriangle className="w-4 h-4 shrink-0 mt-0.5" />
             <span>
-              This permanently removes the object from the cluster. Traffic
-              routing changes immediately and cannot be undone.
+              This permanently removes the object from the cluster. This action
+              cannot be undone.
             </span>
           </div>
 

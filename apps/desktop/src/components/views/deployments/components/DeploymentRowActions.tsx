@@ -8,6 +8,7 @@ import {
   MoreHorizontal,
   Box,
   Code2,
+  FileCode,
   RotateCw,
   SlidersHorizontal,
   Trash2,
@@ -31,6 +32,7 @@ export function DeploymentRowActions({
   const openWorkloadAction = useClusterStore(
     (state) => state.openWorkloadAction,
   );
+  const openInspector = useClusterStore((state) => state.openInspector);
   const [copiedCommand, setCopiedCommand] = React.useState<string | null>(null);
   const [showActionMenu, setShowActionMenu] = React.useState(false);
   const [showKubectlSubmenu, setShowKubectlSubmenu] = React.useState(false);
@@ -99,6 +101,18 @@ export function DeploymentRowActions({
       action: "delete",
       name: item.name,
       namespace: item.namespace,
+    });
+  };
+
+  const handleEditYaml = () => {
+    closeRowActionMenu();
+    openInspector({
+      kind: "Deployment",
+      name: item.name,
+      namespace: item.namespace,
+      status: item.status,
+      data: item as unknown as Record<string, unknown>,
+      initialTab: "edit",
     });
   };
 
@@ -200,6 +214,12 @@ export function DeploymentRowActions({
             <div className="my-1 border-t border-[var(--border)]/60" />
 
             <div className="space-y-0.5">
+              <RowAction
+                icon={FileCode}
+                title="Edit YAML"
+                detail="Open the live manifest in the resource editor"
+                onClick={handleEditYaml}
+              />
               <RowAction
                 icon={SlidersHorizontal}
                 title="Scale Replicas"

@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	domaincontexts "github.com/kubeview/engine/internal/domain/contexts"
+	shared "github.com/kubeview/engine/internal/domain/shared"
 )
 
 type Service struct {
@@ -27,7 +28,7 @@ func (service *Service) Switch(
 ) (*domaincontexts.SwitchResult, error) {
 	name := strings.TrimSpace(contextName)
 	if name == "" {
-		return nil, fmt.Errorf("contextName parameter is required")
+		return nil, shared.Validation("contextName parameter is required")
 	}
 
 	result, err := service.repository.Switch(ctx, name)

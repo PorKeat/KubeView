@@ -1,7 +1,7 @@
 "use client";
 
 import { motion } from "motion/react";
-import { AlertTriangle, RefreshCw, Search, X } from "lucide-react";
+import { AlertTriangle, Plus, RefreshCw, Search, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Tooltip } from "@/components/ui";
 import type { NetworkingFilterOption } from "../types";
@@ -10,6 +10,7 @@ export interface NetworkingToolbarProps {
   search: string;
   setSearch: (value: string) => void;
   searchPlaceholder: string;
+  nounSingular: string;
   nounPlural: string;
   filterOptions: NetworkingFilterOption[];
   activeFilter: string;
@@ -17,6 +18,7 @@ export interface NetworkingToolbarProps {
   testIdPrefix: string;
   sortedItemsCount: number;
   onRefresh: () => void;
+  onCreate?: () => void;
   isLoading: boolean;
 }
 
@@ -24,6 +26,7 @@ export function NetworkingToolbar({
   search,
   setSearch,
   searchPlaceholder,
+  nounSingular,
   nounPlural,
   filterOptions,
   activeFilter,
@@ -31,6 +34,7 @@ export function NetworkingToolbar({
   testIdPrefix,
   sortedItemsCount,
   onRefresh,
+  onCreate,
   isLoading,
 }: NetworkingToolbarProps) {
   return (
@@ -103,6 +107,18 @@ export function NetworkingToolbar({
       <div className="flex max-w-full flex-wrap items-center gap-2 text-xs text-[var(--muted)] shrink-0 order-3 sm:order-none">
         <span className="font-mono text-[11px]">{sortedItemsCount} items</span>
         <div className="h-3 w-[1px] bg-[var(--border)]" />
+        {onCreate && (
+          <Tooltip content={`Create ${nounSingular}`}>
+            <button
+              onClick={onCreate}
+              className="p-1.5 rounded-lg hover:bg-[var(--surface-hover)] text-[var(--muted)] hover:text-[var(--foreground)] transition-colors cursor-pointer"
+              aria-label={`Create ${nounSingular}`}
+              data-testid={`${testIdPrefix}-create`}
+            >
+              <Plus className="w-3.5 h-3.5" />
+            </button>
+          </Tooltip>
+        )}
         <Tooltip content={`Refresh ${nounPlural}`}>
           <button
             onClick={onRefresh}

@@ -15,6 +15,7 @@ export const createCoreSlice: StateCreator<ClusterState, [], [], CoreSlice> = (
   rbacMode: "cluster-admin",
   selectedResource: null,
   isInspectorOpen: false,
+  isInspectorEditDirty: false,
   isLoading: false,
   isKubeconfigModalOpen: false,
   kubeconfigModalTab: "browse",
@@ -52,8 +53,18 @@ export const createCoreSlice: StateCreator<ClusterState, [], [], CoreSlice> = (
   setServerInfo: (version, latency) =>
     set({ serverVersion: version, latencyMs: latency }),
   openInspector: (resource) =>
-    set({ selectedResource: resource, isInspectorOpen: true }),
-  closeInspector: () => set({ selectedResource: null, isInspectorOpen: false }),
+    set({
+      selectedResource: resource,
+      isInspectorOpen: true,
+      isInspectorEditDirty: false,
+    }),
+  closeInspector: () =>
+    set({
+      selectedResource: null,
+      isInspectorOpen: false,
+      isInspectorEditDirty: false,
+    }),
+  setInspectorEditDirty: (dirty) => set({ isInspectorEditDirty: dirty }),
 
   openKubeconfigModal: (tab = "browse") =>
     set({ isKubeconfigModalOpen: true, kubeconfigModalTab: tab }),

@@ -17,6 +17,8 @@ export interface CoreSlice {
   isLoading: boolean;
   selectedResource: SelectedResource | null;
   isInspectorOpen: boolean;
+  isInspectorEditDirty: boolean;
+  setInspectorEditDirty: (dirty: boolean) => void;
   isKubeconfigModalOpen: boolean;
   kubeconfigModalTab: "auto" | "browse" | "paste" | "manage";
   splashDismissed: boolean;

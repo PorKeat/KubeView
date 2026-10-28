@@ -3,6 +3,7 @@
 import * as React from "react";
 import { Radio } from "lucide-react";
 import { useClusterStore } from "@/stores/clusterStore";
+import { useResourceActions } from "../shared/useResourceActions";
 import type { EndpointsSummary } from "@kubeview/contracts";
 import {
   NetworkingResourcePage,
@@ -60,6 +61,7 @@ function endpointsStatus(endpoints: EndpointsSummary) {
 }
 
 export function EndpointsListView() {
+  const { editResource, deleteResource, createResource } = useResourceActions();
   const {
     endpoints,
     totalEndpointsCount,
@@ -321,6 +323,19 @@ export function EndpointsListView() {
       describeCommand={(item) =>
         `kubectl describe endpoints ${item.name} -n ${item.namespace}`
       }
+      onEdit={(item) =>
+        editResource(
+          "Endpoints",
+          item.name,
+          item.namespace,
+          item.status,
+          item as unknown as Record<string, unknown>,
+        )
+      }
+      onDelete={(item) =>
+        deleteResource("Endpoints", item.name, item.namespace)
+      }
+      onCreate={() => createResource("Endpoints", currentNamespace)}
       testIdPrefix="endpoints"
       codeCommand={(namespace) => `kubectl get endpoints -n ${namespace}`}
       emptyDescription="Endpoints track the ready pod addresses behind each Service selector."

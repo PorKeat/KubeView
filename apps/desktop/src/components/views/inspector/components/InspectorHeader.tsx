@@ -37,6 +37,7 @@ export interface InspectorHeaderProps {
   onOpenExecModal: (pod: { name: string; namespace: string }) => void;
   onOpenRestartConfirm: (pod: { name: string; namespace: string }) => void;
   onOpenDeleteConfirm: (pod: { name: string; namespace: string }) => void;
+  onEditYaml?: () => void;
 }
 
 export function InspectorHeader({
@@ -66,6 +67,7 @@ export function InspectorHeader({
   onOpenExecModal,
   onOpenRestartConfirm,
   onOpenDeleteConfirm,
+  onEditYaml,
 }: InspectorHeaderProps) {
   const [copiedTitle, setCopiedTitle] = React.useState(false);
   const isWorkloadController =
@@ -199,6 +201,7 @@ export function InspectorHeader({
         onOpenRestartConfirm={onOpenRestartConfirm}
         onOpenDeleteConfirm={onOpenDeleteConfirm}
         onCopyTitle={handleCopyTitle}
+        onEditYaml={onEditYaml}
       />
     </div>
   );

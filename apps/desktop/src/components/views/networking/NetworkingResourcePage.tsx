@@ -44,6 +44,7 @@ export function NetworkingResourcePage<T>({
   onEdit,
   onDelete,
   onDiagnose,
+  onCreate,
   testIdPrefix,
   clusterScoped = false,
   includeClusterScoped = false,
@@ -120,6 +121,7 @@ export function NetworkingResourcePage<T>({
         search={search}
         setSearch={setSearch}
         searchPlaceholder={searchPlaceholder}
+        nounSingular={nounSingular}
         nounPlural={nounPlural}
         filterOptions={filterOptions}
         activeFilter={activeFilter}
@@ -127,6 +129,7 @@ export function NetworkingResourcePage<T>({
         testIdPrefix={testIdPrefix}
         sortedItemsCount={sortedItems.length}
         onRefresh={onRefresh}
+        onCreate={onCreate}
         isLoading={isLoading}
       />
 

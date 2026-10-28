@@ -4,6 +4,7 @@ import * as React from "react";
 import { Database } from "lucide-react";
 import type { StorageClassSummary } from "@kubeview/contracts";
 import { useClusterStore } from "@/stores/clusterStore";
+import { useResourceActions } from "../shared/useResourceActions";
 import {
   NetworkingResourcePage,
   type NetworkingColumn,
@@ -13,6 +14,7 @@ import { storageClassMatches, storageClassStatus } from "./configStorageUtils";
 
 export function StorageClassesView() {
   const [filter, setFilter] = React.useState("all");
+  const { editResource, deleteResource, createResource } = useResourceActions();
   const {
     storageClasses,
     totalStorageClassesCount,
@@ -137,6 +139,17 @@ export function StorageClassesView() {
         })
       }
       describeCommand={(item) => `kubectl describe storageclass ${item.name}`}
+      onEdit={(item) =>
+        editResource(
+          "StorageClass",
+          item.name,
+          "",
+          item.default ? "Default" : "Available",
+          item as unknown as Record<string, unknown>,
+        )
+      }
+      onDelete={(item) => deleteResource("StorageClass", item.name)}
+      onCreate={() => createResource("StorageClass")}
       testIdPrefix="storageclasses"
       autoRefresh={false}
       clusterScoped

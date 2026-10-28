@@ -27,6 +27,7 @@ import {
   RBACView,
   CustomResourcesView,
 } from "./accesscustom/AccessCustomViews";
+import { PermissionsView } from "./permissions/PermissionsView";
 import { SettingsView } from "./settings/SettingsView";
 import { ErrorBoundary, NotFoundState } from "@/components/ui";
 
@@ -111,6 +112,10 @@ export function ActiveViewRenderer() {
 
         if (activeTabId === "rbac") {
           return <RBACView />;
+        }
+
+        if (activeTabId === "permissions") {
+          return <PermissionsView />;
         }
 
         if (activeTabId === "crds") {

@@ -10,6 +10,7 @@ import type {
   ServiceSummary,
 } from "@kubeview/contracts";
 import { useClusterStore, type SelectedResource } from "@/stores/clusterStore";
+import { resourceTarget } from "@/lib/resourceKinds";
 import { Chip, SectionTitle } from "./InspectorNetworkingPrimitives";
 import {
   EndpointsDetail,
@@ -23,6 +24,7 @@ import {
 
 export interface InspectorNetworkingOverviewProps {
   currentResource: SelectedResource;
+  onEditResource: () => void;
   data:
     | ServiceSummary
     | EndpointsSummary
@@ -67,6 +69,7 @@ function networkingIcon(kind: string) {
 
 export function InspectorNetworkingOverview({
   currentResource,
+  onEditResource,
   data,
 }: InspectorNetworkingOverviewProps) {
   const Icon = networkingIcon(currentResource.kind);
@@ -88,9 +91,6 @@ export function InspectorNetworkingOverview({
     currentResource.kind === "NetworkPolicy"
       ? (data as NetworkPolicySummary)
       : null;
-  const openResourceEditor = useClusterStore(
-    (state) => state.openResourceEditor,
-  );
   const openDeleteResource = useClusterStore(
     (state) => state.openDeleteResource,
   );
@@ -142,41 +142,29 @@ export function InspectorNetworkingOverview({
         {ingress && (
           <IngressDetail
             ingress={ingress}
-            onEdit={() =>
-              void openResourceEditor({
-                kind: "Ingress",
-                name: ingress.name,
-                namespace: ingress.namespace,
-              })
-            }
-            onDelete={() =>
-              openDeleteResource({
-                kind: "Ingress",
-                name: ingress.name,
-                namespace: ingress.namespace,
-              })
-            }
+            onEdit={onEditResource}
+            onDelete={() => {
+              const target = resourceTarget(
+                "Ingress",
+                ingress.name,
+                ingress.namespace,
+              );
+              if (target) openDeleteResource(target);
+            }}
           />
         )}
         {gateway && (
           <GatewayDetail
             gateway={gateway}
-            onEdit={() =>
-              void openResourceEditor({
-                kind: gateway.kind as
-                  "GatewayClass" | "Gateway" | "HTTPRoute" | "GRPCRoute",
-                name: gateway.name,
-                namespace: gateway.namespace || "Cluster Scope",
-              })
-            }
-            onDelete={() =>
-              openDeleteResource({
-                kind: gateway.kind as
-                  "GatewayClass" | "Gateway" | "HTTPRoute" | "GRPCRoute",
-                name: gateway.name,
-                namespace: gateway.namespace || "Cluster Scope",
-              })
-            }
+            onEdit={onEditResource}
+            onDelete={() => {
+              const target = resourceTarget(
+                gateway.kind,
+                gateway.name,
+                gateway.namespace,
+              );
+              if (target) openDeleteResource(target);
+            }}
           />
         )}
         {policy && <NetworkPolicyDetail policy={policy} />}

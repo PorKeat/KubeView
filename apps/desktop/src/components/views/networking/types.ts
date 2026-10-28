@@ -49,6 +49,7 @@ export interface NetworkingResourcePageProps<T> {
   onEdit?: (item: T) => void;
   onDelete?: (item: T) => void;
   onDiagnose?: (item: T) => void;
+  onCreate?: () => void;
   testIdPrefix: string;
   clusterScoped?: boolean;
   includeClusterScoped?: boolean;

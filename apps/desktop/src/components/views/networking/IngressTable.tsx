@@ -3,6 +3,8 @@
 import * as React from "react";
 import { Globe } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { resourceTarget } from "@/lib/resourceKinds";
+import { useResourceActions } from "@/components/views/shared/useResourceActions";
 import { useClusterStore } from "@/stores/clusterStore";
 import type { IngressSummary } from "@kubeview/contracts";
 import {
@@ -23,6 +25,7 @@ export function IngressTable({
   filter: string;
   setFilter: (filter: string) => void;
 }) {
+  const { createResource } = useResourceActions();
   const {
     ingresses,
     totalIngressesCount,
@@ -31,7 +34,6 @@ export function IngressTable({
     loadIngresses,
     currentNamespace,
     openInspector,
-    openResourceEditor,
     openDeleteResource,
   } = useClusterStore();
 
@@ -258,19 +260,24 @@ export function IngressTable({
         `kubectl describe ingress ${ingress.name} -n ${ingress.namespace}`
       }
       onEdit={(ingress) =>
-        void openResourceEditor({
+        openInspector({
           kind: "Ingress",
           name: ingress.name,
           namespace: ingress.namespace,
+          status: ingress.status,
+          data: ingress as unknown as Record<string, unknown>,
+          initialTab: "edit",
         })
       }
-      onDelete={(ingress) =>
-        openDeleteResource({
-          kind: "Ingress",
-          name: ingress.name,
-          namespace: ingress.namespace,
-        })
-      }
+      onDelete={(ingress) => {
+        const target = resourceTarget(
+          "Ingress",
+          ingress.name,
+          ingress.namespace,
+        );
+        if (target) openDeleteResource(target);
+      }}
+      onCreate={() => createResource("Ingress", currentNamespace)}
       testIdPrefix="ingresses"
       codeCommand={(namespace) => `kubectl get ingress -n ${namespace}`}
       emptyDescription="Ingresses route external HTTP and HTTPS traffic to Services inside the cluster."

@@ -1,4 +1,4 @@
-package rpc
+package fleet
 
 import (
 	"encoding/json"
@@ -9,7 +9,7 @@ import (
 	domainfleet "github.com/kubeview/engine/internal/domain/fleet"
 )
 
-func TestFleetOverviewResponsePreservesWireShape(t *testing.T) {
+func TestOverviewResponsePreservesWireShape(t *testing.T) {
 	result := &domainfleet.Result{
 		Clusters: []domainfleet.Snapshot{{
 			Context: domainfleet.Context{
@@ -45,7 +45,7 @@ func TestFleetOverviewResponsePreservesWireShape(t *testing.T) {
 		FetchedAt: time.Date(2026, 10, 27, 12, 0, 0, 0, time.UTC),
 	}
 
-	response := fleetOverviewToResponse(result)
+	response := overviewToResponse(result)
 	if response.Clusters[0].ContextName != "prod" || response.Clusters[0].Status != "degraded" {
 		t.Fatalf("unexpected cluster mapping: %+v", response.Clusters[0])
 	}

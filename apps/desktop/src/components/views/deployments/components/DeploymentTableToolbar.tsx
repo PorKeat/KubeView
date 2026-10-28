@@ -8,6 +8,7 @@ import {
   AlertTriangle,
   Clock,
   Pause,
+  Plus,
 } from "lucide-react";
 import { motion } from "motion/react";
 import { cn } from "@/lib/utils";
@@ -30,6 +31,7 @@ export interface DeploymentTableToolbarProps {
   setStatusFilter: (status: DeploymentStatusFilter) => void;
   sortedItemsCount: number;
   handleRefresh: () => void;
+  onCreate?: () => void;
   isLoading: boolean;
 }
 
@@ -42,6 +44,7 @@ export function DeploymentTableToolbar({
   setStatusFilter,
   sortedItemsCount,
   handleRefresh,
+  onCreate,
   isLoading,
 }: DeploymentTableToolbarProps) {
   const baseDeployments = React.useMemo(() => {
@@ -163,6 +166,18 @@ export function DeploymentTableToolbar({
       <div className="flex max-w-full flex-wrap items-center gap-2 text-xs text-[var(--muted)] shrink-0 order-3 sm:order-none">
         <span className="font-mono text-[11px]">{sortedItemsCount} items</span>
         <div className="h-3 w-[1px] bg-[var(--border)]" />
+        {onCreate && (
+          <Tooltip content="Create Deployment">
+            <button
+              onClick={onCreate}
+              className="p-1.5 rounded-lg hover:bg-[var(--surface-hover)] text-[var(--muted)] hover:text-[var(--foreground)] transition-colors cursor-pointer"
+              aria-label="Create Deployment"
+              data-testid="deployments-create"
+            >
+              <Plus className="w-3.5 h-3.5" />
+            </button>
+          </Tooltip>
+        )}
         <Tooltip content="Refresh deployments">
           <button
             onClick={handleRefresh}

@@ -25,6 +25,7 @@ import {
   Trash2,
   Users,
   Key,
+  ShieldCheck,
 } from "lucide-react";
 import { useTabStore, TabItem } from "@/stores/tabStore";
 import { useLayoutStore } from "@/stores/layoutStore";
@@ -79,6 +80,8 @@ export function TabBar() {
         return Users;
       case "rbac":
         return Key;
+      case "permissions":
+        return ShieldCheck;
       case "crds":
         return Boxes;
       case "statefulsets":
