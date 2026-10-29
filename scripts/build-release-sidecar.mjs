@@ -1,5 +1,5 @@
 import { execFileSync } from "node:child_process";
-import { chmodSync, mkdirSync, renameSync, rmSync } from "node:fs";
+import { chmodSync, mkdirSync, rmSync } from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -36,10 +36,12 @@ const built = [];
 for (const spec of specs) {
   const output = path.join(
     outDir,
-    `.kubeview-engine-${spec.triple}${spec.ext ?? ""}`,
+    `kubeview-engine-${spec.triple}${spec.ext ?? ""}`,
   );
   rmSync(output, { force: true });
-  console.log(`Building engine for ${spec.goos}/${spec.goarch}`);
+  console.log(
+    `Building engine for ${spec.goos}/${spec.goarch} -> ${path.basename(output)}`,
+  );
   execFileSync(
     "go",
     [
@@ -62,21 +64,18 @@ for (const spec of specs) {
       stdio: "inherit",
     },
   );
+  chmodSync(output, 0o755);
   built.push(output);
 }
 
-const finalPath = path.join(
-  outDir,
-  `kubeview-engine-${target}${specs[0].ext ?? ""}`,
-);
-rmSync(finalPath, { force: true });
-if (built.length === 1) {
-  renameSync(built[0], finalPath);
-} else {
-  execFileSync("lipo", ["-create", ...built, "-output", finalPath], {
+if (specs.length > 1) {
+  const universalPath = path.join(outDir, `kubeview-engine-${target}`);
+  rmSync(universalPath, { force: true });
+  execFileSync("lipo", ["-create", ...built, "-output", universalPath], {
     stdio: "inherit",
   });
-  for (const output of built) rmSync(output, { force: true });
+  chmodSync(universalPath, 0o755);
+  console.log(`Universal sidecar ready: ${path.relative(root, universalPath)}`);
 }
-chmodSync(finalPath, 0o755);
-console.log(`Sidecar ready: ${path.relative(root, finalPath)}`);
+
+console.log(`Sidecar(s) ready for ${target}`);
