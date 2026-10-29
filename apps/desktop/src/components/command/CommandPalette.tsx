@@ -37,6 +37,9 @@ import {
   Route,
   ArrowUp,
   SlidersHorizontal,
+  Webhook,
+  FileCheck2,
+  Link2,
 } from "lucide-react";
 import { useLayoutStore } from "@/stores/layoutStore";
 import { useTabStore } from "@/stores/tabStore";
@@ -464,6 +467,58 @@ export function CommandPalette() {
               >
                 <Clock className="w-4 h-4 text-orange-500 dark:text-orange-400" />
                 <span>Leases</span>
+              </Command.Item>
+              <Command.Item
+                onSelect={() =>
+                  navigateTo(
+                    "mutatingwebhookconfigurations",
+                    "Mutating Webhook Configs",
+                  )
+                }
+                value="Mutating Webhook Configs admission"
+                className="flex items-center gap-2.5 px-2.5 py-2 rounded-md cursor-pointer hover:bg-[var(--surface-hover)] text-[var(--foreground)] transition-colors"
+              >
+                <Webhook className="w-4 h-4 text-blue-500 dark:text-blue-400" />
+                <span>Mutating Webhook Configs</span>
+              </Command.Item>
+              <Command.Item
+                onSelect={() =>
+                  navigateTo(
+                    "validatingwebhookconfigurations",
+                    "Validating Webhook Configs",
+                  )
+                }
+                value="Validating Webhook Configs admission"
+                className="flex items-center gap-2.5 px-2.5 py-2 rounded-md cursor-pointer hover:bg-[var(--surface-hover)] text-[var(--foreground)] transition-colors"
+              >
+                <ShieldCheck className="w-4 h-4 text-emerald-500 dark:text-emerald-400" />
+                <span>Validating Webhook Configs</span>
+              </Command.Item>
+              <Command.Item
+                onSelect={() =>
+                  navigateTo(
+                    "validatingadmissionpolicies",
+                    "Validating Admission Policies",
+                  )
+                }
+                value="Validating Admission Policies CEL admission"
+                className="flex items-center gap-2.5 px-2.5 py-2 rounded-md cursor-pointer hover:bg-[var(--surface-hover)] text-[var(--foreground)] transition-colors"
+              >
+                <FileCheck2 className="w-4 h-4 text-violet-500 dark:text-violet-400" />
+                <span>Validating Admission Policies</span>
+              </Command.Item>
+              <Command.Item
+                onSelect={() =>
+                  navigateTo(
+                    "validatingadmissionpolicybindings",
+                    "Admission Policy Bindings",
+                  )
+                }
+                value="Admission Policy Bindings activation parameter"
+                className="flex items-center gap-2.5 px-2.5 py-2 rounded-md cursor-pointer hover:bg-[var(--surface-hover)] text-[var(--foreground)] transition-colors"
+              >
+                <Link2 className="w-4 h-4 text-amber-500 dark:text-amber-400" />
+                <span>Admission Policy Bindings</span>
               </Command.Item>
             </Command.Group>
 

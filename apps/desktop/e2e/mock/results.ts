@@ -690,6 +690,58 @@ export function resultFor(method: string, params?: JsonRecord): unknown {
           totalCount: 1,
         };
       }
+      if (kind === "mutatingwebhookconfigurations") {
+        return {
+          kind,
+          items: [
+            item("mutating-webhook", undefined, "1 webhooks", "healthy", {
+              webhooks: "1",
+              failurePolicy: "Fail",
+              sideEffects: "None",
+            }),
+          ],
+          totalCount: 1,
+        };
+      }
+      if (kind === "validatingwebhookconfigurations") {
+        return {
+          kind,
+          items: [
+            item("validating-webhook", undefined, "1 webhooks", "healthy", {
+              webhooks: "1",
+              failurePolicy: "Fail",
+              sideEffects: "None",
+            }),
+          ],
+          totalCount: 1,
+        };
+      }
+      if (kind === "validatingadmissionpolicies") {
+        return {
+          kind,
+          items: [
+            item("require-labels", undefined, "1 validations", "healthy", {
+              validations: "1",
+              failurePolicy: "Fail",
+              paramKind: "ConfigMap/v1",
+            }),
+          ],
+          totalCount: 1,
+        };
+      }
+      if (kind === "validatingadmissionpolicybindings") {
+        return {
+          kind,
+          items: [
+            item("require-labels-binding", undefined, "Bound", "healthy", {
+              policy: "require-labels",
+              actions: "Deny",
+              parameter: "—",
+            }),
+          ],
+          totalCount: 1,
+        };
+      }
       return { kind, items: [], totalCount: 0 };
     }
     case "simpleResources.counts":
@@ -707,6 +759,10 @@ export function resultFor(method: string, params?: JsonRecord): unknown {
         priorityClasses: 1,
         runtimeClasses: 1,
         leases: 1,
+        mutatingWebhookConfigurations: 1,
+        validatingWebhookConfigurations: 1,
+        validatingAdmissionPolicies: 1,
+        validatingAdmissionPolicyBindings: 1,
       };
     case "ingresses.apply":
     case "gatewayresources.apply":

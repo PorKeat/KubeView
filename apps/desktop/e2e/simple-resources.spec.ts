@@ -43,6 +43,26 @@ const pages = [
   { id: "priorityclasses", title: "Priority Classes", rows: 1 },
   { id: "runtimeclasses", title: "Runtime Classes", rows: 1 },
   { id: "leases", title: "Leases", rows: 1 },
+  {
+    id: "mutatingwebhookconfigurations",
+    title: "Mutating Webhook Configs",
+    rows: 1,
+  },
+  {
+    id: "validatingwebhookconfigurations",
+    title: "Validating Webhook Configs",
+    rows: 1,
+  },
+  {
+    id: "validatingadmissionpolicies",
+    title: "Validating Admission Policies",
+    rows: 1,
+  },
+  {
+    id: "validatingadmissionpolicybindings",
+    title: "Admission Policy Bindings",
+    rows: 1,
+  },
 ];
 
 test.describe("KubeView simple resource pages", () => {

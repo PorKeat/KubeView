@@ -11,7 +11,11 @@ export type SimpleResourceKind =
   | "limitranges"
   | "priorityclasses"
   | "runtimeclasses"
-  | "leases";
+  | "leases"
+  | "mutatingwebhookconfigurations"
+  | "validatingwebhookconfigurations"
+  | "validatingadmissionpolicies"
+  | "validatingadmissionpolicybindings";
 
 export type SimpleResourceStatusTone =
   "healthy" | "warning" | "critical" | "muted";
@@ -49,4 +53,8 @@ export interface SimpleResourceCountsResult {
   priorityClasses: number;
   runtimeClasses: number;
   leases: number;
+  mutatingWebhookConfigurations: number;
+  validatingWebhookConfigurations: number;
+  validatingAdmissionPolicies: number;
+  validatingAdmissionPolicyBindings: number;
 }

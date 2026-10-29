@@ -29,6 +29,9 @@ import {
   Activity,
   ArrowUp,
   SlidersHorizontal,
+  Webhook,
+  FileCheck2,
+  Link2,
   Monitor,
   Keyboard,
   Timer,
@@ -129,6 +132,10 @@ export interface SidebarCounts {
   priorityClasses: number;
   runtimeClasses: number;
   leases: number;
+  mutatingWebhookConfigurations: number;
+  validatingWebhookConfigurations: number;
+  validatingAdmissionPolicies: number;
+  validatingAdmissionPolicyBindings: number;
 }
 
 export function buildNavigationGroups(counts: SidebarCounts): NavGroup[] {
@@ -165,6 +172,10 @@ export function buildNavigationGroups(counts: SidebarCounts): NavGroup[] {
     priorityClasses,
     runtimeClasses,
     leases,
+    mutatingWebhookConfigurations,
+    validatingWebhookConfigurations,
+    validatingAdmissionPolicies,
+    validatingAdmissionPolicyBindings,
   } = counts;
 
   return [
@@ -423,6 +434,55 @@ export function buildNavigationGroups(counts: SidebarCounts): NavGroup[] {
           title: "Leases",
           icon: Clock,
           badge: leases > 0 ? leases : undefined,
+          badgeVariant: "accent",
+        },
+      ],
+    },
+    {
+      category: "Admission",
+      items: [
+        {
+          id: "mutatingwebhookconfigurations",
+          title: "Mutating Webhook Configs",
+          shortTitle: "Mutating Webhooks",
+          icon: Webhook,
+          badge:
+            mutatingWebhookConfigurations > 0
+              ? mutatingWebhookConfigurations
+              : undefined,
+          badgeVariant: "accent",
+        },
+        {
+          id: "validatingwebhookconfigurations",
+          title: "Validating Webhook Configs",
+          shortTitle: "Validating Webhooks",
+          icon: ShieldCheck,
+          badge:
+            validatingWebhookConfigurations > 0
+              ? validatingWebhookConfigurations
+              : undefined,
+          badgeVariant: "accent",
+        },
+        {
+          id: "validatingadmissionpolicies",
+          title: "Validating Admission Policies",
+          shortTitle: "Admission Policies",
+          icon: FileCheck2,
+          badge:
+            validatingAdmissionPolicies > 0
+              ? validatingAdmissionPolicies
+              : undefined,
+          badgeVariant: "accent",
+        },
+        {
+          id: "validatingadmissionpolicybindings",
+          title: "Admission Policy Bindings",
+          shortTitle: "Policy Bindings",
+          icon: Link2,
+          badge:
+            validatingAdmissionPolicyBindings > 0
+              ? validatingAdmissionPolicyBindings
+              : undefined,
           badgeVariant: "accent",
         },
       ],

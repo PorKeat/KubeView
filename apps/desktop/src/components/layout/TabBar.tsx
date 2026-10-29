@@ -36,6 +36,9 @@ import {
   ArrowUp,
   Shield,
   SlidersHorizontal,
+  Webhook,
+  FileCheck2,
+  Link2,
 } from "lucide-react";
 import { useTabStore, TabItem } from "@/stores/tabStore";
 import { useLayoutStore } from "@/stores/layoutStore";
@@ -102,6 +105,14 @@ export function TabBar() {
         return Cpu;
       case "leases":
         return Clock;
+      case "mutatingwebhookconfigurations":
+        return Webhook;
+      case "validatingwebhookconfigurations":
+        return ShieldCheck;
+      case "validatingadmissionpolicies":
+        return FileCheck2;
+      case "validatingadmissionpolicybindings":
+        return Link2;
       case "pods":
         return Box;
       case "deployments":

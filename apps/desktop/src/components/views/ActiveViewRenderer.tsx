@@ -97,6 +97,24 @@ export function ActiveViewRenderer() {
           return <SimpleResourcesView kind="leases" />;
         }
 
+        if (activeTabId === "mutatingwebhookconfigurations") {
+          return <SimpleResourcesView kind="mutatingwebhookconfigurations" />;
+        }
+
+        if (activeTabId === "validatingwebhookconfigurations") {
+          return <SimpleResourcesView kind="validatingwebhookconfigurations" />;
+        }
+
+        if (activeTabId === "validatingadmissionpolicies") {
+          return <SimpleResourcesView kind="validatingadmissionpolicies" />;
+        }
+
+        if (activeTabId === "validatingadmissionpolicybindings") {
+          return (
+            <SimpleResourcesView kind="validatingadmissionpolicybindings" />
+          );
+        }
+
         if (activeTabId === "fleet") {
           return <FleetCatalogView />;
         }

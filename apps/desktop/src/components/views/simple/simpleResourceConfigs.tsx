@@ -15,8 +15,12 @@ import {
   Repeat,
   Route,
   Shield,
+  ShieldCheck,
   SlidersHorizontal,
+  Webhook,
   Waypoints,
+  FileCheck2,
+  Link2,
   type LucideIcon,
 } from "lucide-react";
 
@@ -506,6 +510,152 @@ export const SIMPLE_RESOURCE_CONFIGS: Record<
         label: "Renewed",
         render: (item) => (
           <DetailValue item={item} detailKey="renewTime" mono />
+        ),
+      },
+    ],
+  },
+  mutatingwebhookconfigurations: {
+    kind: "mutatingwebhookconfigurations",
+    title: "Mutating Webhook Configs",
+    description:
+      "Admission webhooks that can rewrite objects before persistence. A failing mutating webhook can block every matching write.",
+    icon: Webhook,
+    namespaceScoped: false,
+    searchPlaceholder: "Filter mutating webhooks...",
+    emptyTitle: "No mutating webhook configs",
+    emptyDescription:
+      "The cluster has no mutating admission webhooks configured.",
+    primary: (item) => item.name,
+    columns: [
+      {
+        key: "webhooks",
+        label: "Webhooks",
+        render: (item) => (
+          <span className="font-mono text-[10px] tabular-nums">
+            {detail(item, "webhooks")}
+          </span>
+        ),
+      },
+      {
+        key: "failurePolicy",
+        label: "Failure policy",
+        render: (item) => (
+          <DetailValue item={item} detailKey="failurePolicy" mono />
+        ),
+      },
+      {
+        key: "sideEffects",
+        label: "Side effects",
+        render: (item) => (
+          <DetailValue item={item} detailKey="sideEffects" mono />
+        ),
+      },
+    ],
+  },
+  validatingwebhookconfigurations: {
+    kind: "validatingwebhookconfigurations",
+    title: "Validating Webhook Configs",
+    description:
+      "Admission webhooks that reject invalid objects. A Fail policy can make an unavailable webhook block changes.",
+    icon: ShieldCheck,
+    namespaceScoped: false,
+    searchPlaceholder: "Filter validating webhooks...",
+    emptyTitle: "No validating webhook configs",
+    emptyDescription:
+      "The cluster has no validating admission webhooks configured.",
+    primary: (item) => item.name,
+    columns: [
+      {
+        key: "webhooks",
+        label: "Webhooks",
+        render: (item) => (
+          <span className="font-mono text-[10px] tabular-nums">
+            {detail(item, "webhooks")}
+          </span>
+        ),
+      },
+      {
+        key: "failurePolicy",
+        label: "Failure policy",
+        render: (item) => (
+          <DetailValue item={item} detailKey="failurePolicy" mono />
+        ),
+      },
+      {
+        key: "sideEffects",
+        label: "Side effects",
+        render: (item) => (
+          <DetailValue item={item} detailKey="sideEffects" mono />
+        ),
+      },
+    ],
+  },
+  validatingadmissionpolicies: {
+    kind: "validatingadmissionpolicies",
+    title: "Validating Admission Policies",
+    description:
+      "CEL-based admission rules evaluated by the API server. Policies stay inert until a binding targets them.",
+    icon: FileCheck2,
+    namespaceScoped: false,
+    searchPlaceholder: "Filter admission policies...",
+    emptyTitle: "No validating admission policies",
+    emptyDescription:
+      "The cluster does not serve validating admission policies.",
+    primary: (item) => item.name,
+    columns: [
+      {
+        key: "validations",
+        label: "Validations",
+        render: (item) => (
+          <span className="font-mono text-[10px] tabular-nums">
+            {detail(item, "validations")}
+          </span>
+        ),
+      },
+      {
+        key: "failurePolicy",
+        label: "Failure policy",
+        render: (item) => (
+          <DetailValue item={item} detailKey="failurePolicy" mono />
+        ),
+      },
+      {
+        key: "paramKind",
+        label: "Param kind",
+        render: (item) => (
+          <DetailValue item={item} detailKey="paramKind" mono />
+        ),
+      },
+    ],
+  },
+  validatingadmissionpolicybindings: {
+    kind: "validatingadmissionpolicybindings",
+    title: "Admission Policy Bindings",
+    description:
+      "Bindings activate a validating admission policy and choose which requests it evaluates.",
+    icon: Link2,
+    namespaceScoped: false,
+    searchPlaceholder: "Filter policy bindings...",
+    emptyTitle: "No admission policy bindings",
+    emptyDescription:
+      "No binding activates a validating admission policy on this cluster.",
+    primary: (item) => item.name,
+    columns: [
+      {
+        key: "policy",
+        label: "Policy",
+        render: (item) => <DetailValue item={item} detailKey="policy" mono />,
+      },
+      {
+        key: "actions",
+        label: "Actions",
+        render: (item) => <DetailValue item={item} detailKey="actions" mono />,
+      },
+      {
+        key: "parameter",
+        label: "Parameter",
+        render: (item) => (
+          <DetailValue item={item} detailKey="parameter" mono />
         ),
       },
     ],

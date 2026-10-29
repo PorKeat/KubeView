@@ -1,6 +1,50 @@
 import type { PageGuide } from "../types";
 
 export const PAGE_GUIDES: Record<string, PageGuide> = {
+  mutatingwebhookconfigurations: {
+    title: "Mutating Webhook Configs",
+    beginner:
+      "Mutating webhooks can rewrite objects during admission. A broken webhook with a Fail policy can block matching writes.",
+    intermediate:
+      "Check the failure policy and side effects. A webhook can be healthy but still add latency to every applicable request.",
+    advanced:
+      "Mutating webhooks run before validation. Rules, selectors, and reinvocation policy determine how many times a request can be changed.",
+    pathId: "first-steps",
+    lessonId: "everything-is-a-resource",
+  },
+  validatingwebhookconfigurations: {
+    title: "Validating Webhook Configs",
+    beginner:
+      "Validating webhooks reject requests that break a policy. If the webhook is unavailable, Fail policies reject the request too.",
+    intermediate:
+      "Inspect failure policy, side effects, and the rules that select requests. A single broad webhook can affect the whole cluster.",
+    advanced:
+      "Admission webhooks receive API server requests and must be highly available. Use narrow match rules and budget latency.",
+    pathId: "first-steps",
+    lessonId: "everything-is-a-resource",
+  },
+  validatingadmissionpolicies: {
+    title: "Validating Admission Policies",
+    beginner:
+      "ValidatingAdmissionPolicy uses CEL expressions evaluated inside the API server. A policy needs a binding before it enforces anything.",
+    intermediate:
+      "Compare the expression set, failure policy, and parameter kind. Invalid CEL or missing parameters can make a policy unusable.",
+    advanced:
+      "Policies run in admission order with webhooks. Match constraints and parameter references decide which requests pay the cost.",
+    pathId: "first-steps",
+    lessonId: "everything-is-a-resource",
+  },
+  validatingadmissionpolicybindings: {
+    title: "Admission Policy Bindings",
+    beginner:
+      "A binding activates a policy and chooses whether matching requests are denied, warned, or audited.",
+    intermediate:
+      "Check the policy reference and validation actions. A binding can target only part of the cluster with match resources.",
+    advanced:
+      "Bindings can supply parameters for policy evaluation. Missing parameters or a stale policy name silently weaken enforcement.",
+    pathId: "first-steps",
+    lessonId: "everything-is-a-resource",
+  },
   horizontalpodautoscalers: {
     title: "Horizontal Pod Autoscalers",
     beginner:

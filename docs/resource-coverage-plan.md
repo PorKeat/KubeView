@@ -1,14 +1,14 @@
 # Resource Coverage Plan (RC1–RC5)
 
-> Status: RC1–RC2 implemented; RC3–RC5 planned. This track closes the resource-page gap against the Freelens/Lens reference sidebar. It feeds the existing roadmap phases for the resource browser (04), networking (09), storage (10), and Helm (11).
+> Status: RC1–RC3 implemented; RC4–RC5 planned. This track closes the resource-page gap against the Freelens/Lens reference sidebar. It feeds the existing roadmap phases for the resource browser (04), networking (09), storage (10), and Helm (11).
 
 ## Current Coverage
 
 Reference inventory: **36 resource entries** across seven groups.
 
-- **30 implemented**
+- **34 implemented**
 - **0 partial**
-- **6 fully missing**
+- **2 fully missing**
 
 | Group     | Implemented                                                                        | Missing                                                                                                                                                                                                                                                 |
 | --------- | ---------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |

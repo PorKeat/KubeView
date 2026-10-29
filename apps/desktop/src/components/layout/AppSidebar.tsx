@@ -200,6 +200,14 @@ export function AppSidebar() {
         priorityClasses: simpleResourceCounts?.priorityClasses ?? 0,
         runtimeClasses: simpleResourceCounts?.runtimeClasses ?? 0,
         leases: simpleResourceCounts?.leases ?? 0,
+        mutatingWebhookConfigurations:
+          simpleResourceCounts?.mutatingWebhookConfigurations ?? 0,
+        validatingWebhookConfigurations:
+          simpleResourceCounts?.validatingWebhookConfigurations ?? 0,
+        validatingAdmissionPolicies:
+          simpleResourceCounts?.validatingAdmissionPolicies ?? 0,
+        validatingAdmissionPolicyBindings:
+          simpleResourceCounts?.validatingAdmissionPolicyBindings ?? 0,
       }),
     [
       availableContexts.length,
