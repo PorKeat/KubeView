@@ -5,7 +5,7 @@
 # KubeView
 
 <p align="center">
-  <a href="LICENSE"><img src="https://img.shields.io/badge/License-BSL_1.1-blue.svg?style=flat-square" alt="License: BSL 1.1" /></a>
+  <a href="LICENSE"><img src="https://img.shields.io/badge/License-Apache_2.0-blue.svg?style=flat-square" alt="License: Apache 2.0" /></a>
   <a href="SECURITY.md"><img src="https://img.shields.io/badge/Security-Policy_Active-38B879.svg?style=flat-square" alt="Security Policy" /></a>
   <a href="CONTRIBUTING.md"><img src="https://img.shields.io/badge/PRs-Welcome-F08A42.svg?style=flat-square" alt="PRs Welcome" /></a>
   <a href="CODE_OF_CONDUCT.md"><img src="https://img.shields.io/badge/Contributor_Covenant-v2.1-teal.svg?style=flat-square" alt="Code of Conduct" /></a>
@@ -94,7 +94,27 @@ flowchart LR
 - **Drift Classification:** Compare desired manifests against live resources and classify each as in sync, changed, missing, or error.
 - **Focused Diff Review:** Inspect desired and live YAML side by side using the shared diff renderer.
 - **Reviewed Apply:** Validate the desired manifest with a dry-run, check RBAC capabilities, then apply only after explicit confirmation.
-- **Local-First Safety:** Manifest contents are read by the Go sidecar and never uploaded. Remote Git, Kustomize, Helm, Argo CD, Flux, and CI integrations are planned next.
+- **Local-First Safety:** Manifest contents are read by the Go sidecar and never uploaded. Helm release/chart browsing is read-only; remote Git, Kustomize, Helm lifecycle actions, Argo CD, Flux, and CI integrations remain planned.
+
+### 7. 🧭 Cluster Rail & Catalog
+
+- **Far-left cluster rail** with live health dots, two-letter context tags, pinning, and quick switching.
+- **Catalog sidebar** with clusters, kubeconfigs, web links, learning, and fleet health.
+- **Catalog tools** include search, environment labels, pins, bulk actions, sorting, latency, and a detail drawer.
+
+### 8. 🧩 Complete Resource Coverage
+
+- All **36 reference resource pages** now exist, including namespaces, events, replication controllers, endpoint slices, ingress classes, PVCs, HPAs, PDBs, quotas, limits, scheduling classes, leases, and admission resources.
+- Shared search, sorting, filtering, detail drawer, YAML copy, and guarded deletes across the simple-resource pages.
+
+### 9. ⛵ Helm Browser
+
+- **Helm releases** decoded from cluster release secrets, with chart, app version, revision, and status.
+- **Chart repositories** can be added locally and browsed read-only. Helm install/upgrade/rollback remain future work.
+
+### 10. ⚙️ Settings V2
+
+- Startup page, cluster rail visibility, sidebar launch behavior, guardrails, read-only context protection, density, accent/status/accessibility palettes, polling behavior, notifications, terminal/log defaults, Helm integrations, and settings export/import.
 
 ---
 
@@ -102,7 +122,7 @@ flowchart LR
 
 Every major view and component in KubeView adheres to clean architecture principles:
 
-- **Maximum File Length Under 680 Lines:** All legacy monolithic views have been decomposed into cohesive subcomponents with explicit TypeScript contracts.
+- **Maximum File Length Under 500 Lines:** All legacy monolithic views have been decomposed into cohesive subcomponents with explicit TypeScript contracts.
 - **100% Backward Compatibility:** Re-export barrels preserve standard import paths across the codebase.
 - **WCAG AA Compliance:** High-contrast tokens, semantic ARIA attributes, and full keyboard navigation support across dropdowns, tables, drawers, and modal dialogs.
 
@@ -212,7 +232,7 @@ Explore the detailed architecture and technical specifications in [`docs/`](docs
 KubeView is built for enterprise production readiness, adhering to open-source governance and security standards:
 
 - 🔒 [**Security Policy (SECURITY.md)**](SECURITY.md) — Vulnerability reporting, Coordinated Disclosure SLA, trust model, and scope.
-- 📜 [**License (LICENSE)**](LICENSE) — Licensed under **Business Source License 1.1 (BSL 1.1)**. Free for personal, educational, and internal cluster use; strictly prohibits competing forks and commercial clones.
+- 📜 [**License (LICENSE)**](LICENSE) — Open source under the **Apache License 2.0**. Use, modify, and distribute it under the license terms.
 - 🤝 [**Contributing Guide (CONTRIBUTING.md)**](CONTRIBUTING.md) — Local development, conventional commits, quality gates, and PR review process.
 - 💖 [**Code of Conduct (CODE_OF_CONDUCT.md)**](CODE_OF_CONDUCT.md) — Contributor Covenant v2.1 community pledge and enforcement standards.
 - 📋 [**Changelog (CHANGELOG.md)**](CHANGELOG.md) — Keep a Changelog version history and release notes.
@@ -221,12 +241,12 @@ KubeView is built for enterprise production readiness, adhering to open-source g
 
 ## 📄 License & Community Usage
 
-KubeView is licensed under the **Business Source License 1.1 (BSL 1.1)**.
+KubeView is open source under the **Apache License 2.0**.
 
-- **Free for Developers & Community:** You are 100% free to download, run, test, and use KubeView for all personal, educational, and internal organizational cluster management operations.
-- **Anti-Competitor & Anti-Fork Restriction:** You may NOT make the functionality of KubeView available to third parties as a competing product, commercial fork, SaaS, or hosted Kubernetes management service without an explicit commercial license.
-- **Open-Source Transition:** On October 21, 2030, this release automatically transitions to the Apache License, Version 2.0.
+- **Open Source:** You may use, reproduce, modify, and distribute KubeView, including commercially, under the terms of the Apache License 2.0.
+- **Patent Grant:** The license includes an express patent grant from contributors.
+- **Attribution:** Keep the copyright notice and NOTICE file with distributions.
 
 See the [LICENSE](LICENSE) file for the full legal text.
 
-Copyright © 2026 [PorKeat](https://github.com/PorKeat). All Rights Reserved.
+Copyright © 2026 [Seng Porkeat](https://github.com/PorKeat).

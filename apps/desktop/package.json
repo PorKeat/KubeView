@@ -2,8 +2,8 @@
   "name": "@kubeview/desktop",
   "version": "0.2.0",
   "private": true,
-  "license": "BSL-1.1",
-  "author": "PorKeat <alexkgm2412@gmail.com>",
+  "license": "Apache-2.0",
+  "author": "Seng Porkeat <alexkgm2412@gmail.com>",
   "scripts": {
     "dev": "next dev --turbopack -p 3005 -H 127.0.0.1",
     "build": "next build",

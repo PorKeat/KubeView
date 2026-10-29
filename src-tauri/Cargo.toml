@@ -2,7 +2,8 @@
 name = "kubeview"
 version = "0.2.0"
 description = "Next-generation Kubernetes desktop IDE and operations platform"
-authors = ["KubeView Authors"]
+authors = ["Seng Porkeat <alexkgm2412@gmail.com>"]
+license = "Apache-2.0"
 edition = "2021"
 
 [lib]

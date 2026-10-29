@@ -10,14 +10,14 @@ Reference inventory: **36 resource entries** across seven groups.
 - **0 partial**
 - **0 fully missing**
 
-| Group     | Implemented                                                                        | Missing                                                                                                                                                                                                                                                 |
-| --------- | ---------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Workloads | Overview, Pods, Deployments, DaemonSets, StatefulSets, ReplicaSets, Jobs, CronJobs | Replication Controllers                                                                                                                                                                                                                                 |
-| Network   | Services, Endpoints, Ingresses, Network Policies, Port Forwarding                  | Endpoint Slices, Ingress Classes                                                                                                                                                                                                                        |
-| Storage   | Persistent Volumes, Storage Classes                                                | Persistent Volume Claims                                                                                                                                                                                                                                |
-| Config    | ConfigMaps, Secrets                                                                | Resource Quotas, Limit Ranges, Horizontal Pod Autoscalers, Pod Disruption Budgets, Priority Classes, Runtime Classes, Leases, Mutating Webhook Configs, Validating Webhook Configs, Validating Admission Policies, Validating Admission Policy Bindings |
-| Helm      | — (only Helm release Secret labeling)                                              | Charts, Releases                                                                                                                                                                                                                                        |
-| General   | —                                                                                  | Namespaces, global Events                                                                                                                                                                                                                               |
+| Group     | Implemented                                                                                                                                                                                                                                                                  | Missing |
+| --------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------- |
+| Workloads | Overview, Pods, Deployments, DaemonSets, StatefulSets, ReplicaSets, Replication Controllers, Jobs, CronJobs                                                                                                                                                                  | —       |
+| Network   | Services, Endpoints, Endpoint Slices, Ingresses, Ingress Classes, Network Policies, Port Forwarding                                                                                                                                                                          | —       |
+| Storage   | Persistent Volumes, Persistent Volume Claims, Storage Classes                                                                                                                                                                                                                | —       |
+| Config    | ConfigMaps, Secrets, Resource Quotas, Limit Ranges, Horizontal Pod Autoscalers, Pod Disruption Budgets, Priority Classes, Runtime Classes, Leases, Mutating Webhook Configs, Validating Webhook Configs, Validating Admission Policies, Validating Admission Policy Bindings | —       |
+| Helm      | Releases, Charts                                                                                                                                                                                                                                                             | —       |
+| General   | Namespaces, global Events                                                                                                                                                                                                                                                    | —       |
 
 KubeView also has pages not in this reference: Gateway API, CNI Observability, RBAC, Service Accounts, Permissions Checker, Custom Resources, GitOps Drift, the cluster catalog, and the Learning Center.
 
@@ -44,14 +44,14 @@ KubeView also has pages not in this reference: Gateway API, CNI Observability, R
 ### Contracts
 
 - `SimpleResourceItem`, `SimpleResourceListResult`, `SimpleResourceCountsResult`.
-- Helm gets typed contracts (`HelmReleaseSummary`, later chart types).
+- Helm releases and chart browsing are implemented; install/upgrade/rollback are out of scope.
 
 ### Desktop
 
 - `SimpleResourcesView`: shared toolbar, search, filters, sorting, refresh, loading/empty/403 states, and a read-only detail drawer.
 - `simpleResourceConfigs.tsx`: per-kind columns, labels, filters, and empty copy.
 - Sidebar count badges load through `simpleResources.counts`.
-- Helm views are separate and richer.
+- Helm release rows use the shared resource table; Charts has a dedicated repository browser.
 
 ### Navigation
 
@@ -67,7 +67,7 @@ KubeView also has pages not in this reference: Gateway API, CNI Observability, R
 
 ---
 
-## RC1 — Foundation and core visibility _(large)_
+## RC1 — Foundation and core visibility ✅ Completed _(large)_
 
 **Framework plus six pages and the Events upgrade.**
 
@@ -82,7 +82,7 @@ Also: simple-resource engine layer, contracts, store, table shell, drawer, count
 
 **Acceptance:** all six pages render live data; namespace scoping works; 403 shows an inline permission state; counts populate; existing suites pass.
 
-## RC2 — Scaling, quota, and scheduling _(medium)_
+## RC2 — Scaling, quota, and scheduling ✅ Completed _(medium)_
 
 | Group      | Deliverable                                                                                                                  |
 | ---------- | ---------------------------------------------------------------------------------------------------------------------------- |
@@ -92,7 +92,7 @@ Also: simple-resource engine layer, contracts, store, table shell, drawer, count
 
 **Acceptance:** correct empty states on clusters without these objects; HPA/PDB rows expose the fields operators need without opening the drawer.
 
-## RC3 — Admission configuration _(small–medium)_
+## RC3 — Admission configuration ✅ Completed _(small–medium)_
 
 - Mutating Webhook Configs
 - Validating Webhook Configs
@@ -103,7 +103,7 @@ Notes: discovery-based version selection; unsupported kinds are omitted from nav
 
 **Acceptance:** pages appear only on clusters serving the APIs; read-only drawer handles YAML.
 
-## RC4 — Helm _(medium–large)_
+## RC4 — Helm ✅ Completed _(medium–large)_
 
 **4a. Releases**
 
@@ -119,7 +119,7 @@ Notes: discovery-based version selection; unsupported kinds are omitted from nav
 
 **Acceptance:** release list matches `helm list` on a test cluster; chart browsing works against a configured repository; values are not shown by default.
 
-## RC5 — Hardening _(medium)_
+## RC5 — Hardening ✅ Completed _(medium)_
 
 - Copy YAML / download manifest for simple resources.
 - Delete with confirmation for safe kinds only (Leases, PDBs, HPAs, webhook configs); no bulk destructive actions.
