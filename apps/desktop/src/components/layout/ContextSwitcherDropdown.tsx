@@ -19,7 +19,7 @@ import { cn } from "@/lib/utils";
 import { Tooltip } from "@/components/ui/Tooltip";
 
 interface ContextSwitcherDropdownProps {
-  variant?: "default" | "unified";
+  variant?: "default" | "unified" | "compact";
   className?: string;
 }
 
@@ -135,38 +135,70 @@ export function ContextSwitcherDropdown({
         aria-label={`Active Kubernetes cluster: ${currentContext || "Select Cluster"}, status ${connectionStatus}`}
         aria-expanded={isOpen}
         className={cn(
-          "flex min-w-0 max-w-[170px] items-center gap-2 text-xs transition-colors text-[var(--foreground)] outline-hidden group select-none cursor-pointer focus-visible:ring-2 focus-visible:ring-[var(--accent)] focus-visible:outline-hidden sm:max-w-none",
+          "relative flex min-w-0 max-w-[170px] items-center gap-2 text-xs transition-colors text-[var(--foreground)] outline-hidden group select-none cursor-pointer focus-visible:ring-2 focus-visible:ring-[var(--accent)] focus-visible:outline-hidden sm:max-w-none",
           variant === "default" &&
             "px-2.5 py-1.5 rounded-lg bg-[var(--background)] border border-[var(--border)] hover:bg-[var(--surface-hover)] hover:border-black/20 dark:hover:border-white/20",
           variant === "unified" &&
             "px-2.5 py-1.5 rounded-md hover:bg-black/[0.05] dark:hover:bg-white/[0.06]",
+          variant === "compact" &&
+            "h-9 w-9 justify-center rounded-lg px-0 py-0 hover:bg-black/[0.05] dark:hover:bg-white/[0.06]",
           isOpen &&
             variant === "unified" &&
+            "bg-black/[0.08] dark:bg-white/[0.1]",
+          isOpen &&
+            variant === "compact" &&
             "bg-black/[0.08] dark:bg-white/[0.1]",
           className,
         )}
         title={`Active Context: ${currentContext || "None"} (${connectionStatus})`}
       >
-        <div className="flex items-center gap-1.5 min-w-0">
-          <Server className="w-3.5 h-3.5 text-[var(--muted)] group-hover:text-[var(--foreground)] transition-colors shrink-0" />
-          <span className="font-semibold max-w-[90px] truncate sm:max-w-[130px]">
-            {currentContext || "Select Cluster"}
-          </span>
-        </div>
-        <span className="hidden sm:inline-flex">
-          {getProviderBadge(currentInfo.provider)}
-        </span>
-        {latencyMs > 0 && (
-          <span className="hidden sm:inline text-[11px] text-[var(--muted)] font-mono tabular-nums">
-            ({latencyMs}ms)
-          </span>
+        {variant === "compact" ? (
+          <>
+            <Server
+              className="h-4 w-4 text-[var(--muted)] transition-colors group-hover:text-[var(--foreground)]"
+              aria-hidden="true"
+            />
+            <span
+              className={cn(
+                "absolute right-1.5 top-1.5 h-1.5 w-1.5 rounded-full border border-[var(--surface)]",
+                connectionStatus === "connected"
+                  ? "bg-emerald-500"
+                  : connectionStatus === "degraded" ||
+                      connectionStatus === "checking"
+                    ? "bg-amber-500"
+                    : "bg-rose-500",
+                connectionStatus === "checking" && "animate-pulse",
+              )}
+              aria-hidden="true"
+            />
+            <span className="sr-only">
+              {currentContext || "Select Cluster"}
+            </span>
+          </>
+        ) : (
+          <>
+            <div className="flex items-center gap-1.5 min-w-0">
+              <Server className="w-3.5 h-3.5 text-[var(--muted)] group-hover:text-[var(--foreground)] transition-colors shrink-0" />
+              <span className="font-semibold max-w-[90px] truncate sm:max-w-[130px]">
+                {currentContext || "Select Cluster"}
+              </span>
+            </div>
+            <span className="hidden sm:inline-flex">
+              {getProviderBadge(currentInfo.provider)}
+            </span>
+            {latencyMs > 0 && (
+              <span className="hidden sm:inline text-[11px] text-[var(--muted)] font-mono tabular-nums">
+                ({latencyMs}ms)
+              </span>
+            )}
+            <ChevronDown
+              className={cn(
+                "w-3 h-3 text-[var(--muted)] group-hover:text-[var(--foreground)] transition-transform duration-200 shrink-0",
+                isOpen && "rotate-180",
+              )}
+            />
+          </>
         )}
-        <ChevronDown
-          className={cn(
-            "w-3 h-3 text-[var(--muted)] group-hover:text-[var(--foreground)] transition-transform duration-200 shrink-0",
-            isOpen && "rotate-180",
-          )}
-        />
       </button>
 
       <AnimatePresence>
@@ -181,9 +213,14 @@ export function ContextSwitcherDropdown({
               damping: 30,
               mass: 0.8,
             }}
-            style={{ transformOrigin: "top left" }}
+            style={{
+              transformOrigin: variant === "compact" ? "top right" : "top left",
+            }}
             onClick={(e) => e.stopPropagation()}
-            className="absolute left-0 top-full mt-1.5 z-50 w-[360px] max-w-[calc(100vw-2rem)] p-2 rounded-xl bg-[var(--surface)] border border-[var(--border)] shadow-2xl shadow-black/30 dark:shadow-black/70 backdrop-blur-xl outline-hidden select-none"
+            className={cn(
+              "absolute top-full mt-1.5 z-50 w-[360px] max-w-[calc(100vw-2rem)] p-2 rounded-xl bg-[var(--surface)] border border-[var(--border)] shadow-2xl shadow-black/30 dark:shadow-black/70 backdrop-blur-xl outline-hidden select-none",
+              variant === "compact" ? "right-0" : "left-0",
+            )}
           >
             {/* Header & Quick Filter */}
             <div className="px-2 pt-1 pb-2 border-b border-[var(--border)] mb-1">

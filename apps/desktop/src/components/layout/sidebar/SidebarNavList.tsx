@@ -62,6 +62,7 @@ export function SidebarNavList({
                         onClick={() => onItemClick(item)}
                         className={cn(
                           "w-full flex items-center justify-between px-2.5 py-1.5 text-xs rounded-lg transition-colors text-left group relative",
+                          item.desktopHidden && "lg:hidden",
                           item.disabled
                             ? "opacity-35 cursor-not-allowed select-none hover:bg-transparent text-[var(--muted)]"
                             : isActive

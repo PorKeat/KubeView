@@ -28,6 +28,10 @@ import {
   ShieldCheck,
   GitBranch,
   GraduationCap,
+  FolderTree,
+  History,
+  Waypoints,
+  Route,
 } from "lucide-react";
 import { useTabStore, TabItem } from "@/stores/tabStore";
 import { useLayoutStore } from "@/stores/layoutStore";
@@ -68,6 +72,18 @@ export function TabBar() {
         return GitBranch;
       case "learning":
         return GraduationCap;
+      case "namespaces":
+        return FolderTree;
+      case "events":
+        return History;
+      case "replicationcontrollers":
+        return Repeat;
+      case "endpointslices":
+        return Waypoints;
+      case "ingressclasses":
+        return Route;
+      case "persistentvolumeclaims":
+        return HardDrive;
       case "pods":
         return Box;
       case "deployments":

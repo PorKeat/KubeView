@@ -22,6 +22,10 @@ import {
   FolderLock,
   Boxes,
   Server,
+  FolderTree,
+  History,
+  Waypoints,
+  Route,
   Monitor,
   Keyboard,
   Timer,
@@ -37,6 +41,7 @@ export interface NavItem {
   badge?: string | number;
   badgeVariant?: "default" | "warning" | "accent" | "soon";
   disabled?: boolean;
+  desktopHidden?: boolean;
 }
 
 export interface NavGroup {
@@ -108,6 +113,12 @@ export interface SidebarCounts {
   serviceAccounts: number;
   rbac: number;
   crds: number;
+  namespaces: number;
+  events: number;
+  replicationControllers: number;
+  endpointSlices: number;
+  ingressClasses: number;
+  persistentVolumeClaims: number;
 }
 
 export function buildNavigationGroups(counts: SidebarCounts): NavGroup[] {
@@ -131,6 +142,12 @@ export function buildNavigationGroups(counts: SidebarCounts): NavGroup[] {
     serviceAccounts,
     rbac,
     crds,
+    namespaces,
+    events,
+    replicationControllers,
+    endpointSlices,
+    ingressClasses,
+    persistentVolumeClaims,
   } = counts;
 
   return [
@@ -143,19 +160,33 @@ export function buildNavigationGroups(counts: SidebarCounts): NavGroup[] {
           icon: Server,
           badge: contextCount > 0 ? contextCount : undefined,
           badgeVariant: "accent",
+          desktopHidden: true,
         },
         { id: "overview", title: "Cluster Overview", icon: LayoutDashboard },
-        {
-          id: "learning",
-          title: "Learning Center",
-          shortTitle: "Learn",
-          icon: GraduationCap,
-        },
         {
           id: "gitops",
           title: "GitOps Drift",
           shortTitle: "GitOps",
           icon: GitBranch,
+        },
+      ],
+    },
+    {
+      category: "Cluster",
+      items: [
+        {
+          id: "namespaces",
+          title: "Namespaces",
+          icon: FolderTree,
+          badge: namespaces > 0 ? namespaces : undefined,
+          badgeVariant: "accent",
+        },
+        {
+          id: "events",
+          title: "Events",
+          icon: History,
+          badge: events > 0 ? events : undefined,
+          badgeVariant: "accent",
         },
       ],
     },
@@ -181,6 +212,15 @@ export function buildNavigationGroups(counts: SidebarCounts): NavGroup[] {
           title: "ReplicaSets",
           icon: Repeat,
           badge: replicaSets > 0 ? replicaSets : undefined,
+          badgeVariant: "accent",
+        },
+        {
+          id: "replicationcontrollers",
+          title: "Replication Controllers",
+          shortTitle: "Replication Ctrls",
+          icon: Repeat,
+          badge:
+            replicationControllers > 0 ? replicationControllers : undefined,
           badgeVariant: "accent",
         },
         {
@@ -224,10 +264,24 @@ export function buildNavigationGroups(counts: SidebarCounts): NavGroup[] {
           badgeVariant: "accent",
         },
         {
+          id: "endpointslices",
+          title: "Endpoint Slices",
+          icon: Waypoints,
+          badge: endpointSlices > 0 ? endpointSlices : undefined,
+          badgeVariant: "accent",
+        },
+        {
           id: "ingresses",
           title: "Ingresses & Gateways",
           icon: Globe,
           badge: ingressGateway > 0 ? ingressGateway : undefined,
+          badgeVariant: "accent",
+        },
+        {
+          id: "ingressclasses",
+          title: "Ingress Classes",
+          icon: Route,
+          badge: ingressClasses > 0 ? ingressClasses : undefined,
           badgeVariant: "accent",
         },
         {
@@ -274,6 +328,15 @@ export function buildNavigationGroups(counts: SidebarCounts): NavGroup[] {
           title: "Persistent Volumes",
           icon: HardDrive,
           badge: persistentVolumes > 0 ? persistentVolumes : undefined,
+          badgeVariant: "accent",
+        },
+        {
+          id: "persistentvolumeclaims",
+          title: "Persistent Volume Claims",
+          shortTitle: "Volume Claims",
+          icon: HardDrive,
+          badge:
+            persistentVolumeClaims > 0 ? persistentVolumeClaims : undefined,
           badgeVariant: "accent",
         },
         {

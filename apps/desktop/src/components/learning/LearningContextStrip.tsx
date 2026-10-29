@@ -4,6 +4,7 @@ import * as React from "react";
 import { ArrowRight, Compass, GraduationCap, Lightbulb, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useTabStore } from "@/stores/tabStore";
+import { useLayoutStore } from "@/stores/layoutStore";
 import { useLearningStore } from "@/stores/learningStore";
 import { getPageGuide } from "@/features/learning/content/contextHelp";
 import { getPageTour } from "@/features/learning/content/tours";
@@ -11,6 +12,9 @@ import { LEARNING_LEVEL_LABELS } from "@/features/learning/types";
 
 export function LearningContextStrip() {
   const activeTabId = useTabStore((state) => state.activeTabId);
+  const fleetCatalogSection = useLayoutStore(
+    (state) => state.fleetCatalogSection,
+  );
   const openTab = useTabStore((state) => state.openTab);
   const learningMode = useLearningStore((state) => state.learningMode);
   const level = useLearningStore((state) => state.level);
@@ -19,8 +23,18 @@ export function LearningContextStrip() {
   const completedTours = useLearningStore((state) => state.completedTours);
   const [dismissedTabs, setDismissedTabs] = React.useState<string[]>([]);
 
-  const guide = getPageGuide(activeTabId);
-  const pageTour = getPageTour(activeTabId);
+  const guideKey =
+    activeTabId === "fleet"
+      ? fleetCatalogSection === "health"
+        ? "fleet"
+        : fleetCatalogSection === "kubeconfigs"
+          ? "fleet-kubeconfigs"
+          : fleetCatalogSection === "links"
+            ? "fleet-links"
+            : "fleet-catalog"
+      : activeTabId;
+  const guide = getPageGuide(guideKey);
+  const pageTour = getPageTour(guideKey);
   const isDismissed = dismissedTabs.includes(activeTabId);
 
   if (

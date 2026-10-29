@@ -19,6 +19,7 @@ export function FleetOverviewView() {
     >
       <FleetOverviewHeader
         configuredCount={fleet.configuredCount}
+        hasSnapshot={fleet.hasSnapshot}
         isRefreshing={fleet.isFleetLoading}
         onRefresh={() => void fleet.handleRefresh()}
         onManage={() => fleet.openKubeconfigModal("manage")}

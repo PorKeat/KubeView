@@ -451,6 +451,158 @@ export function resultFor(method: string, params?: JsonRecord): unknown {
       };
     case "cilium.hubbleFlows":
       return { flows: [hubbleFlow] };
+    case "simpleResources.list": {
+      const kind =
+        typeof params?.kind === "string" ? params.kind : "namespaces";
+      const item = (
+        name: string,
+        namespace: string | undefined,
+        status: string,
+        statusTone: string,
+        details: Record<string, string>,
+      ) => ({
+        name,
+        namespace,
+        status,
+        statusTone,
+        age: "3m",
+        createdAt: now,
+        details,
+        labels: {},
+        annotations: {},
+      });
+
+      if (kind === "namespaces") {
+        return {
+          kind,
+          items: [
+            item("default", undefined, "Active", "healthy", {
+              phase: "Active",
+            }),
+            item("kube-system", undefined, "Active", "healthy", {
+              phase: "Active",
+            }),
+            item("retiring", undefined, "Terminating", "warning", {
+              phase: "Terminating",
+            }),
+          ],
+          totalCount: 3,
+        };
+      }
+      if (kind === "events") {
+        return {
+          kind,
+          items: [
+            item("web.1a2b", "default", "Warning", "critical", {
+              reason: "BackOff",
+              message: "Back-off restarting failed container web",
+              type: "Warning",
+              object: "Pod/web-1",
+              count: "4",
+            }),
+            item("web.3c4d", "default", "Normal", "healthy", {
+              reason: "Scheduled",
+              message: "Successfully assigned default/web-1 to worker-1",
+              type: "Normal",
+              object: "Pod/web-1",
+              count: "1",
+            }),
+            item("api.5e6f", "kube-system", "Warning", "critical", {
+              reason: "FailedMount",
+              message: "MountVolume.SetUp failed for volume config",
+              type: "Warning",
+              object: "Pod/api-0",
+              count: "2",
+            }),
+          ],
+          totalCount: 3,
+        };
+      }
+      if (kind === "replicationcontrollers") {
+        return {
+          kind,
+          items: [
+            item("web-rc", "default", "1/2 ready", "warning", {
+              desired: "2",
+              ready: "1",
+              available: "1",
+              selector: "app=web",
+            }),
+          ],
+          totalCount: 1,
+        };
+      }
+      if (kind === "endpointslices") {
+        return {
+          kind,
+          items: [
+            item("web-abc", "default", "1 endpoints", "healthy", {
+              service: "web",
+              addressType: "IPv4",
+              endpoints: "1",
+              ports: "8080/TCP",
+            }),
+            item("web-def", "default", "0 endpoints", "warning", {
+              service: "web",
+              addressType: "IPv4",
+              endpoints: "0",
+              ports: "8081/TCP",
+            }),
+          ],
+          totalCount: 2,
+        };
+      }
+      if (kind === "ingressclasses") {
+        return {
+          kind,
+          items: [
+            item("nginx", undefined, "Default", "healthy", {
+              controller: "k8s.io/ingress-nginx",
+              default: "true",
+            }),
+            item("traefik", undefined, "Configured", "muted", {
+              controller: "traefik.io/ingress-controller",
+              default: "false",
+            }),
+          ],
+          totalCount: 2,
+        };
+      }
+      if (kind === "persistentvolumeclaims") {
+        return {
+          kind,
+          items: [
+            item("data", "default", "Bound", "healthy", {
+              capacity: "2Gi",
+              requested: "2Gi",
+              accessModes: "ReadWriteOnce",
+              storageClass: "fast",
+              volume: "pv-data",
+              volumeMode: "Filesystem",
+            }),
+            item("queue", "default", "Pending", "warning", {
+              capacity: "0",
+              requested: "1Gi",
+              accessModes: "ReadWriteOnce",
+              storageClass: "slow",
+              volume: "",
+              volumeMode: "Filesystem",
+            }),
+          ],
+          totalCount: 2,
+        };
+      }
+      return { kind, items: [], totalCount: 0 };
+    }
+    case "simpleResources.counts":
+      return {
+        namespaces: 3,
+        events: 3,
+        replicationControllers: 1,
+        endpointSlices: 2,
+        ingressClasses: 2,
+        persistentVolumeClaims: 2,
+      };
     case "ingresses.apply":
     case "gatewayresources.apply":
       return { ...ingress };

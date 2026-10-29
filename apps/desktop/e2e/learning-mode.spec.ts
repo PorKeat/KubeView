@@ -14,7 +14,8 @@ async function bootApp(page: Page) {
 }
 
 async function openLearningCenter(page: Page) {
-  await page.locator('[data-testid="nav-item-learning"]').click();
+  await page.locator('[data-testid="cluster-rail-all"]').click();
+  await page.locator('[data-testid="catalog-nav-learning"]').click();
   await expect(
     page.getByRole("heading", { name: "Learning Center" }),
   ).toBeVisible();
@@ -110,6 +111,13 @@ test.describe("KubeView UI - Learning mode", () => {
 
     await openLearningCenter(page);
     await page.locator('[data-testid="learning-level-intermediate"]').click();
+    // Learning lives under the All Clusters catalog; select the cluster tile
+    // to return to its resource sidebar before navigating resource pages.
+    await page
+      .locator(
+        '[data-testid="cluster-rail-context"][data-context-name="mock-cluster"]',
+      )
+      .click();
     await page.locator('[data-testid="nav-item-pods"]').click();
     await expect(strip).toBeVisible();
     await expect(strip).toContainText("Compare readiness");

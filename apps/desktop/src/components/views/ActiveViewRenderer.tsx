@@ -5,7 +5,8 @@ import { useTabStore } from "@/stores/tabStore";
 import { ClusterOverviewView } from "./ClusterOverviewView";
 import { GitOpsView } from "./gitops/GitOpsView";
 import { LearningCenterView } from "./learning/LearningCenterView";
-import { FleetOverviewView } from "./fleet/FleetOverviewView";
+import { FleetCatalogView } from "./fleet/FleetCatalogView";
+import { SimpleResourcesView } from "./simple/SimpleResourcesView";
 import { ResourceListView } from "./ResourceListView";
 import { DeploymentListView } from "./deployments/DeploymentListView";
 import { ReplicaSetListView } from "./replicasets/ReplicaSetListView";
@@ -44,8 +45,32 @@ export function ActiveViewRenderer() {
           return <ClusterOverviewView />;
         }
 
+        if (activeTabId === "namespaces") {
+          return <SimpleResourcesView kind="namespaces" />;
+        }
+
+        if (activeTabId === "events") {
+          return <SimpleResourcesView kind="events" />;
+        }
+
+        if (activeTabId === "replicationcontrollers") {
+          return <SimpleResourcesView kind="replicationcontrollers" />;
+        }
+
+        if (activeTabId === "endpointslices") {
+          return <SimpleResourcesView kind="endpointslices" />;
+        }
+
+        if (activeTabId === "ingressclasses") {
+          return <SimpleResourcesView kind="ingressclasses" />;
+        }
+
+        if (activeTabId === "persistentvolumeclaims") {
+          return <SimpleResourcesView kind="persistentvolumeclaims" />;
+        }
+
         if (activeTabId === "fleet") {
-          return <FleetOverviewView />;
+          return <FleetCatalogView />;
         }
 
         if (activeTabId === "gitops") {

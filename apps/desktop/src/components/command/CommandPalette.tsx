@@ -31,6 +31,10 @@ import {
   ShieldCheck,
   Boxes,
   GraduationCap,
+  FolderTree,
+  History,
+  Waypoints,
+  Route,
 } from "lucide-react";
 import { useLayoutStore } from "@/stores/layoutStore";
 import { useTabStore } from "@/stores/tabStore";
@@ -316,6 +320,72 @@ export function CommandPalette() {
               >
                 <Boxes className="w-4 h-4 text-violet-500 dark:text-violet-400" />
                 <span>Custom Resources</span>
+              </Command.Item>
+              <Command.Item
+                onSelect={() => navigateTo("namespaces", "Namespaces")}
+                value="Namespaces namespace partitions cluster structure"
+                className="flex items-center gap-2.5 px-2.5 py-2 rounded-md cursor-pointer hover:bg-[var(--surface-hover)] text-[var(--foreground)] transition-colors"
+              >
+                <FolderTree className="w-4 h-4 text-amber-500 dark:text-amber-400" />
+                <span>Namespaces</span>
+              </Command.Item>
+              <Command.Item
+                onSelect={() => {
+                  setCurrentNamespace("all");
+                  navigateTo("events", "Events");
+                }}
+                value="Events event warnings cluster activity"
+                className="flex items-center gap-2.5 px-2.5 py-2 rounded-md cursor-pointer hover:bg-[var(--surface-hover)] text-[var(--foreground)] transition-colors"
+              >
+                <History className="w-4 h-4 text-emerald-500 dark:text-emerald-400" />
+                <span>Events</span>
+              </Command.Item>
+              <Command.Item
+                onSelect={() => {
+                  setCurrentNamespace("all");
+                  navigateTo(
+                    "replicationcontrollers",
+                    "Replication Controllers",
+                  );
+                }}
+                value="Replication Controllers legacy workload"
+                className="flex items-center gap-2.5 px-2.5 py-2 rounded-md cursor-pointer hover:bg-[var(--surface-hover)] text-[var(--foreground)] transition-colors"
+              >
+                <Repeat className="w-4 h-4 text-cyan-500 dark:text-cyan-400" />
+                <span>Replication Controllers</span>
+              </Command.Item>
+              <Command.Item
+                onSelect={() => {
+                  setCurrentNamespace("all");
+                  navigateTo("endpointslices", "Endpoint Slices");
+                }}
+                value="Endpoint Slices endpoints discovery service"
+                className="flex items-center gap-2.5 px-2.5 py-2 rounded-md cursor-pointer hover:bg-[var(--surface-hover)] text-[var(--foreground)] transition-colors"
+              >
+                <Waypoints className="w-4 h-4 text-purple-500 dark:text-purple-400" />
+                <span>Endpoint Slices</span>
+              </Command.Item>
+              <Command.Item
+                onSelect={() => navigateTo("ingressclasses", "Ingress Classes")}
+                value="Ingress Classes ingress class controller"
+                className="flex items-center gap-2.5 px-2.5 py-2 rounded-md cursor-pointer hover:bg-[var(--surface-hover)] text-[var(--foreground)] transition-colors"
+              >
+                <Route className="w-4 h-4 text-sky-500 dark:text-sky-400" />
+                <span>Ingress Classes</span>
+              </Command.Item>
+              <Command.Item
+                onSelect={() => {
+                  setCurrentNamespace("all");
+                  navigateTo(
+                    "persistentvolumeclaims",
+                    "Persistent Volume Claims",
+                  );
+                }}
+                value="Persistent Volume Claims PVC storage"
+                className="flex items-center gap-2.5 px-2.5 py-2 rounded-md cursor-pointer hover:bg-[var(--surface-hover)] text-[var(--foreground)] transition-colors"
+              >
+                <HardDrive className="w-4 h-4 text-emerald-500 dark:text-emerald-400" />
+                <span>Persistent Volume Claims</span>
               </Command.Item>
             </Command.Group>
 

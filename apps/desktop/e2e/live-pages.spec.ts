@@ -173,7 +173,10 @@ test.describe("KubeView live sidebar audit", () => {
 
   for (const item of pages) {
     test(`audits ${item.title}`, async ({ page }) => {
-      const navItem = page.locator(`[data-testid="nav-item-${item.id}"]`);
+      const navItem =
+        item.id === "fleet"
+          ? page.locator('[data-testid="cluster-rail-all"]')
+          : page.locator(`[data-testid="nav-item-${item.id}"]`);
       if (await navItem.isDisabled()) {
         test.skip(true, `${item.title} is marked Soon in the sidebar.`);
         return;
@@ -199,6 +202,10 @@ test.describe("KubeView live sidebar audit", () => {
       if (item.id === "overview") {
         await page.waitForTimeout(200);
       } else if (item.id === "fleet") {
+        await expect(
+          page.locator('[data-testid="cluster-catalog-view"]'),
+        ).toBeVisible();
+        await page.getByRole("button", { name: "View fleet health" }).click();
         await expect(
           page.locator('[data-testid="fleet-overview-view"]'),
         ).toBeVisible();

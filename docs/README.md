@@ -32,6 +32,8 @@
   _9-Step Implementation Sequence_: Step-by-step engineering work breakdown structure (WBS), testing strategy (`envtest`, `testify`, `Playwright`), and quality gates.
 - [**ROADMAP.md**](ROADMAP.md)
   _16-Phase Feature Roadmap_: Detailed task checklists, status tracker, and milestone progression (Core IDE → Deep Ops → Ecosystem).
+- [**resource-coverage-plan.md**](resource-coverage-plan.md)
+  _Resource Coverage Track (RC1–RC5)_: Gap inventory against the Freelens/Lens sidebar and the shared simple-resource architecture for closing it.
 - [**gitops-integration.md**](gitops-integration.md)
   _GitOps Drift Integration_: Local manifest scanning, desired-versus-live drift, safe reviewed applies, security boundaries, and the Argo CD, Flux, multi-cluster, and CI roadmap.
 

@@ -3,6 +3,7 @@
 import * as React from "react";
 import { AppHeader } from "./AppHeader";
 import { AppSidebar } from "./AppSidebar";
+import { ClusterRail } from "./ClusterRail";
 import { TabBar } from "./TabBar";
 import { StatusBar } from "./StatusBar";
 import { ActiveViewRenderer } from "@/components/views/ActiveViewRenderer";
@@ -27,6 +28,7 @@ import { GuidedTour } from "@/components/learning/GuidedTour";
 import { useClusterStore } from "@/stores/clusterStore";
 import { useSettingsStore } from "@/stores/settingsStore";
 import { useTabStore } from "@/stores/tabStore";
+import { useCatalogStore } from "@/stores/catalogStore";
 
 export function AppShell() {
   const loadContexts = useClusterStore((s) => s.loadContexts);
@@ -38,6 +40,10 @@ export function AppShell() {
   const reducedMotion = useSettingsStore((s) => s.reducedMotion);
   const autoRefreshSeconds = useSettingsStore((s) => s.autoRefreshSeconds);
   const openTab = useTabStore((s) => s.openTab);
+
+  React.useEffect(() => {
+    void useCatalogStore.persist.rehydrate();
+  }, []);
 
   React.useEffect(() => {
     document.documentElement.dataset.fontSize = fontSize;
@@ -79,6 +85,7 @@ export function AppShell() {
 
       {/* 2. Main Middle Workspace (Sidebar + Tabbed Content) */}
       <div className="flex-1 flex overflow-hidden">
+        <ClusterRail />
         <AppSidebar />
 
         <main className="flex-1 flex flex-col min-w-0 bg-[var(--background)] overflow-hidden">

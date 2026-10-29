@@ -7,11 +7,14 @@ import { useTabStore } from "@/stores/tabStore";
 import { useClusterStore } from "@/stores/clusterStore";
 import { useSettingsStore, type SettingsSection } from "@/stores/settingsStore";
 import { cn } from "@/lib/utils";
+import { invokeRpc } from "@/lib/ipc";
+import type { SimpleResourceCountsResult } from "@kubeview/contracts";
 import { Tooltip } from "@/components/ui/Tooltip";
 import { buildNavigationGroups, type NavItem } from "./sidebar/navConfig";
 import { SidebarNavList } from "./sidebar/SidebarNavList";
 import { SidebarSettingsNav } from "./sidebar/SidebarSettingsNav";
 import { SidebarFooter } from "./sidebar/SidebarFooter";
+import { CatalogSidebarNav } from "./sidebar/CatalogSidebarNav";
 
 export function AppSidebar() {
   const {
@@ -20,12 +23,18 @@ export function AppSidebar() {
     setSidebarCollapsed,
     mobileSidebarOpen,
     setMobileSidebarOpen,
+    fleetCatalogSection,
+    setFleetCatalogSection,
+    catalogMode,
+    setCatalogMode,
   } = useLayoutStore();
   const { activeTabId, previousTabId, openTabs, openTab, setActiveTab } =
     useTabStore();
   const { activeSection, setActiveSection } = useSettingsStore();
+  const loadContexts = useClusterStore((state) => state.loadContexts);
   const {
     availableContexts,
+    currentContext,
     clusterOverview,
     totalPodsCount,
     pods,
@@ -65,7 +74,33 @@ export function AppSidebar() {
   const [collapsedGroups, setCollapsedGroups] = React.useState<
     Record<string, boolean>
   >({});
+  const [simpleResourceCounts, setSimpleResourceCounts] =
+    React.useState<SimpleResourceCountsResult | null>(null);
+
+  React.useEffect(() => {
+    let cancelled = false;
+    if (!currentContext) {
+      setSimpleResourceCounts(null);
+      return;
+    }
+    invokeRpc<SimpleResourceCountsResult>("simpleResources.counts", {
+      contextName: currentContext,
+    })
+      .then((counts) => {
+        if (!cancelled) setSimpleResourceCounts(counts);
+      })
+      .catch(() => {
+        if (!cancelled) setSimpleResourceCounts(null);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [currentContext]);
   const isSettingsActive = activeTabId === "settings";
+  const isLearningActive = activeTabId === "learning";
+  const isCatalogActive =
+    !isSettingsActive &&
+    (activeTabId === "fleet" || (catalogMode && isLearningActive));
   const settingsReturnTab = React.useMemo(
     () =>
       openTabs.find(
@@ -149,6 +184,14 @@ export function AppSidebar() {
         serviceAccounts: serviceAccountCount,
         rbac: rbacCount,
         crds: crdCount,
+        namespaces: simpleResourceCounts?.namespaces ?? 0,
+        events: simpleResourceCounts?.events ?? 0,
+        replicationControllers:
+          simpleResourceCounts?.replicationControllers ?? 0,
+        endpointSlices: simpleResourceCounts?.endpointSlices ?? 0,
+        ingressClasses: simpleResourceCounts?.ingressClasses ?? 0,
+        persistentVolumeClaims:
+          simpleResourceCounts?.persistentVolumeClaims ?? 0,
       }),
     [
       availableContexts.length,
@@ -170,6 +213,7 @@ export function AppSidebar() {
       serviceAccountCount,
       rbacCount,
       crdCount,
+      simpleResourceCounts,
     ],
   );
 
@@ -279,6 +323,15 @@ export function AppSidebar() {
       loadCRDs();
     }
 
+    if (
+      item.id === "events" ||
+      item.id === "replicationcontrollers" ||
+      item.id === "endpointslices" ||
+      item.id === "persistentvolumeclaims"
+    ) {
+      setCurrentNamespace("all");
+    }
+
     openTab({
       id: item.id,
       title: item.title,
@@ -333,7 +386,11 @@ export function AppSidebar() {
         <div className="h-10 px-4 flex items-center justify-between border-b border-[var(--border)] shrink-0">
           {!sidebarCollapsed && (
             <span className="text-xs font-medium text-[var(--muted)]">
-              {isSettingsActive ? "Settings" : "Resources"}
+              {isSettingsActive
+                ? "Settings"
+                : isCatalogActive
+                  ? "Catalog"
+                  : "Resources"}
             </span>
           )}
           <div className="ml-auto flex items-center gap-0.5">
@@ -376,7 +433,40 @@ export function AppSidebar() {
               onSectionClick={handleSettingsSectionClick}
             />
           )}
-          {!isSettingsActive && (
+          {!isSettingsActive && isCatalogActive && (
+            <CatalogSidebarNav
+              sidebarCollapsed={sidebarCollapsed}
+              activeSection={fleetCatalogSection}
+              fleetActive={activeTabId === "fleet"}
+              activeLearning={isLearningActive}
+              contextCount={availableContexts.length}
+              onSelectSection={(section) => {
+                setCatalogMode(true);
+                setFleetCatalogSection(section);
+                openTab({
+                  id: "fleet",
+                  title: "All Clusters",
+                  icon: "Server",
+                  closable: true,
+                });
+                if (
+                  section === "kubeconfigs" &&
+                  availableContexts.length === 0
+                ) {
+                  void loadContexts();
+                }
+              }}
+              onSelectLearning={() => {
+                setCatalogMode(true);
+                openTab({
+                  id: "learning",
+                  title: "Learning Center",
+                  closable: true,
+                });
+              }}
+            />
+          )}
+          {!isSettingsActive && !isCatalogActive && (
             <SidebarNavList
               groups={navigationGroups}
               collapsedGroups={collapsedGroups}

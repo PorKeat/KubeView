@@ -153,6 +153,13 @@ const fleetOverview = {
   fetchedAt,
 };
 
+async function openFleetHealth(page: import("@playwright/test").Page) {
+  await page.getByRole("button", { name: "View fleet health" }).click();
+  await expect(
+    page.locator('[data-testid="fleet-overview-view"]'),
+  ).toBeVisible();
+}
+
 test.describe("KubeView All Clusters", () => {
   test.beforeEach(async ({ page }) => {
     await page.addInitScript(() => {
@@ -176,14 +183,15 @@ test.describe("KubeView All Clusters", () => {
   });
 
   test("renders all clusters with aggregate health", async ({ page }) => {
-    await page.locator('[data-testid="nav-item-fleet"]').click();
+    await page.locator('[data-testid="cluster-rail-all"]').click();
 
     await expect(
       page.getByRole("tab", { name: "All Clusters tab" }),
     ).toHaveAttribute("aria-selected", "true");
     await expect(
-      page.locator('[data-testid="fleet-overview-view"]'),
+      page.locator('[data-testid="cluster-catalog-view"]'),
     ).toBeVisible();
+    await openFleetHealth(page);
     const cards = page.locator('[data-testid="fleet-cluster-card"]');
     await expect(cards).toHaveCount(3);
     await expect(
@@ -211,7 +219,8 @@ test.describe("KubeView All Clusters", () => {
   test("filters and searches clusters without losing the view", async ({
     page,
   }) => {
-    await page.locator('[data-testid="nav-item-fleet"]').click();
+    await page.locator('[data-testid="cluster-rail-all"]').click();
+    await openFleetHealth(page);
     const cards = page.locator('[data-testid="fleet-cluster-card"]');
     await expect(cards).toHaveCount(3);
 
@@ -237,10 +246,13 @@ test.describe("KubeView All Clusters", () => {
   test("switches context and opens the selected cluster overview", async ({
     page,
   }) => {
-    await page.locator('[data-testid="nav-item-fleet"]').click();
+    await page.locator('[data-testid="cluster-rail-all"]').click();
+    await expect(
+      page.locator('[data-testid="cluster-catalog-view"]'),
+    ).toBeVisible();
     await page
       .locator(
-        '[data-testid="fleet-open-cluster"][data-context-name="staging"]',
+        '[data-testid="catalog-open-cluster"][data-context-name="staging"]',
       )
       .click();
 
@@ -255,10 +267,8 @@ test.describe("KubeView All Clusters", () => {
   test("lets the user switch between single and multi-cluster overviews", async ({
     page,
   }) => {
-    await page.locator('[data-testid="nav-item-fleet"]').click();
-    await expect(
-      page.locator('[data-testid="fleet-overview-view"]'),
-    ).toBeVisible();
+    await page.locator('[data-testid="cluster-rail-all"]').click();
+    await openFleetHealth(page);
 
     await page.getByTestId("overview-view-single").click();
     await expect(
@@ -274,10 +284,125 @@ test.describe("KubeView All Clusters", () => {
     ).toBeVisible();
   });
 
+  test("shows live context health in the cluster rail and opens the fleet view", async ({
+    page,
+  }) => {
+    await page.setViewportSize({ width: 1440, height: 900 });
+    await page.addStyleTag({
+      content: "nextjs-portal { display: none !important; }",
+    });
+    const rail = page.locator('[data-testid="cluster-rail"]');
+    await expect(rail).toBeVisible();
+    await expect(
+      rail.locator('[data-testid="cluster-rail-context"]'),
+    ).toHaveCount(3, { timeout: 15000 });
+    await expect(
+      rail.locator(
+        '[data-testid="cluster-rail-context"][data-context-name="mock-cluster"]',
+      ),
+    ).toHaveAttribute("aria-pressed", "true");
+    await expect(
+      rail.locator(
+        '[data-testid="cluster-rail-context"][data-context-name="staging"]',
+      ),
+    ).toHaveAttribute("data-status", "degraded");
+
+    await rail.locator('[data-testid="cluster-rail-all"]').click();
+
+    await expect(
+      page.locator('[data-testid="cluster-catalog-view"]'),
+    ).toBeVisible();
+    await expect(
+      rail.locator('[data-testid="cluster-rail-all"]'),
+    ).toHaveAttribute("aria-pressed", "true");
+
+    // The sidebar switches from Resources to the Catalog concept.
+    const catalogNav = page.locator('[data-testid="catalog-nav-clusters"]');
+    await expect(catalogNav).toBeVisible();
+    await expect(catalogNav).toHaveAttribute("aria-pressed", "true");
+    await expect(
+      page.locator('[data-testid="catalog-cluster-row"]'),
+    ).toHaveCount(3, { timeout: 15000 });
+    await page.waitForTimeout(350);
+
+    await page.screenshot({
+      path:
+        process.env.KUBEVIEW_RAIL_SCREENSHOT ??
+        "/tmp/kubeview-cluster-rail.png",
+      fullPage: false,
+    });
+
+    await openFleetHealth(page);
+    await expect(page.getByTestId("fleet-live-indicator")).toBeVisible();
+    await expect(
+      page.locator('[data-testid="catalog-nav-health"]'),
+    ).toHaveAttribute("aria-pressed", "true");
+    await page.waitForTimeout(350);
+    await page.screenshot({
+      path:
+        process.env.KUBEVIEW_RAIL_HEALTH_SCREENSHOT ??
+        "/tmp/kubeview-cluster-rail-health.png",
+      fullPage: false,
+    });
+
+    const activeContext = rail.locator(
+      '[data-testid="cluster-rail-context"][data-context-name="mock-cluster"]',
+    );
+    await activeContext.click();
+    await expect(
+      page.getByRole("tab", { name: "Cluster Overview tab" }),
+    ).toHaveAttribute("aria-selected", "true");
+    await expect(activeContext).toHaveAttribute("aria-pressed", "true");
+    await expect(
+      rail.locator('[data-testid="cluster-rail-all"]'),
+    ).toHaveAttribute("aria-pressed", "false");
+    await page.waitForTimeout(350);
+    await page.screenshot({
+      path:
+        process.env.KUBEVIEW_RAIL_OVERVIEW_SCREENSHOT ??
+        "/tmp/kubeview-cluster-rail-overview.png",
+      fullPage: false,
+    });
+  });
+
+  test("opens Kubeconfigs as a catalog page instead of a modal", async ({
+    page,
+  }) => {
+    await page.setViewportSize({ width: 1440, height: 900 });
+    await page.addStyleTag({
+      content: "nextjs-portal { display: none !important; }",
+    });
+    await page.locator('[data-testid="cluster-rail-all"]').click();
+    await page.locator('[data-testid="catalog-nav-kubeconfigs"]').click();
+
+    await expect(
+      page.locator('[data-testid="kubeconfigs-catalog-view"]'),
+    ).toBeVisible();
+    await expect(page.getByRole("dialog")).toHaveCount(0);
+    await expect(page.locator('[data-testid="kubeconfig-row"]')).toHaveCount(
+      3,
+      { timeout: 15000 },
+    );
+    await expect(
+      page.locator('[data-testid="catalog-nav-kubeconfigs"]'),
+    ).toHaveAttribute("aria-pressed", "true");
+    await page.waitForTimeout(350);
+    await page.screenshot({
+      path:
+        process.env.KUBEVIEW_KUBECONFIGS_SCREENSHOT ??
+        "/tmp/kubeview-kubeconfigs.png",
+      fullPage: false,
+    });
+  });
+
   test("fits the phone viewport without horizontal scrolling", async ({
     page,
   }) => {
-    await page.locator('[data-testid="nav-item-fleet"]').click();
+    await page.locator('[data-testid="cluster-rail-all"]').click();
+    await expect(
+      page.locator('[data-testid="cluster-catalog-view"]'),
+    ).toBeVisible();
+    await openFleetHealth(page);
     await expect(
       page.locator('[data-testid="fleet-cluster-card"]').first(),
     ).toBeVisible();

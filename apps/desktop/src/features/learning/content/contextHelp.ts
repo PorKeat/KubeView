@@ -1,6 +1,72 @@
 import type { PageGuide } from "../types";
 
 export const PAGE_GUIDES: Record<string, PageGuide> = {
+  namespaces: {
+    title: "Namespaces",
+    beginner:
+      "Namespaces split one cluster into named scopes. Most workload pages can be filtered to a single namespace.",
+    intermediate:
+      "Watch for Terminating namespaces; a finalizer can keep a namespace stuck even after its workloads are gone.",
+    advanced:
+      "Namespace deletion is asynchronous. Inspect remaining resources and finalizers before forcing a cleanup.",
+    pathId: "first-steps",
+    lessonId: "contexts-and-namespaces",
+  },
+  events: {
+    title: "Events",
+    beginner:
+      "Events are short-lived messages from the cluster. Warning events usually explain why a Pod is pending or restarting.",
+    intermediate:
+      "Read the reason, involved object, and count together. A repeated BackOff is different from a single scheduling failure.",
+    advanced:
+      "Events are namespaced and expire quickly. Correlate them with Pod conditions and controller status for a durable diagnosis.",
+    pathId: "first-steps",
+    lessonId: "contexts-and-namespaces",
+  },
+  replicationcontrollers: {
+    title: "Replication Controllers",
+    beginner:
+      "A ReplicationController is the older way to keep a fixed number of Pods running. Prefer Deployments for new work.",
+    intermediate:
+      "Compare desired and ready replicas. A controller can exist with zero ready Pods if its selector no longer matches.",
+    advanced:
+      "ReplicationControllers do not provide rollout history or revisions. Their selectors are equality-based maps.",
+    pathId: "first-steps",
+    lessonId: "deployments-keep-pods-alive",
+  },
+  endpointslices: {
+    title: "Endpoint Slices",
+    beginner:
+      "EndpointSlices are the address lists behind a Service. An empty slice means the Service has no ready Pods.",
+    intermediate:
+      "Check the service-name label, address type, endpoints, and ports. A slice can be healthy while the Service selector is wrong.",
+    advanced:
+      "EndpointSlices replace the single Endpoints object for scale. The EndpointSlice controller owns them; manual edits may be overwritten.",
+    pathId: "first-steps",
+    lessonId: "services-route-traffic",
+  },
+  ingressclasses: {
+    title: "Ingress Classes",
+    beginner:
+      "An IngressClass names the controller that should handle an Ingress. The default class is used when an Ingress does not set one.",
+    intermediate:
+      "If an Ingress never gets an address, verify its class exists and points at an installed controller.",
+    advanced:
+      "IngressClasses are cluster-scoped. Controllers can watch only their class, so a typo silently leaves an Ingress unhandled.",
+    pathId: "first-steps",
+    lessonId: "services-route-traffic",
+  },
+  persistentvolumeclaims: {
+    title: "Persistent Volume Claims",
+    beginner:
+      "A PVC asks for storage. Bound means it found a volume; Pending usually means no matching volume or StorageClass.",
+    intermediate:
+      "Compare requested capacity, access modes, and storage class. A claim can be Bound but still unusable if the volume is on the wrong node.",
+    advanced:
+      "Retention policy belongs to the PersistentVolume. Deleting a claim can retain, delete, or orphan its volume depending on that policy.",
+    pathId: "first-steps",
+    lessonId: "contexts-and-namespaces",
+  },
   overview: {
     title: "Cluster Overview",
     beginner:
@@ -13,8 +79,41 @@ export const PAGE_GUIDES: Record<string, PageGuide> = {
     pathId: "first-steps",
     lessonId: "what-is-a-cluster",
   },
+  "fleet-catalog": {
+    title: "Catalog",
+    beginner:
+      "The Catalog lists every kubeconfig context you have added. Selecting a cluster makes it active and opens its overview; the resource sidebar returns with it.",
+    intermediate:
+      "Use the catalog to compare source, endpoint, version, distro, and connection state in one place. Switch to Fleet Health when you need capacity and workload detail.",
+    advanced:
+      "Each row maps to a kubeconfig context. Deleting or re-pointing an endpoint affects that context only; other contexts keep their own credentials and scopes.",
+    pathId: "first-steps",
+    lessonId: "contexts-and-namespaces",
+  },
+  "fleet-kubeconfigs": {
+    title: "Kubeconfigs",
+    beginner:
+      "A kubeconfig file holds one or more contexts. Each row here is a context from that file, with the endpoint and credentials it uses.",
+    intermediate:
+      "Open a context to make it active, diagnose its connection, or re-point the API server. Removing a context only affects this kubeconfig, not the cluster itself.",
+    advanced:
+      "Contexts bind a cluster, user, and default namespace. If authentication uses exec or OIDC, the plugin runs locally when the connection is opened.",
+    pathId: "first-steps",
+    lessonId: "contexts-and-namespaces",
+  },
+  "fleet-links": {
+    title: "Web Links",
+    beginner:
+      "Save the dashboards you open often, such as Argo CD or Grafana, so they are one click from your cluster catalog.",
+    intermediate:
+      "A link can target one context or all of them. Links open in your browser and are stored only on this machine.",
+    advanced:
+      "Use cluster-specific links when each context has its own observability stack. Shared links cover tools that span the whole fleet.",
+    pathId: "first-steps",
+    lessonId: "contexts-and-namespaces",
+  },
   fleet: {
-    title: "All Clusters",
+    title: "Fleet Health",
     beginner:
       "This page compares every kubeconfig context you have added. Each card is a separate cluster, so a problem on one card does not affect the others.",
     intermediate:

@@ -91,18 +91,11 @@ export function AppHeader() {
           <Logo size="sm" />
         </div>
 
-        {/* Integrated Cluster & Namespace Scope Bar (Single Quiet Border, No Line Clutter) */}
-        <div className="flex min-w-0 items-center rounded-lg bg-black/[0.03] dark:bg-white/[0.04] border border-[var(--border)] p-0.5 shrink-0">
-          <ContextSwitcherDropdown variant="unified" />
-          {connectionStatus !== "offline" && (
-            <>
-              <div className="h-3.5 w-[1px] bg-[var(--border)] opacity-60 shrink-0 mx-0.5" />
-              <div className="hidden md:block">
-                <NamespaceSelectorDropdown variant="unified" />
-              </div>
-            </>
-          )}
-        </div>
+        {connectionStatus !== "offline" && (
+          <div className="hidden min-w-0 items-center rounded-lg border border-[var(--border)] bg-black/[0.03] p-0.5 shrink-0 dark:bg-white/[0.04] md:flex">
+            <NamespaceSelectorDropdown variant="unified" />
+          </div>
+        )}
       </div>
 
       {/* Center: Search Trigger (Cmd+K) - 36px High-Craft Command Pill */}
@@ -130,6 +123,11 @@ export function AppHeader() {
 
       {/* Right: Quick Actions & Utilities - 36px Tactile Buttons */}
       <div className="flex shrink-0 items-center gap-0.5 sm:gap-1">
+        <div className="flex items-center">
+          <ContextSwitcherDropdown variant="compact" />
+          <div className="mx-1 h-4 w-[1px] bg-[var(--border)]" />
+        </div>
+
         <Tooltip content="Search resources (⌘K)" side="bottom">
           <button
             onClick={() => setCommandPaletteOpen(true)}

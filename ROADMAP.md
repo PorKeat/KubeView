@@ -63,6 +63,20 @@ Phase 12 ──► Phase 13 ──► Phase 14 ──► Phase 15 ──► Phas
 
 ---
 
+## 🧩 Resource Coverage Track (RC1–RC5)
+
+> The reference sidebar lists 36 resource entries. **23 are implemented**, **0 are partial**, and **13 remain**. This track closes the gap with one shared simple-resource layer instead of a bespoke slice per kind. It feeds Phases 04, 09, 10, and 11. Full plan: [resource-coverage-plan.md](docs/resource-coverage-plan.md).
+
+|  Phase  | Focus                        | Resources                                                                                                                                        |     Size     |    Status    |
+| :-----: | :--------------------------- | :----------------------------------------------------------------------------------------------------------------------------------------------- | :----------: | :----------: |
+| **RC1** | Foundation + core visibility | Shared engine/contracts/UI layer; Namespaces, global Events, Replication Controllers, Endpoint Slices, Ingress Classes, Persistent Volume Claims |    Large     | ✅ Completed |
+| **RC2** | Scaling, quota, scheduling   | Horizontal Pod Autoscalers, Pod Disruption Budgets, Resource Quotas, Limit Ranges, Priority Classes, Runtime Classes, Leases                     |    Medium    |  ⏳ Planned  |
+| **RC3** | Admission configuration      | Mutating and Validating Webhook Configs, Validating Admission Policies and Bindings                                                              | Small–Medium |  ⏳ Planned  |
+| **RC4** | Helm                         | Releases (decode Helm release Secrets), Charts (repository browsing)                                                                             | Medium–Large |  ⏳ Planned  |
+| **RC5** | Hardening                    | Safe deletes, YAML copy, learning guides, live-page audit, large-list caps                                                                       |    Medium    |  ⏳ Planned  |
+
+---
+
 ## 🚀 Detailed Phase Breakdown
 
 ### Phase 1 — Core Desktop Application
