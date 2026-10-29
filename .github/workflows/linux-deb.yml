@@ -1,0 +1,67 @@
+name: Build Linux deb
+
+on:
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: Existing release tag
+        required: true
+        default: v0.1.2
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.tag }}
+          fetch-depth: 0
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 11.9.0
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: engine/go.mod
+          cache-dependency-path: engine/go.sum
+
+      - name: Install Linux dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libwebkit2gtk-4.1-dev libappindicator3-dev librsvg2-dev patchelf
+
+      - uses: dtolnay/rust-toolchain@stable
+
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: src-tauri -> target
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile --config.strictDepBuilds=false
+
+      - name: Rebuild native dependencies
+        run: pnpm rebuild lefthook unrs-resolver
+
+      - name: Build contracts
+        run: pnpm build:contracts
+
+      - name: Build Linux engine sidecar
+        run: node scripts/build-release-sidecar.mjs x86_64-unknown-linux-gnu
+
+      - name: Build Debian package
+        run: pnpm exec tauri build --target x86_64-unknown-linux-gnu --bundles deb
+
+      - name: Upload Debian package to release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: gh release upload "${{ inputs.tag }}" src-tauri/target/x86_64-unknown-linux-gnu/release/bundle/deb/*.deb --clobber
