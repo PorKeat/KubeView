@@ -42,13 +42,14 @@ for (const spec of specs) {
   console.log(
     `Building engine for ${spec.goos}/${spec.goarch} -> ${path.basename(output)}`,
   );
+  const ldflags = spec.goos === "windows" ? "-s -w -H=windowsgui" : "-s -w";
   execFileSync(
     "go",
     [
       "build",
       "-trimpath",
       "-ldflags",
-      "-s -w",
+      ldflags,
       "-o",
       output,
       "./cmd/kubeview-engine",

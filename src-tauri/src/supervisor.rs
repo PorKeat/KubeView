@@ -160,11 +160,20 @@ async fn spawn_engine(
     pending: PendingMap,
     stdin_tx: StdinSlot,
 ) -> Result<Child, String> {
-    let mut child = Command::new(bin_path)
+    let mut command = Command::new(bin_path);
+    command
         .stdin(Stdio::piped())
         .stdout(Stdio::piped())
         .stderr(Stdio::piped())
-        .kill_on_drop(true)
+        .kill_on_drop(true);
+
+    #[cfg(windows)]
+    {
+        // Keep the Go engine from allocating a console window.
+        command.creation_flags(0x08000000); // CREATE_NO_WINDOW
+    }
+
+    let mut child = command
         .spawn()
         .map_err(|e| format!("Failed to spawn engine binary at {:?}: {}", bin_path, e))?;
 

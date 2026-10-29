@@ -1,6 +1,6 @@
 [package]
 name = "kubeview"
-version = "0.1.1"
+version = "0.1.2"
 description = "Next-generation Kubernetes desktop IDE and operations platform"
 authors = ["KubeView Authors"]
 edition = "2021"
