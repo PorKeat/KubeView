@@ -245,7 +245,7 @@ export function CronJobListView() {
                     ascending: sortAsc,
                     onSort: handleSort,
                   })}
-                  className="w-48 sm:w-56 md:w-64 py-1 px-3 cursor-pointer hover:text-[var(--foreground)] transition-colors"
+                  className="w-48 sm:w-56 py-1 px-3 cursor-pointer hover:text-[var(--foreground)] transition-colors"
                 >
                   <div className="flex items-center gap-1">
                     <span>Name</span>

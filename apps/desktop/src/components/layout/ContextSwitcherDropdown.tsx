@@ -13,6 +13,7 @@ import {
 } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
 import { useClusterStore, ClusterContextInfo } from "@/stores/clusterStore";
+import { useCatalogStore } from "@/stores/catalogStore";
 import { isInternalEndpoint } from "@/lib/endpointUtils";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
@@ -38,6 +39,12 @@ export function ContextSwitcherDropdown({
     openEndpointModal,
     deleteContext,
   } = useClusterStore();
+  const contextAliases = useCatalogStore((state) => state.aliases);
+  const currentLabel =
+    contextAliases[currentContext] || currentContext || "Select Cluster";
+  const currentContextSuffix = contextAliases[currentContext]
+    ? ` (${currentContext})`
+    : "";
   const [search, setSearch] = React.useState("");
   const [isOpen, setIsOpen] = React.useState(false);
   const dropdownRef = React.useRef<HTMLDivElement>(null);
@@ -79,11 +86,14 @@ export function ContextSwitcherDropdown({
     latencyMs,
   };
 
-  const filteredContexts = availableContexts.filter(
-    (c) =>
-      c.name.toLowerCase().includes(search.toLowerCase()) ||
-      c.server.toLowerCase().includes(search.toLowerCase()),
-  );
+  const filteredContexts = availableContexts.filter((context) => {
+    const query = search.toLowerCase();
+    return (
+      context.name.toLowerCase().includes(query) ||
+      (contextAliases[context.name] ?? "").toLowerCase().includes(query) ||
+      context.server.toLowerCase().includes(query)
+    );
+  });
 
   const getProviderBadge = (provider: ClusterContextInfo["provider"]) => {
     switch (provider) {
@@ -132,7 +142,7 @@ export function ContextSwitcherDropdown({
         type="button"
         onClick={() => setIsOpen((prev) => !prev)}
         data-testid="context-switcher-trigger"
-        aria-label={`Active Kubernetes cluster: ${currentContext || "Select Cluster"}, status ${connectionStatus}`}
+        aria-label={`Active Kubernetes cluster: ${currentLabel}${currentContextSuffix}, status ${connectionStatus}`}
         aria-expanded={isOpen}
         className={cn(
           "relative flex min-w-0 max-w-[170px] items-center gap-2 text-xs transition-colors text-[var(--foreground)] outline-hidden group select-none cursor-pointer focus-visible:ring-2 focus-visible:ring-[var(--accent)] focus-visible:outline-hidden sm:max-w-none",
@@ -150,7 +160,7 @@ export function ContextSwitcherDropdown({
             "bg-black/[0.08] dark:bg-white/[0.1]",
           className,
         )}
-        title={`Active Context: ${currentContext || "None"} (${connectionStatus})`}
+        title={`Active Context: ${currentLabel}${currentContextSuffix} (${connectionStatus})`}
       >
         {variant === "compact" ? (
           <>
@@ -171,16 +181,14 @@ export function ContextSwitcherDropdown({
               )}
               aria-hidden="true"
             />
-            <span className="sr-only">
-              {currentContext || "Select Cluster"}
-            </span>
+            <span className="sr-only">{currentLabel}</span>
           </>
         ) : (
           <>
             <div className="flex items-center gap-1.5 min-w-0">
               <Server className="w-3.5 h-3.5 text-[var(--muted)] group-hover:text-[var(--foreground)] transition-colors shrink-0" />
               <span className="font-semibold max-w-[90px] truncate sm:max-w-[130px]">
-                {currentContext || "Select Cluster"}
+                {currentLabel}
               </span>
             </div>
             <span className="hidden sm:inline-flex">
@@ -282,6 +290,8 @@ export function ContextSwitcherDropdown({
               {filteredContexts.map((ctx) => {
                 const isSelected = ctx.name === currentContext;
                 const isInternal = isInternalEndpoint(ctx.server);
+                const alias = contextAliases[ctx.name];
+                const displayName = alias || ctx.name;
 
                 return (
                   <div
@@ -333,8 +343,9 @@ export function ContextSwitcherDropdown({
                               ? "font-semibold text-[var(--foreground)]"
                               : "text-[var(--foreground)]",
                           )}
+                          title={alias ? `${alias} (${ctx.name})` : ctx.name}
                         >
-                          {ctx.name}
+                          {displayName}
                         </span>
                         {getProviderBadge(ctx.provider)}
                         {isInternal && (
@@ -344,7 +355,7 @@ export function ContextSwitcherDropdown({
                         )}
                       </div>
                       <span className="text-[11px] text-[var(--muted)] font-mono truncate mt-0.5">
-                        {ctx.server}
+                        {alias ? `${ctx.name} · ${ctx.server}` : ctx.server}
                       </span>
                     </div>
 

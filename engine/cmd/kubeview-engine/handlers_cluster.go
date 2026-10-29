@@ -51,6 +51,69 @@ func registerClusterHandlers(
 		return res, nil
 	})
 
+	// Method: clusters.updateKubeconfigContext
+	server.Register("clusters.updateKubeconfigContext", func(params json.RawMessage) (interface{}, *ipc.RPCError) {
+		var p struct {
+			ContextName string `json:"contextName"`
+			YAML        string `json:"yaml"`
+		}
+		if err := json.Unmarshal(params, &p); err != nil {
+			return nil, &ipc.RPCError{
+				Code:    ipc.ErrCodeInvalidParams,
+				Message: fmt.Sprintf("Invalid params: %v", err),
+			}
+		}
+		if p.ContextName == "" {
+			return nil, &ipc.RPCError{
+				Code:    ipc.ErrCodeInvalidParams,
+				Message: "contextName is required",
+			}
+		}
+		res, err := mgr.UpdateKubeconfigContext(p.ContextName, p.YAML)
+		if err != nil {
+			return nil, &ipc.RPCError{
+				Code:    ipc.ErrCodeInternalError,
+				Message: err.Error(),
+			}
+		}
+		server.Log("Updated kubeconfig context: %s", p.ContextName)
+		return res, nil
+	})
+
+	// Method: clusters.exportKubeconfig
+	server.Register("clusters.exportKubeconfig", func(params json.RawMessage) (interface{}, *ipc.RPCError) {
+		var p struct {
+			ContextName string `json:"contextName"`
+			Context     string `json:"context,omitempty"`
+		}
+		if err := json.Unmarshal(params, &p); err != nil {
+			return nil, &ipc.RPCError{
+				Code:    ipc.ErrCodeInvalidParams,
+				Message: fmt.Sprintf("Invalid params: %v", err),
+			}
+		}
+		contextName := p.ContextName
+		if contextName == "" {
+			contextName = p.Context
+		}
+		if contextName == "" {
+			return nil, &ipc.RPCError{
+				Code:    ipc.ErrCodeInvalidParams,
+				Message: "contextName is required",
+			}
+		}
+
+		res, err := mgr.ExportKubeconfig(contextName)
+		if err != nil {
+			return nil, &ipc.RPCError{
+				Code:    ipc.ErrCodeInternalError,
+				Message: err.Error(),
+			}
+		}
+		server.Log("Exported kubeconfig for context: %s", contextName)
+		return res, nil
+	})
+
 	// Method: clusters.importDetected
 	server.Register("clusters.importDetected", func(params json.RawMessage) (interface{}, *ipc.RPCError) {
 		var p cluster.ImportDetectedContextsParams

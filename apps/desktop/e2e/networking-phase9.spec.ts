@@ -4,7 +4,7 @@ import { mockRpc } from "./mockRpc";
 test.describe("KubeView UI - Networking Phase 9", () => {
   test.beforeEach(async ({ page }) => {
     await page.addInitScript(() => {
-      localStorage.setItem("kubeview_splash_seen", "true");
+      localStorage.setItem("kubeview_skip_boot_splash", "true");
     });
     await mockRpc(page);
     await page.goto("/");
@@ -48,7 +48,11 @@ test.describe("KubeView UI - Networking Phase 9", () => {
   }) => {
     await page.locator('[data-testid="nav-item-ingresses"]').click();
     await expect(page.locator('[data-testid="ingresses-row"]')).toHaveCount(1);
-    await expect(page.locator("text=Valid")).toBeVisible();
+    await expect(
+      page
+        .locator('[data-testid="ingresses-row"]')
+        .getByText("Valid", { exact: true }),
+    ).toBeVisible();
 
     await page.getByRole("button", { name: "Edit web-ingress" }).click();
     await expect(
@@ -59,7 +63,7 @@ test.describe("KubeView UI - Networking Phase 9", () => {
     ).toBeVisible();
     await expect(
       page.locator('[data-testid="inspector-resource-editor-yaml"]'),
-    ).toHaveValue(/kind: Ingress/);
+    ).toContainText(/kind: Ingress/);
     await page.locator('[data-testid="inspector-close-btn"]').click();
 
     await page.getByRole("button", { name: "Delete web-ingress" }).click();

@@ -70,6 +70,48 @@ export function resultFor(method: string, params?: JsonRecord): unknown {
           },
         ],
       };
+    case "clusters.exportKubeconfig": {
+      const contextName =
+        typeof params?.contextName === "string"
+          ? params.contextName
+          : "mock-cluster";
+      return {
+        contextName,
+        fileName: `${contextName.replace(/[^A-Za-z0-9_-]/g, "_")}.kubeconfig`,
+        yaml: `apiVersion: v1
+clusters:
+- cluster:
+    server: https://mock.example:6443
+  name: mock
+contexts:
+- context:
+    cluster: mock
+    user: mock-user
+    namespace: default
+  name: ${contextName}
+current-context: ${contextName}
+kind: Config
+preferences: {}
+users:
+- name: mock-user
+  user:
+    token: mock-token
+`,
+      };
+    }
+    case "clusters.updateKubeconfigContext": {
+      return {
+        contextName:
+          typeof params?.contextName === "string"
+            ? params.contextName
+            : "mock-cluster",
+        fileName: "mock-cluster.kubeconfig",
+        yaml:
+          typeof params?.yaml === "string" && params.yaml.trim()
+            ? params.yaml
+            : "apiVersion: v1\nkind: Config\n",
+      };
+    }
     case "clusters.switchContext": {
       const contextName =
         typeof params?.contextName === "string"

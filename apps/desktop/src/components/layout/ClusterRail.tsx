@@ -1,7 +1,9 @@
 "use client";
 
 import * as React from "react";
-import { LayoutGrid, Loader2, Plus, ShipWheel } from "lucide-react";
+import { Camera, LayoutGrid, Loader2, Plus, ShipWheel } from "lucide-react";
+import { toast } from "sonner";
+import { readClusterImage } from "@/lib/clusterImage";
 import { useClusterStore } from "@/stores/clusterStore";
 import { useFleetOverviewStore } from "@/stores/fleetStore";
 import { useTabStore } from "@/stores/tabStore";
@@ -12,13 +14,6 @@ import { useLayoutStore } from "@/stores/layoutStore";
 import { useCatalogStore } from "@/stores/catalogStore";
 
 type RailStatus = "connected" | "degraded" | "offline" | "checking";
-
-const STATUS_DOT: Record<RailStatus, string> = {
-  connected: "bg-[var(--status-healthy)]",
-  degraded: "bg-[var(--status-warning)]",
-  offline: "bg-[var(--status-critical)]",
-  checking: "bg-sky-400 animate-pulse",
-};
 
 const STATUS_LABEL: Record<RailStatus, string> = {
   connected: "Connected",
@@ -54,9 +49,14 @@ export function ClusterRail() {
   );
   const setCatalogMode = useLayoutStore((state) => state.setCatalogMode);
   const pinnedClusters = useCatalogStore((state) => state.pinned);
+  const clusterImages = useCatalogStore((state) => state.images);
+  const clusterAliases = useCatalogStore((state) => state.aliases);
+  const setContextImage = useCatalogStore((state) => state.setContextImage);
   const [pendingContext, setPendingContext] = React.useState<string | null>(
     null,
   );
+  const [imageTarget, setImageTarget] = React.useState<string | null>(null);
+  const imageInputRef = React.useRef<HTMLInputElement>(null);
   const previousContextKey = React.useRef<string | null>(null);
 
   const contextKey = React.useMemo(
@@ -137,23 +137,27 @@ export function ClusterRail() {
 
   const isFleetActive = activeTabId === "fleet";
   const totals = fleetOverview?.totals;
-  const allStatus: RailStatus =
-    availableContexts.length === 0
-      ? "offline"
-      : totals
-        ? totals.offline === totals.total
-          ? "offline"
-          : totals.degraded > 0 || totals.offline > 0
-            ? "degraded"
-            : "connected"
-        : isFleetLoading
-          ? "checking"
-          : "degraded";
   const allTooltip = totals
     ? `All Clusters · ${totals.healthy}/${totals.total} healthy`
     : isFleetLoading
       ? "All Clusters · Loading fleet telemetry"
       : "All Clusters · Live fleet overview";
+
+  const handleImageFile = async (file: File) => {
+    if (!imageTarget) return;
+    try {
+      const image = await readClusterImage(file);
+      setContextImage(imageTarget, image);
+      toast.success(`Updated image for ${imageTarget}`);
+    } catch (error) {
+      toast.error(
+        error instanceof Error ? error.message : "Could not update that image.",
+      );
+    } finally {
+      setImageTarget(null);
+      if (imageInputRef.current) imageInputRef.current.value = "";
+    }
+  };
 
   const handleAllClusters = () => {
     setCatalogMode(true);
@@ -193,6 +197,16 @@ export function ClusterRail() {
       aria-label="Cluster navigation"
       className="hidden h-full w-16 shrink-0 select-none flex-col items-center border-r border-[var(--border)] bg-[var(--background)] lg:flex"
     >
+      <input
+        ref={imageInputRef}
+        type="file"
+        accept="image/png,image/jpeg,image/webp"
+        className="hidden"
+        onChange={(event) => {
+          const file = event.target.files?.[0];
+          if (file) void handleImageFile(file);
+        }}
+      />
       <div className="flex w-full flex-col items-center pb-1 pt-3">
         <Tooltip content={allTooltip} side="right" delayDuration={250}>
           <button
@@ -209,15 +223,6 @@ export function ClusterRail() {
             )}
           >
             <LayoutGrid className="h-4 w-4" aria-hidden="true" />
-            {availableContexts.length > 0 && (
-              <span
-                className={cn(
-                  "absolute right-1 top-1 h-1.5 w-1.5 rounded-full border border-black/20",
-                  STATUS_DOT[allStatus],
-                )}
-                aria-hidden="true"
-              />
-            )}
             {isFleetActive && (
               <span
                 className="absolute -left-[7px] top-1/2 h-5 w-0.5 -translate-y-1/2 rounded-full bg-[var(--accent)]"
@@ -244,67 +249,90 @@ export function ClusterRail() {
           const isActive = !isFleetActive && context.name === currentContext;
           const latency = context.latencyMs;
           const isPending = pendingContext === context.name;
-          const tooltip = `${context.name} · ${STATUS_LABEL[status]}${
-            latency > 0 ? ` · ${latency}ms` : ""
-          }`;
+          const image = clusterImages[context.name];
+          const alias = clusterAliases[context.name];
+          const displayName = alias || context.name;
+          const tooltip = `${displayName}${
+            alias ? ` (${context.name})` : ""
+          } · ${STATUS_LABEL[status]}${latency > 0 ? ` · ${latency}ms` : ""}`;
 
           return (
-            <Tooltip
+            <div
               key={context.name}
-              content={tooltip}
-              side="right"
-              delayDuration={250}
+              className="group/tile relative flex w-full justify-center"
             >
-              <button
-                type="button"
-                data-testid="cluster-rail-context"
-                data-context-name={context.name}
-                data-status={status}
-                aria-label={`Switch to ${context.name} (${STATUS_LABEL[status]})`}
-                aria-pressed={isActive}
-                aria-busy={isPending}
-                title={`${context.name}\n${context.server}`}
-                onClick={() => void handleSelectContext(context.name)}
-                className={cn(
-                  "group relative flex h-9 w-9 shrink-0 items-center justify-center rounded-[10px] border border-white/15 text-[10px] font-semibold tracking-wide text-white shadow-sm transition-all duration-150 cursor-pointer hover:-translate-y-px hover:brightness-110 focus-visible:ring-2 focus-visible:ring-[var(--accent)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--background)] focus-visible:outline-hidden",
-                  isActive &&
-                    "ring-2 ring-[var(--foreground)] ring-offset-2 ring-offset-[var(--background)]",
-                )}
-                style={{ backgroundImage: tone }}
-              >
-                <span className="relative z-10 [text-shadow:0_1px_2px_rgba(0,0,0,0.35)]">
-                  {tag}
-                </span>
-                <span
+              <Tooltip content={tooltip} side="right" delayDuration={250}>
+                <button
+                  type="button"
+                  data-testid="cluster-rail-context"
+                  data-context-name={context.name}
+                  data-status={status}
+                  aria-label={`Switch to ${displayName} (${STATUS_LABEL[status]})`}
+                  aria-pressed={isActive}
+                  aria-busy={isPending}
+                  title={`${alias ? `${alias}\n${context.name}` : context.name}\n${context.server}`}
+                  onClick={() => void handleSelectContext(context.name)}
                   className={cn(
-                    "absolute left-1 top-1 h-1.5 w-1.5 rounded-full border border-black/20",
-                    STATUS_DOT[status],
+                    "group relative flex h-9 w-9 shrink-0 items-center justify-center rounded-[10px] border border-white/15 text-[10px] font-semibold tracking-wide text-white shadow-sm transition-all duration-150 cursor-pointer hover:-translate-y-px hover:brightness-110 focus-visible:ring-2 focus-visible:ring-[var(--accent)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--background)] focus-visible:outline-hidden",
+                    isActive &&
+                      "ring-2 ring-[var(--foreground)] ring-offset-2 ring-offset-[var(--background)]",
                   )}
-                  aria-hidden="true"
-                />
-                {isPending ? (
-                  <span className="absolute -bottom-0.5 -right-0.5 flex h-3.5 w-3.5 items-center justify-center rounded-full border border-white/20 bg-[#11161e] text-white">
-                    <Loader2
-                      className="h-2.5 w-2.5 animate-spin"
+                  style={{ backgroundImage: tone }}
+                >
+                  {image ? (
+                    <img
+                      src={image}
+                      alt=""
+                      className="absolute inset-0 h-full w-full rounded-[10px] object-cover"
+                    />
+                  ) : (
+                    <span className="relative z-10 [text-shadow:0_1px_2px_rgba(0,0,0,0.35)]">
+                      {tag}
+                    </span>
+                  )}
+                  {isPending ? (
+                    <span className="absolute -bottom-0.5 -right-0.5 flex h-3.5 w-3.5 items-center justify-center rounded-full border border-white/20 bg-[#11161e] text-white">
+                      <Loader2
+                        className="h-2.5 w-2.5 animate-spin"
+                        aria-hidden="true"
+                      />
+                    </span>
+                  ) : (
+                    <span
+                      className="absolute -bottom-0.5 -right-0.5 flex h-3.5 w-3.5 items-center justify-center rounded-full border border-white/20 bg-[#11161e] text-white/80"
+                      aria-hidden="true"
+                    >
+                      <ShipWheel className="h-2 w-2" />
+                    </span>
+                  )}
+                  {isActive && (
+                    <span
+                      className="absolute -left-[7px] top-1/2 h-5 w-0.5 -translate-y-1/2 rounded-full bg-[var(--accent)]"
                       aria-hidden="true"
                     />
-                  </span>
-                ) : (
-                  <span
-                    className="absolute -bottom-0.5 -right-0.5 flex h-3.5 w-3.5 items-center justify-center rounded-full border border-white/20 bg-[#11161e] text-white/80"
-                    aria-hidden="true"
-                  >
-                    <ShipWheel className="h-2 w-2" />
-                  </span>
-                )}
-                {isActive && (
-                  <span
-                    className="absolute -left-[7px] top-1/2 h-5 w-0.5 -translate-y-1/2 rounded-full bg-[var(--accent)]"
-                    aria-hidden="true"
-                  />
-                )}
-              </button>
-            </Tooltip>
+                  )}
+                </button>
+              </Tooltip>
+              <Tooltip
+                content="Change cluster image"
+                side="right"
+                delayDuration={250}
+              >
+                <button
+                  type="button"
+                  data-testid="cluster-image-upload"
+                  data-context-name={context.name}
+                  aria-label={`Change image for ${context.name}`}
+                  onClick={() => {
+                    setImageTarget(context.name);
+                    imageInputRef.current?.click();
+                  }}
+                  className="absolute bottom-0 left-[calc(50%-22px)] z-20 flex h-3.5 w-3.5 items-center justify-center rounded-full border border-white/20 bg-[#11161e] text-white/80 opacity-0 transition-opacity group-hover/tile:opacity-100 focus-visible:opacity-100 focus-visible:ring-2 focus-visible:ring-[var(--accent)] focus-visible:outline-hidden cursor-pointer"
+                >
+                  <Camera className="h-2 w-2" aria-hidden="true" />
+                </button>
+              </Tooltip>
+            </div>
           );
         })}
 

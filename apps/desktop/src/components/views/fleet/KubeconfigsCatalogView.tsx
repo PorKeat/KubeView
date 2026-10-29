@@ -1,20 +1,25 @@
 "use client";
 
 import * as React from "react";
+import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
 import {
   ArrowRight,
   Check,
   Copy,
+  Download,
   KeyRound,
   Loader2,
+  LockKeyhole,
+  MoreHorizontal,
+  Pencil,
   Plus,
   RefreshCw,
   Settings2,
-  SlidersHorizontal,
   Stethoscope,
   Trash2,
 } from "lucide-react";
 import { toast } from "sonner";
+import type { ExportKubeconfigResult } from "@kubeview/contracts";
 import {
   useClusterStore,
   type ClusterContextInfo,
@@ -22,10 +27,16 @@ import {
 import { useLayoutStore } from "@/stores/layoutStore";
 import { useFleetOverviewStore } from "@/stores/fleetStore";
 import { useTabStore } from "@/stores/tabStore";
+import { useCatalogStore } from "@/stores/catalogStore";
+import { invokeRpc } from "@/lib/ipc";
+import { saveTextFile } from "@/lib/saveFile";
 import { cn } from "@/lib/utils";
-import { clusterTag, clusterTone } from "@/lib/clusterVisuals";
-import { Tooltip } from "@/components/ui/Tooltip";
+import { ClusterImageControl } from "./catalog/ClusterImageControl";
+import { KubeconfigEditModal } from "./catalog/KubeconfigEditModal";
 import { providerLabel } from "./lib/fleetOverview";
+
+const rowActionClass =
+  "flex cursor-pointer items-center gap-2 rounded-md px-2.5 py-1.5 text-[11px] font-medium text-[var(--foreground)] outline-none transition-colors data-[highlighted]:bg-[var(--surface-hover)] data-[disabled]:cursor-wait data-[disabled]:opacity-50";
 
 function statusMeta(status: ClusterContextInfo["status"]) {
   switch (status) {
@@ -65,7 +76,6 @@ export function KubeconfigsCatalogView() {
   const loadContexts = useClusterStore((state) => state.loadContexts);
   const switchContext = useClusterStore((state) => state.switchContext);
   const diagnoseContext = useClusterStore((state) => state.diagnoseContext);
-  const openEndpointModal = useClusterStore((state) => state.openEndpointModal);
   const deleteContext = useClusterStore((state) => state.deleteContext);
   const openKubeconfigModal = useClusterStore(
     (state) => state.openKubeconfigModal,
@@ -79,7 +89,15 @@ export function KubeconfigsCatalogView() {
   );
   const setCatalogMode = useLayoutStore((state) => state.setCatalogMode);
   const openTab = useTabStore((state) => state.openTab);
+  const contextAliases = useCatalogStore((state) => state.aliases);
+  const [editingContext, setEditingContext] =
+    React.useState<ClusterContextInfo | null>(null);
   const [copied, setCopied] = React.useState(false);
+  const [copiedContext, setCopiedContext] = React.useState<string | null>(null);
+  const [exporting, setExporting] = React.useState<{
+    contextName: string;
+    action: "copy" | "download";
+  } | null>(null);
   const [openingContext, setOpeningContext] = React.useState<string | null>(
     null,
   );
@@ -110,6 +128,60 @@ export function KubeconfigsCatalogView() {
       window.setTimeout(() => setCopied(false), 2000);
     } catch {
       toast.error("Could not copy the kubeconfig path");
+    }
+  };
+
+  const handleCopyKubeconfig = async (context: ClusterContextInfo) => {
+    setExporting({ contextName: context.name, action: "copy" });
+    try {
+      const result = await invokeRpc<ExportKubeconfigResult>(
+        "clusters.exportKubeconfig",
+        { contextName: context.name },
+      );
+      await navigator.clipboard.writeText(result.yaml);
+      setCopiedContext(context.name);
+      toast.success(`Kubeconfig copied: ${context.name}`);
+      window.setTimeout(
+        () =>
+          setCopiedContext((current) =>
+            current === context.name ? null : current,
+          ),
+        2000,
+      );
+    } catch (err) {
+      toast.error(
+        `Could not copy kubeconfig: ${
+          err instanceof Error ? err.message : String(err)
+        }`,
+      );
+    } finally {
+      setExporting(null);
+    }
+  };
+
+  const handleDownloadKubeconfig = async (context: ClusterContextInfo) => {
+    setExporting({ contextName: context.name, action: "download" });
+    try {
+      const result = await invokeRpc<ExportKubeconfigResult>(
+        "clusters.exportKubeconfig",
+        { contextName: context.name },
+      );
+      const saved = await saveTextFile(result.yaml, {
+        defaultPath: result.fileName || `${context.name}.kubeconfig`,
+        mimeType: "application/yaml;charset=utf-8",
+        filters: [
+          { name: "Kubeconfig", extensions: ["kubeconfig", "yaml", "yml"] },
+        ],
+      });
+      if (saved) toast.success(`Kubeconfig downloaded: ${context.name}`);
+    } catch (err) {
+      toast.error(
+        `Could not download kubeconfig: ${
+          err instanceof Error ? err.message : String(err)
+        }`,
+      );
+    } finally {
+      setExporting(null);
     }
   };
 
@@ -319,6 +391,7 @@ export function KubeconfigsCatalogView() {
                 const meta = statusMeta(liveStatus);
                 const isActive = context.name === currentContext;
                 const isOpening = openingContext === context.name;
+                const alias = contextAliases[context.name];
 
                 return (
                   <tr
@@ -332,20 +405,18 @@ export function KubeconfigsCatalogView() {
                   >
                     <td className="px-3 py-2.5">
                       <div className="flex min-w-0 items-center gap-2.5">
-                        <span
-                          className="flex h-7 w-7 shrink-0 items-center justify-center rounded-md border border-white/15 text-[9px] font-semibold tracking-wide text-white shadow-sm [text-shadow:0_1px_2px_rgba(0,0,0,0.35)]"
-                          style={{ backgroundImage: clusterTone(context.name) }}
-                          aria-hidden="true"
-                        >
-                          {clusterTag(context.name)}
-                        </span>
+                        <ClusterImageControl contextName={context.name} />
                         <div className="min-w-0">
                           <div className="flex min-w-0 items-center gap-1.5">
                             <span
                               className="truncate font-medium text-[var(--foreground)]"
-                              title={context.name}
+                              title={
+                                alias
+                                  ? `${alias} (${context.name})`
+                                  : context.name
+                              }
                             >
-                              {context.name}
+                              {alias || context.name}
                             </span>
                             {isActive && (
                               <span className="rounded border border-[var(--accent)]/25 bg-[var(--accent)]/10 px-1.5 py-0.5 font-mono text-[9px] font-semibold uppercase tracking-wide text-[var(--accent)]">
@@ -353,8 +424,13 @@ export function KubeconfigsCatalogView() {
                               </span>
                             )}
                           </div>
-                          <div className="truncate font-mono text-[10px] text-[var(--muted)]">
-                            {providerLabel(context.provider)}
+                          <div
+                            className="truncate font-mono text-[10px] text-[var(--muted)]"
+                            title={context.name}
+                          >
+                            {alias
+                              ? `${context.name} · ${providerLabel(context.provider)}`
+                              : providerLabel(context.provider)}
                           </div>
                         </div>
                       </div>
@@ -396,51 +472,128 @@ export function KubeconfigsCatalogView() {
                       </span>
                     </td>
                     <td className="px-3 py-2.5">
-                      <div className="flex items-center justify-end gap-0.5">
-                        <Tooltip content="Diagnose connection" side="top">
-                          <button
-                            type="button"
-                            data-testid="kubeconfig-diagnose"
-                            aria-label={`Diagnose ${context.name}`}
-                            onClick={() => void handleDiagnose(context)}
-                            className="rounded-md p-1.5 text-[var(--muted)] transition-colors hover:bg-[var(--surface-active)] hover:text-[var(--foreground)] cursor-pointer focus-visible:ring-2 focus-visible:ring-[var(--accent)] focus-visible:outline-hidden"
-                          >
-                            <Stethoscope
-                              className="h-3.5 w-3.5"
-                              aria-hidden="true"
-                            />
-                          </button>
-                        </Tooltip>
-                        <Tooltip content="Configure endpoint" side="top">
-                          <button
-                            type="button"
-                            data-testid="kubeconfig-endpoint"
-                            aria-label={`Configure endpoint for ${context.name}`}
-                            onClick={() =>
-                              openEndpointModal(context.name, context.server)
-                            }
-                            className="rounded-md p-1.5 text-[var(--muted)] transition-colors hover:bg-[var(--surface-active)] hover:text-[var(--foreground)] cursor-pointer focus-visible:ring-2 focus-visible:ring-[var(--accent)] focus-visible:outline-hidden"
-                          >
-                            <SlidersHorizontal
-                              className="h-3.5 w-3.5"
-                              aria-hidden="true"
-                            />
-                          </button>
-                        </Tooltip>
-                        <Tooltip content="Remove context" side="top">
-                          <button
-                            type="button"
-                            data-testid="kubeconfig-remove"
-                            aria-label={`Remove ${context.name}`}
-                            onClick={() => void handleRemove(context)}
-                            className="rounded-md p-1.5 text-[var(--muted)] transition-colors hover:bg-rose-500/15 hover:text-rose-500 cursor-pointer focus-visible:ring-2 focus-visible:ring-[var(--accent)] focus-visible:outline-hidden"
-                          >
-                            <Trash2
-                              className="h-3.5 w-3.5"
-                              aria-hidden="true"
-                            />
-                          </button>
-                        </Tooltip>
+                      <div className="flex items-center justify-end gap-1">
+                        <DropdownMenu.Root>
+                          <DropdownMenu.Trigger asChild>
+                            <button
+                              type="button"
+                              data-testid="kubeconfig-actions"
+                              data-context-name={context.name}
+                              aria-label={`More actions for ${context.name}`}
+                              className="rounded-md p-1.5 text-[var(--muted)] transition-colors hover:bg-[var(--surface-active)] hover:text-[var(--foreground)] cursor-pointer focus-visible:ring-2 focus-visible:ring-[var(--accent)] focus-visible:outline-hidden"
+                            >
+                              <MoreHorizontal
+                                className="h-3.5 w-3.5"
+                                aria-hidden="true"
+                              />
+                            </button>
+                          </DropdownMenu.Trigger>
+                          <DropdownMenu.Portal>
+                            <DropdownMenu.Content
+                              align="end"
+                              sideOffset={6}
+                              className="z-[130] min-w-52 rounded-xl border border-[var(--border)] bg-[var(--surface-elevated)] p-1 shadow-2xl backdrop-blur-md"
+                            >
+                              <DropdownMenu.Item
+                                data-testid="kubeconfig-edit"
+                                data-context-name={context.name}
+                                onSelect={() => setEditingContext(context)}
+                                className={rowActionClass}
+                              >
+                                <Pencil
+                                  className="h-3.5 w-3.5 text-[var(--muted)]"
+                                  aria-hidden="true"
+                                />
+                                Edit kubeconfig
+                              </DropdownMenu.Item>
+                              <DropdownMenu.Item
+                                data-testid="kubeconfig-copy"
+                                data-context-name={context.name}
+                                disabled={exporting !== null}
+                                onSelect={() =>
+                                  void handleCopyKubeconfig(context)
+                                }
+                                className={rowActionClass}
+                              >
+                                {exporting?.contextName === context.name &&
+                                exporting.action === "copy" ? (
+                                  <Loader2
+                                    className="h-3.5 w-3.5 animate-spin"
+                                    aria-hidden="true"
+                                  />
+                                ) : copiedContext === context.name ? (
+                                  <Check
+                                    className="h-3.5 w-3.5 text-emerald-500"
+                                    aria-hidden="true"
+                                  />
+                                ) : (
+                                  <Copy
+                                    className="h-3.5 w-3.5 text-[var(--muted)]"
+                                    aria-hidden="true"
+                                  />
+                                )}
+                                {copiedContext === context.name
+                                  ? "Copied"
+                                  : "Copy kubeconfig"}
+                              </DropdownMenu.Item>
+                              <DropdownMenu.Item
+                                data-testid="kubeconfig-download"
+                                data-context-name={context.name}
+                                disabled={exporting !== null}
+                                onSelect={() =>
+                                  void handleDownloadKubeconfig(context)
+                                }
+                                className={rowActionClass}
+                              >
+                                {exporting?.contextName === context.name &&
+                                exporting.action === "download" ? (
+                                  <Loader2
+                                    className="h-3.5 w-3.5 animate-spin"
+                                    aria-hidden="true"
+                                  />
+                                ) : (
+                                  <Download
+                                    className="h-3.5 w-3.5 text-[var(--muted)]"
+                                    aria-hidden="true"
+                                  />
+                                )}
+                                Download kubeconfig
+                              </DropdownMenu.Item>
+                              <DropdownMenu.Label className="flex items-center gap-1.5 px-2.5 py-1 text-[9px] font-mono text-amber-700 dark:text-amber-400">
+                                <LockKeyhole
+                                  className="h-3 w-3"
+                                  aria-hidden="true"
+                                />
+                                Export contains credentials
+                              </DropdownMenu.Label>
+                              <DropdownMenu.Item
+                                data-testid="kubeconfig-diagnose"
+                                data-context-name={context.name}
+                                onSelect={() => void handleDiagnose(context)}
+                                className={rowActionClass}
+                              >
+                                <Stethoscope
+                                  className="h-3.5 w-3.5 text-[var(--muted)]"
+                                  aria-hidden="true"
+                                />
+                                Diagnose connection
+                              </DropdownMenu.Item>
+                              <DropdownMenu.Separator className="my-1 h-px bg-[var(--border)]" />
+                              <DropdownMenu.Item
+                                data-testid="kubeconfig-remove"
+                                data-context-name={context.name}
+                                onSelect={() => void handleRemove(context)}
+                                className={`${rowActionClass} text-rose-600 dark:text-rose-400`}
+                              >
+                                <Trash2
+                                  className="h-3.5 w-3.5"
+                                  aria-hidden="true"
+                                />
+                                Remove context
+                              </DropdownMenu.Item>
+                            </DropdownMenu.Content>
+                          </DropdownMenu.Portal>
+                        </DropdownMenu.Root>
                         <button
                           type="button"
                           data-testid="kubeconfig-open"
@@ -480,6 +633,12 @@ export function KubeconfigsCatalogView() {
             </tbody>
           </table>
         </div>
+      )}
+      {editingContext && (
+        <KubeconfigEditModal
+          context={editingContext}
+          onClose={() => setEditingContext(null)}
+        />
       )}
     </div>
   );

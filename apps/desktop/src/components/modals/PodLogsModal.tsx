@@ -4,6 +4,7 @@ import * as React from "react";
 import { useClusterStore } from "@/stores/clusterStore";
 import { toast } from "sonner";
 import { getStreamCredentials, resetStreamCredentials } from "@/lib/ipc";
+import { saveTextFile } from "@/lib/saveFile";
 import { PodLogsHeader } from "./PodLogsHeader";
 import { PodLogsToolbar } from "./PodLogsToolbar";
 import { PodLogsConsole } from "./PodLogsConsole";
@@ -311,15 +312,13 @@ export function PodLogsModal() {
     setTimeout(() => setCopied(false), 2000);
   };
 
-  const handleDownload = () => {
-    const blob = new Blob([logs], { type: "text/plain" });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = `${logsModalPod.name}-${selectedContainer || "logs"}.log`;
-    a.click();
-    URL.revokeObjectURL(url);
-    toast.success("Log file downloaded");
+  const handleDownload = async () => {
+    const saved = await saveTextFile(logs, {
+      defaultPath: `${logsModalPod.name}-${selectedContainer || "logs"}.log`,
+      mimeType: "text/plain;charset=utf-8",
+      filters: [{ name: "Log file", extensions: ["log", "txt"] }],
+    });
+    if (saved) toast.success("Log file downloaded");
   };
 
   const scrollToBottom = () => {

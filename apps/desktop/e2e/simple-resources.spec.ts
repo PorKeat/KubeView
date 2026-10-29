@@ -3,7 +3,7 @@ import { mockRpc } from "./mockRpc";
 
 async function boot(page: Page) {
   await page.addInitScript(() => {
-    localStorage.setItem("kubeview_splash_seen", "true");
+    localStorage.setItem("kubeview_skip_boot_splash", "true");
   });
   await mockRpc(page);
   await page.goto("/");
@@ -162,7 +162,7 @@ test.describe("KubeView simple resource pages", () => {
 
   test("adds a Helm repository and browses its charts", async ({ page }) => {
     await page.addInitScript(() => {
-      localStorage.setItem("kubeview_splash_seen", "true");
+      localStorage.setItem("kubeview_skip_boot_splash", "true");
     });
     await mockRpc(page);
     await page.goto("/");
@@ -205,7 +205,7 @@ test.describe("KubeView simple resource pages", () => {
     page,
   }) => {
     await page.addInitScript(() => {
-      localStorage.setItem("kubeview_splash_seen", "true");
+      localStorage.setItem("kubeview_skip_boot_splash", "true");
     });
     await mockRpc(page, {
       errors: {

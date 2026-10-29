@@ -3,6 +3,7 @@
 import * as React from "react";
 import { useTabStore } from "@/stores/tabStore";
 import { ClusterOverviewView } from "./ClusterOverviewView";
+import { TopologyView } from "./topology/TopologyView";
 import { GitOpsView } from "./gitops/GitOpsView";
 import { LearningCenterView } from "./learning/LearningCenterView";
 import { FleetCatalogView } from "./fleet/FleetCatalogView";
@@ -44,6 +45,10 @@ export function ActiveViewRenderer() {
       {(() => {
         if (activeTabId === "overview") {
           return <ClusterOverviewView />;
+        }
+
+        if (activeTabId === "topology") {
+          return <TopologyView />;
         }
 
         if (activeTabId === "namespaces") {

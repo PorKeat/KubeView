@@ -16,8 +16,8 @@ export function InspectorTabBar({
   onSelectTab,
 }: InspectorTabBarProps) {
   return (
-    <div className="h-11 border-b border-[var(--border)] px-2 sm:px-4 flex items-center bg-[var(--surface)] shrink-0 overflow-x-auto scrollbar-none">
-      <div className="flex items-center gap-1 p-0.5 rounded-lg bg-black/[0.04] dark:bg-white/[0.05] border border-[var(--border)] text-xs select-none">
+    <div className="min-h-11 border-b border-[var(--border)] px-2 py-1.5 sm:px-4 flex items-center bg-[var(--surface)] shrink-0">
+      <div className="flex max-w-full flex-wrap items-center gap-1 rounded-lg border border-[var(--border)] bg-black/[0.04] p-0.5 text-xs select-none dark:bg-white/[0.05]">
         {tabs.map((t) => {
           const Icon = t.icon;
           const isActive = activeTab === t.id;
@@ -27,7 +27,7 @@ export function InspectorTabBar({
               data-testid={`inspector-tab-${t.id}`}
               onClick={() => onSelectTab(t.id)}
               className={cn(
-                "relative px-2.5 py-1 text-xs rounded-md capitalize transition-colors font-medium cursor-pointer flex items-center gap-1.5 outline-hidden focus-visible:ring-1 focus-visible:ring-[var(--accent)]",
+                "relative flex shrink-0 items-center gap-1.5 whitespace-nowrap rounded-md px-2.5 py-1 text-xs font-medium capitalize outline-hidden transition-colors cursor-pointer focus-visible:ring-1 focus-visible:ring-[var(--accent)]",
                 isActive
                   ? "text-[var(--foreground)] font-semibold"
                   : "text-[var(--muted)] hover:text-[var(--foreground)]",

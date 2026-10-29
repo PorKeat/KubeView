@@ -79,7 +79,7 @@ export function DeploymentTableHeader({
             ascending: sortAsc,
             onSort,
           })}
-          className="w-48 sm:w-56 md:w-64 py-1 px-3 cursor-pointer hover:text-[var(--foreground)] transition-colors min-w-0"
+          className="w-48 sm:w-56 md:w-60 py-1 px-3 cursor-pointer hover:text-[var(--foreground)] transition-colors min-w-0"
         >
           <div className="flex items-center gap-1">
             <span>Name</span>

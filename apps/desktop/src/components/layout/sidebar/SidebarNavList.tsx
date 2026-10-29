@@ -5,6 +5,14 @@ import { cn } from "@/lib/utils";
 import { Tooltip } from "@/components/ui/Tooltip";
 import type { NavGroup, NavItem } from "./navConfig";
 
+function groupTestId(category: string) {
+  return category
+    .toLowerCase()
+    .replace(/&/g, "and")
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "");
+}
+
 export function SidebarNavList({
   groups,
   collapsedGroups,
@@ -23,16 +31,31 @@ export function SidebarNavList({
   return (
     <>
       {groups.map((group) => {
-        const isGroupCollapsed = collapsedGroups[group.category];
+        const isGroupCollapsed = collapsedGroups[group.category] ?? true;
+        const hasActiveItem = group.items.some(
+          (item) => item.id === activeTabId,
+        );
 
         return (
           <div key={group.category} className="space-y-0.5">
             {!sidebarCollapsed ? (
               <button
+                type="button"
+                data-nav-group={group.category}
+                data-testid={`nav-group-${groupTestId(group.category)}`}
+                aria-expanded={!isGroupCollapsed}
                 onClick={() => onToggleGroup(group.category)}
                 className="w-full flex items-center justify-between px-2 py-1 text-xs font-medium text-[var(--muted)] hover:text-[var(--foreground)] rounded transition-colors cursor-pointer"
               >
-                <span>{group.category}</span>
+                <span className="flex items-center gap-1.5">
+                  {group.category}
+                  {isGroupCollapsed && hasActiveItem && (
+                    <span
+                      className="h-1.5 w-1.5 rounded-full bg-[var(--accent)]"
+                      aria-label="Current section"
+                    />
+                  )}
+                </span>
                 {isGroupCollapsed ? (
                   <ChevronRight className="w-3.5 h-3.5" />
                 ) : (

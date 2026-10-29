@@ -20,8 +20,8 @@ import type {
   SecretSummary,
   CRDSummary,
 } from "@kubeview/contracts";
-import { ConfigStorageEditorForm } from "@/components/modals/ConfigStorageEditorForm";
 import { PodTroubleshootingAssistant } from "@/components/views/troubleshooting";
+import { ConfigStorageEditView } from "../tabs/ConfigStorageEditView";
 import { InspectorResourceEditor } from "../tabs/InspectorResourceEditor";
 
 import { InspectorNodeOverview } from "../tabs/InspectorNodeOverview";
@@ -92,6 +92,8 @@ export interface InspectorTabContentProps {
   isLoadingYaml: boolean;
   isLoadingEvents: boolean;
   copiedYaml: boolean;
+  isEditorMaximized: boolean;
+  onToggleEditorMaximized: () => void;
   onFilterPodsForNode: (nodeName: string) => void;
   onInspectPod: (resource: SelectedResource) => void;
   onViewAllPods: () => void;
@@ -158,6 +160,8 @@ export function InspectorTabContent({
   isLoadingYaml,
   isLoadingEvents,
   copiedYaml,
+  isEditorMaximized,
+  onToggleEditorMaximized,
   onFilterPodsForNode,
   onInspectPod,
   onViewAllPods,
@@ -181,7 +185,32 @@ export function InspectorTabContent({
   if (activeTab === "edit" && !editableConfigStorageData) {
     return (
       <div className="flex-1 min-h-0 overflow-hidden">
-        <InspectorResourceEditor currentResource={currentResource} />
+        <InspectorResourceEditor
+          currentResource={currentResource}
+          isMaximized={isEditorMaximized}
+          onToggleMaximize={onToggleEditorMaximized}
+        />
+      </div>
+    );
+  }
+
+  if (activeTab === "edit" && editableConfigStorageData) {
+    return (
+      <div className="flex min-h-0 flex-1 overflow-hidden">
+        <ConfigStorageEditView
+          currentResource={currentResource}
+          data={editableConfigStorageData}
+          isEditorMaximized={isEditorMaximized}
+          onToggleEditorMaximized={onToggleEditorMaximized}
+          onClose={onClose}
+          onSaved={() => {
+            if (isConfigMap) {
+              void loadConfigMaps(currentResource.namespace);
+            } else {
+              void loadSecrets(currentResource.namespace);
+            }
+          }}
+        />
       </div>
     );
   }
@@ -221,26 +250,6 @@ export function InspectorTabContent({
         </>
       ) : isConfigStorageResource ? (
         <>
-          {activeTab === "edit" && editableConfigStorageData && (
-            <ConfigStorageEditorForm
-              target={{
-                kind: isConfigMap ? "ConfigMap" : "Secret",
-                name: currentResource.name,
-                namespace: currentResource.namespace,
-                status: currentResource.status,
-                immutable: editableConfigStorageData.immutable,
-                summary: editableConfigStorageData,
-              }}
-              onClose={onClose}
-              onSaved={() => {
-                if (isConfigMap) {
-                  void loadConfigMaps(currentResource.namespace);
-                } else {
-                  void loadSecrets(currentResource.namespace);
-                }
-              }}
-            />
-          )}
           {activeTab === "overview" && configStorageData && (
             <InspectorConfigStorageOverview
               currentResource={currentResource}

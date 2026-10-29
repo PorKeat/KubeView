@@ -33,7 +33,6 @@ import {
   type EnvTag,
 } from "@/stores/catalogStore";
 import { cn } from "@/lib/utils";
-import { clusterTag, clusterTone } from "@/lib/clusterVisuals";
 import { EmptyState } from "@/components/ui";
 import { CustomSelect } from "@/components/ui/CustomSelect";
 import { Tooltip } from "@/components/ui/Tooltip";
@@ -50,6 +49,7 @@ import {
   type CatalogStatus,
 } from "./catalog/catalogMeta";
 import { CatalogClusterDrawer } from "./catalog/CatalogClusterDrawer";
+import { ClusterImageControl } from "./catalog/ClusterImageControl";
 
 type CatalogFilter = "all" | "healthy" | "attention" | "offline";
 type SortKey = "name" | "status" | "distro" | "version" | "latency";
@@ -144,8 +144,11 @@ export function ClusterCatalogView() {
 
   const pinned = useCatalogStore((state) => state.pinned);
   const tags = useCatalogStore((state) => state.tags);
+  const images = useCatalogStore((state) => state.images);
+  const contextAliases = useCatalogStore((state) => state.aliases);
   const togglePin = useCatalogStore((state) => state.togglePin);
   const setTag = useCatalogStore((state) => state.setTag);
+  const setContextImage = useCatalogStore((state) => state.setContextImage);
 
   const [search, setSearch] = React.useState("");
   const [filter, setFilter] = React.useState<CatalogFilter>("all");
@@ -243,13 +246,15 @@ export function ClusterCatalogView() {
       if (!matchesHealth) return false;
       if (envFilter !== "all" && row.env !== envFilter) return false;
       if (!query) return true;
-      return `${row.context.name} ${row.context.server} ${
-        row.context.provider
-      } ${row.snapshot?.cluster ?? ""} ${ENV_META[row.env].label}`
+      return `${row.context.name} ${
+        contextAliases[row.context.name] ?? ""
+      } ${row.context.server} ${row.context.provider} ${
+        row.snapshot?.cluster ?? ""
+      } ${ENV_META[row.env].label}`
         .toLowerCase()
         .includes(query);
     });
-  }, [envFilter, filter, rows, search]);
+  }, [contextAliases, envFilter, filter, rows, search]);
 
   const sortedRows = React.useMemo(() => {
     return [...filteredRows].sort((a, b) =>
@@ -716,7 +721,17 @@ export function ClusterCatalogView() {
           </div>
 
           <div className="mt-3 overflow-x-auto rounded-xl border border-[var(--border)] bg-[var(--surface)]">
-            <table className="w-full min-w-[980px] border-collapse text-left text-xs">
+            <table className="w-full table-fixed border-collapse text-left text-xs">
+              <colgroup>
+                <col className="w-9" />
+                <col className="w-[25%]" />
+                <col className="w-[20%]" />
+                <col className="w-[8%]" />
+                <col className="w-[11%]" />
+                <col className="w-[7%]" />
+                <col className="w-[9%]" />
+                <col className="w-[16%]" />
+              </colgroup>
               <thead>
                 <tr className="border-b border-[var(--border)] font-mono text-[9px] uppercase tracking-[0.12em] text-[var(--muted)]">
                   <th scope="col" className="w-9 px-3 py-2">
@@ -736,9 +751,6 @@ export function ClusterCatalogView() {
                     sort={sort}
                     onSort={toggleSort}
                   />
-                  <th scope="col" className="px-3 py-2 font-medium">
-                    Source
-                  </th>
                   <th scope="col" className="px-3 py-2 font-medium">
                     Endpoint
                   </th>
@@ -778,7 +790,7 @@ export function ClusterCatalogView() {
                   const envMeta = ENV_META[env];
                   const isActive = context.name === currentContext;
                   const isOpening = openingContext === context.name;
-
+                  const alias = contextAliases[context.name];
                   return (
                     <tr
                       key={context.name}
@@ -815,15 +827,7 @@ export function ClusterCatalogView() {
                       </td>
                       <td className="px-3 py-2.5">
                         <div className="flex min-w-0 items-center gap-2.5">
-                          <span
-                            className="flex h-7 w-7 shrink-0 items-center justify-center rounded-md border border-white/15 text-[9px] font-semibold tracking-wide text-white shadow-sm [text-shadow:0_1px_2px_rgba(0,0,0,0.35)]"
-                            style={{
-                              backgroundImage: clusterTone(context.name),
-                            }}
-                            aria-hidden="true"
-                          >
-                            {clusterTag(context.name)}
-                          </span>
+                          <ClusterImageControl contextName={context.name} />
                           <div className="min-w-0">
                             <div className="flex min-w-0 items-center gap-1.5">
                               {row.pinned && (
@@ -834,9 +838,13 @@ export function ClusterCatalogView() {
                               )}
                               <span
                                 className="truncate font-medium text-[var(--foreground)]"
-                                title={context.name}
+                                title={
+                                  alias
+                                    ? `${alias} (${context.name})`
+                                    : context.name
+                                }
                               >
-                                {context.name}
+                                {alias || context.name}
                               </span>
                               {isActive && (
                                 <span className="rounded border border-[var(--accent)]/25 bg-[var(--accent)]/10 px-1.5 py-0.5 font-mono text-[9px] font-semibold uppercase tracking-wide text-[var(--accent)]">
@@ -853,14 +861,16 @@ export function ClusterCatalogView() {
                                 {envMeta.label}
                               </span>
                             </div>
-                            <div className="truncate font-mono text-[10px] text-[var(--muted)]">
-                              {context.cluster}
+                            <div
+                              className="truncate font-mono text-[10px] text-[var(--muted)]"
+                              title={context.name}
+                            >
+                              {alias
+                                ? `${context.name} · ${context.cluster}`
+                                : context.cluster}
                             </div>
                           </div>
                         </div>
-                      </td>
-                      <td className="px-3 py-2.5 font-mono text-[10px] text-[var(--muted)]">
-                        kubeconfig
                       </td>
                       <td className="max-w-[210px] px-3 py-2.5">
                         <span
@@ -965,7 +975,7 @@ export function ClusterCatalogView() {
                 {sortedRows.length === 0 && (
                   <tr>
                     <td
-                      colSpan={9}
+                      colSpan={8}
                       className="px-3 py-8 text-center text-[11px] text-[var(--muted)]"
                     >
                       No clusters match the current filters.
@@ -988,6 +998,7 @@ export function ClusterCatalogView() {
           configPath={configPath}
           pinned={drawerRow.pinned}
           isActive={drawerRow.context.name === currentContext}
+          image={images[drawerRow.context.name]}
           onClose={() => setDrawerContext(null)}
           onOpen={() => void handleOpenCluster(drawerRow.context.name)}
           onDiagnose={() => void handleDiagnose(drawerRow.context.name)}
@@ -998,6 +1009,7 @@ export function ClusterCatalogView() {
           onRemove={() => void handleRemove(drawerRow.context.name)}
           onTogglePin={() => togglePin(drawerRow.context.name)}
           onSetEnv={(tag) => setTag(drawerRow.context.name, tag)}
+          onSetImage={(image) => setContextImage(drawerRow.context.name, image)}
         />
       )}
     </div>

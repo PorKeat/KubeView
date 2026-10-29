@@ -8,7 +8,7 @@ async function openPage(page: Page, id: string) {
 test.describe("KubeView Config & Storage", () => {
   test.beforeEach(async ({ page }) => {
     await page.addInitScript(() => {
-      localStorage.setItem("kubeview_splash_seen", "true");
+      localStorage.setItem("kubeview_skip_boot_splash", "true");
     });
     await mockRpc(page);
     await page.goto("/");
@@ -82,6 +82,13 @@ test.describe("KubeView Config & Storage", () => {
     ).toBeVisible();
     await page.locator('[data-testid="inspector-tab-edit"]').click();
     await expect(
+      page.locator('[data-testid="inspector-resource-editor"]'),
+    ).toBeVisible();
+    await expect(
+      page.locator('[data-testid="inspector-resource-editor-yaml"]'),
+    ).toContainText(/kind: ConfigMap/);
+    await page.locator('[data-testid="config-storage-mode-form"]').click();
+    await expect(
       page.locator('[data-testid="config-storage-editor-form"]'),
     ).toBeVisible();
     await page.getByRole("button", { name: "Close editor" }).click();
@@ -93,6 +100,7 @@ test.describe("KubeView Config & Storage", () => {
   test("expands multiline ConfigMap values in the editor", async ({ page }) => {
     await openPage(page, "configmaps");
     await page.locator('[data-testid="configmaps-edit"]').first().click();
+    await page.locator('[data-testid="config-storage-mode-form"]').click();
     const value = page.locator('[data-testid="config-storage-value-0"]');
     await expect(value).toHaveValue("enabled=true");
     await value.fill(
@@ -108,6 +116,7 @@ test.describe("KubeView Config & Storage", () => {
   test("edits ConfigMaps from the form and adds keys", async ({ page }) => {
     await openPage(page, "configmaps");
     await page.locator('[data-testid="configmaps-edit"]').first().click();
+    await page.locator('[data-testid="config-storage-mode-form"]').click();
     const modal = page.locator('[data-testid="config-storage-editor-form"]');
     await expect(modal).toBeVisible();
     await expect(
@@ -122,6 +131,35 @@ test.describe("KubeView Config & Storage", () => {
     await page.locator('[data-testid="config-storage-value-1"]').fill("on");
     await page.locator('[data-testid="config-storage-save"]').click();
     await expect(modal).toHaveCount(0);
+  });
+
+  test("gates and applies Secret YAML behind an explicit reveal", async ({
+    page,
+  }) => {
+    await openPage(page, "secrets");
+    await page.locator('[data-testid="secrets-edit"]').first().click();
+    await page.locator('[data-testid="config-storage-mode-yaml"]').click();
+
+    const gate = page.locator('[data-testid="secret-yaml-gate"]');
+    await expect(gate).toBeVisible();
+    await expect(page.locator("body")).not.toContainText("super-secret-value");
+
+    await page.locator('[data-testid="secret-yaml-reveal"]').click();
+    const yamlEditor = page.locator(
+      '[data-testid="inspector-resource-editor-yaml"]',
+    );
+    await expect(yamlEditor).toContainText(/kind: Secret/);
+
+    const original = (await yamlEditor.innerText()).replace(/ /g, " ");
+    await yamlEditor.click();
+    await page.keyboard.press("ControlOrMeta+A");
+    await page.keyboard.insertText(`${original}# reviewed in YAML\n`);
+    await page
+      .locator('[data-testid="inspector-resource-editor-apply-close"]')
+      .click();
+    await expect(
+      page.locator('[data-testid="resource-inspector-drawer"]'),
+    ).toHaveCount(0);
   });
 
   test("reveals and edits Secrets only after confirmation", async ({

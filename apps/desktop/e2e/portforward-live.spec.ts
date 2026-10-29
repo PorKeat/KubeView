@@ -1,4 +1,5 @@
 import { test, expect, type Page } from "@playwright/test";
+import { expandSidebarGroups } from "./nav";
 import net from "node:net";
 
 interface PortForwardItem {
@@ -21,7 +22,7 @@ test.describe("KubeView live port forwarding", () => {
 
   test("starts and stops a real service tunnel", async ({ page }) => {
     await page.addInitScript(() => {
-      localStorage.setItem("kubeview_splash_seen", "true");
+      localStorage.setItem("kubeview_skip_boot_splash", "true");
     });
     await page.goto("/");
     await page.waitForLoadState("domcontentloaded");
@@ -77,6 +78,7 @@ test.describe("KubeView live port forwarding", () => {
         .map((item) => item.id),
     );
     try {
+      await expandSidebarGroups(page);
       await page.locator('[data-testid="nav-item-portforwards"]').click();
       await expect(
         page.getByRole("heading", { name: "Port Forwarding Manager" }),

@@ -26,9 +26,13 @@ export interface CatalogLinkInput {
 interface CatalogState {
   pinned: string[];
   tags: Record<string, EnvTag>;
+  images: Record<string, string>;
+  aliases: Record<string, string>;
   links: CatalogLink[];
   togglePin: (contextName: string) => void;
   setTag: (contextName: string, tag: EnvTag | null) => void;
+  setContextImage: (contextName: string, image: string | null) => void;
+  setContextAlias: (contextName: string, alias: string | null) => void;
   addLink: (input: CatalogLinkInput) => CatalogLink;
   updateLink: (id: string, input: CatalogLinkInput) => void;
   removeLink: (id: string) => void;
@@ -62,6 +66,8 @@ export const useCatalogStore = create<CatalogState>()(
     (set) => ({
       pinned: [],
       tags: {},
+      images: {},
+      aliases: {},
       links: [],
       togglePin: (contextName) =>
         set((state) => ({
@@ -75,6 +81,21 @@ export const useCatalogStore = create<CatalogState>()(
           if (tag) tags[contextName] = tag;
           else delete tags[contextName];
           return { tags };
+        }),
+      setContextImage: (contextName, image) =>
+        set((state) => {
+          const images = { ...state.images };
+          if (image) images[contextName] = image;
+          else delete images[contextName];
+          return { images };
+        }),
+      setContextAlias: (contextName, alias) =>
+        set((state) => {
+          const aliases = { ...state.aliases };
+          const value = alias?.trim();
+          if (value) aliases[contextName] = value;
+          else delete aliases[contextName];
+          return { aliases };
         }),
       addLink: (input) => {
         const link: CatalogLink = {
@@ -112,6 +133,8 @@ export const useCatalogStore = create<CatalogState>()(
       partialize: (state) => ({
         pinned: state.pinned,
         tags: state.tags,
+        images: state.images,
+        aliases: state.aliases,
         links: state.links,
       }),
     },

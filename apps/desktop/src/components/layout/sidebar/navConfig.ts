@@ -246,6 +246,7 @@ export function buildNavigationGroups(counts: SidebarCounts): NavGroup[] {
           desktopHidden: true,
         },
         { id: "overview", title: "Cluster Overview", icon: LayoutDashboard },
+        { id: "topology", title: "Topology", icon: Network },
         {
           id: "gitops",
           title: "GitOps Drift",

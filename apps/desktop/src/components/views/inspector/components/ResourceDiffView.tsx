@@ -8,7 +8,7 @@ export function ResourceDiffView({ diff }: { diff: YamlDiff }) {
     return (
       <div
         data-testid="inspector-resource-editor-diff"
-        className="flex min-h-[320px] flex-1 items-center justify-center rounded-lg border border-[var(--border)] bg-[#1e1e1e] font-mono text-xs text-slate-400"
+        className="flex min-h-[320px] flex-1 items-center justify-center rounded-lg border border-[var(--editor-border)] bg-[var(--editor-bg)] font-mono text-xs text-[var(--editor-muted)]"
       >
         No changes against the live manifest.
       </div>
@@ -18,7 +18,7 @@ export function ResourceDiffView({ diff }: { diff: YamlDiff }) {
   return (
     <div
       data-testid="inspector-resource-editor-diff"
-      className="min-h-[320px] flex-1 overflow-auto rounded-lg border border-[var(--border)] bg-[#1e1e1e] font-mono text-[11px] leading-5"
+      className="min-h-[320px] flex-1 overflow-auto rounded-lg border border-[var(--editor-border)] bg-[var(--editor-bg)] font-mono text-[11px] leading-5 text-[var(--editor-fg)]"
     >
       {diff.lines.map((line, index) => (
         <div
@@ -26,19 +26,20 @@ export function ResourceDiffView({ diff }: { diff: YamlDiff }) {
           className={cn(
             "flex min-w-max border-l-2",
             line.kind === "added" &&
-              "border-emerald-500/70 bg-emerald-500/10 text-emerald-300",
+              "border-emerald-500/70 bg-emerald-500/10 text-emerald-700 dark:text-emerald-300",
             line.kind === "removed" &&
-              "border-rose-500/70 bg-rose-500/10 text-rose-300",
-            line.kind === "context" && "border-transparent text-slate-400",
+              "border-rose-500/70 bg-rose-500/10 text-rose-700 dark:text-rose-300",
+            line.kind === "context" &&
+              "border-transparent text-[var(--editor-muted)]",
           )}
         >
-          <span className="w-10 shrink-0 select-none border-r border-white/5 px-1 text-right text-slate-600">
+          <span className="w-10 shrink-0 select-none border-r border-[var(--editor-border)] px-1 text-right text-[var(--editor-muted)]">
             {line.oldLine ?? ""}
           </span>
-          <span className="w-10 shrink-0 select-none border-r border-white/5 px-1 text-right text-slate-600">
+          <span className="w-10 shrink-0 select-none border-r border-[var(--editor-border)] px-1 text-right text-[var(--editor-muted)]">
             {line.newLine ?? ""}
           </span>
-          <span className="w-5 shrink-0 select-none text-center text-slate-500">
+          <span className="w-5 shrink-0 select-none text-center text-[var(--editor-muted)]">
             {line.kind === "added" ? "+" : line.kind === "removed" ? "-" : " "}
           </span>
           <span className="whitespace-pre pr-3">{line.text || " "}</span>

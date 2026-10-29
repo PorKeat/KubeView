@@ -1,9 +1,10 @@
 import { test, expect } from "@playwright/test";
+import { expandSidebarGroups } from "./nav";
 
 test.describe("KubeView UI - Pods Management View", () => {
   test.beforeEach(async ({ page }) => {
     await page.addInitScript(() => {
-      localStorage.setItem("kubeview_splash_seen", "true");
+      localStorage.setItem("kubeview_skip_boot_splash", "true");
     });
     await page.goto("/");
     await page.waitForLoadState("domcontentloaded");
@@ -12,6 +13,7 @@ test.describe("KubeView UI - Pods Management View", () => {
     await expect(trigger).toContainText("kubernetes-admin@kubekey", {
       timeout: 15000,
     });
+    await expandSidebarGroups(page);
   });
 
   test("navigates to Pods view and displays pod list", async ({ page }) => {

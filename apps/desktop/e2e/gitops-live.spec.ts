@@ -1,4 +1,5 @@
 import { test, expect } from "@playwright/test";
+import { expandSidebarGroups } from "./nav";
 import { mkdtempSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
@@ -25,7 +26,7 @@ data:
 
     try {
       await page.addInitScript(() => {
-        localStorage.setItem("kubeview_splash_seen", "true");
+        localStorage.setItem("kubeview_skip_boot_splash", "true");
       });
       await page.goto("/");
       await page.waitForLoadState("domcontentloaded");
@@ -58,6 +59,7 @@ data:
         return;
       }
 
+      await expandSidebarGroups(page);
       await page.locator('[data-testid="nav-item-gitops"]').click();
       await page.locator('[data-testid="gitops-manual-toggle"]').click();
       await page.locator('[data-testid="gitops-source-path"]').fill(directory);

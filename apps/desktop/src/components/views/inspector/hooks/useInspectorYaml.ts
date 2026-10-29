@@ -2,6 +2,7 @@
 
 import * as React from "react";
 import { toast } from "sonner";
+import { saveTextFile } from "@/lib/saveFile";
 import { useClusterStore, type SelectedResource } from "@/stores/clusterStore";
 import type { PodSummary } from "@kubeview/contracts";
 import { synthesizePodYaml } from "../lib/synthesizePodYaml";
@@ -214,16 +215,14 @@ export function useInspectorYaml({
     setTimeout(() => setCopiedYaml(false), 2000);
   };
 
-  const downloadYaml = () => {
+  const downloadYaml = async () => {
     if (!currentResource) return;
-    const blob = new Blob([liveYaml], { type: "text/yaml" });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = `${currentResource.name}.yaml`;
-    a.click();
-    URL.revokeObjectURL(url);
-    toast.success("YAML manifest downloaded");
+    const saved = await saveTextFile(liveYaml, {
+      defaultPath: `${currentResource.name}.yaml`,
+      mimeType: "application/yaml;charset=utf-8",
+      filters: [{ name: "YAML", extensions: ["yaml", "yml"] }],
+    });
+    if (saved) toast.success("YAML manifest downloaded");
   };
 
   return {

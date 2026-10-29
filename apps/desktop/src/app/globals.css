@@ -32,6 +32,21 @@
     --status-critical-bg: rgba(239, 68, 68, 0.12);
     --status-muted: #94a3b8;
     --status-muted-bg: rgba(148, 163, 184, 0.12);
+    --editor-bg: #fcfdff;
+    --editor-gutter-bg: #f6f8fb;
+    --editor-border: #e2e8f0;
+    --editor-fg: #172033;
+    --editor-muted: #94a3b8;
+    --editor-active-line: rgba(15, 23, 42, 0.035);
+    --editor-selection: rgba(234, 88, 12, 0.16);
+    --yaml-key: #0f766e;
+    --yaml-string: #b45309;
+    --yaml-number: #7c3aed;
+    --yaml-bool: #2563eb;
+    --yaml-null: #64748b;
+    --yaml-comment: #64748b;
+    --yaml-meta: #be123c;
+    --yaml-punctuation: #64748b;
     --radius: 0.5rem;
   }
 
@@ -56,6 +71,21 @@
     --status-critical-bg: rgba(244, 63, 94, 0.12);
     --status-muted: #94a3b8;
     --status-muted-bg: rgba(148, 163, 184, 0.12);
+    --editor-bg: #0d121b;
+    --editor-gutter-bg: #0a0f17;
+    --editor-border: #1e2638;
+    --editor-fg: #dbe4f0;
+    --editor-muted: #5d6b80;
+    --editor-active-line: rgba(255, 255, 255, 0.035);
+    --editor-selection: rgba(240, 138, 66, 0.24);
+    --yaml-key: #7dd3fc;
+    --yaml-string: #fbbf24;
+    --yaml-number: #c4b5fd;
+    --yaml-bool: #fda4af;
+    --yaml-null: #94a3b8;
+    --yaml-comment: #64748b;
+    --yaml-meta: #f472b6;
+    --yaml-punctuation: #93a4b8;
   }
 
   * {
@@ -260,6 +290,166 @@
     rgba(255, 255, 255, 0.02) 80%,
     transparent 100%
   );
+}
+
+/* ============================================================
+   Boot splash and workspace transitions
+   ============================================================ */
+html[data-splash-seen="true"] [data-splash-screen] {
+  display: none;
+}
+
+.splash-screen {
+  transition:
+    opacity 400ms cubic-bezier(0.22, 1, 0.36, 1),
+    transform 500ms cubic-bezier(0.22, 1, 0.36, 1),
+    filter 400ms ease;
+  will-change: opacity, transform, filter;
+}
+
+.splash-grid {
+  background-image: radial-gradient(
+    circle at 1px 1px,
+    rgba(15, 23, 42, 0.09) 1px,
+    transparent 0
+  );
+  background-size: 26px 26px;
+  mask-image: radial-gradient(ellipse at center, black 0%, transparent 72%);
+  -webkit-mask-image: radial-gradient(
+    ellipse at center,
+    black 0%,
+    transparent 72%
+  );
+}
+
+.dark .splash-grid {
+  background-image: radial-gradient(
+    circle at 1px 1px,
+    rgba(255, 255, 255, 0.09) 1px,
+    transparent 0
+  );
+}
+
+.splash-aurora {
+  background: radial-gradient(
+    circle at 50% 48%,
+    rgba(240, 138, 66, 0.14) 0%,
+    rgba(240, 138, 66, 0.04) 32%,
+    transparent 68%
+  );
+}
+
+.splash-content {
+  animation: splashContentIn 700ms cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+.splash-orbit {
+  animation: splashOrbit 16s linear infinite;
+}
+
+.splash-orbit-reverse {
+  animation: splashOrbit 22s linear infinite reverse;
+}
+
+.splash-progress {
+  transform-origin: left center;
+  animation: splashProgress 1.2s cubic-bezier(0.22, 1, 0.36, 1) 80ms both;
+}
+
+.inspector-drawer {
+  transition:
+    transform 320ms cubic-bezier(0.16, 1, 0.3, 1),
+    max-width 380ms cubic-bezier(0.16, 1, 0.3, 1);
+  will-change: transform, max-width;
+}
+
+/* React Flow canvas */
+.topology-flow .react-flow {
+  background: transparent;
+}
+
+.topology-flow .react-flow__controls {
+  overflow: hidden;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  box-shadow: none;
+}
+
+.topology-flow .react-flow__controls-button {
+  width: 24px;
+  height: 24px;
+  border-bottom: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--foreground);
+  fill: var(--foreground);
+}
+
+.topology-flow .react-flow__controls-button:hover {
+  background: var(--surface-hover);
+}
+
+.topology-flow .react-flow__controls-button:last-child {
+  border-bottom: 0;
+}
+
+.topology-flow .react-flow__edge.animated path {
+  stroke-dasharray: 5 5;
+}
+
+.topology-flow .react-flow__attribution {
+  display: none;
+}
+
+@keyframes splashContentIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px) scale(0.985);
+    filter: blur(5px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+    filter: blur(0);
+  }
+}
+
+@keyframes splashOrbit {
+  0% {
+    opacity: 0.28;
+    transform: scale(0.94) rotate(0deg);
+  }
+  50% {
+    opacity: 0.72;
+  }
+  100% {
+    opacity: 0.28;
+    transform: scale(1.04) rotate(360deg);
+  }
+}
+
+@keyframes splashProgress {
+  from {
+    opacity: 0.45;
+    transform: scaleX(0.04);
+  }
+  to {
+    opacity: 1;
+    transform: scaleX(1);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .splash-screen,
+  .inspector-drawer {
+    transition: none;
+  }
+
+  .splash-content,
+  .splash-orbit,
+  .splash-orbit-reverse,
+  .splash-progress {
+    animation: none;
+  }
 }
 
 /* ============================================================

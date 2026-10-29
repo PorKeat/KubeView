@@ -235,7 +235,10 @@ export function AppSidebar() {
   );
 
   const toggleGroup = (category: string) => {
-    setCollapsedGroups((prev) => ({ ...prev, [category]: !prev[category] }));
+    setCollapsedGroups((prev) => {
+      const currentlyCollapsed = prev[category] ?? true;
+      return { ...prev, [category]: !currentlyCollapsed };
+    });
   };
 
   const handleItemClick = (item: NavItem) => {

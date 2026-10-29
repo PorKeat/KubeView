@@ -1,9 +1,10 @@
 import { test, expect } from "@playwright/test";
+import { expandSidebarGroups } from "./nav";
 
 test.describe("KubeView UI - Deep Conditions & Edge Case Verification", () => {
   test.beforeEach(async ({ page }) => {
     await page.addInitScript(() => {
-      localStorage.setItem("kubeview_splash_seen", "true");
+      localStorage.setItem("kubeview_skip_boot_splash", "true");
       localStorage.setItem("theme", "dark");
     });
     await page.goto("/");
@@ -13,6 +14,7 @@ test.describe("KubeView UI - Deep Conditions & Edge Case Verification", () => {
     await expect(trigger).toContainText("kubernetes-admin@kubekey", {
       timeout: 15000,
     });
+    await expandSidebarGroups(page);
   });
 
   test("status bar renders modern clean IDE styling and handles telemetry interactions", async ({

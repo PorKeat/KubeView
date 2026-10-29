@@ -44,10 +44,16 @@ export function ConfigStorageEditorForm({
   target,
   onClose,
   onSaved,
+  onDirtyChange,
+  headerAccessory,
+  onRevealed,
 }: {
   target: ConfigStorageEditorTarget;
   onClose: () => void;
   onSaved: () => void;
+  onDirtyChange?: (dirty: boolean) => void;
+  headerAccessory?: React.ReactNode;
+  onRevealed?: () => void;
 }) {
   const currentContext = useClusterStore((state) => state.currentContext);
   const [entries, setEntries] = React.useState<EditableEntry[]>([]);
@@ -138,6 +144,11 @@ export function ConfigStorageEditorForm({
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [isSaving, onClose]);
 
+  React.useEffect(() => {
+    onDirtyChange?.(dirty);
+    return () => onDirtyChange?.(false);
+  }, [dirty, onDirtyChange]);
+
   const validationError = React.useMemo(
     () => validateEntries(entries, binaryData),
     [entries, binaryData],
@@ -185,6 +196,7 @@ export function ConfigStorageEditorForm({
       setSecretType(data.type || "Opaque");
       setIsRevealed(true);
       setDirty(false);
+      onRevealed?.();
     } catch (err) {
       setError(err instanceof Error ? err.message : String(err));
     } finally {
@@ -263,15 +275,18 @@ export function ConfigStorageEditorForm({
             </p>
           </div>
         </div>
-        <button
-          type="button"
-          onClick={handleClose}
-          disabled={isSaving}
-          className="cursor-pointer rounded-lg p-1.5 text-[var(--muted)] transition-colors hover:bg-[var(--surface-hover)] hover:text-[var(--foreground)] disabled:opacity-40"
-          aria-label="Close editor"
-        >
-          <X className="h-4 w-4" />
-        </button>
+        <div className="flex flex-wrap items-center justify-end gap-2">
+          {headerAccessory}
+          <button
+            type="button"
+            onClick={handleClose}
+            disabled={isSaving}
+            className="cursor-pointer rounded-lg p-1.5 text-[var(--muted)] transition-colors hover:bg-[var(--surface-hover)] hover:text-[var(--foreground)] disabled:opacity-40"
+            aria-label="Close editor"
+          >
+            <X className="h-4 w-4" />
+          </button>
+        </div>
       </div>
 
       <div className="space-y-3 p-4 sm:p-5">

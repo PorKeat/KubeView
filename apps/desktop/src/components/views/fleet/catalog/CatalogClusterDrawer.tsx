@@ -3,6 +3,7 @@
 import * as React from "react";
 import {
   ArrowRight,
+  Camera,
   KeyRound,
   Pin,
   PinOff,
@@ -18,6 +19,7 @@ import type { ClusterContextInfo } from "@/stores/clusterStore";
 import { ENV_TAG_OPTIONS, type EnvTag } from "@/stores/catalogStore";
 import { cn } from "@/lib/utils";
 import { CustomSelect } from "@/components/ui/CustomSelect";
+import { readClusterImage } from "@/lib/clusterImage";
 import { ENV_META, catalogStatusMeta } from "./catalogMeta";
 import type { CatalogStatus } from "./catalogMeta";
 
@@ -30,6 +32,7 @@ export interface CatalogClusterDrawerProps {
   configPath: string;
   pinned: boolean;
   isActive: boolean;
+  image?: string;
   onClose: () => void;
   onOpen: () => void;
   onDiagnose: () => void;
@@ -37,6 +40,7 @@ export interface CatalogClusterDrawerProps {
   onRemove: () => void;
   onTogglePin: () => void;
   onSetEnv: (tag: EnvTag | null) => void;
+  onSetImage: (image: string | null) => void;
 }
 
 const ENV_SELECT_OPTIONS: { value: string; label: string }[] = [
@@ -56,6 +60,7 @@ export function CatalogClusterDrawer({
   configPath,
   pinned,
   isActive,
+  image,
   onClose,
   onOpen,
   onDiagnose,
@@ -63,8 +68,12 @@ export function CatalogClusterDrawer({
   onRemove,
   onTogglePin,
   onSetEnv,
+  onSetImage,
 }: CatalogClusterDrawerProps) {
   const [confirmingRemove, setConfirmingRemove] = React.useState(false);
+  const [imageBusy, setImageBusy] = React.useState(false);
+  const [imageError, setImageError] = React.useState<string | null>(null);
+  const imageInputRef = React.useRef<HTMLInputElement>(null);
   const meta = catalogStatusMeta(status);
   const envMeta = ENV_META[env];
 
@@ -220,6 +229,81 @@ export function CatalogClusterDrawer({
               </dl>
             </section>
           )}
+
+          <section className="rounded-xl border border-[var(--border)] bg-[var(--background)] p-3">
+            <h3 className="flex items-center gap-1.5 font-mono text-[9px] uppercase tracking-[0.14em] text-[var(--muted)]">
+              <Camera className="h-3 w-3" aria-hidden="true" />
+              Cluster image
+            </h3>
+            <div className="mt-2 flex items-center gap-3">
+              <span className="flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-lg border border-[var(--border)] bg-[var(--surface-active)] text-[var(--accent)]">
+                {image ? (
+                  <img
+                    src={image}
+                    alt=""
+                    className="h-full w-full object-cover"
+                  />
+                ) : (
+                  <Server className="h-4 w-4" aria-hidden="true" />
+                )}
+              </span>
+              <div className="flex min-w-0 flex-1 flex-wrap items-center gap-2">
+                <button
+                  type="button"
+                  data-testid="catalog-image-upload"
+                  onClick={() => imageInputRef.current?.click()}
+                  disabled={imageBusy}
+                  className="rounded-md border border-[var(--border)] bg-[var(--surface)] px-2.5 py-1.5 text-[10px] font-medium text-[var(--foreground)] transition-colors hover:bg-[var(--surface-hover)] disabled:opacity-60 cursor-pointer"
+                >
+                  {imageBusy
+                    ? "Processing..."
+                    : image
+                      ? "Replace image"
+                      : "Upload image"}
+                </button>
+                {image && (
+                  <button
+                    type="button"
+                    onClick={() => onSetImage(null)}
+                    className="rounded-md px-2 py-1.5 text-[10px] font-medium text-rose-500 transition-colors hover:bg-rose-500/10 cursor-pointer"
+                  >
+                    Remove
+                  </button>
+                )}
+              </div>
+            </div>
+            <input
+              ref={imageInputRef}
+              type="file"
+              accept="image/png,image/jpeg,image/webp"
+              className="hidden"
+              onChange={(event) => {
+                const file = event.target.files?.[0];
+                event.target.value = "";
+                if (!file) return;
+                setImageBusy(true);
+                setImageError(null);
+                void readClusterImage(file)
+                  .then(onSetImage)
+                  .catch((error: unknown) =>
+                    setImageError(
+                      error instanceof Error
+                        ? error.message
+                        : "Could not process that image.",
+                    ),
+                  )
+                  .finally(() => setImageBusy(false));
+              }}
+            />
+            {imageError && (
+              <p role="alert" className="mt-2 text-[10px] text-rose-500">
+                {imageError}
+              </p>
+            )}
+            <p className="mt-2 text-[10px] text-[var(--muted)]">
+              Shown on the rail and catalog. Images are resized locally.
+            </p>
+          </section>
 
           <section className="rounded-xl border border-[var(--border)] bg-[var(--background)] p-3">
             <h3 className="flex items-center gap-1.5 font-mono text-[9px] uppercase tracking-[0.14em] text-[var(--muted)]">

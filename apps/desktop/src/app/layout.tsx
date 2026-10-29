@@ -37,6 +37,11 @@ export default function RootLayout({
             __html: `
               (function () {
                 try {
+                  if (
+                    localStorage.getItem("kubeview_skip_boot_splash") === "true"
+                  ) {
+                    document.documentElement.dataset.splashSeen = "true";
+                  }
                   var raw = localStorage.getItem("kubeview-preferences");
                   if (!raw) return;
                   var parsed = JSON.parse(raw);

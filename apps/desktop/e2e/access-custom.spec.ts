@@ -8,7 +8,7 @@ async function openPage(page: Page, id: string) {
 test.describe("KubeView Access & Custom", () => {
   test.beforeEach(async ({ page }) => {
     await page.addInitScript(() => {
-      localStorage.setItem("kubeview_splash_seen", "true");
+      localStorage.setItem("kubeview_skip_boot_splash", "true");
     });
     await mockRpc(page);
     await page.goto("/");

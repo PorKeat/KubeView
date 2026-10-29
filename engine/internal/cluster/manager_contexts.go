@@ -3,6 +3,9 @@ package cluster
 import (
 	"fmt"
 	"sort"
+
+	"k8s.io/client-go/tools/clientcmd"
+	clientcmdapi "k8s.io/client-go/tools/clientcmd/api"
 )
 
 // GetConfigPath returns the active kubeconfig path
@@ -60,6 +63,67 @@ func (m *Manager) ListContexts() (*ListContextsResult, error) {
 		CurrentContext: m.currentContext,
 		Contexts:       summaries,
 		ConfigPath:     m.configPath,
+	}, nil
+}
+
+// ExportKubeconfig returns a standalone kubeconfig containing only the
+// selected context, its cluster, and its auth info.
+func (m *Manager) ExportKubeconfig(contextName string) (*ExportKubeconfigResult, error) {
+	m.mu.RLock()
+	defer m.mu.RUnlock()
+
+	if contextName == "" {
+		return nil, fmt.Errorf("context name is required")
+	}
+	if m.rawConfig == nil {
+		return nil, fmt.Errorf("kubeconfig is not loaded")
+	}
+
+	ctx, ok := m.rawConfig.Contexts[contextName]
+	if !ok || ctx == nil {
+		return nil, fmt.Errorf("context %q does not exist in kubeconfig", contextName)
+	}
+
+	cluster, ok := m.rawConfig.Clusters[ctx.Cluster]
+	if !ok || cluster == nil {
+		return nil, fmt.Errorf("cluster %q referenced by context %q was not found", ctx.Cluster, contextName)
+	}
+
+	exported := clientcmdapi.NewConfig()
+	exported.APIVersion = "v1"
+	exported.Kind = "Config"
+	exported.Preferences = m.rawConfig.Preferences
+	exported.CurrentContext = contextName
+
+	contextCopy := *ctx
+	exported.Contexts[contextName] = &contextCopy
+
+	clusterCopy := *cluster
+	exported.Clusters[ctx.Cluster] = &clusterCopy
+
+	if ctx.AuthInfo != "" {
+		authInfo, ok := m.rawConfig.AuthInfos[ctx.AuthInfo]
+		if !ok || authInfo == nil {
+			return nil, fmt.Errorf("user %q referenced by context %q was not found", ctx.AuthInfo, contextName)
+		}
+		authCopy := *authInfo
+		exported.AuthInfos[ctx.AuthInfo] = &authCopy
+	}
+
+	data, err := clientcmd.Write(*exported)
+	if err != nil {
+		return nil, fmt.Errorf("failed to serialize kubeconfig for %q: %w", contextName, err)
+	}
+
+	baseName := sanitizeConfigName(contextName)
+	if baseName == "" {
+		baseName = "kubeconfig"
+	}
+
+	return &ExportKubeconfigResult{
+		ContextName: contextName,
+		FileName:    baseName + ".kubeconfig",
+		YAML:        string(data),
 	}, nil
 }
 

@@ -1,4 +1,5 @@
 import { test, expect, type Page } from "@playwright/test";
+import { expandSidebarGroups } from "./nav";
 
 const AUDIT_DIR = process.env.KUBEVIEW_AUDIT_DIR ?? "/tmp/kubeview-live-audit";
 
@@ -30,7 +31,7 @@ test.describe("KubeView live networking audit", () => {
   test.beforeEach(async ({ page }) => {
     await page.setViewportSize({ width: 1280, height: 900 });
     await page.addInitScript(() => {
-      localStorage.setItem("kubeview_splash_seen", "true");
+      localStorage.setItem("kubeview_skip_boot_splash", "true");
     });
     await page.goto("/");
     await page.waitForLoadState("domcontentloaded");
@@ -62,6 +63,7 @@ test.describe("KubeView live networking audit", () => {
       return;
     }
     await page.waitForTimeout(500);
+    await expandSidebarGroups(page);
 
     for (const id of [
       "services",

@@ -258,7 +258,7 @@ export function JobListView() {
         />
       ) : (
         <div className="flex-1 overflow-auto min-h-0">
-          <table className="w-full min-w-[860px] text-left text-xs border-collapse table-fixed">
+          <table className="w-full text-left text-xs border-collapse table-fixed">
             <JobTableHeader
               sortField={sortField}
               sortAsc={sortAsc}

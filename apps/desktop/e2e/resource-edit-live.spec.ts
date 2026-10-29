@@ -1,4 +1,5 @@
 import { test, expect } from "@playwright/test";
+import { expandSidebarGroups } from "./nav";
 
 test.describe("KubeView live generic editor", () => {
   test.describe.configure({ timeout: 60_000 });
@@ -6,7 +7,7 @@ test.describe("KubeView live generic editor", () => {
   test("loads a live manifest into the inline editor", async ({ page }) => {
     await page.setViewportSize({ width: 1280, height: 900 });
     await page.addInitScript(() => {
-      localStorage.setItem("kubeview_splash_seen", "true");
+      localStorage.setItem("kubeview_skip_boot_splash", "true");
     });
     await page.goto("/");
     await page.waitForLoadState("domcontentloaded");
@@ -39,6 +40,7 @@ test.describe("KubeView live generic editor", () => {
       return;
     }
 
+    await expandSidebarGroups(page);
     await page.locator('[data-testid="nav-item-serviceaccounts"]').click();
     await expect(
       page.locator('[data-testid="serviceaccounts-row"]').first(),
@@ -51,7 +53,7 @@ test.describe("KubeView live generic editor", () => {
     await expect(inline).toBeVisible({ timeout: 15000 });
     await expect(
       inline.locator('[data-testid="inspector-resource-editor-yaml"]'),
-    ).toHaveValue(/kind:\s*ServiceAccount/);
+    ).toContainText(/kind:\s*ServiceAccount/);
     await expect(page.getByText("Component Render Error")).toHaveCount(0);
     await page.locator('[data-testid="inspector-close-btn"]').click();
 
@@ -74,7 +76,7 @@ test.describe("KubeView live generic editor", () => {
       await expect(inline).toBeVisible({ timeout: 15000 });
       await expect(
         inline.locator('[data-testid="inspector-resource-editor-yaml"]'),
-      ).toHaveValue(/kind:\s*Deployment/);
+      ).toContainText(/kind:\s*Deployment/);
     }
   });
 });

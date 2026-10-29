@@ -4,7 +4,7 @@ test.describe("KubeView UI - App Shell & Navigation", () => {
   test.beforeEach(async ({ page }) => {
     // Pre-set localStorage to dismiss onboarding splash and modals cleanly
     await page.addInitScript(() => {
-      localStorage.setItem("kubeview_splash_seen", "true");
+      localStorage.setItem("kubeview_skip_boot_splash", "true");
     });
     await page.goto("/");
     // Wait for initial render and hydration

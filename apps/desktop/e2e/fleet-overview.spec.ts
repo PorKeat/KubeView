@@ -163,7 +163,7 @@ async function openFleetHealth(page: import("@playwright/test").Page) {
 test.describe("KubeView All Clusters", () => {
   test.beforeEach(async ({ page }) => {
     await page.addInitScript(() => {
-      localStorage.setItem("kubeview_splash_seen", "true");
+      localStorage.setItem("kubeview_skip_boot_splash", "true");
     });
     await mockRpc(page, {
       responses: {
@@ -393,6 +393,96 @@ test.describe("KubeView All Clusters", () => {
         "/tmp/kubeview-kubeconfigs.png",
       fullPage: false,
     });
+  });
+
+  test("copies and downloads a kubeconfig for a context", async ({
+    page,
+    context,
+  }) => {
+    await page.setViewportSize({ width: 1440, height: 900 });
+    const origin = new URL(page.url()).origin;
+    await context.grantPermissions(["clipboard-read", "clipboard-write"], {
+      origin,
+    });
+    await page.locator('[data-testid="cluster-rail-all"]').click();
+    await page.locator('[data-testid="catalog-nav-kubeconfigs"]').click();
+
+    const row = page.locator(
+      '[data-testid="kubeconfig-row"][data-context-name="mock-cluster"]',
+    );
+    await expect(row).toBeVisible();
+
+    await row.locator('[data-testid="kubeconfig-actions"]').click();
+    await page
+      .locator(
+        '[data-testid="kubeconfig-copy"][data-context-name="mock-cluster"]',
+      )
+      .click();
+    await expect(page.locator("body")).toContainText(
+      "Kubeconfig copied: mock-cluster",
+    );
+    await expect
+      .poll(() => page.evaluate(() => navigator.clipboard.readText()))
+      .toContain("kind: Config");
+
+    const downloadPromise = page.waitForEvent("download");
+    await row.locator('[data-testid="kubeconfig-actions"]').click();
+    await page
+      .locator(
+        '[data-testid="kubeconfig-download"][data-context-name="mock-cluster"]',
+      )
+      .click();
+    const download = await downloadPromise;
+    expect(download.suggestedFilename()).toBe("mock-cluster.kubeconfig");
+  });
+
+  test("edits a kubeconfig and shows its alias", async ({ page }) => {
+    await page.setViewportSize({ width: 1440, height: 900 });
+    await page.locator('[data-testid="cluster-rail-all"]').click();
+    await page.locator('[data-testid="catalog-nav-kubeconfigs"]').click();
+
+    const row = page.locator(
+      '[data-testid="kubeconfig-row"][data-context-name="mock-cluster"]',
+    );
+    await expect(row).toBeVisible();
+    await row.locator('[data-testid="kubeconfig-actions"]').click();
+    await page
+      .locator(
+        '[data-testid="kubeconfig-edit"][data-context-name="mock-cluster"]',
+      )
+      .click();
+
+    const modal = page.getByTestId("kubeconfig-edit-modal");
+    await expect(modal).toBeVisible();
+    await page.getByTestId("kubeconfig-edit-alias").fill("Production East");
+    await page.getByTestId("kubeconfig-edit-save").click();
+
+    await expect(modal).toHaveCount(0);
+    await expect(row).toContainText("Production East");
+    await expect(row).toContainText("mock-cluster");
+  });
+
+  test("edits kubeconfig raw YAML", async ({ page }) => {
+    await page.setViewportSize({ width: 1440, height: 900 });
+    await page.locator('[data-testid="cluster-rail-all"]').click();
+    await page.locator('[data-testid="catalog-nav-kubeconfigs"]').click();
+
+    const row = page.locator(
+      '[data-testid="kubeconfig-row"][data-context-name="mock-cluster"]',
+    );
+    await row.locator('[data-testid="kubeconfig-actions"]').click();
+    await page
+      .locator(
+        '[data-testid="kubeconfig-edit"][data-context-name="mock-cluster"]',
+      )
+      .click();
+    await page.getByTestId("kubeconfig-edit-tab-yaml").click();
+
+    const editor = page.getByTestId("kubeconfig-edit-yaml");
+    await expect(editor).toContainText("kind: Config");
+    await expect(editor).toContainText("namespace: default");
+    await page.getByTestId("kubeconfig-edit-save").click();
+    await expect(page.getByTestId("kubeconfig-edit-modal")).toHaveCount(0);
   });
 
   test("fits the phone viewport without horizontal scrolling", async ({

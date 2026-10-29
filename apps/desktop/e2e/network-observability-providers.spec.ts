@@ -29,7 +29,7 @@ const calicoObservability = {
 test.describe("KubeView Network Observability providers", () => {
   test.beforeEach(async ({ page }) => {
     await page.addInitScript(() => {
-      localStorage.setItem("kubeview_splash_seen", "true");
+      localStorage.setItem("kubeview_skip_boot_splash", "true");
     });
     await mockRpc(page, {
       responses: { "networking.observability": calicoObservability },

@@ -17,6 +17,15 @@ async fn send_rpc_request(
     supervisor.send_request(&method, params).await
 }
 
+#[tauri::command]
+fn write_text_file(path: String, contents: String) -> Result<(), String> {
+    if path.trim().is_empty() {
+        return Err("A file path is required.".to_string());
+    }
+    std::fs::write(&path, contents.as_bytes())
+        .map_err(|error| format!("Could not save file: {error}"))
+}
+
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     let _ = env_logger::try_init();
@@ -59,7 +68,11 @@ pub fn run() {
             }
             Ok(())
         })
-        .invoke_handler(tauri::generate_handler![ping, send_rpc_request])
+        .invoke_handler(tauri::generate_handler![
+            ping,
+            send_rpc_request,
+            write_text_file
+        ])
         .run(tauri::generate_context!())
         .expect("error while running KubeView desktop application");
 }

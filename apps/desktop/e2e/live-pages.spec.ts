@@ -1,4 +1,5 @@
 import { test, expect, type Page } from "@playwright/test";
+import { expandSidebarGroups } from "./nav";
 
 const AUDIT_DIR =
   process.env.KUBEVIEW_LIVE_PAGES_DIR ?? "/tmp/kubeview-live-pages";
@@ -125,7 +126,7 @@ test.describe("KubeView live sidebar audit", () => {
   test.beforeEach(async ({ page }) => {
     await page.setViewportSize({ width: 1280, height: 900 });
     await page.addInitScript(() => {
-      localStorage.setItem("kubeview_splash_seen", "true");
+      localStorage.setItem("kubeview_skip_boot_splash", "true");
     });
 
     const issues: string[] = [];
@@ -169,6 +170,7 @@ test.describe("KubeView live sidebar audit", () => {
       return;
     }
     await page.waitForTimeout(500);
+    await expandSidebarGroups(page);
   });
 
   for (const item of pages) {

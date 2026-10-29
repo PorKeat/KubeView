@@ -3,7 +3,7 @@ import { mockRpc, type MockRpcOptions } from "./mockRpc";
 
 async function boot(page: Page, options: MockRpcOptions = {}) {
   await page.addInitScript(() => {
-    localStorage.setItem("kubeview_splash_seen", "true");
+    localStorage.setItem("kubeview_skip_boot_splash", "true");
   });
   await mockRpc(page, options);
   await page.goto("/");

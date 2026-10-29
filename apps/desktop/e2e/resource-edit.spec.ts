@@ -1,9 +1,19 @@
-import { test, expect, type Page } from "@playwright/test";
+import { test, expect, type Locator, type Page } from "@playwright/test";
 import { mockRpc, type MockRpcOptions } from "./mockRpc";
+
+async function readYaml(editor: Locator) {
+  return (await editor.innerText()).replace(/ /g, " ");
+}
+
+async function replaceYaml(page: Page, editor: Locator, value: string) {
+  await editor.click();
+  await page.keyboard.press("ControlOrMeta+A");
+  await page.keyboard.insertText(value);
+}
 
 async function boot(page: Page, options: MockRpcOptions = {}) {
   await page.addInitScript(() => {
-    localStorage.setItem("kubeview_splash_seen", "true");
+    localStorage.setItem("kubeview_skip_boot_splash", "true");
   });
   await mockRpc(page, options);
   await page.goto("/");
@@ -28,15 +38,31 @@ test.describe("KubeView generic resource editor", () => {
     await expect(inline).toBeVisible();
     await expect(
       inline.locator('[data-testid="inspector-resource-editor-yaml"]'),
-    ).toHaveValue(/kind: ServiceAccount/);
+    ).toContainText(/kind: ServiceAccount/);
     await expect(
       inline.locator('[data-testid="inspector-resource-editor-delete"]'),
     ).toBeVisible();
 
-    const textarea = inline.locator(
+    const maximize = inline.locator(
+      '[data-testid="inspector-resource-editor-maximize"]',
+    );
+    const widthBefore = (await drawer.boundingBox())?.width ?? 0;
+    await maximize.click();
+    await expect(maximize).toHaveAttribute("aria-pressed", "true");
+    await expect
+      .poll(async () => (await drawer.boundingBox())?.width ?? 0)
+      .toBeGreaterThan(widthBefore);
+    await maximize.click();
+    await expect(maximize).toHaveAttribute("aria-pressed", "false");
+
+    const yamlEditor = inline.locator(
       '[data-testid="inspector-resource-editor-yaml"]',
     );
-    await textarea.fill(`${await textarea.inputValue()}# edited\n`);
+    await replaceYaml(
+      page,
+      yamlEditor,
+      `${await readYaml(yamlEditor)}# edited\n`,
+    );
 
     await inline
       .locator('[data-testid="inspector-resource-editor-validate"]')
@@ -46,10 +72,9 @@ test.describe("KubeView generic resource editor", () => {
     ).toContainText("Valid");
 
     await inline
-      .locator('[data-testid="inspector-resource-editor-apply"]')
+      .locator('[data-testid="inspector-resource-editor-apply-close"]')
       .click();
-    await expect(drawer).toBeVisible();
-    await page.locator('[data-testid="inspector-close-btn"]').click();
+    await expect(drawer).toHaveCount(0);
 
     await page.locator('[data-testid="serviceaccounts-create"]').click();
     const modal = page.locator('[data-testid="resource-editor-modal"]');
@@ -130,7 +155,7 @@ test.describe("KubeView generic resource editor", () => {
     await expect(inline).toBeVisible();
     await expect(
       inline.locator('[data-testid="inspector-resource-editor-yaml"]'),
-    ).toHaveValue(/kind: ServiceAccount/);
+    ).toContainText(/kind: ServiceAccount/);
     await page.locator('[data-testid="inspector-close-btn"]').click();
 
     await page.locator('[data-testid="nav-item-deployments"]').click();
@@ -161,13 +186,13 @@ test.describe("KubeView generic resource editor", () => {
 
     await page.locator('[data-testid="serviceaccounts-edit"]').click();
     const inline = page.locator('[data-testid="inspector-resource-editor"]');
-    const textarea = inline.locator(
+    const yamlEditor = inline.locator(
       '[data-testid="inspector-resource-editor-yaml"]',
     );
     await expect(inline).toBeVisible();
-    const original = await textarea.inputValue();
+    const original = await readYaml(yamlEditor);
 
-    await textarea.fill(`${original}# changed\n`);
+    await replaceYaml(page, yamlEditor, `${original}# changed\n`);
     await page
       .locator('[data-testid="inspector-resource-editor-view-diff"]')
       .click();
@@ -184,8 +209,12 @@ test.describe("KubeView generic resource editor", () => {
     await page
       .locator('[data-testid="inspector-resource-editor-view-yaml"]')
       .click();
-    const current = await textarea.inputValue();
-    await textarea.fill(current.replace("  namespace: production\n", ""));
+    const current = await readYaml(yamlEditor);
+    await replaceYaml(
+      page,
+      yamlEditor,
+      current.replace("  namespace: production\n", ""),
+    );
     await page
       .locator('[data-testid="inspector-resource-editor-apply"]')
       .click();
@@ -218,11 +247,15 @@ test.describe("KubeView generic resource editor", () => {
 
     await page.locator('[data-testid="serviceaccounts-edit"]').click();
     const inline = page.locator('[data-testid="inspector-resource-editor"]');
-    const textarea = inline.locator(
+    const yamlEditor = inline.locator(
       '[data-testid="inspector-resource-editor-yaml"]',
     );
     await expect(inline).toBeVisible();
-    await textarea.fill(`${await textarea.inputValue()}# denied\n`);
+    await replaceYaml(
+      page,
+      yamlEditor,
+      `${await readYaml(yamlEditor)}# denied\n`,
+    );
     await page
       .locator('[data-testid="inspector-resource-editor-apply"]')
       .click();

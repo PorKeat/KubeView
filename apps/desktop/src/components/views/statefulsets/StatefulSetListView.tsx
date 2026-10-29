@@ -275,7 +275,7 @@ export function StatefulSetListView() {
         />
       ) : (
         <div className="flex-1 overflow-auto min-h-0">
-          <table className="w-full min-w-[1040px] text-left text-xs border-collapse table-fixed">
+          <table className="w-full text-left text-xs border-collapse table-fixed">
             <StatefulSetTableHeader
               sortField={sortField}
               sortAsc={sortAsc}

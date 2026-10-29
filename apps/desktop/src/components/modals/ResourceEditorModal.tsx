@@ -11,7 +11,7 @@ import {
   Trash2,
   X,
 } from "lucide-react";
-import { cn } from "@/lib/utils";
+import { YamlEditor } from "@/components/editor/YamlEditor";
 import { useClusterStore } from "@/stores/clusterStore";
 
 export function ResourceEditorModal() {
@@ -71,57 +71,92 @@ export function ResourceEditorModal() {
     resourceEditorCapabilities?.reasons?.[requiredVerb] ||
     `Your identity is not allowed to ${requiredVerb} this resource.`;
 
+  const submitEditor = () => {
+    if (
+      isResourceEditorLoading ||
+      isResourceEditorSaving ||
+      isResourceEditorValidating ||
+      !canApply ||
+      !resourceEditorYaml.trim()
+    ) {
+      return;
+    }
+    void applyResourceEditor();
+  };
+
   return (
     <div
       data-testid="resource-editor-modal"
-      className="fixed inset-0 z-[60] flex items-end sm:items-center justify-center p-0 sm:p-4 bg-black/60 backdrop-blur-md animate-in fade-in duration-150"
+      className="fixed inset-0 z-[60] flex items-end justify-center bg-black/60 p-0 backdrop-blur-md animate-in fade-in duration-150 sm:items-center sm:p-4"
     >
-      <div className="flex max-h-[94dvh] w-full max-w-3xl flex-col overflow-hidden rounded-t-2xl border border-[var(--border)] bg-[var(--surface)] shadow-2xl animate-in zoom-in-95 duration-150 sm:rounded-2xl">
+      <div className="flex max-h-[96dvh] w-full max-w-5xl flex-col overflow-hidden rounded-t-2xl border border-[var(--border)] bg-[var(--surface)] shadow-2xl animate-in zoom-in-95 duration-150 sm:rounded-2xl">
         <div className="flex items-center justify-between gap-3 border-b border-[var(--border)] px-4 py-3 sm:px-5">
           <div className="flex min-w-0 items-center gap-3">
-            <div className="p-2 rounded-xl bg-[var(--accent)]/15 text-[var(--accent)] border border-[var(--accent)]/25 shrink-0">
-              <FileCode className="w-4 h-4" />
+            <div className="shrink-0 rounded-xl border border-[var(--accent)]/25 bg-[var(--accent)]/15 p-2 text-[var(--accent)]">
+              <FileCode className="h-4 w-4" aria-hidden="true" />
             </div>
             <div className="min-w-0">
-              <h3 className="text-sm font-bold text-[var(--foreground)] tracking-tight">
+              <h3 className="text-sm font-bold tracking-tight text-[var(--foreground)]">
                 {isCreate ? "Create" : "Edit"} {target.kind}
               </h3>
-              <p className="text-[11px] text-[var(--muted)] font-mono truncate">
-                {target.apiVersion} · {target.resource}
-                {target.name ? ` · ${target.name}` : ""}
-                {target.namespace ? ` in ${target.namespace}` : ""}
-              </p>
+              <div className="mt-1 flex min-w-0 flex-wrap items-center gap-1.5 font-mono text-[9px] text-[var(--muted)]">
+                <span className="rounded border border-[var(--border)] bg-[var(--surface-active)]/60 px-1.5 py-0.5">
+                  {target.apiVersion}
+                </span>
+                <span className="rounded border border-[var(--border)] bg-[var(--surface-active)]/60 px-1.5 py-0.5">
+                  {target.resource}
+                </span>
+                {target.namespace && (
+                  <span className="rounded border border-[var(--border)] bg-[var(--surface-active)]/60 px-1.5 py-0.5">
+                    {target.namespace}
+                  </span>
+                )}
+                {target.name && (
+                  <span className="max-w-[220px] truncate" title={target.name}>
+                    {target.name}
+                  </span>
+                )}
+              </div>
             </div>
           </div>
           <button
             type="button"
             onClick={closeResourceEditor}
             disabled={isResourceEditorSaving || isResourceEditorValidating}
-            className="p-1.5 rounded-lg text-[var(--muted)] hover:text-[var(--foreground)] hover:bg-[var(--surface-hover)] transition-colors cursor-pointer disabled:opacity-40"
+            className="cursor-pointer rounded-lg p-1.5 text-[var(--muted)] transition-colors hover:bg-[var(--surface-hover)] hover:text-[var(--foreground)] disabled:opacity-40"
             aria-label="Close YAML editor"
           >
-            <X className="w-4 h-4" />
+            <X className="h-4 w-4" aria-hidden="true" />
           </button>
         </div>
 
-        <div className="flex-1 min-h-0 space-y-3 overflow-y-auto p-4 sm:p-5">
+        <div className="min-h-0 flex-1 space-y-3 overflow-y-auto p-4 sm:p-5">
           {resourceEditorError && (
             <div className="flex items-start gap-2 rounded-xl border border-rose-500/25 bg-rose-500/10 p-3 text-[11px] text-rose-600 dark:text-rose-400">
-              <AlertTriangle className="w-4 h-4 shrink-0 mt-0.5" />
+              <AlertTriangle
+                className="mt-0.5 h-4 w-4 shrink-0"
+                aria-hidden="true"
+              />
               <span className="leading-relaxed">{resourceEditorError}</span>
             </div>
           )}
 
           {!canApply && (
             <div className="flex items-start gap-2 rounded-xl border border-amber-500/25 bg-amber-500/10 p-3 text-[11px] text-amber-700 dark:text-amber-400">
-              <LockKeyhole className="w-4 h-4 shrink-0 mt-0.5" />
+              <LockKeyhole
+                className="mt-0.5 h-4 w-4 shrink-0"
+                aria-hidden="true"
+              />
               <span className="leading-relaxed">{capabilityReason}</span>
             </div>
           )}
 
           {resourceEditorCapabilityWarning && (
             <div className="flex items-start gap-2 rounded-xl border border-amber-500/20 bg-amber-500/5 p-3 text-[11px] text-amber-700 dark:text-amber-400">
-              <AlertTriangle className="w-4 h-4 shrink-0 mt-0.5" />
+              <AlertTriangle
+                className="mt-0.5 h-4 w-4 shrink-0"
+                aria-hidden="true"
+              />
               <span className="leading-relaxed">
                 Permission lookup unavailable. The API server will still
                 authorize the request. {resourceEditorCapabilityWarning}
@@ -129,7 +164,7 @@ export function ResourceEditorModal() {
             </div>
           )}
 
-          <div className="flex items-center justify-between gap-2 text-[10px] font-mono text-[var(--muted)]">
+          <div className="flex items-center justify-between gap-2 font-mono text-[10px] text-[var(--muted)]">
             <span>kubeview field manager · managedFields stripped on read</span>
             <span className="tabular-nums">
               {lineCount} lines · {resourceEditorYaml.length} bytes
@@ -137,27 +172,26 @@ export function ResourceEditorModal() {
           </div>
 
           {isResourceEditorLoading ? (
-            <div className="flex h-64 items-center justify-center gap-2 rounded-xl border border-[var(--border)] bg-[#1e1e1e] font-mono text-xs text-slate-400">
-              <RotateCw className="w-4 h-4 animate-spin text-[var(--accent)]" />
+            <div className="flex h-64 items-center justify-center gap-2 rounded-xl border border-[var(--editor-border)] bg-[var(--editor-bg)] font-mono text-xs text-[var(--editor-muted)]">
+              <RotateCw className="h-4 w-4 animate-spin text-[var(--accent)]" />
               Fetching live manifest...
             </div>
           ) : (
-            <textarea
-              data-testid="resource-editor-textarea"
+            <YamlEditor
               value={resourceEditorYaml}
-              onChange={(event) => setResourceEditorYaml(event.target.value)}
-              spellCheck={false}
-              wrap="off"
-              className={cn(
-                "w-full min-h-[46vh] max-h-[60vh] resize-y rounded-xl border border-[var(--border)] bg-[#1e1e1e] p-3 font-mono text-[11px] leading-5 text-slate-200 outline-hidden",
-                "focus:border-[var(--accent)] focus-ring",
-              )}
-              aria-label={`${target.kind} YAML manifest`}
+              onChange={setResourceEditorYaml}
+              onSubmit={submitEditor}
+              ariaLabel={`${target.kind} YAML manifest`}
+              testId="resource-editor-textarea"
+              className="h-[46vh] min-h-[320px] max-h-[60vh]"
             />
           )}
 
           <div className="flex items-start gap-2 rounded-xl border border-amber-500/20 bg-amber-500/5 p-2.5 text-[10px] leading-relaxed text-amber-700 dark:text-amber-400">
-            <AlertTriangle className="w-3.5 h-3.5 shrink-0 mt-0.5" />
+            <AlertTriangle
+              className="mt-0.5 h-3.5 w-3.5 shrink-0"
+              aria-hidden="true"
+            />
             <span>
               Applying{" "}
               {isCreate ? "creates a new object" : "replaces the live manifest"}
@@ -187,9 +221,9 @@ export function ResourceEditorModal() {
                   : resourceEditorCapabilities?.reasons?.delete ||
                     `Your identity cannot delete ${target.kind}.`
               }
-              className="inline-flex items-center gap-1.5 rounded-lg border border-rose-500/25 bg-rose-500/10 px-3 py-1.5 text-xs font-semibold text-rose-600 dark:text-rose-400 transition-colors hover:bg-rose-500/15 cursor-pointer disabled:cursor-not-allowed disabled:opacity-40"
+              className="inline-flex cursor-pointer items-center gap-1.5 rounded-lg border border-rose-500/25 bg-rose-500/10 px-3 py-1.5 text-xs font-semibold text-rose-600 transition-colors hover:bg-rose-500/15 disabled:cursor-not-allowed disabled:opacity-40 dark:text-rose-400"
             >
-              <Trash2 className="w-3.5 h-3.5" />
+              <Trash2 className="h-3.5 w-3.5" aria-hidden="true" />
               Delete
             </button>
           ) : (
@@ -206,14 +240,14 @@ export function ResourceEditorModal() {
                 isResourceEditorLoading ||
                 !resourceEditorYaml.trim()
               }
-              className="inline-flex items-center gap-1.5 rounded-lg border border-[var(--border)] px-3.5 py-1.5 text-xs font-medium text-[var(--foreground)] transition-colors hover:bg-[var(--surface-hover)] cursor-pointer disabled:opacity-40"
+              className="inline-flex cursor-pointer items-center gap-1.5 rounded-lg border border-[var(--border)] px-3.5 py-1.5 text-xs font-medium text-[var(--foreground)] transition-colors hover:bg-[var(--surface-hover)] disabled:opacity-40"
             >
               {isResourceEditorValidating ? (
-                <RotateCw className="w-3.5 h-3.5 animate-spin" />
+                <RotateCw className="h-3.5 w-3.5 animate-spin" />
               ) : resourceEditorValidationSuccess ? (
-                <BadgeCheck className="w-3.5 h-3.5 text-emerald-500" />
+                <BadgeCheck className="h-3.5 w-3.5 text-emerald-500" />
               ) : (
-                <BadgeCheck className="w-3.5 h-3.5" />
+                <BadgeCheck className="h-3.5 w-3.5" />
               )}
               {isResourceEditorValidating
                 ? "Validating..."
@@ -225,7 +259,7 @@ export function ResourceEditorModal() {
               type="button"
               onClick={closeResourceEditor}
               disabled={isResourceEditorSaving || isResourceEditorValidating}
-              className="rounded-lg border border-[var(--border)] px-3.5 py-1.5 text-xs font-medium text-[var(--foreground)] transition-colors hover:bg-[var(--surface-hover)] cursor-pointer disabled:opacity-40"
+              className="cursor-pointer rounded-lg border border-[var(--border)] px-3.5 py-1.5 text-xs font-medium text-[var(--foreground)] transition-colors hover:bg-[var(--surface-hover)] disabled:opacity-40"
             >
               Cancel
             </button>
@@ -240,18 +274,19 @@ export function ResourceEditorModal() {
                 isResourceEditorLoading ||
                 !resourceEditorYaml.trim()
               }
-              className="inline-flex items-center gap-1.5 rounded-lg bg-[var(--accent)] px-4 py-1.5 text-xs font-semibold text-white shadow-md transition-all hover:bg-[var(--accent-hover)] cursor-pointer disabled:opacity-50"
+              title="Apply and close (⌘/Ctrl+Enter)"
+              className="inline-flex cursor-pointer items-center gap-1.5 rounded-lg bg-[var(--accent)] px-4 py-1.5 text-xs font-semibold text-white shadow-md transition-all hover:bg-[var(--accent-hover)] disabled:opacity-50"
             >
               {isResourceEditorSaving ? (
-                <RotateCw className="w-3.5 h-3.5 animate-spin" />
+                <RotateCw className="h-3.5 w-3.5 animate-spin" />
               ) : (
-                <Save className="w-3.5 h-3.5" />
+                <Save className="h-3.5 w-3.5" aria-hidden="true" />
               )}
               {isResourceEditorSaving
                 ? "Applying..."
                 : isCreate
-                  ? "Create Resource"
-                  : "Apply Manifest"}
+                  ? "Create resource"
+                  : "Apply & close"}
             </button>
           </div>
         </div>

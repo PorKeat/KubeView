@@ -140,6 +140,17 @@ export interface ImportKubeconfigResult {
   totalContexts: number;
 }
 
+export interface ExportKubeconfigResult {
+  contextName: string;
+  fileName: string;
+  yaml: string;
+}
+
+export interface UpdateKubeconfigContextParams {
+  contextName: string;
+  yaml: string;
+}
+
 export interface DetectedContextInfo {
   contextName: string;
   clusterName: string;

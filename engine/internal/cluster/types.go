@@ -42,6 +42,13 @@ type ListContextsResult struct {
 	ConfigPath     string           `json:"configPath"`
 }
 
+// ExportKubeconfigResult is a standalone kubeconfig for one context.
+type ExportKubeconfigResult struct {
+	ContextName string `json:"contextName"`
+	FileName    string `json:"fileName"`
+	YAML        string `json:"yaml"`
+}
+
 // SwitchContextParams specifies the new context to activate
 type SwitchContextParams struct {
 	ContextName string `json:"contextName"`

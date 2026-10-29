@@ -33,6 +33,7 @@ export function ResourceInspectorDrawer() {
   } = useClusterStore();
 
   const [activeTab, setActiveTab] = React.useState<InspectorTabId>("overview");
+  const [isEditorMaximized, setIsEditorMaximized] = React.useState(false);
   const [pendingGuard, setPendingGuard] = React.useState<
     InspectorTabId | "close" | null
   >(null);
@@ -137,6 +138,20 @@ export function ResourceInspectorDrawer() {
     isAccessResource,
   });
 
+  const inspectedResourceKey = currentResource
+    ? `${currentResource.kind}/${currentResource.namespace}/${currentResource.name}`
+    : "";
+
+  React.useEffect(() => {
+    setIsEditorMaximized(false);
+  }, [inspectedResourceKey]);
+
+  React.useEffect(() => {
+    if (!isInspectorOpen || activeTab !== "edit") {
+      setIsEditorMaximized(false);
+    }
+  }, [isInspectorOpen, activeTab]);
+
   const actions = useInspectorActions({
     currentResource,
     isDeployment,
@@ -222,14 +237,13 @@ export function ResourceInspectorDrawer() {
       <div
         data-testid="resource-inspector-drawer"
         className={cn(
-          "fixed inset-y-0 right-0 z-40 w-full glass-panel border-l border-[var(--border)] shadow-2xl flex flex-col select-none backdrop-blur-xl",
+          "inspector-drawer fixed inset-y-0 right-0 z-40 w-full glass-panel border-l border-[var(--border)] shadow-2xl flex flex-col select-none backdrop-blur-xl transform motion-reduce:transform-none",
           activeTab === "edit"
-            ? "max-w-3xl md:max-w-4xl"
+            ? isEditorMaximized
+              ? "max-w-[100vw]"
+              : "max-w-3xl md:max-w-4xl"
             : "max-w-xl md:max-w-2xl",
-          "transform transition-transform motion-reduce:transition-none motion-reduce:transform-none",
-          isMounted
-            ? "translate-x-0 duration-250 ease-[cubic-bezier(0.16,1,0.3,1)]"
-            : "translate-x-full duration-200 ease-in",
+          isMounted ? "translate-x-0" : "translate-x-full",
         )}
       >
         {/* Top Header */}
@@ -322,6 +336,10 @@ export function ResourceInspectorDrawer() {
           isLoadingYaml={yaml.isLoadingYaml}
           isLoadingEvents={isLoadingEvents}
           copiedYaml={yaml.copiedYaml}
+          isEditorMaximized={isEditorMaximized}
+          onToggleEditorMaximized={() =>
+            setIsEditorMaximized((previous) => !previous)
+          }
           onFilterPodsForNode={actions.handleFilterPodsForNode}
           onInspectPod={openInspector}
           onViewAllPods={actions.handleViewAllPods}

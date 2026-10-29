@@ -131,7 +131,7 @@ export function ReplicaSetTableHeader({
             {renderSortIndicator("ready")}
           </div>
         </th>
-        <th className="w-40 py-1 px-3">Owner</th>
+        <th className="w-32 py-1 px-3">Owner</th>
         <th
           {...sortableHeaderProps({
             field: "age",

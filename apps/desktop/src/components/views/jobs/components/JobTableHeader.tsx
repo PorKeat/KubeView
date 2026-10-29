@@ -116,7 +116,7 @@ export function JobTableHeader({
         </th>
         <th className="w-24 py-1 px-3">Completions</th>
         <th className="w-20 py-1 px-3">Duration</th>
-        <th className="w-40 py-1 px-3">Owner</th>
+        <th className="w-32 py-1 px-3">Owner</th>
         <th
           {...sortableHeaderProps({
             field: "age",

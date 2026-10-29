@@ -80,7 +80,7 @@ export function StatefulSetTableHeader({
             ascending: sortAsc,
             onSort,
           })}
-          className="w-48 sm:w-56 md:w-64 py-1 px-3 cursor-pointer hover:text-[var(--foreground)] transition-colors min-w-0"
+          className="w-48 sm:w-56 md:w-60 py-1 px-3 cursor-pointer hover:text-[var(--foreground)] transition-colors min-w-0"
         >
           <div className="flex items-center gap-1">
             <span>Name</span>
@@ -132,7 +132,7 @@ export function StatefulSetTableHeader({
           </div>
         </th>
         <th className="w-16 py-1 px-3">Updated</th>
-        <th className="w-36 py-1 px-3">Service</th>
+        <th className="w-32 py-1 px-3">Service</th>
         <th
           {...sortableHeaderProps({
             field: "age",

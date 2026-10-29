@@ -440,9 +440,9 @@ export function SimpleResourcesView({ kind }: { kind: SimpleResourceKind }) {
   return (
     <div
       data-testid={`simple-resource-view-${kind}`}
-      className="flex w-full flex-1 select-none flex-col overflow-y-auto p-4 md:p-5 lg:p-6"
+      className="flex h-full w-full flex-1 select-none flex-col overflow-hidden"
     >
-      <div className="flex flex-col gap-3 border-b border-[var(--border)] pb-3">
+      <div className="flex shrink-0 flex-col gap-3 border-b border-[var(--border)] px-4 pb-3 pt-4 md:px-5 lg:px-6">
         <div className="flex flex-col justify-between gap-3 sm:flex-row sm:items-center">
           <div className="flex min-w-0 items-start gap-3">
             <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-[var(--border)] bg-[var(--surface-active)] text-[var(--accent)]">
@@ -527,7 +527,7 @@ export function SimpleResourcesView({ kind }: { kind: SimpleResourceKind }) {
       </div>
 
       {error && (
-        <div className="mt-3">
+        <div className="mt-3 shrink-0 px-4 md:px-5 lg:px-6">
           <ErrorBanner
             message={error}
             title={`Unable to load ${config.title.toLowerCase()}`}
@@ -538,7 +538,7 @@ export function SimpleResourcesView({ kind }: { kind: SimpleResourceKind }) {
       )}
 
       {isLoading && items.length === 0 ? (
-        <div className="mt-3 overflow-hidden rounded-xl border border-[var(--border)] bg-[var(--surface)]">
+        <div className="mx-4 mt-3 min-h-0 flex-1 overflow-hidden rounded-xl border border-[var(--border)] bg-[var(--surface)] md:mx-5 lg:mx-6">
           <div className="space-y-2 p-3">
             {Array.from({ length: 5 }).map((_, index) => (
               <div
@@ -549,7 +549,7 @@ export function SimpleResourcesView({ kind }: { kind: SimpleResourceKind }) {
           </div>
         </div>
       ) : filteredItems.length === 0 ? (
-        <div className="mt-3">
+        <div className="mx-4 mt-3 min-h-0 flex-1 md:mx-5 lg:mx-6">
           <EmptyState
             variant={search || filter !== "All" ? "search" : "empty"}
             title={
@@ -576,7 +576,7 @@ export function SimpleResourcesView({ kind }: { kind: SimpleResourceKind }) {
           />
         </div>
       ) : (
-        <div className="mt-3 overflow-x-auto rounded-xl border border-[var(--border)] bg-[var(--surface)]">
+        <div className="mx-4 mb-4 mt-3 min-h-0 flex-1 overflow-auto rounded-xl border border-[var(--border)] bg-[var(--surface)] md:mx-5 lg:mx-6">
           <table className="w-full min-w-[760px] border-collapse text-left text-xs">
             <thead>
               <tr className="border-b border-[var(--border)] font-mono text-[9px] uppercase tracking-[0.12em] text-[var(--muted)]">

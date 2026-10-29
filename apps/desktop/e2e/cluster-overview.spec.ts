@@ -3,7 +3,7 @@ import { test, expect } from "@playwright/test";
 test.describe("KubeView UI - Cluster Overview & Health Metrics", () => {
   test.beforeEach(async ({ page }) => {
     await page.addInitScript(() => {
-      localStorage.setItem("kubeview_splash_seen", "true");
+      localStorage.setItem("kubeview_skip_boot_splash", "true");
     });
     await page.goto("/");
     await page.waitForLoadState("domcontentloaded");

@@ -322,7 +322,7 @@ export function DeploymentListView() {
           data-tour="deployments-table"
           className="flex-1 overflow-auto min-h-0"
         >
-          <table className="w-full min-w-[1000px] text-left text-xs border-collapse table-fixed">
+          <table className="w-full text-left text-xs border-collapse table-fixed">
             <DeploymentTableHeader
               sortField={sortField}
               sortAsc={sortAsc}

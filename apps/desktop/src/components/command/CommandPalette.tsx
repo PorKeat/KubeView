@@ -146,6 +146,14 @@ export function CommandPalette() {
                 <span>Cluster Overview</span>
               </Command.Item>
               <Command.Item
+                onSelect={() => navigateTo("topology", "Topology")}
+                value="Topology cluster nodes workloads services map graph"
+                className="flex items-center gap-2.5 px-2.5 py-2 rounded-md cursor-pointer hover:bg-[var(--surface-hover)] text-[var(--foreground)] transition-colors"
+              >
+                <Network className="w-4 h-4 text-cyan-500 dark:text-cyan-400" />
+                <span>Topology</span>
+              </Command.Item>
+              <Command.Item
                 onSelect={() => navigateTo("learning", "Learning Center")}
                 value="Learning Center learn tutorial glossary beginner Kubernetes guidance"
                 className="flex items-center gap-2.5 px-2.5 py-2 rounded-md cursor-pointer hover:bg-[var(--surface-hover)] text-[var(--foreground)] transition-colors"
