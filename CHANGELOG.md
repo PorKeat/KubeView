@@ -9,6 +9,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.2.0] - 2026-10-29
+
+### Added
+
+- Far-left cluster rail with live health, pinned contexts, and catalog mode.
+- Cluster catalog with search, filters, pins, environment tags, bulk actions, and detail drawer.
+- Kubeconfigs and Web Links catalog pages.
+- RC1–RC5 resource coverage: namespaces, events, replication controllers, endpoint slices, ingress classes, PVCs, HPAs, PDBs, quotas, limits, scheduling classes, leases, admission resources, and Helm.
+- Helm release inventory and read-only chart repository browser.
+- Settings V2: startup, safety guardrails, appearance density/accent/accessibility, polling, notifications, terminal/log defaults, integrations, and settings portability.
+- YAML copy and guarded safe deletes for simple resources.
+
+### Changed
+
+- Removed the duplicate Settings control from the cluster rail.
+- Resource coverage now tracks all 36 reference resource entries.
+
 ### Added
 
 - Enterprise GitHub community health and governance documentation (`SECURITY.md`, `LICENSE`, `CONTRIBUTING.md`, `CODE_OF_CONDUCT.md`).

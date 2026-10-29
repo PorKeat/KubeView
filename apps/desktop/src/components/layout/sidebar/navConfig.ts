@@ -37,6 +37,10 @@ import {
   Keyboard,
   Timer,
   GraduationCap,
+  Home,
+  Bell,
+  Terminal,
+  Plug,
 } from "lucide-react";
 import type { SettingsSection } from "@/stores/settingsStore";
 
@@ -67,12 +71,60 @@ export interface SettingsNavItem {
 
 export const SETTINGS_NAV_ITEMS: SettingsNavItem[] = [
   {
+    id: "settings-general",
+    testId: "general",
+    section: "general",
+    title: "General",
+    description: "Startup and workspace",
+    icon: Home,
+  },
+  {
+    id: "settings-safety",
+    testId: "safety",
+    section: "safety",
+    title: "Safety",
+    description: "Guardrails and protected contexts",
+    icon: ShieldCheck,
+  },
+  {
     id: "settings-appearance",
     testId: "appearance",
     section: "appearance",
     title: "Appearance",
     description: "Theme, text, motion",
     icon: Monitor,
+  },
+  {
+    id: "settings-notifications",
+    testId: "notifications",
+    section: "notifications",
+    title: "Notifications",
+    description: "Alerts and desktop notices",
+    icon: Bell,
+  },
+  {
+    id: "settings-terminal",
+    testId: "terminal",
+    section: "terminal",
+    title: "Terminal & Logs",
+    description: "Shell and log display defaults",
+    icon: Terminal,
+  },
+  {
+    id: "settings-integrations",
+    testId: "integrations",
+    section: "integrations",
+    title: "Integrations",
+    description: "Helm, GitOps, and editor",
+    icon: Plug,
+  },
+  {
+    id: "settings-advanced",
+    testId: "advanced",
+    section: "advanced",
+    title: "Advanced",
+    description: "Timeouts and portability",
+    icon: SlidersHorizontal,
   },
   {
     id: "settings-data-refresh",

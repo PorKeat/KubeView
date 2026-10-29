@@ -1,3 +1,4 @@
+import { useSettingsStore } from "@/stores/settingsStore";
 import type {
   ListContextsResult,
   SwitchContextResult,
@@ -7,6 +8,63 @@ import type {
 
 const MOCK_MODE = process.env.NEXT_PUBLIC_KUBEVIEW_MOCK === "1";
 const RPC_TIMEOUT_MS = 30_000;
+
+const MUTATING_METHODS = new Set([
+  "configmaps.apply",
+  "secrets.apply",
+  "pods.delete",
+  "pods.restart",
+  "pods.exec",
+  "deployments.delete",
+  "deployments.restart",
+  "deployments.scale",
+  "replicasets.delete",
+  "replicasets.scale",
+  "statefulsets.delete",
+  "statefulsets.restart",
+  "statefulsets.scale",
+  "daemonsets.delete",
+  "daemonsets.restart",
+  "jobs.delete",
+  "cronjobs.delete",
+  "cronjobs.suspend",
+  "cronjobs.resume",
+  "ingresses.apply",
+  "ingresses.delete",
+  "gatewayresources.apply",
+  "gatewayresources.delete",
+  "resources.apply",
+  "resources.delete",
+]);
+
+function safetyError(method: string, params: unknown): Error | null {
+  const settings = useSettingsStore.getState();
+  const contextName =
+    params && typeof params === "object" && "contextName" in params
+      ? String((params as { contextName?: unknown }).contextName ?? "")
+      : "";
+  const mutating = MUTATING_METHODS.has(method);
+  const isProtected =
+    contextName.length > 0 &&
+    (settings.protectedContexts.includes(contextName) ||
+      (settings.protectProduction &&
+        /(^|[-_@/])prod([-_@/]|$)/i.test(contextName)));
+
+  if (mutating && settings.readOnlyMode) {
+    return new Error(
+      "Read-only mode is enabled in Settings. Mutation blocked.",
+    );
+  }
+  if (method === "pods.exec" && settings.disableExec) {
+    return new Error("Pod exec is disabled in Settings.");
+  }
+  if (mutating && isProtected) {
+    return new Error(
+      `Context "${contextName}" is protected. Mutation blocked.`,
+    );
+  }
+  return null;
+}
 
 function notifyForbidden(
   method: string,
@@ -40,6 +98,8 @@ export async function invokeRpc<T>(
   method: string,
   params?: unknown,
 ): Promise<T> {
+  const blocked = safetyError(method, params);
+  if (blocked) throw blocked;
   if (isTauri()) {
     try {
       const { invoke } = await import("@tauri-apps/api/core");

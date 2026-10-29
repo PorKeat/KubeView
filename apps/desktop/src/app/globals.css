@@ -366,3 +366,28 @@ th[tabindex="0"]:focus-visible {
   outline: 2px solid var(--accent);
   outline-offset: -2px;
 }
+
+/* Settings V2 appearance modes */
+:root[data-density="compact"] table th,
+:root[data-density="compact"] table td {
+  padding-top: 4px !important;
+  padding-bottom: 4px !important;
+}
+
+:root[data-status-palette="colorblind"] {
+  --status-healthy: #0072b2;
+  --status-warning: #e69f00;
+  --status-critical: #d55e00;
+}
+
+:root[data-high-contrast="true"] {
+  --border: #94a3b8;
+  --border-subtle: #cbd5e1;
+  --muted: #475569;
+}
+
+.dark[data-high-contrast="true"] {
+  --border: #64748b;
+  --border-subtle: #475569;
+  --muted: #cbd5e1;
+}

@@ -30,6 +30,7 @@ import { useSettingsStore } from "@/stores/settingsStore";
 import { useTabStore } from "@/stores/tabStore";
 import { useCatalogStore } from "@/stores/catalogStore";
 import { useHelmStore } from "@/stores/helmStore";
+import { useLayoutStore } from "@/stores/layoutStore";
 
 export function AppShell() {
   const loadContexts = useClusterStore((s) => s.loadContexts);
@@ -40,7 +41,90 @@ export function AppShell() {
   const fontSize = useSettingsStore((s) => s.fontSize);
   const reducedMotion = useSettingsStore((s) => s.reducedMotion);
   const autoRefreshSeconds = useSettingsStore((s) => s.autoRefreshSeconds);
+  const density = useSettingsStore((s) => s.density);
+  const accent = useSettingsStore((s) => s.accent);
+  const statusPalette = useSettingsStore((s) => s.statusPalette);
+  const highContrast = useSettingsStore((s) => s.highContrast);
+  const monoFontSize = useSettingsStore((s) => s.monoFontSize);
+  const showClusterRail = useSettingsStore((s) => s.showClusterRail);
+  const sidebarDefaultCollapsed = useSettingsStore(
+    (s) => s.sidebarDefaultCollapsed,
+  );
+  const startupPage = useSettingsStore((s) => s.startupPage);
+  const pauseWhenHidden = useSettingsStore((s) => s.pauseWhenHidden);
+  const refreshOnFocus = useSettingsStore((s) => s.refreshOnFocus);
   const openTab = useTabStore((s) => s.openTab);
+  const setSidebarCollapsed = useLayoutStore((s) => s.setSidebarCollapsed);
+  const startupApplied = React.useRef(false);
+  const sidebarApplied = React.useRef(false);
+  const [isHidden, setIsHidden] = React.useState(false);
+
+  React.useEffect(() => {
+    document.documentElement.dataset.density = density;
+    document.documentElement.dataset.statusPalette = statusPalette;
+    document.documentElement.dataset.highContrast = String(highContrast);
+    document.documentElement.dataset.monoSize = monoFontSize;
+  }, [density, highContrast, monoFontSize, statusPalette]);
+
+  React.useEffect(() => {
+    const accents: Record<string, { base: string; hover: string }> = {
+      orange: { base: "#f08a42", hover: "#ff9d5c" },
+      blue: { base: "#4f8ff7", hover: "#70a7ff" },
+      emerald: { base: "#34b981", hover: "#51d39a" },
+      violet: { base: "#a78bfa", hover: "#bda7ff" },
+    };
+    const selected = accents[accent] ?? accents.orange;
+    document.documentElement.style.setProperty("--accent", selected.base);
+    document.documentElement.style.setProperty(
+      "--accent-hover",
+      selected.hover,
+    );
+  }, [accent]);
+
+  React.useEffect(() => {
+    if (sidebarApplied.current) return;
+    sidebarApplied.current = true;
+    if (sidebarDefaultCollapsed) setSidebarCollapsed(true);
+  }, [setSidebarCollapsed, sidebarDefaultCollapsed]);
+
+  React.useEffect(() => {
+    if (startupApplied.current) return;
+    startupApplied.current = true;
+    if (startupPage === "fleet") {
+      openTab({
+        id: "fleet",
+        title: "All Clusters",
+        icon: "Server",
+        closable: true,
+      });
+    } else if (startupPage === "learning") {
+      openTab({
+        id: "learning",
+        title: "Learning Center",
+        closable: true,
+      });
+    }
+  }, [openTab, startupPage]);
+
+  React.useEffect(() => {
+    const handleVisibility = () => setIsHidden(document.hidden);
+    handleVisibility();
+    document.addEventListener("visibilitychange", handleVisibility);
+    return () =>
+      document.removeEventListener("visibilitychange", handleVisibility);
+  }, []);
+
+  React.useEffect(() => {
+    if (!refreshOnFocus) return;
+    const handleFocus = () => {
+      if (document.hidden) return;
+      const store = useClusterStore.getState();
+      void store.loadClusterOverview();
+      void store.loadPods();
+    };
+    window.addEventListener("focus", handleFocus);
+    return () => window.removeEventListener("focus", handleFocus);
+  }, [refreshOnFocus]);
 
   React.useEffect(() => {
     void useCatalogStore.persist.rehydrate();
@@ -58,8 +142,10 @@ export function AppShell() {
   }, [reducedMotion]);
 
   React.useEffect(() => {
-    setAutoRefreshInterval(autoRefreshSeconds * 1000);
-  }, [autoRefreshSeconds, setAutoRefreshInterval]);
+    const interval =
+      pauseWhenHidden && isHidden ? 0 : autoRefreshSeconds * 1000;
+    setAutoRefreshInterval(interval);
+  }, [autoRefreshSeconds, isHidden, pauseWhenHidden, setAutoRefreshInterval]);
 
   React.useEffect(() => {
     const handleSettingsShortcut = (event: KeyboardEvent) => {
@@ -87,7 +173,7 @@ export function AppShell() {
 
       {/* 2. Main Middle Workspace (Sidebar + Tabbed Content) */}
       <div className="flex-1 flex overflow-hidden">
-        <ClusterRail />
+        {showClusterRail && <ClusterRail />}
         <AppSidebar />
 
         <main className="flex-1 flex flex-col min-w-0 bg-[var(--background)] overflow-hidden">

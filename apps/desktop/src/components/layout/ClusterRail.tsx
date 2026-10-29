@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { LayoutGrid, Loader2, Plus, Settings, ShipWheel } from "lucide-react";
+import { LayoutGrid, Loader2, Plus, ShipWheel } from "lucide-react";
 import { useClusterStore } from "@/stores/clusterStore";
 import { useFleetOverviewStore } from "@/stores/fleetStore";
 import { useTabStore } from "@/stores/tabStore";
@@ -187,10 +187,6 @@ export function ClusterRail() {
     }
   };
 
-  const handleOpenSettings = () => {
-    openTab({ id: "settings", title: "Settings", closable: true });
-  };
-
   return (
     <aside
       data-testid="cluster-rail"
@@ -325,18 +321,13 @@ export function ClusterRail() {
         </Tooltip>
       </div>
 
-      <div className="flex w-full flex-col items-center gap-1 border-t border-[var(--border)] py-2">
-        <Tooltip content="Settings (⌘,)" side="right" delayDuration={250}>
-          <button
-            type="button"
-            aria-label="Open settings"
-            onClick={handleOpenSettings}
-            className="flex h-8 w-8 items-center justify-center rounded-lg text-[var(--muted)] transition-colors cursor-pointer hover:bg-[var(--surface-hover)] hover:text-[var(--foreground)] focus-visible:ring-2 focus-visible:ring-[var(--accent)] focus-visible:outline-hidden"
-          >
-            <Settings className="h-3.5 w-3.5" aria-hidden="true" />
-          </button>
-        </Tooltip>
-        <span className="font-mono text-[6.5px] uppercase tracking-[0.14em] text-[var(--muted)]">
+      <div className="flex w-full items-center justify-center border-t border-[var(--border)] py-2.5">
+        <span
+          className="font-mono text-[6.5px] uppercase tracking-[0.14em] text-[var(--muted)]"
+          title={`${availableContexts.length} cluster context${
+            availableContexts.length === 1 ? "" : "s"
+          }`}
+        >
           {availableContexts.length} context
           {availableContexts.length === 1 ? "" : "s"}
         </span>

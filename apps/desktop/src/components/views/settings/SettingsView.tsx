@@ -22,8 +22,18 @@ import {
 } from "@/stores/settingsStore";
 import { LearningSettingsPanel } from "./components/LearningSettingsPanel";
 import {
+  ChoiceGroup,
+  AdvancedSettingsPanel,
+  GeneralSettingsPanel,
+  IntegrationsSettingsPanel,
+  NotificationsSettingsPanel,
+  SafetySettingsPanel,
+  TerminalSettingsPanel,
+} from "./components/SettingsPanels";
+import {
   SettingsHeading,
   SettingsSectionCard,
+  SettingsToggleRow,
 } from "./components/SettingsSectionCard";
 
 type ThemePreference = "system" | "light" | "dark";
@@ -75,6 +85,7 @@ export function SettingsView() {
     setDefaultPageSize,
     setAutoRefreshSeconds,
     setReducedMotion,
+    resetPreferences,
   } = useSettingsStore();
   const scrollRef = React.useRef<HTMLDivElement>(null);
 
@@ -83,10 +94,7 @@ export function SettingsView() {
   }, [activeSection]);
 
   const handleReset = () => {
-    setFontSize("md");
-    setDefaultPageSize(50);
-    setAutoRefreshSeconds(0);
-    setReducedMotion(false);
+    resetPreferences();
     setTheme("system");
     toast.success("Preferences restored to defaults");
   };
@@ -128,8 +136,14 @@ export function SettingsView() {
             </div>
           </header>
 
+          {activeSection === "general" && <GeneralSettingsPanel />}
+          {activeSection === "safety" && <SafetySettingsPanel />}
           {activeSection === "appearance" && <AppearancePanel />}
           {activeSection === "data-refresh" && <DataRefreshPanel />}
+          {activeSection === "notifications" && <NotificationsSettingsPanel />}
+          {activeSection === "terminal" && <TerminalSettingsPanel />}
+          {activeSection === "integrations" && <IntegrationsSettingsPanel />}
+          {activeSection === "advanced" && <AdvancedSettingsPanel />}
           {activeSection === "learning" && <LearningSettingsPanel />}
           {activeSection === "shortcuts" && <ShortcutsPanel />}
         </div>
@@ -140,8 +154,18 @@ export function SettingsView() {
 
 function AppearancePanel() {
   const { theme, setTheme } = useTheme();
-  const { fontSize, setFontSize, reducedMotion, setReducedMotion } =
-    useSettingsStore();
+  const {
+    fontSize,
+    setFontSize,
+    reducedMotion,
+    setReducedMotion,
+    density,
+    accent,
+    statusPalette,
+    highContrast,
+    monoFontSize,
+    updatePreferences,
+  } = useSettingsStore();
   const activeTheme: ThemePreference =
     theme === "light" || theme === "dark" ? theme : "system";
 
@@ -282,6 +306,64 @@ function AppearancePanel() {
           />
         </button>
       </div>
+
+      <div className="grid gap-6 xl:grid-cols-2">
+        <ChoiceGroup
+          label="Table density"
+          description="Compact reduces vertical cell padding across resource tables."
+          value={density}
+          options={[
+            { value: "comfortable", label: "Comfortable" },
+            { value: "compact", label: "Compact" },
+          ]}
+          onChange={(value) => updatePreferences({ density: value })}
+          testIdPrefix="settings-density"
+        />
+        <ChoiceGroup
+          label="Accent color"
+          description="Changes buttons, active states, and focus rings."
+          value={accent}
+          options={[
+            { value: "orange", label: "Orange" },
+            { value: "blue", label: "Blue" },
+            { value: "emerald", label: "Green" },
+            { value: "violet", label: "Violet" },
+          ]}
+          onChange={(value) => updatePreferences({ accent: value })}
+          testIdPrefix="settings-accent"
+        />
+        <ChoiceGroup
+          label="Status palette"
+          description="Use a color-vision-safe status palette."
+          value={statusPalette}
+          options={[
+            { value: "standard", label: "Standard" },
+            { value: "colorblind", label: "Color-safe" },
+          ]}
+          onChange={(value) => updatePreferences({ statusPalette: value })}
+          testIdPrefix="settings-status-palette"
+        />
+        <ChoiceGroup
+          label="Monospace text"
+          description="Base size for logs, YAML, and identifiers."
+          value={monoFontSize}
+          options={[
+            { value: "sm", label: "Small" },
+            { value: "md", label: "Default" },
+            { value: "lg", label: "Large" },
+          ]}
+          onChange={(value) => updatePreferences({ monoFontSize: value })}
+          testIdPrefix="settings-mono-size"
+        />
+      </div>
+      <SettingsToggleRow
+        icon={Accessibility}
+        title="High contrast"
+        description="Strengthen borders and muted text for low-vision use."
+        checked={highContrast}
+        onToggle={() => updatePreferences({ highContrast: !highContrast })}
+        testId="settings-high-contrast"
+      />
     </SettingsSectionCard>
   );
 }
@@ -292,6 +374,9 @@ function DataRefreshPanel() {
     setAutoRefreshSeconds,
     defaultPageSize,
     setDefaultPageSize,
+    pauseWhenHidden,
+    refreshOnFocus,
+    updatePreferences,
   } = useSettingsStore();
 
   return (
@@ -369,6 +454,28 @@ function DataRefreshPanel() {
         </div>
       </div>
 
+      <div className="grid gap-2 md:grid-cols-2">
+        <SettingsToggleRow
+          icon={Timer}
+          title="Pause polling when hidden"
+          description="Stop background refresh while the window is not visible."
+          checked={pauseWhenHidden}
+          onToggle={() =>
+            updatePreferences({ pauseWhenHidden: !pauseWhenHidden })
+          }
+          testId="settings-pause-hidden"
+        />
+        <SettingsToggleRow
+          icon={Timer}
+          title="Refresh when focused"
+          description="Refresh the active cluster when you return to the window."
+          checked={refreshOnFocus}
+          onToggle={() =>
+            updatePreferences({ refreshOnFocus: !refreshOnFocus })
+          }
+          testId="settings-refresh-focus"
+        />
+      </div>
       <p className="rounded-xl border border-[var(--border)]/70 bg-black/[0.02] px-3 py-2.5 text-[10px] leading-relaxed text-[var(--muted)] dark:bg-white/[0.02]">
         Auto-refresh applies to the active view. Manual refresh and live
         connection diagnostics remain available in the header.

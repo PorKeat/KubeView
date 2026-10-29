@@ -1,6 +1,6 @@
 {
   "name": "@kubeview/desktop",
-  "version": "0.1.2",
+  "version": "0.2.0",
   "private": true,
   "license": "BSL-1.1",
   "author": "PorKeat <alexkgm2412@gmail.com>",
