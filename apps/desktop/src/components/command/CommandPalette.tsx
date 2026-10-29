@@ -35,6 +35,8 @@ import {
   History,
   Waypoints,
   Route,
+  ArrowUp,
+  SlidersHorizontal,
 } from "lucide-react";
 import { useLayoutStore } from "@/stores/layoutStore";
 import { useTabStore } from "@/stores/tabStore";
@@ -386,6 +388,82 @@ export function CommandPalette() {
               >
                 <HardDrive className="w-4 h-4 text-emerald-500 dark:text-emerald-400" />
                 <span>Persistent Volume Claims</span>
+              </Command.Item>
+              <Command.Item
+                onSelect={() => {
+                  setCurrentNamespace("all");
+                  navigateTo(
+                    "horizontalpodautoscalers",
+                    "Horizontal Pod Autoscalers",
+                  );
+                }}
+                value="Horizontal Pod Autoscalers HPA autoscaling replicas"
+                className="flex items-center gap-2.5 px-2.5 py-2 rounded-md cursor-pointer hover:bg-[var(--surface-hover)] text-[var(--foreground)] transition-colors"
+              >
+                <Activity className="w-4 h-4 text-blue-500 dark:text-blue-400" />
+                <span>Horizontal Pod Autoscalers</span>
+              </Command.Item>
+              <Command.Item
+                onSelect={() => {
+                  setCurrentNamespace("all");
+                  navigateTo("poddisruptionbudgets", "Pod Disruption Budgets");
+                }}
+                value="Pod Disruption Budgets PDB disruption availability"
+                className="flex items-center gap-2.5 px-2.5 py-2 rounded-md cursor-pointer hover:bg-[var(--surface-hover)] text-[var(--foreground)] transition-colors"
+              >
+                <Shield className="w-4 h-4 text-amber-500 dark:text-amber-400" />
+                <span>Pod Disruption Budgets</span>
+              </Command.Item>
+              <Command.Item
+                onSelect={() => {
+                  setCurrentNamespace("all");
+                  navigateTo("resourcequotas", "Resource Quotas");
+                }}
+                value="Resource Quotas quota namespace limits"
+                className="flex items-center gap-2.5 px-2.5 py-2 rounded-md cursor-pointer hover:bg-[var(--surface-hover)] text-[var(--foreground)] transition-colors"
+              >
+                <Layers className="w-4 h-4 text-violet-500 dark:text-violet-400" />
+                <span>Resource Quotas</span>
+              </Command.Item>
+              <Command.Item
+                onSelect={() => {
+                  setCurrentNamespace("all");
+                  navigateTo("limitranges", "Limit Ranges");
+                }}
+                value="Limit Ranges limits defaults namespace"
+                className="flex items-center gap-2.5 px-2.5 py-2 rounded-md cursor-pointer hover:bg-[var(--surface-hover)] text-[var(--foreground)] transition-colors"
+              >
+                <SlidersHorizontal className="w-4 h-4 text-sky-500 dark:text-sky-400" />
+                <span>Limit Ranges</span>
+              </Command.Item>
+              <Command.Item
+                onSelect={() =>
+                  navigateTo("priorityclasses", "Priority Classes")
+                }
+                value="Priority Classes scheduling preemption"
+                className="flex items-center gap-2.5 px-2.5 py-2 rounded-md cursor-pointer hover:bg-[var(--surface-hover)] text-[var(--foreground)] transition-colors"
+              >
+                <ArrowUp className="w-4 h-4 text-rose-500 dark:text-rose-400" />
+                <span>Priority Classes</span>
+              </Command.Item>
+              <Command.Item
+                onSelect={() => navigateTo("runtimeclasses", "Runtime Classes")}
+                value="Runtime Classes runtime handler container"
+                className="flex items-center gap-2.5 px-2.5 py-2 rounded-md cursor-pointer hover:bg-[var(--surface-hover)] text-[var(--foreground)] transition-colors"
+              >
+                <Cpu className="w-4 h-4 text-emerald-500 dark:text-emerald-400" />
+                <span>Runtime Classes</span>
+              </Command.Item>
+              <Command.Item
+                onSelect={() => {
+                  setCurrentNamespace("all");
+                  navigateTo("leases", "Leases");
+                }}
+                value="Leases leader election coordination renew"
+                className="flex items-center gap-2.5 px-2.5 py-2 rounded-md cursor-pointer hover:bg-[var(--surface-hover)] text-[var(--foreground)] transition-colors"
+              >
+                <Clock className="w-4 h-4 text-orange-500 dark:text-orange-400" />
+                <span>Leases</span>
               </Command.Item>
             </Command.Group>
 

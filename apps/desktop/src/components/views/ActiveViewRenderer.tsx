@@ -69,6 +69,34 @@ export function ActiveViewRenderer() {
           return <SimpleResourcesView kind="persistentvolumeclaims" />;
         }
 
+        if (activeTabId === "horizontalpodautoscalers") {
+          return <SimpleResourcesView kind="horizontalpodautoscalers" />;
+        }
+
+        if (activeTabId === "poddisruptionbudgets") {
+          return <SimpleResourcesView kind="poddisruptionbudgets" />;
+        }
+
+        if (activeTabId === "resourcequotas") {
+          return <SimpleResourcesView kind="resourcequotas" />;
+        }
+
+        if (activeTabId === "limitranges") {
+          return <SimpleResourcesView kind="limitranges" />;
+        }
+
+        if (activeTabId === "priorityclasses") {
+          return <SimpleResourcesView kind="priorityclasses" />;
+        }
+
+        if (activeTabId === "runtimeclasses") {
+          return <SimpleResourcesView kind="runtimeclasses" />;
+        }
+
+        if (activeTabId === "leases") {
+          return <SimpleResourcesView kind="leases" />;
+        }
+
         if (activeTabId === "fleet") {
           return <FleetCatalogView />;
         }

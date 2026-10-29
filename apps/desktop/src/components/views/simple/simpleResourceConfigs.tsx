@@ -4,11 +4,18 @@ import type {
   SimpleResourceKind,
 } from "@kubeview/contracts";
 import {
+  Activity,
+  ArrowUp,
+  Clock,
+  Cpu,
   FolderTree,
   HardDrive,
   History,
+  Layers,
   Repeat,
   Route,
+  Shield,
+  SlidersHorizontal,
   Waypoints,
   type LucideIcon,
 } from "lucide-react";
@@ -265,6 +272,241 @@ export const SIMPLE_RESOURCE_CONFIGS: Record<
         key: "volume",
         label: "Volume",
         render: (item) => <DetailValue item={item} detailKey="volume" mono />,
+      },
+    ],
+  },
+  horizontalpodautoscalers: {
+    kind: "horizontalpodautoscalers",
+    title: "Horizontal Pod Autoscalers",
+    description:
+      "Autoscaling targets and current replica pressure. A warning means the controller cannot scale or the desired replicas are not met.",
+    icon: Activity,
+    namespaceScoped: true,
+    searchPlaceholder: "Filter autoscalers by target, namespace...",
+    emptyTitle: "No horizontal pod autoscalers",
+    emptyDescription: "No autoscaler is configured in this namespace.",
+    primary: (item) => item.name,
+    secondary: (item) => item.namespace || "",
+    columns: [
+      {
+        key: "target",
+        label: "Target",
+        render: (item) => <DetailValue item={item} detailKey="target" mono />,
+      },
+      {
+        key: "replicas",
+        label: "Min / Max",
+        render: (item) => (
+          <span className="font-mono text-[10px] tabular-nums">
+            {detail(item, "min")} / {detail(item, "max")}
+          </span>
+        ),
+      },
+      {
+        key: "metrics",
+        label: "Metrics",
+        render: (item) => (
+          <span className="font-mono text-[10px] tabular-nums">
+            {detail(item, "metrics")}
+          </span>
+        ),
+      },
+    ],
+  },
+  poddisruptionbudgets: {
+    kind: "poddisruptionbudgets",
+    title: "Pod Disruption Budgets",
+    description:
+      "Voluntary disruption limits for workloads. Zero allowed disruptions can block node drains even when the workload is healthy.",
+    icon: Shield,
+    namespaceScoped: true,
+    searchPlaceholder: "Filter disruption budgets...",
+    emptyTitle: "No pod disruption budgets",
+    emptyDescription:
+      "No disruption budget protects workloads in this namespace.",
+    primary: (item) => item.name,
+    secondary: (item) => item.namespace || "",
+    columns: [
+      {
+        key: "minAvailable",
+        label: "Min available",
+        render: (item) => (
+          <DetailValue item={item} detailKey="minAvailable" mono />
+        ),
+      },
+      {
+        key: "maxUnavailable",
+        label: "Max unavailable",
+        render: (item) => (
+          <DetailValue item={item} detailKey="maxUnavailable" mono />
+        ),
+      },
+      {
+        key: "allowed",
+        label: "Allowed disruptions",
+        render: (item) => (
+          <span className="font-mono text-[10px] tabular-nums">
+            {detail(item, "allowedDisruptions")}
+          </span>
+        ),
+      },
+      {
+        key: "expected",
+        label: "Expected pods",
+        render: (item) => (
+          <span className="font-mono text-[10px] tabular-nums">
+            {detail(item, "expectedPods")}
+          </span>
+        ),
+      },
+    ],
+  },
+  resourcequotas: {
+    kind: "resourcequotas",
+    title: "Resource Quotas",
+    description:
+      "Namespace-level hard limits and current usage. Quotas can block new Pods even when the cluster has free capacity.",
+    icon: Layers,
+    namespaceScoped: true,
+    searchPlaceholder: "Filter quotas...",
+    emptyTitle: "No resource quotas",
+    emptyDescription:
+      "No aggregate resource limits are enforced in this namespace.",
+    primary: (item) => item.name,
+    secondary: (item) => item.namespace || "",
+    columns: [
+      {
+        key: "hard",
+        label: "Hard limits",
+        className: "max-w-[280px]",
+        render: (item) => <DetailValue item={item} detailKey="hard" mono />,
+      },
+      {
+        key: "used",
+        label: "Used",
+        className: "max-w-[280px]",
+        render: (item) => <DetailValue item={item} detailKey="used" mono />,
+      },
+    ],
+  },
+  limitranges: {
+    kind: "limitranges",
+    title: "Limit Ranges",
+    description:
+      "Default and maximum resource limits applied to Pods and containers in a namespace.",
+    icon: SlidersHorizontal,
+    namespaceScoped: true,
+    searchPlaceholder: "Filter limit ranges...",
+    emptyTitle: "No limit ranges",
+    emptyDescription:
+      "No default or maximum resource limits apply in this namespace.",
+    primary: (item) => item.name,
+    secondary: (item) => item.namespace || "",
+    columns: [
+      {
+        key: "types",
+        label: "Types",
+        render: (item) => <DetailValue item={item} detailKey="types" mono />,
+      },
+      {
+        key: "limits",
+        label: "Limits",
+        render: (item) => (
+          <span className="font-mono text-[10px] tabular-nums">
+            {detail(item, "limits")}
+          </span>
+        ),
+      },
+    ],
+  },
+  priorityclasses: {
+    kind: "priorityclasses",
+    title: "Priority Classes",
+    description:
+      "Scheduling priority classes. Higher values win scheduling and can preempt lower-priority Pods when enabled.",
+    icon: ArrowUp,
+    namespaceScoped: false,
+    searchPlaceholder: "Filter priority classes...",
+    emptyTitle: "No priority classes",
+    emptyDescription: "The cluster has no custom scheduling priority classes.",
+    primary: (item) => item.name,
+    columns: [
+      {
+        key: "value",
+        label: "Value",
+        render: (item) => (
+          <span className="font-mono text-[10px] tabular-nums">
+            {detail(item, "value")}
+          </span>
+        ),
+      },
+      {
+        key: "preemption",
+        label: "Preemption",
+        render: (item) => (
+          <DetailValue item={item} detailKey="preemptionPolicy" mono />
+        ),
+      },
+    ],
+  },
+  runtimeclasses: {
+    kind: "runtimeclasses",
+    title: "Runtime Classes",
+    description:
+      "Container runtime handlers available to Pods. RuntimeClass can add overhead accounting and node selector constraints.",
+    icon: Cpu,
+    namespaceScoped: false,
+    searchPlaceholder: "Filter runtime classes...",
+    emptyTitle: "No runtime classes",
+    emptyDescription:
+      "The cluster exposes no alternate container runtime classes.",
+    primary: (item) => item.name,
+    columns: [
+      {
+        key: "handler",
+        label: "Handler",
+        render: (item) => <DetailValue item={item} detailKey="handler" mono />,
+      },
+      {
+        key: "overhead",
+        label: "Overhead",
+        render: (item) => <DetailValue item={item} detailKey="overhead" mono />,
+      },
+    ],
+  },
+  leases: {
+    kind: "leases",
+    title: "Leases",
+    description:
+      "Coordination leases used by control-plane and leader-elected components. An expired holder can indicate a stalled controller.",
+    icon: Clock,
+    namespaceScoped: true,
+    searchPlaceholder: "Filter leases by holder, namespace...",
+    emptyTitle: "No leases",
+    emptyDescription: "No coordination leases are visible in this namespace.",
+    primary: (item) => item.name,
+    secondary: (item) => item.namespace || "",
+    columns: [
+      {
+        key: "holder",
+        label: "Holder",
+        render: (item) => <DetailValue item={item} detailKey="holder" mono />,
+      },
+      {
+        key: "duration",
+        label: "Duration",
+        render: (item) => (
+          <span className="font-mono text-[10px]">
+            {detail(item, "duration")}
+          </span>
+        ),
+      },
+      {
+        key: "renew",
+        label: "Renewed",
+        render: (item) => (
+          <DetailValue item={item} detailKey="renewTime" mono />
+        ),
       },
     ],
   },

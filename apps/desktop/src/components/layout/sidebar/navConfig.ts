@@ -26,6 +26,9 @@ import {
   History,
   Waypoints,
   Route,
+  Activity,
+  ArrowUp,
+  SlidersHorizontal,
   Monitor,
   Keyboard,
   Timer,
@@ -119,6 +122,13 @@ export interface SidebarCounts {
   endpointSlices: number;
   ingressClasses: number;
   persistentVolumeClaims: number;
+  horizontalPodAutoscalers: number;
+  podDisruptionBudgets: number;
+  resourceQuotas: number;
+  limitRanges: number;
+  priorityClasses: number;
+  runtimeClasses: number;
+  leases: number;
 }
 
 export function buildNavigationGroups(counts: SidebarCounts): NavGroup[] {
@@ -148,6 +158,13 @@ export function buildNavigationGroups(counts: SidebarCounts): NavGroup[] {
     endpointSlices,
     ingressClasses,
     persistentVolumeClaims,
+    horizontalPodAutoscalers,
+    podDisruptionBudgets,
+    resourceQuotas,
+    limitRanges,
+    priorityClasses,
+    runtimeClasses,
+    leases,
   } = counts;
 
   return [
@@ -247,6 +264,28 @@ export function buildNavigationGroups(counts: SidebarCounts): NavGroup[] {
       ],
     },
     {
+      category: "Scaling",
+      items: [
+        {
+          id: "horizontalpodautoscalers",
+          title: "Horizontal Pod Autoscalers",
+          shortTitle: "HPAs",
+          icon: Activity,
+          badge:
+            horizontalPodAutoscalers > 0 ? horizontalPodAutoscalers : undefined,
+          badgeVariant: "accent",
+        },
+        {
+          id: "poddisruptionbudgets",
+          title: "Pod Disruption Budgets",
+          shortTitle: "PDBs",
+          icon: Shield,
+          badge: podDisruptionBudgets > 0 ? podDisruptionBudgets : undefined,
+          badgeVariant: "accent",
+        },
+      ],
+    },
+    {
       category: "Networking",
       items: [
         {
@@ -324,6 +363,20 @@ export function buildNavigationGroups(counts: SidebarCounts): NavGroup[] {
           badgeVariant: "accent",
         },
         {
+          id: "resourcequotas",
+          title: "Resource Quotas",
+          icon: Layers,
+          badge: resourceQuotas > 0 ? resourceQuotas : undefined,
+          badgeVariant: "accent",
+        },
+        {
+          id: "limitranges",
+          title: "Limit Ranges",
+          icon: SlidersHorizontal,
+          badge: limitRanges > 0 ? limitRanges : undefined,
+          badgeVariant: "accent",
+        },
+        {
           id: "persistentvolumes",
           title: "Persistent Volumes",
           icon: HardDrive,
@@ -344,6 +397,32 @@ export function buildNavigationGroups(counts: SidebarCounts): NavGroup[] {
           title: "Storage Classes",
           icon: HardDrive,
           badge: storageClasses > 0 ? storageClasses : undefined,
+          badgeVariant: "accent",
+        },
+      ],
+    },
+    {
+      category: "Scheduling",
+      items: [
+        {
+          id: "priorityclasses",
+          title: "Priority Classes",
+          icon: ArrowUp,
+          badge: priorityClasses > 0 ? priorityClasses : undefined,
+          badgeVariant: "accent",
+        },
+        {
+          id: "runtimeclasses",
+          title: "Runtime Classes",
+          icon: Cpu,
+          badge: runtimeClasses > 0 ? runtimeClasses : undefined,
+          badgeVariant: "accent",
+        },
+        {
+          id: "leases",
+          title: "Leases",
+          icon: Clock,
+          badge: leases > 0 ? leases : undefined,
           badgeVariant: "accent",
         },
       ],

@@ -192,6 +192,14 @@ export function AppSidebar() {
         ingressClasses: simpleResourceCounts?.ingressClasses ?? 0,
         persistentVolumeClaims:
           simpleResourceCounts?.persistentVolumeClaims ?? 0,
+        horizontalPodAutoscalers:
+          simpleResourceCounts?.horizontalPodAutoscalers ?? 0,
+        podDisruptionBudgets: simpleResourceCounts?.podDisruptionBudgets ?? 0,
+        resourceQuotas: simpleResourceCounts?.resourceQuotas ?? 0,
+        limitRanges: simpleResourceCounts?.limitRanges ?? 0,
+        priorityClasses: simpleResourceCounts?.priorityClasses ?? 0,
+        runtimeClasses: simpleResourceCounts?.runtimeClasses ?? 0,
+        leases: simpleResourceCounts?.leases ?? 0,
       }),
     [
       availableContexts.length,
@@ -327,7 +335,12 @@ export function AppSidebar() {
       item.id === "events" ||
       item.id === "replicationcontrollers" ||
       item.id === "endpointslices" ||
-      item.id === "persistentvolumeclaims"
+      item.id === "persistentvolumeclaims" ||
+      item.id === "horizontalpodautoscalers" ||
+      item.id === "poddisruptionbudgets" ||
+      item.id === "resourcequotas" ||
+      item.id === "limitranges" ||
+      item.id === "leases"
     ) {
       setCurrentNamespace("all");
     }

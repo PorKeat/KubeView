@@ -280,6 +280,20 @@ func (m *Manager) ListSimpleResources(
 		sort.Slice(items, func(i, j int) bool { return items[i].Name < items[j].Name })
 		return &SimpleResourceListResult{Kind: kind, Items: items, TotalCount: len(items)}, nil
 
+	case "horizontalpodautoscalers":
+		return listSimpleHorizontalPodAutoscalers(ctx, client, namespace)
+	case "poddisruptionbudgets":
+		return listSimplePodDisruptionBudgets(ctx, client, namespace)
+	case "resourcequotas":
+		return listSimpleResourceQuotas(ctx, client, namespace)
+	case "limitranges":
+		return listSimpleLimitRanges(ctx, client, namespace)
+	case "priorityclasses":
+		return listSimplePriorityClasses(ctx, client, namespace)
+	case "runtimeclasses":
+		return listSimpleRuntimeClasses(ctx, client, namespace)
+	case "leases":
+		return listSimpleLeases(ctx, client, namespace)
 	case "persistentvolumeclaims":
 		list, listErr := client.CoreV1().PersistentVolumeClaims(namespace).List(ctx, metav1.ListOptions{})
 		if listErr != nil {
@@ -335,12 +349,19 @@ func (m *Manager) ListSimpleResources(
 
 // SimpleResourceCountsResult is used for the sidebar badges.
 type SimpleResourceCountsResult struct {
-	Namespaces             int `json:"namespaces"`
-	Events                 int `json:"events"`
-	ReplicationControllers int `json:"replicationControllers"`
-	EndpointSlices         int `json:"endpointSlices"`
-	IngressClasses         int `json:"ingressClasses"`
-	PersistentVolumeClaims int `json:"persistentVolumeClaims"`
+	Namespaces               int `json:"namespaces"`
+	Events                   int `json:"events"`
+	ReplicationControllers   int `json:"replicationControllers"`
+	EndpointSlices           int `json:"endpointSlices"`
+	IngressClasses           int `json:"ingressClasses"`
+	PersistentVolumeClaims   int `json:"persistentVolumeClaims"`
+	HorizontalPodAutoscalers int `json:"horizontalPodAutoscalers"`
+	PodDisruptionBudgets     int `json:"podDisruptionBudgets"`
+	ResourceQuotas           int `json:"resourceQuotas"`
+	LimitRanges              int `json:"limitRanges"`
+	PriorityClasses          int `json:"priorityClasses"`
+	RuntimeClasses           int `json:"runtimeClasses"`
+	Leases                   int `json:"leases"`
 }
 
 // CountSimpleResources returns best-effort counts for the simple-resource
@@ -361,5 +382,12 @@ func (m *Manager) CountSimpleResources(ctx context.Context, contextName string) 
 	result.EndpointSlices = count("endpointslices")
 	result.IngressClasses = count("ingressclasses")
 	result.PersistentVolumeClaims = count("persistentvolumeclaims")
+	result.HorizontalPodAutoscalers = count("horizontalpodautoscalers")
+	result.PodDisruptionBudgets = count("poddisruptionbudgets")
+	result.ResourceQuotas = count("resourcequotas")
+	result.LimitRanges = count("limitranges")
+	result.PriorityClasses = count("priorityclasses")
+	result.RuntimeClasses = count("runtimeclasses")
+	result.Leases = count("leases")
 	return result
 }

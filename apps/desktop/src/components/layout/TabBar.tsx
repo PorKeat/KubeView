@@ -32,6 +32,10 @@ import {
   History,
   Waypoints,
   Route,
+  Activity,
+  ArrowUp,
+  Shield,
+  SlidersHorizontal,
 } from "lucide-react";
 import { useTabStore, TabItem } from "@/stores/tabStore";
 import { useLayoutStore } from "@/stores/layoutStore";
@@ -84,6 +88,20 @@ export function TabBar() {
         return Route;
       case "persistentvolumeclaims":
         return HardDrive;
+      case "horizontalpodautoscalers":
+        return Activity;
+      case "poddisruptionbudgets":
+        return Shield;
+      case "resourcequotas":
+        return Layers;
+      case "limitranges":
+        return SlidersHorizontal;
+      case "priorityclasses":
+        return ArrowUp;
+      case "runtimeclasses":
+        return Cpu;
+      case "leases":
+        return Clock;
       case "pods":
         return Box;
       case "deployments":

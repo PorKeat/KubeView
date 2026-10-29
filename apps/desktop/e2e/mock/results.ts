@@ -592,6 +592,104 @@ export function resultFor(method: string, params?: JsonRecord): unknown {
           totalCount: 2,
         };
       }
+      if (kind === "horizontalpodautoscalers") {
+        return {
+          kind,
+          items: [
+            item("web-hpa", "default", "1/2 replicas", "warning", {
+              target: "Deployment/web",
+              min: "1",
+              max: "4",
+              current: "1",
+              desired: "2",
+              metrics: "1",
+            }),
+          ],
+          totalCount: 1,
+        };
+      }
+      if (kind === "poddisruptionbudgets") {
+        return {
+          kind,
+          items: [
+            item("web-pdb", "default", "1/1 healthy", "warning", {
+              minAvailable: "1",
+              maxUnavailable: "—",
+              allowedDisruptions: "0",
+              expectedPods: "1",
+              currentHealthy: "1",
+              desiredHealthy: "1",
+            }),
+          ],
+          totalCount: 1,
+        };
+      }
+      if (kind === "resourcequotas") {
+        return {
+          kind,
+          items: [
+            item("team-quota", "default", "2 constraints", "healthy", {
+              constraints: "2",
+              usedCount: "2",
+              hard: "pods=5, requests.cpu=2",
+              used: "pods=2, requests.cpu=1",
+            }),
+          ],
+          totalCount: 1,
+        };
+      }
+      if (kind === "limitranges") {
+        return {
+          kind,
+          items: [
+            item("limits", "default", "1 limits", "muted", {
+              limits: "1",
+              types: "Container",
+            }),
+          ],
+          totalCount: 1,
+        };
+      }
+      if (kind === "priorityclasses") {
+        return {
+          kind,
+          items: [
+            item("high-priority", undefined, "Default", "healthy", {
+              value: "1000",
+              globalDefault: "true",
+              preemptionPolicy: "PreemptLowerPriority",
+              description: "Critical workloads",
+            }),
+          ],
+          totalCount: 1,
+        };
+      }
+      if (kind === "runtimeclasses") {
+        return {
+          kind,
+          items: [
+            item("gvisor", undefined, "Configured", "muted", {
+              handler: "runsc",
+              overhead: "—",
+            }),
+          ],
+          totalCount: 1,
+        };
+      }
+      if (kind === "leases") {
+        return {
+          kind,
+          items: [
+            item("leader-election", "kube-system", "Expired", "warning", {
+              holder: "leader-1",
+              duration: "30s",
+              renewTime: "2026-10-27T08:00:00Z",
+              acquireTime: "2026-10-27T07:00:00Z",
+            }),
+          ],
+          totalCount: 1,
+        };
+      }
       return { kind, items: [], totalCount: 0 };
     }
     case "simpleResources.counts":
@@ -602,6 +700,13 @@ export function resultFor(method: string, params?: JsonRecord): unknown {
         endpointSlices: 2,
         ingressClasses: 2,
         persistentVolumeClaims: 2,
+        horizontalPodAutoscalers: 1,
+        podDisruptionBudgets: 1,
+        resourceQuotas: 1,
+        limitRanges: 1,
+        priorityClasses: 1,
+        runtimeClasses: 1,
+        leases: 1,
       };
     case "ingresses.apply":
     case "gatewayresources.apply":

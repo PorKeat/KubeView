@@ -4,7 +4,14 @@ export type SimpleResourceKind =
   | "replicationcontrollers"
   | "endpointslices"
   | "ingressclasses"
-  | "persistentvolumeclaims";
+  | "persistentvolumeclaims"
+  | "horizontalpodautoscalers"
+  | "poddisruptionbudgets"
+  | "resourcequotas"
+  | "limitranges"
+  | "priorityclasses"
+  | "runtimeclasses"
+  | "leases";
 
 export type SimpleResourceStatusTone =
   "healthy" | "warning" | "critical" | "muted";
@@ -35,4 +42,11 @@ export interface SimpleResourceCountsResult {
   endpointSlices: number;
   ingressClasses: number;
   persistentVolumeClaims: number;
+  horizontalPodAutoscalers: number;
+  podDisruptionBudgets: number;
+  resourceQuotas: number;
+  limitRanges: number;
+  priorityClasses: number;
+  runtimeClasses: number;
+  leases: number;
 }

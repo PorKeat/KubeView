@@ -1,6 +1,83 @@
 import type { PageGuide } from "../types";
 
 export const PAGE_GUIDES: Record<string, PageGuide> = {
+  horizontalpodautoscalers: {
+    title: "Horizontal Pod Autoscalers",
+    beginner:
+      "An HPA changes a workload's replica count based on metrics. Min and max bound how far it can scale.",
+    intermediate:
+      "Compare current and desired replicas. An AbleToScale warning means the metrics pipeline or target is failing.",
+    advanced:
+      "Metrics availability and target readiness both gate scaling. A converged HPA can still show a warning while it waits for metrics.",
+    pathId: "first-steps",
+    lessonId: "deployments-keep-pods-alive",
+  },
+  poddisruptionbudgets: {
+    title: "Pod Disruption Budgets",
+    beginner:
+      "A PDB limits how many Pods can be voluntarily evicted during drains or upgrades.",
+    intermediate:
+      "Allowed disruptions can be zero while the workload is healthy; this blocks node drains without making the Pods unhealthy.",
+    advanced:
+      "MinAvailable and MaxUnavailable are alternatives. PDBs do not protect against crashes, only voluntary disruption.",
+    pathId: "first-steps",
+    lessonId: "deployments-keep-pods-alive",
+  },
+  resourcequotas: {
+    title: "Resource Quotas",
+    beginner:
+      "A ResourceQuota sets hard limits for a namespace, such as total CPU, memory, or object counts.",
+    intermediate:
+      "Compare hard limits with used values. A workload can be rejected even when nodes have free capacity.",
+    advanced:
+      "Quota admission happens before scheduling. Pods may remain Pending if their requests exceed the remaining quota.",
+    pathId: "first-steps",
+    lessonId: "contexts-and-namespaces",
+  },
+  limitranges: {
+    title: "Limit Ranges",
+    beginner:
+      "A LimitRange supplies default requests and limits and can enforce maximum or minimum values per Pod or container.",
+    intermediate:
+      "Defaults are applied only when a manifest omits the field. Explicit values that exceed the range are rejected.",
+    advanced:
+      "LimitRange admission applies per namespace. It can prevent unschedulable workloads but does not reserve capacity.",
+    pathId: "first-steps",
+    lessonId: "contexts-and-namespaces",
+  },
+  priorityclasses: {
+    title: "Priority Classes",
+    beginner:
+      "Priority classes tell the scheduler which Pods matter most when the cluster is full.",
+    intermediate:
+      "Higher values win scheduling. With preemption enabled, a Pod can evict lower-priority Pods to make room.",
+    advanced:
+      "Preemption is best-effort and can still fail on topology or resource constraints. Use it deliberately in shared clusters.",
+    pathId: "first-steps",
+    lessonId: "pods-run-containers",
+  },
+  runtimeclasses: {
+    title: "Runtime Classes",
+    beginner:
+      "RuntimeClass selects an alternate container runtime or isolation profile for a Pod.",
+    intermediate:
+      "The handler must be installed on the node. Pod overhead is charged against node capacity when configured.",
+    advanced:
+      "RuntimeClass can combine handlers with node selectors and tolerations. Missing handlers leave Pods unschedulable.",
+    pathId: "first-steps",
+    lessonId: "pods-run-containers",
+  },
+  leases: {
+    title: "Leases",
+    beginner:
+      "A Lease is a short-lived coordination record used for leader election and component heartbeats.",
+    intermediate:
+      "Check the holder, renew time, and duration. An expired lease often means the controller stopped renewing it.",
+    advanced:
+      "Lease clocks come from the API server. Clock skew or a paused controller can make a live holder appear stale.",
+    pathId: "first-steps",
+    lessonId: "contexts-and-namespaces",
+  },
   namespaces: {
     title: "Namespaces",
     beginner:

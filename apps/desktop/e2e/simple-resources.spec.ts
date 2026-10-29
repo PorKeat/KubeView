@@ -32,6 +32,17 @@ const pages = [
     title: "Persistent Volume Claims",
     rows: 2,
   },
+  {
+    id: "horizontalpodautoscalers",
+    title: "Horizontal Pod Autoscalers",
+    rows: 1,
+  },
+  { id: "poddisruptionbudgets", title: "Pod Disruption Budgets", rows: 1 },
+  { id: "resourcequotas", title: "Resource Quotas", rows: 1 },
+  { id: "limitranges", title: "Limit Ranges", rows: 1 },
+  { id: "priorityclasses", title: "Priority Classes", rows: 1 },
+  { id: "runtimeclasses", title: "Runtime Classes", rows: 1 },
+  { id: "leases", title: "Leases", rows: 1 },
 ];
 
 test.describe("KubeView simple resource pages", () => {
