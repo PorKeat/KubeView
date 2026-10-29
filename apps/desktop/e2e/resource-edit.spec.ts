@@ -242,7 +242,7 @@ test.describe("KubeView generic resource editor", () => {
     ).toHaveValue("serviceaccounts");
     await expect(
       page.locator('[data-testid="permission-check-verb"]'),
-    ).toHaveValue("update");
+    ).toContainText("update");
     await expect(
       page.locator('[data-testid="permission-check-namespace"]'),
     ).toHaveValue("production");

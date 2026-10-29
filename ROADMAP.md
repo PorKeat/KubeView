@@ -59,6 +59,8 @@ Phase 12 ──► Phase 13 ──► Phase 14 ──► Phase 15 ──► Phas
 | **15** | [AI-assisted operations](#phase-15--ai-assisted-operations)                            | Root cause diagnosis, log summarizer, privacy guard         |   Milestone 3    |  ⏳ Pending  |
 | **16** | [Production quality and distribution](#phase-16--production-quality-and-distribution)  | Playwright E2E, Go `envtest`, code signing, auto-update     |   Milestone 3    |  ⏳ Pending  |
 
+> **GitOps integration track:** Local raw-YAML drift detection, shared diff review, and RBAC-aware apply are implemented. Remote Git, Kustomize/Helm rendering, Argo CD and Flux status/sync, multi-cluster target mappings, and CI visibility remain planned. See [docs/gitops-integration.md](docs/gitops-integration.md).
+
 ---
 
 ## 🚀 Detailed Phase Breakdown

@@ -67,6 +67,10 @@ func main() {
 		server.Log("Fatal: unable to initialize resources module: %v", err)
 		os.Exit(1)
 	}
+	if err := bootstrap.RegisterGitOpsModule(server, mgr); err != nil {
+		server.Log("Fatal: unable to initialize gitops module: %v", err)
+		os.Exit(1)
+	}
 
 	// 3. Setup out-of-band file watcher and live K8s resource stream
 	if mgr != nil {

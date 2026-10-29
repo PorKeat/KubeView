@@ -40,9 +40,6 @@ test.describe("KubeView permission checker", () => {
     await page
       .locator('[data-testid="permission-check-resource"]')
       .fill("pods");
-    await page
-      .locator('[data-testid="permission-check-verb"]')
-      .selectOption("get");
     await page.locator('[data-testid="permission-check"]').click();
 
     const decision = page.locator('[data-testid="permission-decision"]');
@@ -64,9 +61,10 @@ test.describe("KubeView permission checker", () => {
     await page
       .locator('[data-testid="permission-check-resource"]')
       .fill("secrets");
+    await page.locator('[data-testid="permission-check-verb"]').click();
     await page
-      .locator('[data-testid="permission-check-verb"]')
-      .selectOption("delete");
+      .locator('[data-testid="permission-check-verb-option-delete"]')
+      .click();
     await page.locator('[data-testid="permission-check"]').click();
 
     const decision = page.locator('[data-testid="permission-decision"]');

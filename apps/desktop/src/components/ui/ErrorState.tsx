@@ -14,11 +14,17 @@ import {
   Terminal,
   ExternalLink,
   X,
+  Lightbulb,
 } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { useTabStore } from "@/stores/tabStore";
+import { useLearningStore } from "@/stores/learningStore";
 import { Tooltip } from "@/components/ui/Tooltip";
+import {
+  ErrorExplanationContent,
+  ExplainError,
+} from "@/components/learning/ExplainError";
 
 interface ErrorStateProps {
   title?: string;
@@ -159,6 +165,8 @@ export function ErrorState({
           </p>
         </div>
 
+        <ExplainError code={code} title={title} message={message} />
+
         {/* Action Buttons */}
         <div className="flex items-center justify-center gap-2 pt-1">
           {onRetry && (
@@ -250,50 +258,81 @@ export function ErrorState({
  */
 export function ErrorBanner({
   message,
+  code,
+  title,
   actionLabel,
   onAction,
   onDismiss,
   className,
 }: {
   message: string;
+  code?: string;
+  title?: string;
   actionLabel?: string;
   onAction?: () => void;
   onDismiss?: () => void;
   className?: string;
 }) {
+  const learningMode = useLearningStore((state) => state.learningMode);
+  const [explainOpen, setExplainOpen] = React.useState(false);
+
   return (
     <div
       className={cn(
-        "px-4 py-2 bg-rose-500/10 border-b border-rose-500/20 text-xs text-rose-600 dark:text-rose-300 flex items-center justify-between gap-3 select-none",
+        "bg-rose-500/10 border-b border-rose-500/20 text-xs text-rose-600 dark:text-rose-300 select-none",
         className,
       )}
     >
-      <div className="flex items-center gap-2 truncate">
-        <AlertTriangle className="w-3.5 h-3.5 text-rose-500 dark:text-rose-400 shrink-0" />
-        <span className="truncate">{message}</span>
+      <div className="px-4 py-2 flex items-center justify-between gap-3">
+        <div className="flex items-center gap-2 truncate">
+          <AlertTriangle className="w-3.5 h-3.5 text-rose-500 dark:text-rose-400 shrink-0" />
+          <span className="truncate">{message}</span>
+        </div>
+
+        <div className="flex items-center gap-2 shrink-0">
+          {learningMode && (
+            <button
+              type="button"
+              onClick={() => setExplainOpen((current) => !current)}
+              aria-expanded={explainOpen}
+              data-testid="error-banner-explain"
+              className="inline-flex items-center gap-1 rounded-md border border-rose-500/25 bg-rose-500/10 px-1.5 py-0.5 text-[10px] font-medium text-rose-700 transition-colors hover:bg-rose-500/15 dark:text-rose-300 cursor-pointer focus-visible:ring-2 focus-visible:ring-[var(--accent)] focus-visible:outline-hidden"
+            >
+              <Lightbulb className="w-3 h-3" aria-hidden="true" />
+              {explainOpen ? "Hide" : "Explain"}
+            </button>
+          )}
+          {actionLabel && onAction && (
+            <button
+              onClick={onAction}
+              className="text-[11px] font-medium underline underline-offset-2 hover:text-[var(--foreground)] cursor-pointer"
+            >
+              {actionLabel}
+            </button>
+          )}
+          {onDismiss && (
+            <Tooltip content="Dismiss notice">
+              <button
+                onClick={onDismiss}
+                className="p-0.5 rounded hover:bg-rose-500/20 text-rose-500 dark:text-rose-400 hover:text-[var(--foreground)] cursor-pointer"
+                aria-label="Dismiss notice"
+              >
+                <X className="w-3.5 h-3.5" />
+              </button>
+            </Tooltip>
+          )}
+        </div>
       </div>
 
-      <div className="flex items-center gap-2 shrink-0">
-        {actionLabel && onAction && (
-          <button
-            onClick={onAction}
-            className="text-[11px] font-medium underline underline-offset-2 hover:text-[var(--foreground)] cursor-pointer"
-          >
-            {actionLabel}
-          </button>
-        )}
-        {onDismiss && (
-          <Tooltip content="Dismiss notice">
-            <button
-              onClick={onDismiss}
-              className="p-0.5 rounded hover:bg-rose-500/20 text-rose-500 dark:text-rose-400 hover:text-[var(--foreground)] cursor-pointer"
-              aria-label="Dismiss notice"
-            >
-              <X className="w-3.5 h-3.5" />
-            </button>
-          </Tooltip>
-        )}
-      </div>
+      {learningMode && explainOpen && (
+        <div className="border-t border-rose-500/15 px-4 py-2.5">
+          <ErrorExplanationContent
+            code={code}
+            title={title}
+            message={message}
+          />
+        </div>
+      )}
     </div>
   );
 }

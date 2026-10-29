@@ -106,6 +106,18 @@ test.describe("KubeView UI - Networking Phase 9", () => {
     await expect(
       page.locator('[data-testid="port-forward-target"]'),
     ).toBeVisible();
+    await page.locator('[data-testid="port-forward-namespace"]').click();
+    await page
+      .locator('[data-testid="port-forward-namespace-option-production"]')
+      .click();
+    await expect(
+      page.locator('[data-testid="port-forward-target"]'),
+    ).toBeEnabled();
+    await page.locator('[data-testid="port-forward-target"]').click();
+    await expect(
+      page.locator('[data-testid="port-forward-target-option-web"]'),
+    ).toBeVisible();
+    await page.keyboard.press("Escape");
     await expect(
       page.locator('[data-testid="port-forward-start"]'),
     ).toBeDisabled();

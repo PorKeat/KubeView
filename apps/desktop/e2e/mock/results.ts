@@ -38,6 +38,7 @@ import {
   permissionEffective,
   permissionDecision,
   permissionSubject,
+  gitOpsReport,
 } from "./fixtures";
 
 type JsonRecord = Record<string, unknown>;
@@ -368,6 +369,8 @@ export function resultFor(method: string, params?: JsonRecord): unknown {
       return permissionSubject;
     case "access.explain":
       return permissionDecision;
+    case "gitops.scan":
+      return gitOpsReport;
     case "resources.get": {
       const apiVersion = String(params?.apiVersion ?? "v1");
       const kind = String(params?.kind ?? "ConfigMap");

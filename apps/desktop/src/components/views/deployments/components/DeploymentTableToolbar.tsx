@@ -91,6 +91,7 @@ export function DeploymentTableToolbar({
         <Search className="w-3.5 h-3.5 absolute left-2.5 top-1/2 -translate-y-1/2 text-[var(--muted)]" />
         <input
           type="text"
+          data-tour="deployments-search"
           value={search}
           onChange={(e) => setSearch(e.target.value)}
           placeholder="Filter deployments by name, image, selector..."
@@ -110,7 +111,10 @@ export function DeploymentTableToolbar({
         )}
       </div>
 
-      <div className="relative flex max-w-full min-w-0 shrink-0 items-center gap-1 overflow-x-auto whitespace-nowrap rounded-lg border border-[var(--border)] bg-slate-100/80 p-0.5 text-xs select-none order-2 sm:order-none dark:bg-black/30">
+      <div
+        data-tour="deployments-filters"
+        className="relative flex max-w-full min-w-0 shrink-0 items-center gap-1 overflow-x-auto whitespace-nowrap rounded-lg border border-[var(--border)] bg-slate-100/80 p-0.5 text-xs select-none order-2 sm:order-none dark:bg-black/30"
+      >
         {filterPills.map((pill) => {
           const isActive = statusFilter === pill.id;
           return (

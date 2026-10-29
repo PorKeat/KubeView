@@ -3,6 +3,7 @@
 import * as React from "react";
 import { ScanSearch, ShieldCheck } from "lucide-react";
 import type { PermissionOperation } from "@kubeview/contracts";
+import { CustomSelect } from "@/components/ui/CustomSelect";
 
 const VERBS = [
   "get",
@@ -133,18 +134,17 @@ export function PermissionCheckForm({
 
         <label className="space-y-1">
           <span className={labelClass}>Verb</span>
-          <select
-            data-testid="permission-check-verb"
+          <CustomSelect
             value={operation.verb}
-            onChange={(event) => update("verb", event.target.value)}
-            className={fieldClass}
-          >
-            {VERBS.map((verb) => (
-              <option key={verb} value={verb}>
-                {verb}
-              </option>
-            ))}
-          </select>
+            onChange={(verb) => update("verb", verb)}
+            options={VERBS.map((verb) => ({ value: verb, label: verb }))}
+            triggerTestId="permission-check-verb"
+            optionTestId={(verb) => `permission-check-verb-option-${verb}`}
+            ariaLabel="Permission check verb"
+            containerClassName="w-full"
+            className="w-full rounded-lg bg-[var(--surface)] px-2 py-1.5 text-[11px]"
+            dropdownWidth="w-full"
+          />
         </label>
 
         <label className="space-y-1">

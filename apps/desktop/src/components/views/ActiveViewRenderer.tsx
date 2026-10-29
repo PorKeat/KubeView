@@ -3,6 +3,8 @@
 import * as React from "react";
 import { useTabStore } from "@/stores/tabStore";
 import { ClusterOverviewView } from "./ClusterOverviewView";
+import { GitOpsView } from "./gitops/GitOpsView";
+import { LearningCenterView } from "./learning/LearningCenterView";
 import { FleetOverviewView } from "./fleet/FleetOverviewView";
 import { ResourceListView } from "./ResourceListView";
 import { DeploymentListView } from "./deployments/DeploymentListView";
@@ -44,6 +46,14 @@ export function ActiveViewRenderer() {
 
         if (activeTabId === "fleet") {
           return <FleetOverviewView />;
+        }
+
+        if (activeTabId === "gitops") {
+          return <GitOpsView />;
+        }
+
+        if (activeTabId === "learning") {
+          return <LearningCenterView />;
         }
 
         if (activeTabId === "deployments") {

@@ -2,6 +2,7 @@
 
 import { LoaderCircle, Search, UserRound } from "lucide-react";
 import type { PermissionSubject } from "@kubeview/contracts";
+import { CustomSelect } from "@/components/ui/CustomSelect";
 import { cn } from "@/lib/utils";
 
 const KINDS: Array<{
@@ -72,23 +73,19 @@ export function PermissionSubjectForm({
           <span className="block font-mono text-[9px] uppercase tracking-wider text-[var(--muted)]">
             Kind
           </span>
-          <select
-            data-testid="permission-subject-kind"
+          <CustomSelect<PermissionSubject["kind"]>
             value={subject.kind}
-            onChange={(event) =>
-              onChange({
-                ...subject,
-                kind: event.target.value as PermissionSubject["kind"],
-              })
-            }
-            className="w-full rounded-lg border border-[var(--border)] bg-[var(--surface)] px-2 py-1.5 font-mono text-[11px] text-[var(--foreground)] outline-hidden focus:border-[var(--accent)]"
-          >
-            {KINDS.map((kind) => (
-              <option key={kind.value} value={kind.value}>
-                {kind.label}
-              </option>
-            ))}
-          </select>
+            onChange={(kind) => onChange({ ...subject, kind })}
+            options={KINDS.map((kind) => ({
+              value: kind.value,
+              label: kind.label,
+            }))}
+            triggerTestId="permission-subject-kind"
+            ariaLabel="Subject kind"
+            containerClassName="w-full"
+            className="w-full rounded-lg bg-[var(--surface)] px-2 py-1.5 text-[11px]"
+            dropdownWidth="w-full"
+          />
         </label>
 
         <label className="space-y-1">

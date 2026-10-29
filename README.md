@@ -87,6 +87,15 @@ flowchart LR
 - **Internal Host Endpoint Config:** Detects internal hostnames (e.g., KinD/Minikube internal addresses) and allows instant master IP override without touching host files.
 - **Cluster Switcher & Diagnostics:** Switch between cluster contexts instantly, with automated 4-stage connection diagnostics (Network, Auth, TLS/API, RBAC).
 
+### 6. 🔀 GitOps Drift
+
+- **Local Manifest Sources:** Scan a local Git worktree or manifest directory containing raw Kubernetes YAML.
+- **Native Source Picking:** Choose or drag in a folder from the desktop app, auto-scan it, and reopen recent sources quickly.
+- **Drift Classification:** Compare desired manifests against live resources and classify each as in sync, changed, missing, or error.
+- **Focused Diff Review:** Inspect desired and live YAML side by side using the shared diff renderer.
+- **Reviewed Apply:** Validate the desired manifest with a dry-run, check RBAC capabilities, then apply only after explicit confirmation.
+- **Local-First Safety:** Manifest contents are read by the Go sidecar and never uploaded. Remote Git, Kustomize, Helm, Argo CD, Flux, and CI integrations are planned next.
+
 ---
 
 ## 🏛️ Enterprise Modular Architecture

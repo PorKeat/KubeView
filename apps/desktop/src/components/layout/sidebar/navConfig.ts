@@ -18,12 +18,14 @@ import {
   Users,
   Key,
   ShieldCheck,
+  GitBranch,
   FolderLock,
   Boxes,
   Server,
   Monitor,
   Keyboard,
   Timer,
+  GraduationCap,
 } from "lucide-react";
 import type { SettingsSection } from "@/stores/settingsStore";
 
@@ -67,6 +69,14 @@ export const SETTINGS_NAV_ITEMS: SettingsNavItem[] = [
     title: "Data & Refresh",
     description: "Polling and table rows",
     icon: Timer,
+  },
+  {
+    id: "settings-learning",
+    testId: "learning",
+    section: "learning",
+    title: "Learning",
+    description: "Guided help and depth",
+    icon: GraduationCap,
   },
   {
     id: "settings-shortcuts",
@@ -135,6 +145,18 @@ export function buildNavigationGroups(counts: SidebarCounts): NavGroup[] {
           badgeVariant: "accent",
         },
         { id: "overview", title: "Cluster Overview", icon: LayoutDashboard },
+        {
+          id: "learning",
+          title: "Learning Center",
+          shortTitle: "Learn",
+          icon: GraduationCap,
+        },
+        {
+          id: "gitops",
+          title: "GitOps Drift",
+          shortTitle: "GitOps",
+          icon: GitBranch,
+        },
       ],
     },
     {

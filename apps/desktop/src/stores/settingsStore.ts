@@ -3,7 +3,8 @@ import { persist } from "zustand/middleware";
 
 export type FontSizePreference = "sm" | "md" | "lg" | "xl";
 export type PageSizePreference = 50 | 100 | 250;
-export type SettingsSection = "appearance" | "data-refresh" | "shortcuts";
+export type SettingsSection =
+  "appearance" | "data-refresh" | "learning" | "shortcuts";
 
 export interface SettingsState {
   activeSection: SettingsSection;

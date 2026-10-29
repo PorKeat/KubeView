@@ -63,7 +63,10 @@ export function NetworkingToolbar({
         )}
       </div>
 
-      <div className="relative flex max-w-full min-w-0 shrink-0 items-center gap-1 overflow-x-auto whitespace-nowrap rounded-lg border border-[var(--border)] bg-slate-100/80 p-0.5 text-xs select-none order-2 sm:order-none dark:bg-black/30">
+      <div
+        data-tour={`${testIdPrefix}-filters`}
+        className="relative flex max-w-full min-w-0 shrink-0 items-center gap-1 overflow-x-auto whitespace-nowrap rounded-lg border border-[var(--border)] bg-slate-100/80 p-0.5 text-xs select-none order-2 sm:order-none dark:bg-black/30"
+      >
         {filterOptions.map((pill) => {
           const active = activeFilter === pill.id;
           return (

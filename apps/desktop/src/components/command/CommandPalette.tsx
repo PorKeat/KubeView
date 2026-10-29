@@ -19,19 +19,18 @@ import {
   Sun,
   Moon,
   FolderLock,
-  RefreshCw,
   Server,
   PanelLeftClose,
   Activity,
   Terminal,
   FileCode,
   Shield,
-  Search,
   Settings,
   Users,
   Key,
   ShieldCheck,
   Boxes,
+  GraduationCap,
 } from "lucide-react";
 import { useLayoutStore } from "@/stores/layoutStore";
 import { useTabStore } from "@/stores/tabStore";
@@ -39,6 +38,7 @@ import { useClusterStore } from "@/stores/clusterStore";
 import { useTheme } from "next-themes";
 import { toast } from "sonner";
 import { Logo } from "@/components/brand/Logo";
+import { GitOpsCommandItem } from "./GitOpsCommandItem";
 
 export function CommandPalette() {
   const { commandPaletteOpen, setCommandPaletteOpen, toggleSidebar } =
@@ -135,6 +135,17 @@ export function CommandPalette() {
                 <LayoutDashboard className="w-4 h-4 text-[var(--accent)]" />
                 <span>Cluster Overview</span>
               </Command.Item>
+              <Command.Item
+                onSelect={() => navigateTo("learning", "Learning Center")}
+                value="Learning Center learn tutorial glossary beginner Kubernetes guidance"
+                className="flex items-center gap-2.5 px-2.5 py-2 rounded-md cursor-pointer hover:bg-[var(--surface-hover)] text-[var(--foreground)] transition-colors"
+              >
+                <GraduationCap className="w-4 h-4 text-[var(--accent)]" />
+                <span>Learning Center</span>
+              </Command.Item>
+              <GitOpsCommandItem
+                onSelect={() => navigateTo("gitops", "GitOps Drift")}
+              />
               <Command.Item
                 onSelect={() => navigateTo("pods", "Pods")}
                 className="flex items-center gap-2.5 px-2.5 py-2 rounded-md cursor-pointer hover:bg-[var(--surface-hover)] text-[var(--foreground)] transition-colors"

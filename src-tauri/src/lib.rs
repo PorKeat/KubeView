@@ -22,6 +22,7 @@ pub fn run() {
     let _ = env_logger::try_init();
 
     tauri::Builder::default()
+        .plugin(tauri_plugin_dialog::init())
         .plugin(tauri_plugin_store::Builder::default().build())
         .setup(|app| {
             log::info!("KubeView desktop shell initialized");

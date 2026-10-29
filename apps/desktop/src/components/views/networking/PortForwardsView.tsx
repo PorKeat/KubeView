@@ -5,6 +5,7 @@ import { ArrowLeftRight, Activity, RefreshCw, Square, Zap } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useClusterStore } from "@/stores/clusterStore";
 import { EmptyState, Tooltip } from "@/components/ui";
+import { CustomSelect } from "@/components/ui/CustomSelect";
 import type { PortForwardSession } from "@kubeview/contracts";
 
 function formatBytes(value: number): string {
@@ -26,10 +27,14 @@ export function PortForwardsView() {
     availableNamespaces,
     services,
     pods,
+    isServicesLoading,
+    isPodsLoading,
     portForwards,
     isPortForwardsLoading,
     portForwardsError,
     loadPortForwards,
+    loadServices,
+    loadPods,
     startPortForward,
     stopPortForward,
   } = useClusterStore();
@@ -48,6 +53,20 @@ export function PortForwardsView() {
   React.useEffect(() => {
     setNamespace(currentNamespace === "all" ? "default" : currentNamespace);
   }, [currentNamespace]);
+
+  React.useEffect(() => {
+    setTargetName("");
+    setRemotePort("");
+  }, [targetKind, namespace]);
+
+  React.useEffect(() => {
+    if (!currentContext) return;
+    if (targetKind === "service") {
+      void loadServices(namespace);
+    } else {
+      void loadPods(namespace);
+    }
+  }, [currentContext, namespace, targetKind, loadServices, loadPods]);
 
   React.useEffect(() => {
     if (currentContext) void loadPortForwards();
@@ -83,6 +102,25 @@ export function PortForwardsView() {
       .filter((pod) => pod.namespace === namespace)
       .map((pod) => pod.name);
   }, [targetKind, namespace, services, pods]);
+
+  const namespaceOptions = React.useMemo(() => {
+    const names = availableNamespaces.filter((item) => item !== "all");
+    if (namespace && !names.includes(namespace)) names.unshift(namespace);
+    return names.map((item) => ({ value: item, label: item }));
+  }, [availableNamespaces, namespace]);
+
+  const isTargetLoading =
+    targetKind === "service" ? isServicesLoading : isPodsLoading;
+
+  const selectTarget = (name: string) => {
+    setTargetName(name);
+    if (targetKind !== "service") return;
+    const service = services.find(
+      (item) => item.namespace === namespace && item.name === name,
+    );
+    const port = service?.ports?.[0]?.port;
+    if (port && port > 0) setRemotePort(String(port));
+  };
 
   const handleStart = async () => {
     const name = targetName.trim();
@@ -161,58 +199,68 @@ export function PortForwardsView() {
             <span className="text-[10px] text-[var(--muted)] font-mono">
               Target kind
             </span>
-            <select
+            <CustomSelect<"service" | "pod">
               value={targetKind}
-              onChange={(event) =>
-                setTargetKind(event.target.value as "service" | "pod")
-              }
-              className="w-full rounded-lg border border-[var(--border)] bg-[var(--surface)] px-2.5 py-1.5 text-xs text-[var(--foreground)] outline-hidden focus:border-[var(--accent)]"
-              aria-label="Port forward target kind"
-            >
-              <option value="service">Service</option>
-              <option value="pod">Pod</option>
-            </select>
+              onChange={setTargetKind}
+              options={[
+                { value: "service", label: "Service" },
+                { value: "pod", label: "Pod" },
+              ]}
+              triggerTestId="port-forward-target-kind"
+              optionTestId={(value) => `port-forward-target-kind-${value}`}
+              ariaLabel="Port forward target kind"
+              containerClassName="w-full"
+              className="w-full rounded-lg bg-[var(--surface)] px-2.5 py-1.5 text-[11px]"
+              dropdownWidth="w-full"
+            />
           </label>
 
           <label className="space-y-1">
             <span className="text-[10px] text-[var(--muted)] font-mono">
               Namespace
             </span>
-            <select
+            <CustomSelect
               value={namespace}
-              onChange={(event) => setNamespace(event.target.value)}
-              className="w-full rounded-lg border border-[var(--border)] bg-[var(--surface)] px-2.5 py-1.5 text-xs text-[var(--foreground)] outline-hidden focus:border-[var(--accent)]"
-              aria-label="Port forward namespace"
-            >
-              {availableNamespaces
-                .filter((item) => item !== "all")
-                .map((item) => (
-                  <option key={item} value={item}>
-                    {item}
-                  </option>
-                ))}
-            </select>
+              onChange={setNamespace}
+              options={namespaceOptions}
+              triggerTestId="port-forward-namespace"
+              optionTestId={(value) => `port-forward-namespace-option-${value}`}
+              ariaLabel="Port forward namespace"
+              containerClassName="w-full"
+              className="w-full rounded-lg bg-[var(--surface)] px-2.5 py-1.5 text-[11px]"
+              dropdownWidth="w-full"
+            />
           </label>
 
-          <label className="space-y-1 sm:col-span-2">
+          <div className="space-y-1 sm:col-span-2">
             <span className="text-[10px] text-[var(--muted)] font-mono">
               {targetKind === "service" ? "Service" : "Pod"} name
             </span>
-            <input
+            <CustomSelect
               value={targetName}
-              onChange={(event) => setTargetName(event.target.value)}
-              list="port-forward-targets"
-              placeholder={`Select or type a ${targetKind}`}
-              className="w-full rounded-lg border border-[var(--border)] bg-[var(--surface)] px-2.5 py-1.5 font-mono text-xs text-[var(--foreground)] placeholder:text-[var(--muted)] outline-hidden focus:border-[var(--accent)]"
-              aria-label="Port forward target name"
-              data-testid="port-forward-target"
+              onChange={selectTarget}
+              options={candidates.map((name) => ({
+                value: name,
+                label: name,
+              }))}
+              placeholder={
+                isTargetLoading
+                  ? "Loading..."
+                  : candidates.length === 0
+                    ? `No ${targetKind}s in ${namespace}`
+                    : `Select a ${targetKind}`
+              }
+              disabled={isTargetLoading || candidates.length === 0}
+              searchable={targetKind === "service"}
+              triggerTestId="port-forward-target"
+              optionTestId={(value) => `port-forward-target-option-${value}`}
+              ariaLabel="Port forward target name"
+              emptyLabel={`No ${targetKind}s in ${namespace}`}
+              containerClassName="w-full"
+              className="w-full rounded-lg bg-[var(--surface)] px-2.5 py-1.5 text-[11px]"
+              dropdownWidth="w-full"
             />
-            <datalist id="port-forward-targets">
-              {candidates.map((name) => (
-                <option key={name} value={name} />
-              ))}
-            </datalist>
-          </label>
+          </div>
 
           <label className="space-y-1">
             <span className="text-[10px] text-[var(--muted)] font-mono">

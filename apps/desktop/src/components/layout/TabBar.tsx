@@ -26,6 +26,8 @@ import {
   Users,
   Key,
   ShieldCheck,
+  GitBranch,
+  GraduationCap,
 } from "lucide-react";
 import { useTabStore, TabItem } from "@/stores/tabStore";
 import { useLayoutStore } from "@/stores/layoutStore";
@@ -62,6 +64,10 @@ export function TabBar() {
         return LayoutDashboard;
       case "fleet":
         return Server;
+      case "gitops":
+        return GitBranch;
+      case "learning":
+        return GraduationCap;
       case "pods":
         return Box;
       case "deployments":

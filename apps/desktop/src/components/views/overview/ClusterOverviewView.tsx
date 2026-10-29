@@ -329,18 +329,20 @@ export function ClusterOverviewView() {
       )}
 
       {/* 1. Page Header */}
-      <ClusterOverviewHeader
-        currentContext={currentContext}
-        connectionStatus={connectionStatus}
-        serverVersion={serverVersion}
-        latencyMs={latencyMs}
-        isNamespaceScoped={isNamespaceScoped}
-        currentNamespace={currentNamespace}
-        totalPodsCount={clusterOverview?.totalPods ?? scopedPods.length}
-        onOpenDiagnostics={handleOpenDiagnostics}
-        onBrowsePods={handleBrowsePods}
-        onRefresh={handleRefresh}
-      />
+      <div data-tour="overview-header">
+        <ClusterOverviewHeader
+          currentContext={currentContext}
+          connectionStatus={connectionStatus}
+          serverVersion={serverVersion}
+          latencyMs={latencyMs}
+          isNamespaceScoped={isNamespaceScoped}
+          currentNamespace={currentNamespace}
+          totalPodsCount={clusterOverview?.totalPods ?? scopedPods.length}
+          onOpenDiagnostics={handleOpenDiagnostics}
+          onBrowsePods={handleBrowsePods}
+          onRefresh={handleRefresh}
+        />
+      </div>
 
       {/* Dynamic Namespace Filter Ambient Banner */}
       {isNamespaceScoped && (
@@ -358,38 +360,42 @@ export function ClusterOverviewView() {
       )}
 
       {/* 2. Unified Telemetry Command Strip & 4 Bento Cards */}
-      <BentoMetricCards
-        clusterOverview={clusterOverview}
-        isNamespaceScoped={isNamespaceScoped}
-        currentNamespace={currentNamespace}
-        scopedPodsCount={scopedPods.length}
-        nodesHostingCount={nodesHostingNamespace.size}
-        availableNamespacesCount={availableNamespaces.length}
-        hasMetrics={hasMetrics}
-        effectiveMode={effectiveMode}
-        telemetryMode={telemetryMode}
-        onSetTelemetryMode={setTelemetryMode}
-        onOpenPodsView={handleBrowsePods}
-        onScrollToNodes={handleScrollToNodes}
-      />
+      <div data-tour="overview-metrics">
+        <BentoMetricCards
+          clusterOverview={clusterOverview}
+          isNamespaceScoped={isNamespaceScoped}
+          currentNamespace={currentNamespace}
+          scopedPodsCount={scopedPods.length}
+          nodesHostingCount={nodesHostingNamespace.size}
+          availableNamespacesCount={availableNamespaces.length}
+          hasMetrics={hasMetrics}
+          effectiveMode={effectiveMode}
+          telemetryMode={telemetryMode}
+          onSetTelemetryMode={setTelemetryMode}
+          onOpenPodsView={handleBrowsePods}
+          onScrollToNodes={handleScrollToNodes}
+        />
+      </div>
 
       {/* 3. Node Topology & Infrastructure */}
-      <NodeTopologySection
-        nodes={nodes}
-        readyNodesCount={clusterOverview?.readyNodes ?? 0}
-        totalCpuCores={clusterOverview?.totalCpuCores ?? 0}
-        totalMemoryGiB={clusterOverview?.totalMemoryGiB ?? 0}
-        selectedNode={selectedNode}
-        nodeViewMode={nodeViewMode}
-        effectiveMode={effectiveMode}
-        isNamespaceScoped={isNamespaceScoped}
-        currentNamespace={currentNamespace}
-        nodesHostingCount={nodesHostingNamespace.size}
-        nodeScopedPodCounts={nodeScopedPodCounts}
-        onSetNodeViewMode={setNodeViewMode}
-        onInspectNode={handleInspectNode}
-        onFilterPodsForNode={handleFilterPodsForNode}
-      />
+      <div data-tour="overview-nodes">
+        <NodeTopologySection
+          nodes={nodes}
+          readyNodesCount={clusterOverview?.readyNodes ?? 0}
+          totalCpuCores={clusterOverview?.totalCpuCores ?? 0}
+          totalMemoryGiB={clusterOverview?.totalMemoryGiB ?? 0}
+          selectedNode={selectedNode}
+          nodeViewMode={nodeViewMode}
+          effectiveMode={effectiveMode}
+          isNamespaceScoped={isNamespaceScoped}
+          currentNamespace={currentNamespace}
+          nodesHostingCount={nodesHostingNamespace.size}
+          nodeScopedPodCounts={nodeScopedPodCounts}
+          onSetNodeViewMode={setNodeViewMode}
+          onInspectNode={handleInspectNode}
+          onFilterPodsForNode={handleFilterPodsForNode}
+        />
+      </div>
 
       {/* 4. Adaptive Layout: Workload Controllers & Incident Journal */}
       {clusterOverview?.warningEvents &&

@@ -20,6 +20,11 @@ import {
   type FontSizePreference,
   type PageSizePreference,
 } from "@/stores/settingsStore";
+import { LearningSettingsPanel } from "./components/LearningSettingsPanel";
+import {
+  SettingsHeading,
+  SettingsSectionCard,
+} from "./components/SettingsSectionCard";
 
 type ThemePreference = "system" | "light" | "dark";
 
@@ -125,6 +130,7 @@ export function SettingsView() {
 
           {activeSection === "appearance" && <AppearancePanel />}
           {activeSection === "data-refresh" && <DataRefreshPanel />}
+          {activeSection === "learning" && <LearningSettingsPanel />}
           {activeSection === "shortcuts" && <ShortcutsPanel />}
         </div>
       </div>
@@ -385,61 +391,6 @@ function ShortcutsPanel() {
         <ShortcutRow keys={["Esc"]} label="Dismiss overlay" />
       </div>
     </SettingsSectionCard>
-  );
-}
-
-function SettingsSectionCard({
-  id,
-  icon: Icon,
-  title,
-  description,
-  children,
-}: {
-  id: string;
-  icon: React.ElementType;
-  title: string;
-  description: string;
-  children: React.ReactNode;
-}) {
-  return (
-    <section
-      id={id}
-      className="scroll-mt-6 overflow-hidden rounded-2xl border border-[var(--border)] bg-[var(--surface)] shadow-2xs"
-    >
-      <div className="flex items-start gap-2.5 border-b border-[var(--border)] px-4 py-4 sm:px-5">
-        <span className="mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-lg border border-[var(--border)] bg-black/[0.03] text-[var(--muted)] dark:bg-white/[0.04]">
-          <Icon className="h-3.5 w-3.5" aria-hidden="true" />
-        </span>
-        <div>
-          <h2 className="text-xs font-semibold text-[var(--foreground)]">
-            {title}
-          </h2>
-          <p className="mt-0.5 text-[10px] leading-relaxed text-[var(--muted)]">
-            {description}
-          </p>
-        </div>
-      </div>
-      <div className="space-y-5 p-4 sm:p-5">{children}</div>
-    </section>
-  );
-}
-
-function SettingsHeading({
-  label,
-  description,
-}: {
-  label: string;
-  description: string;
-}) {
-  return (
-    <div>
-      <p className="text-[11px] font-semibold text-[var(--foreground)]">
-        {label}
-      </p>
-      <p className="mt-0.5 text-[10px] leading-relaxed text-[var(--muted)]">
-        {description}
-      </p>
-    </div>
   );
 }
 

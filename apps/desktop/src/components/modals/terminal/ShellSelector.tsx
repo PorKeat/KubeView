@@ -54,21 +54,6 @@ export function ShellSelector({
 
   return (
     <div className="relative" ref={shellMenuRef}>
-      {/* Native select kept visually hidden for accessibility & automation backwards-compatibility */}
-      <select
-        value={shell}
-        onChange={(e) => onShellChange?.(e.target.value)}
-        tabIndex={-1}
-        aria-hidden="true"
-        className="sr-only"
-      >
-        {SHELL_OPTIONS.map((opt) => (
-          <option key={opt.value} value={opt.value}>
-            {opt.triggerLabel}
-          </option>
-        ))}
-      </select>
-
       {/* Custom Aesthetic Trigger Button */}
       <button
         type="button"

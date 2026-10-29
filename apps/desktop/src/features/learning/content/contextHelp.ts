@@ -1,0 +1,275 @@
+import type { PageGuide } from "../types";
+
+export const PAGE_GUIDES: Record<string, PageGuide> = {
+  overview: {
+    title: "Cluster Overview",
+    beginner:
+      "This is the health dashboard for the selected cluster. Start with warnings and unhealthy Pods, then look at Nodes only if workloads cannot be scheduled.",
+    intermediate:
+      "Read warning events, workload counts, and Node pressure together. A healthy Node count does not mean every workload is ready.",
+    advanced:
+      "These summaries come from the cluster API and Node telemetry. Use the fleet view when you need to compare control planes rather than inspect one cluster.",
+    command: "kubectl get nodes && kubectl get pods -A",
+    pathId: "first-steps",
+    lessonId: "what-is-a-cluster",
+  },
+  fleet: {
+    title: "All Clusters",
+    beginner:
+      "This page compares every kubeconfig context you have added. Each card is a separate cluster, so a problem on one card does not affect the others.",
+    intermediate:
+      "Compare version skew, Node capacity, failing workloads, and latency. A cluster can show Connected while individual resources still fail.",
+    advanced:
+      "Fleet data is gathered per context. Authentication failures are isolated to that context and do not imply the whole fleet is offline.",
+    pathId: "first-steps",
+    lessonId: "contexts-and-namespaces",
+  },
+  gitops: {
+    title: "GitOps Drift",
+    beginner:
+      "Drift means the live cluster differs from the manifests in a local folder. It is a comparison, not an automatic deployment.",
+    intermediate:
+      "Scan a folder, review each resource state, then inspect the line diff before applying anything. Secrets are intentionally excluded.",
+    advanced:
+      "Comparison uses desired-subset matching. Extra live fields such as defaulted values are not treated as drift unless the manifest defines them.",
+    pathId: "first-steps",
+    lessonId: "everything-is-a-resource",
+  },
+  pods: {
+    title: "Pods",
+    beginner:
+      "A Pod wraps one or more containers. Open a Pod to see its status, conditions, logs, and events. A Running Pod can still be failing its readiness check.",
+    intermediate:
+      "Compare readiness, restart count, and status reason. Events explain Kubernetes actions; logs explain application behavior.",
+    advanced:
+      "Container statuses carry waiting, running, and terminated detail. Previous logs and exit codes are often more useful than the Pod phase.",
+    command: "kubectl get pods -A -o wide",
+    pathId: "workloads",
+    lessonId: "pods-run-containers",
+  },
+  deployments: {
+    title: "Deployments",
+    beginner:
+      "A Deployment asks Kubernetes to keep a certain number of Pods running. You normally edit the Deployment, not the Pods it creates.",
+    intermediate:
+      "Watch ready versus desired replicas, generation, and rollout conditions. A stalled rollout usually means new Pods never become ready.",
+    advanced:
+      "Deployments manage ReplicaSets per revision. Revision history supports rollback, while maxSurge and maxUnavailable shape rollout behavior.",
+    command: "kubectl get deployments -A",
+    pathId: "workloads",
+    lessonId: "deployments-keep-pods-alive",
+  },
+  replicasets: {
+    title: "ReplicaSets",
+    beginner:
+      "A ReplicaSet makes sure a certain number of matching Pods exist. Deployments create them, so you rarely edit one directly.",
+    intermediate:
+      "A ReplicaSet with zero desired replicas is often an old rollout revision, not necessarily a failure.",
+    advanced:
+      "ReplicaSets own Pods through selectors and owner references. Manual Pods that match the selector can affect replica accounting.",
+    pathId: "workloads",
+    lessonId: "deployments-keep-pods-alive",
+  },
+  statefulsets: {
+    title: "StatefulSets",
+    beginner:
+      "StatefulSets are for applications that need stable names and storage, such as databases. Each replica keeps its own identity.",
+    intermediate:
+      "Rollouts are ordered. A stuck Pod can hold up the rest of the StatefulSet.",
+    advanced:
+      "Each replica receives a stable ordinal, DNS name, and usually its own PersistentVolumeClaim via volumeClaimTemplates.",
+    pathId: "config-storage",
+    lessonId: "persistent-storage",
+  },
+  daemonsets: {
+    title: "DaemonSets",
+    beginner:
+      "A DaemonSet runs one copy of a Pod on every eligible Node, usually for agents such as log or network collectors.",
+    intermediate:
+      "If desired and ready counts differ, check Node conditions, taints, and whether new Nodes are blocked by selectors.",
+    advanced:
+      "DaemonSets tolerate common Node taints by design, but custom taints can still prevent scheduling unless tolerated.",
+    pathId: "workloads",
+    lessonId: "deployments-keep-pods-alive",
+  },
+  jobs: {
+    title: "Jobs and CronJobs",
+    beginner:
+      "A Job runs until its task finishes. A CronJob creates Jobs on a schedule. Completed is often a healthy state here.",
+    intermediate:
+      "Check completions, active Pods, failed attempts, and the last schedule time. A suspended CronJob will not create new Jobs.",
+    advanced:
+      "Backoff limits, parallelism, completion mode, and history retention determine retry and cleanup behavior.",
+    pathId: "workloads",
+    lessonId: "read-logs-and-events",
+  },
+  services: {
+    title: "Services",
+    beginner:
+      "A Service gives a changing group of Pods one stable address. If no selected Pods are ready, nothing can receive its traffic.",
+    intermediate:
+      "Check the selector, port mapping, and ready endpoint count. A Service can look fine while selecting no Pods.",
+    advanced:
+      "ClusterIP, NodePort, and LoadBalancer expose the Service differently. Headless Services publish addresses without a virtual IP.",
+    command: "kubectl get services -A",
+    pathId: "networking",
+    lessonId: "services-give-one-address",
+  },
+  endpoints: {
+    title: "Endpoints",
+    beginner:
+      "Endpoints are the real Pod addresses behind a Service. An empty list means no selected Pod is ready.",
+    intermediate:
+      "Compare Service selectors with Pod labels and readiness. Endpoints change as Pods become ready or disappear.",
+    advanced:
+      "EndpointSlices back this data at scale. Readiness gates can remove a healthy-looking Pod from serving traffic.",
+    command: "kubectl get endpoints -A",
+    pathId: "networking",
+    lessonId: "endpoints-show-who-is-behind",
+  },
+  ingresses: {
+    title: "Ingresses and Gateways",
+    beginner:
+      "Ingress sends HTTP traffic from outside the cluster to a Service. It only works if an ingress controller is installed.",
+    intermediate:
+      "Check host, path, backend Service, and TLS status. An Ingress can be accepted while its backend or controller is broken.",
+    advanced:
+      "Ingress class selects the controller. Gateway API separates infrastructure and routes with Gateway and HTTPRoute resources.",
+    command: "kubectl get ingress -A",
+    pathId: "networking",
+    lessonId: "ingress-and-gateway",
+  },
+  networkpolicies: {
+    title: "Network Policies",
+    beginner:
+      "NetworkPolicy limits which Pods can talk to each other. It only works if your CNI plugin enforces policy.",
+    intermediate:
+      "An empty policy can deny broadly. Check selectors, ingress and egress directions, and namespace selectors.",
+    advanced:
+      "Policy is additive allow. Enforcement and default-deny behavior depend on the CNI implementation.",
+    pathId: "networking",
+    lessonId: "services-give-one-address",
+  },
+  portforwards: {
+    title: "Port Forwards",
+    beginner:
+      "This creates a private tunnel from your computer to a Pod or Service. Nothing is exposed to the internet.",
+    intermediate:
+      "Choose a namespace and target, verify the remote port, then connect to 127.0.0.1 on the assigned local port.",
+    advanced:
+      "A Service target resolves a ready endpoint Pod. RBAC can block port-forward even when you can read the resource.",
+    command: "kubectl port-forward service/<name> 8080:80 -n <namespace>",
+    pathId: "networking",
+    lessonId: "port-forward-private-tunnel",
+  },
+  cilium: {
+    title: "Network Observability",
+    beginner:
+      "This page summarizes network behavior from the CNI installed in your cluster. Available tabs depend on the provider.",
+    intermediate:
+      "Use policy and endpoint views for configuration, then flows for observed traffic. Provider capabilities are not identical.",
+    advanced:
+      "Cilium can expose Hubble flows and endpoint identity. Other CNIs expose a different subset, so absent data does not always mean an outage.",
+    pathId: "networking",
+    lessonId: "services-give-one-address",
+  },
+  configmaps: {
+    title: "ConfigMaps",
+    beginner:
+      "ConfigMaps hold non-secret settings for applications. Editing one does not automatically restart Pods already using it.",
+    intermediate:
+      "Check keys, consumers, and whether values are mounted or injected as environment variables.",
+    advanced:
+      "Mounted values can update eventually, but environment variables are fixed at container start. Roll out consumers after changes.",
+    command: "kubectl get configmaps -A",
+    pathId: "config-storage",
+    lessonId: "configmaps-are-settings",
+  },
+  secrets: {
+    title: "Secrets",
+    beginner:
+      "Secrets hold credentials. KubeView redacts values so they are not accidentally copied into logs or screenshots.",
+    intermediate:
+      "RBAC controls who can read a Secret. Base64 encoding does not encrypt the value.",
+    advanced:
+      "Encryption at rest is a cluster configuration concern. Secret manifests are excluded from GitOps drift until redaction is safe.",
+    command: "kubectl get secrets -A",
+    pathId: "config-storage",
+    lessonId: "secrets-are-sensitive",
+  },
+  persistentvolumes: {
+    title: "Persistent Volumes",
+    beginner:
+      "Persistent storage keeps data after a Pod is replaced. A claim requests storage and binds to a volume.",
+    intermediate:
+      "Check claim status, access mode, capacity, and the bound volume. Pending claims usually indicate provisioning problems.",
+    advanced:
+      "ReadWriteOnce is a Node-level mount constraint. Reclaim policy determines what happens to backing storage after a claim is deleted.",
+    command: "kubectl get pv,pvc -A",
+    pathId: "config-storage",
+    lessonId: "persistent-storage",
+  },
+  storageclasses: {
+    title: "Storage Classes",
+    beginner:
+      "A StorageClass tells the cluster how to create storage automatically when an application asks for it.",
+    intermediate:
+      "Check the provisioner and default class. A claim can stay Pending when no class can satisfy it.",
+    advanced:
+      "Volume binding mode, reclaim policy, and allowed topologies affect where and when provisioning can succeed.",
+    command: "kubectl get storageclasses",
+    pathId: "config-storage",
+    lessonId: "persistent-storage",
+  },
+  serviceaccounts: {
+    title: "Service Accounts",
+    beginner:
+      "A ServiceAccount is the identity a Pod uses when it talks to the Kubernetes API. It is separate from your kubeconfig user.",
+    intermediate:
+      "Check which workloads use the account and whether a binding grants the required verbs.",
+    advanced:
+      "Token projection and automount settings determine whether a Pod receives credentials. Least privilege applies here too.",
+    command: "kubectl get serviceaccounts -A",
+    pathId: "access",
+    lessonId: "know-your-identity",
+  },
+  rbac: {
+    title: "Roles and Bindings",
+    beginner:
+      "A Role lists allowed actions. A binding attaches that Role to a user, group, or ServiceAccount. Without a binding, a Role does nothing.",
+    intermediate:
+      "Read rules as verbs on resources. Roles are namespaced; ClusterRoles can be used cluster-wide.",
+    advanced:
+      "RBAC is additive allow with no deny rules. Aggregated ClusterRoles and bindings can grant more than one document suggests.",
+    command: "kubectl get roles,rolebindings -A",
+    pathId: "access",
+    lessonId: "roles-and-bindings",
+  },
+  permissions: {
+    title: "Permissions Checker",
+    beginner:
+      "Use this page to test whether an identity can perform one action. It explains a denial without changing the cluster.",
+    intermediate:
+      "Pick the subject, verb, resource, and namespace. The result is an access review, not a simulated API write.",
+    advanced:
+      "The checker uses SelfSubjectAccessReview for the current identity. A forbidden operation can still be allowed for another subject.",
+    command: "kubectl auth can-i <verb> <resource> -n <namespace>",
+    pathId: "access",
+    lessonId: "debug-a-denial",
+  },
+  crds: {
+    title: "Custom Resources",
+    beginner:
+      "Custom resources extend Kubernetes with new object kinds installed by an operator or platform team.",
+    intermediate:
+      "A CRD defines the schema. Individual custom resources are instances, and an operator usually acts on them.",
+    advanced:
+      "Generic editing depends on discovery and the resource schema. Validation may be handled by the CRD or by an admission webhook.",
+    pathId: "first-steps",
+    lessonId: "everything-is-a-resource",
+  },
+};
+
+export function getPageGuide(tabId: string): PageGuide | undefined {
+  return PAGE_GUIDES[tabId];
+}

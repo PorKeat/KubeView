@@ -318,7 +318,10 @@ export function DeploymentListView() {
           onReload={() => loadDeployments(currentNamespace)}
         />
       ) : (
-        <div className="flex-1 overflow-auto min-h-0">
+        <div
+          data-tour="deployments-table"
+          className="flex-1 overflow-auto min-h-0"
+        >
           <table className="w-full min-w-[1000px] text-left text-xs border-collapse table-fixed">
             <DeploymentTableHeader
               sortField={sortField}

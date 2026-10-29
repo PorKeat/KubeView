@@ -17,6 +17,7 @@ interface OverflowReport {
 const pages: LivePage[] = [
   { id: "overview", title: "Cluster Overview" },
   { id: "fleet", title: "All Clusters" },
+  { id: "gitops", title: "GitOps Drift" },
   { id: "pods", title: "Pods" },
   { id: "deployments", title: "Deployments" },
   { id: "replicasets", title: "ReplicaSets" },
@@ -242,6 +243,15 @@ test.describe("KubeView live sidebar audit", () => {
         await expect(
           page.locator('[data-testid="permission-effective"]'),
         ).toBeVisible({ timeout: 15000 });
+      } else if (item.id === "gitops") {
+        await expect(page.locator('[data-testid="gitops-view"]')).toBeVisible();
+        await expect(
+          page.locator('[data-testid="gitops-choose-folder"]'),
+        ).toBeVisible();
+        await page.locator('[data-testid="gitops-manual-toggle"]').click();
+        await expect(
+          page.locator('[data-testid="gitops-source-path"]'),
+        ).toBeVisible();
       } else {
         await exerciseInspector(page, item.id);
 

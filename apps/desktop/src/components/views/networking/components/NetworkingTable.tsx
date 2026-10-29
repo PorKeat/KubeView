@@ -77,6 +77,7 @@ export function NetworkingTable<T>({
     <div
       className="flex-1 overflow-auto min-h-0"
       data-testid="networking-table-scroll"
+      data-tour={`${testIdPrefix}-table`}
     >
       <table className="w-full text-left text-xs border-collapse table-fixed">
         <thead className="sticky top-0 bg-[var(--surface)] z-10 border-b border-[var(--border)] select-none">

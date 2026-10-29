@@ -21,6 +21,8 @@ import { ResourceEditorModal } from "@/components/modals/ResourceEditorModal";
 import { DeleteResourceModal } from "@/components/modals/DeleteResourceModal";
 import { ServiceDiagnosticsModal } from "@/components/modals/ServiceDiagnosticsModal";
 import { RbacForbiddenBridge } from "@/components/permissions/RbacForbiddenBridge";
+import { LearningContextStrip } from "@/components/learning/LearningContextStrip";
+import { GuidedTour } from "@/components/learning/GuidedTour";
 
 import { useClusterStore } from "@/stores/clusterStore";
 import { useSettingsStore } from "@/stores/settingsStore";
@@ -81,6 +83,7 @@ export function AppShell() {
 
         <main className="flex-1 flex flex-col min-w-0 bg-[var(--background)] overflow-hidden">
           <TabBar />
+          <LearningContextStrip />
           <ActiveViewRenderer />
         </main>
       </div>
@@ -109,6 +112,7 @@ export function AppShell() {
       <DeleteResourceModal />
       <ServiceDiagnosticsModal />
       <RbacForbiddenBridge />
+      <GuidedTour />
 
       {/* 8. Initial High-Tech Splash Screen Overlay */}
       <SplashScreen />
