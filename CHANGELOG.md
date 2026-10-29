@@ -9,6 +9,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.2.1] - 2026-10-30
+
+### Changed
+
+- Release KubeView 0.2.1.
+
 ### Changed
 
 - Relicensed KubeView from BSL 1.1 to Apache-2.0. Copyright 2026 Seng Porkeat.

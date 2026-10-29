@@ -1,6 +1,6 @@
 [package]
 name = "kubeview"
-version = "0.2.0"
+version = "0.2.1"
 description = "Next-generation Kubernetes desktop IDE and operations platform"
 authors = ["Seng Porkeat <alexkgm2412@gmail.com>"]
 license = "Apache-2.0"
