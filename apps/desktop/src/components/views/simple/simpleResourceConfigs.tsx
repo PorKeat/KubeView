@@ -16,6 +16,7 @@ import {
   Route,
   Shield,
   ShieldCheck,
+  ShipWheel,
   SlidersHorizontal,
   Webhook,
   Waypoints,
@@ -656,6 +657,49 @@ export const SIMPLE_RESOURCE_CONFIGS: Record<
         label: "Parameter",
         render: (item) => (
           <DetailValue item={item} detailKey="parameter" mono />
+        ),
+      },
+    ],
+  },
+  helmreleases: {
+    kind: "helmreleases",
+    title: "Helm Releases",
+    description:
+      "Releases stored in this cluster's Helm release secrets. Revision, chart, and status come from the release payload.",
+    icon: ShipWheel,
+    namespaceScoped: true,
+    searchPlaceholder: "Filter releases by chart, namespace...",
+    emptyTitle: "No Helm releases",
+    emptyDescription: "No Helm release secrets are visible in this namespace.",
+    primary: (item) => item.name,
+    secondary: (item) => item.namespace || "",
+    columns: [
+      {
+        key: "chart",
+        label: "Chart",
+        render: (item) => <DetailValue item={item} detailKey="chart" mono />,
+      },
+      {
+        key: "chartVersion",
+        label: "Chart version",
+        render: (item) => (
+          <DetailValue item={item} detailKey="chartVersion" mono />
+        ),
+      },
+      {
+        key: "appVersion",
+        label: "App version",
+        render: (item) => (
+          <DetailValue item={item} detailKey="appVersion" mono />
+        ),
+      },
+      {
+        key: "revision",
+        label: "Revision",
+        render: (item) => (
+          <span className="font-mono text-[10px] tabular-nums">
+            {detail(item, "revision")}
+          </span>
         ),
       },
     ],

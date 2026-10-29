@@ -29,6 +29,7 @@ import { useClusterStore } from "@/stores/clusterStore";
 import { useSettingsStore } from "@/stores/settingsStore";
 import { useTabStore } from "@/stores/tabStore";
 import { useCatalogStore } from "@/stores/catalogStore";
+import { useHelmStore } from "@/stores/helmStore";
 
 export function AppShell() {
   const loadContexts = useClusterStore((s) => s.loadContexts);
@@ -43,6 +44,7 @@ export function AppShell() {
 
   React.useEffect(() => {
     void useCatalogStore.persist.rehydrate();
+    void useHelmStore.persist.rehydrate();
   }, []);
 
   React.useEffect(() => {

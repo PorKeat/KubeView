@@ -39,6 +39,7 @@ import {
   Webhook,
   FileCheck2,
   Link2,
+  ShipWheel,
 } from "lucide-react";
 import { useTabStore, TabItem } from "@/stores/tabStore";
 import { useLayoutStore } from "@/stores/layoutStore";
@@ -113,6 +114,10 @@ export function TabBar() {
         return FileCheck2;
       case "validatingadmissionpolicybindings":
         return Link2;
+      case "helmreleases":
+        return ShipWheel;
+      case "helmcharts":
+        return Boxes;
       case "pods":
         return Box;
       case "deployments":

@@ -302,6 +302,8 @@ func (m *Manager) ListSimpleResources(
 		return listSimpleValidatingAdmissionPolicies(ctx, client)
 	case "validatingadmissionpolicybindings":
 		return listSimpleValidatingAdmissionPolicyBindings(ctx, client)
+	case "helmreleases":
+		return listSimpleHelmReleases(ctx, client, namespace)
 	case "persistentvolumeclaims":
 		list, listErr := client.CoreV1().PersistentVolumeClaims(namespace).List(ctx, metav1.ListOptions{})
 		if listErr != nil {
@@ -374,6 +376,7 @@ type SimpleResourceCountsResult struct {
 	ValidatingWebhookConfigurations   int `json:"validatingWebhookConfigurations"`
 	ValidatingAdmissionPolicies       int `json:"validatingAdmissionPolicies"`
 	ValidatingAdmissionPolicyBindings int `json:"validatingAdmissionPolicyBindings"`
+	HelmReleases                      int `json:"helmReleases"`
 }
 
 // CountSimpleResources returns best-effort counts for the simple-resource
@@ -405,5 +408,6 @@ func (m *Manager) CountSimpleResources(ctx context.Context, contextName string) 
 	result.ValidatingWebhookConfigurations = count("validatingwebhookconfigurations")
 	result.ValidatingAdmissionPolicies = count("validatingadmissionpolicies")
 	result.ValidatingAdmissionPolicyBindings = count("validatingadmissionpolicybindings")
+	result.HelmReleases = count("helmreleases")
 	return result
 }

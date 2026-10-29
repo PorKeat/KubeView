@@ -40,6 +40,7 @@ import {
   Webhook,
   FileCheck2,
   Link2,
+  ShipWheel,
 } from "lucide-react";
 import { useLayoutStore } from "@/stores/layoutStore";
 import { useTabStore } from "@/stores/tabStore";
@@ -519,6 +520,25 @@ export function CommandPalette() {
               >
                 <Link2 className="w-4 h-4 text-amber-500 dark:text-amber-400" />
                 <span>Admission Policy Bindings</span>
+              </Command.Item>
+              <Command.Item
+                onSelect={() => {
+                  setCurrentNamespace("all");
+                  navigateTo("helmreleases", "Helm Releases");
+                }}
+                value="Helm Releases charts releases cluster"
+                className="flex items-center gap-2.5 px-2.5 py-2 rounded-md cursor-pointer hover:bg-[var(--surface-hover)] text-[var(--foreground)] transition-colors"
+              >
+                <ShipWheel className="w-4 h-4 text-blue-500 dark:text-blue-400" />
+                <span>Helm Releases</span>
+              </Command.Item>
+              <Command.Item
+                onSelect={() => navigateTo("helmcharts", "Charts")}
+                value="Helm Charts repository charts browse"
+                className="flex items-center gap-2.5 px-2.5 py-2 rounded-md cursor-pointer hover:bg-[var(--surface-hover)] text-[var(--foreground)] transition-colors"
+              >
+                <Boxes className="w-4 h-4 text-violet-500 dark:text-violet-400" />
+                <span>Charts</span>
               </Command.Item>
             </Command.Group>
 

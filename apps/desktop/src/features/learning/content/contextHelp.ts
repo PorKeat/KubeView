@@ -1,6 +1,28 @@
 import type { PageGuide } from "../types";
 
 export const PAGE_GUIDES: Record<string, PageGuide> = {
+  helmreleases: {
+    title: "Helm Releases",
+    beginner:
+      "A Helm release groups the chart, values, and rendered Kubernetes resources for one deployment.",
+    intermediate:
+      "Check the chart version, app version, revision, and release status. A failed release can leave partial resources behind.",
+    advanced:
+      "Revisions come from Helm release secrets. Superseded revisions are history; they are not currently installed.",
+    pathId: "first-steps",
+    lessonId: "contexts-and-namespaces",
+  },
+  helmcharts: {
+    title: "Charts",
+    beginner:
+      "A chart repository index lists package names and versions. This page only browses the index.",
+    intermediate:
+      "Add a trusted repository URL, pick a chart, and compare versions before using Helm outside KubeView.",
+    advanced:
+      "Chart indexes are external HTTP resources. Treat descriptions and versions as untrusted metadata and verify provenance before installing.",
+    pathId: "first-steps",
+    lessonId: "contexts-and-namespaces",
+  },
   mutatingwebhookconfigurations: {
     title: "Mutating Webhook Configs",
     beginner:

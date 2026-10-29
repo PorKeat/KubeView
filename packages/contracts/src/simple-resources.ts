@@ -15,7 +15,8 @@ export type SimpleResourceKind =
   | "mutatingwebhookconfigurations"
   | "validatingwebhookconfigurations"
   | "validatingadmissionpolicies"
-  | "validatingadmissionpolicybindings";
+  | "validatingadmissionpolicybindings"
+  | "helmreleases";
 
 export type SimpleResourceStatusTone =
   "healthy" | "warning" | "critical" | "muted";
@@ -57,4 +58,5 @@ export interface SimpleResourceCountsResult {
   validatingWebhookConfigurations: number;
   validatingAdmissionPolicies: number;
   validatingAdmissionPolicyBindings: number;
+  helmReleases: number;
 }

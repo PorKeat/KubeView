@@ -8,3 +8,4 @@ export * from "./resources.js";
 export * from "./events.js";
 export * from "./clusters.js";
 export * from "./simple-resources.js";
+export * from "./helm.js";

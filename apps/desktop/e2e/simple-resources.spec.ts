@@ -63,6 +63,7 @@ const pages = [
     title: "Admission Policy Bindings",
     rows: 1,
   },
+  { id: "helmreleases", title: "Helm Releases", rows: 1 },
 ];
 
 test.describe("KubeView simple resource pages", () => {
@@ -124,6 +125,47 @@ test.describe("KubeView simple resource pages", () => {
       path:
         process.env.KUBEVIEW_SIMPLE_RESOURCES_SCREENSHOT ??
         "/tmp/kubeview-simple-resources.png",
+      fullPage: false,
+    });
+  });
+
+  test("adds a Helm repository and browses its charts", async ({ page }) => {
+    await page.addInitScript(() => {
+      localStorage.setItem("kubeview_splash_seen", "true");
+    });
+    await mockRpc(page);
+    await page.goto("/");
+    await page.waitForLoadState("domcontentloaded");
+    await expect(
+      page.locator('[data-testid="context-switcher-trigger"]'),
+    ).toBeVisible({ timeout: 15000 });
+    await page.setViewportSize({ width: 1440, height: 900 });
+    await page.getByTestId("nav-item-helmcharts").click();
+
+    const view = page.getByTestId("helm-charts-view");
+    await expect(view).toBeVisible();
+    await expect(page.getByTestId("helm-charts-empty")).toBeVisible();
+    await page.getByTestId("helm-add-repository").click();
+    await page.getByTestId("helm-repository-name").fill("Example");
+    await page
+      .getByTestId("helm-repository-url")
+      .fill("https://charts.example.com");
+    await page.getByTestId("helm-repository-save").click();
+
+    const rows = page.locator('[data-testid="helm-chart-row"]');
+    await expect(rows).toHaveCount(2, { timeout: 15000 });
+    await expect(rows.first()).toContainText("web");
+    await expect(rows.first()).toContainText("1.4.2");
+
+    await page.getByRole("textbox", { name: "Search charts" }).fill("worker");
+    await expect(rows).toHaveCount(1);
+    await page.getByRole("textbox", { name: "Search charts" }).fill("");
+
+    await page.waitForTimeout(300);
+    await page.screenshot({
+      path:
+        process.env.KUBEVIEW_HELM_CHARTS_SCREENSHOT ??
+        "/tmp/kubeview-helm-charts.png",
       fullPage: false,
     });
   });

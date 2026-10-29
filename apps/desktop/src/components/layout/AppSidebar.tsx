@@ -208,6 +208,7 @@ export function AppSidebar() {
           simpleResourceCounts?.validatingAdmissionPolicies ?? 0,
         validatingAdmissionPolicyBindings:
           simpleResourceCounts?.validatingAdmissionPolicyBindings ?? 0,
+        helmReleases: simpleResourceCounts?.helmReleases ?? 0,
       }),
     [
       availableContexts.length,
@@ -348,7 +349,8 @@ export function AppSidebar() {
       item.id === "poddisruptionbudgets" ||
       item.id === "resourcequotas" ||
       item.id === "limitranges" ||
-      item.id === "leases"
+      item.id === "leases" ||
+      item.id === "helmreleases"
     ) {
       setCurrentNamespace("all");
     }

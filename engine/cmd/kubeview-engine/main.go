@@ -47,6 +47,7 @@ func main() {
 	registerNetworkingHandlers(server, mgr)
 	registerConfigAccessHandlers(server, mgr)
 	registerSimpleResourceHandlers(server, mgr)
+	registerHelmHandlers(server)
 	registerActionHandlers(server, mgr)
 	if err := bootstrap.RegisterContextsModule(server, mgr, getResWatcher); err != nil {
 		server.Log("Fatal: unable to initialize contexts module: %v", err)

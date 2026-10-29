@@ -32,6 +32,7 @@ import {
   Webhook,
   FileCheck2,
   Link2,
+  ShipWheel,
   Monitor,
   Keyboard,
   Timer,
@@ -136,6 +137,7 @@ export interface SidebarCounts {
   validatingWebhookConfigurations: number;
   validatingAdmissionPolicies: number;
   validatingAdmissionPolicyBindings: number;
+  helmReleases: number;
 }
 
 export function buildNavigationGroups(counts: SidebarCounts): NavGroup[] {
@@ -176,6 +178,7 @@ export function buildNavigationGroups(counts: SidebarCounts): NavGroup[] {
     validatingWebhookConfigurations,
     validatingAdmissionPolicies,
     validatingAdmissionPolicyBindings,
+    helmReleases,
   } = counts;
 
   return [
@@ -484,6 +487,24 @@ export function buildNavigationGroups(counts: SidebarCounts): NavGroup[] {
               ? validatingAdmissionPolicyBindings
               : undefined,
           badgeVariant: "accent",
+        },
+      ],
+    },
+    {
+      category: "Helm",
+      items: [
+        {
+          id: "helmreleases",
+          title: "Releases",
+          shortTitle: "Releases",
+          icon: ShipWheel,
+          badge: helmReleases > 0 ? helmReleases : undefined,
+          badgeVariant: "accent",
+        },
+        {
+          id: "helmcharts",
+          title: "Charts",
+          icon: Boxes,
         },
       ],
     },

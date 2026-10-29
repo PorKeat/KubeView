@@ -6,6 +6,7 @@ import { ClusterOverviewView } from "./ClusterOverviewView";
 import { GitOpsView } from "./gitops/GitOpsView";
 import { LearningCenterView } from "./learning/LearningCenterView";
 import { FleetCatalogView } from "./fleet/FleetCatalogView";
+import { HelmChartsView } from "./helm/HelmChartsView";
 import { SimpleResourcesView } from "./simple/SimpleResourcesView";
 import { ResourceListView } from "./ResourceListView";
 import { DeploymentListView } from "./deployments/DeploymentListView";
@@ -113,6 +114,14 @@ export function ActiveViewRenderer() {
           return (
             <SimpleResourcesView kind="validatingadmissionpolicybindings" />
           );
+        }
+
+        if (activeTabId === "helmreleases") {
+          return <SimpleResourcesView kind="helmreleases" />;
+        }
+
+        if (activeTabId === "helmcharts") {
+          return <HelmChartsView />;
         }
 
         if (activeTabId === "fleet") {

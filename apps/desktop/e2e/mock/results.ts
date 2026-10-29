@@ -729,6 +729,22 @@ export function resultFor(method: string, params?: JsonRecord): unknown {
           totalCount: 1,
         };
       }
+      if (kind === "helmreleases") {
+        return {
+          kind,
+          items: [
+            item("web", "default", "deployed", "healthy", {
+              chart: "web",
+              chartVersion: "1.4.2",
+              appVersion: "2.1.0",
+              revision: "3",
+              updated: "2026-10-27T08:00:00Z",
+              description: "Upgrade complete",
+            }),
+          ],
+          totalCount: 1,
+        };
+      }
       if (kind === "validatingadmissionpolicybindings") {
         return {
           kind,
@@ -763,6 +779,26 @@ export function resultFor(method: string, params?: JsonRecord): unknown {
         validatingWebhookConfigurations: 1,
         validatingAdmissionPolicies: 1,
         validatingAdmissionPolicyBindings: 1,
+        helmReleases: 1,
+      };
+    case "helm.charts":
+      return {
+        repositoryUrl: params?.repositoryUrl ?? "https://charts.example.com",
+        charts: [
+          {
+            name: "web",
+            version: "1.4.2",
+            appVersion: "2.1.0",
+            description: "Web frontend",
+          },
+          {
+            name: "worker",
+            version: "0.9.0",
+            appVersion: "1.2.0",
+            description: "Background worker",
+          },
+        ],
+        totalCount: 2,
       };
     case "ingresses.apply":
     case "gatewayresources.apply":
