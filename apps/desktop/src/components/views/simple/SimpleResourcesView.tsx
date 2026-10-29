@@ -1,7 +1,16 @@
 "use client";
 
 import * as React from "react";
-import { ChevronDown, ChevronUp, RefreshCw, Search, X } from "lucide-react";
+import {
+  Check,
+  ChevronDown,
+  ChevronUp,
+  Copy,
+  RefreshCw,
+  Search,
+  Trash2,
+  X,
+} from "lucide-react";
 import type {
   SimpleResourceItem,
   SimpleResourceKind,
@@ -12,6 +21,12 @@ import { invokeRpc } from "@/lib/ipc";
 import { useClusterStore } from "@/stores/clusterStore";
 import { cn } from "@/lib/utils";
 import { EmptyState, ErrorBanner } from "@/components/ui";
+import { toast } from "sonner";
+import {
+  SIMPLE_RESOURCE_REFS,
+  SAFE_DELETE_KINDS,
+  type SimpleResourceRef,
+} from "./simpleResourceRefs";
 import {
   SIMPLE_RESOURCE_CONFIGS,
   simpleResourceDetailRows,
@@ -42,12 +57,82 @@ function errorMessage(error: unknown): string {
 function ResourceDetailDrawer({
   item,
   configTitle,
+  currentContext,
+  resourceRef,
+  canDelete,
   onClose,
+  onDeleted,
 }: {
   item: SimpleResourceItem;
   configTitle: string;
+  currentContext: string;
+  resourceRef?: SimpleResourceRef;
+  canDelete: boolean;
   onClose: () => void;
+  onDeleted: () => void;
 }) {
+  const [yamlLoading, setYamlLoading] = React.useState(false);
+  const [yamlCopied, setYamlCopied] = React.useState(false);
+  const [confirmDelete, setConfirmDelete] = React.useState(false);
+  const [deleting, setDeleting] = React.useState(false);
+  const [actionError, setActionError] = React.useState<string | null>(null);
+
+  React.useEffect(() => {
+    setYamlCopied(false);
+    setConfirmDelete(false);
+    setActionError(null);
+  }, [item]);
+
+  const copyYaml = async () => {
+    if (!resourceRef || !currentContext) return;
+    setYamlLoading(true);
+    setActionError(null);
+    try {
+      const result = await invokeRpc<{ yaml: string }>("resources.get", {
+        contextName: currentContext,
+        apiVersion: resourceRef.apiVersion,
+        kind: resourceRef.kind,
+        resource: resourceRef.resource,
+        name: item.name,
+        namespace: item.namespace ?? "",
+      });
+      await navigator.clipboard.writeText(result.yaml);
+      setYamlCopied(true);
+      toast.success("YAML copied to clipboard");
+      window.setTimeout(() => setYamlCopied(false), 2000);
+    } catch (error) {
+      setActionError(
+        error instanceof Error ? error.message : "Unable to copy YAML.",
+      );
+    } finally {
+      setYamlLoading(false);
+    }
+  };
+
+  const deleteResource = async () => {
+    if (!resourceRef || !currentContext) return;
+    setDeleting(true);
+    setActionError(null);
+    try {
+      await invokeRpc("resources.delete", {
+        contextName: currentContext,
+        apiVersion: resourceRef.apiVersion,
+        kind: resourceRef.kind,
+        resource: resourceRef.resource,
+        name: item.name,
+        namespace: item.namespace ?? "",
+      });
+      toast.success(`${item.name} deleted`);
+      onDeleted();
+    } catch (error) {
+      setActionError(
+        error instanceof Error ? error.message : "Unable to delete resource.",
+      );
+    } finally {
+      setDeleting(false);
+    }
+  };
+
   React.useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
       if (event.key === "Escape") onClose();
@@ -174,9 +259,74 @@ function ResourceDetailDrawer({
             </section>
           )}
 
+          {(resourceRef || canDelete) && (
+            <section className="space-y-2 border-t border-[var(--border)] pt-3">
+              <div className="flex flex-wrap items-center gap-2">
+                {resourceRef && (
+                  <button
+                    type="button"
+                    data-testid="simple-resource-copy-yaml"
+                    onClick={() => void copyYaml()}
+                    disabled={yamlLoading}
+                    className="inline-flex items-center gap-1.5 rounded-lg border border-[var(--border)] bg-[var(--surface)] px-2.5 py-2 text-[10px] font-medium text-[var(--foreground)] transition-colors hover:bg-[var(--surface-hover)] disabled:opacity-60 cursor-pointer"
+                  >
+                    {yamlCopied ? (
+                      <Check className="h-3.5 w-3.5 text-emerald-500" />
+                    ) : (
+                      <Copy className="h-3.5 w-3.5 text-[var(--muted)]" />
+                    )}
+                    {yamlCopied ? "Copied" : "Copy YAML"}
+                  </button>
+                )}
+                {canDelete && !confirmDelete && (
+                  <button
+                    type="button"
+                    data-testid="simple-resource-delete"
+                    onClick={() => setConfirmDelete(true)}
+                    className="inline-flex items-center gap-1.5 rounded-lg border border-rose-500/20 bg-rose-500/5 px-2.5 py-2 text-[10px] font-medium text-rose-600 transition-colors hover:bg-rose-500/10 cursor-pointer dark:text-rose-400"
+                  >
+                    <Trash2 className="h-3.5 w-3.5" />
+                    Delete
+                  </button>
+                )}
+              </div>
+              {confirmDelete && (
+                <div className="rounded-lg border border-rose-500/25 bg-rose-500/5 p-2.5">
+                  <p className="text-[11px] text-[var(--foreground)]">
+                    Delete <span className="font-mono">{item.name}</span>?
+                  </p>
+                  <div className="mt-2 flex items-center gap-2">
+                    <button
+                      type="button"
+                      data-testid="simple-resource-delete-confirm"
+                      onClick={() => void deleteResource()}
+                      disabled={deleting}
+                      className="rounded-md bg-rose-600 px-2.5 py-1 text-[10px] font-semibold text-white transition-colors hover:bg-rose-500 disabled:opacity-60 cursor-pointer"
+                    >
+                      {deleting ? "Deleting..." : "Delete"}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setConfirmDelete(false)}
+                      className="rounded-md px-2 py-1 text-[10px] font-medium text-[var(--muted)] transition-colors hover:text-[var(--foreground)] cursor-pointer"
+                    >
+                      Cancel
+                    </button>
+                  </div>
+                </div>
+              )}
+              {actionError && (
+                <p role="alert" className="text-[10px] text-rose-500">
+                  {actionError}
+                </p>
+              )}
+            </section>
+          )}
+
           <p className="pt-1 text-[10px] text-[var(--muted)]">
-            Read-only view. Changes to this resource are not offered in this
-            phase.
+            {resourceRef
+              ? "Read-only details with YAML copy and safe actions."
+              : "Read-only view."}
           </p>
         </div>
       </aside>
@@ -543,7 +693,14 @@ export function SimpleResourcesView({ kind }: { kind: SimpleResourceKind }) {
         <ResourceDetailDrawer
           item={selected}
           configTitle={config.title}
+          currentContext={currentContext}
+          resourceRef={SIMPLE_RESOURCE_REFS[kind]}
+          canDelete={SAFE_DELETE_KINDS.has(kind)}
           onClose={() => setSelected(null)}
+          onDeleted={() => {
+            setSelected(null);
+            void load();
+          }}
         />
       )}
     </div>

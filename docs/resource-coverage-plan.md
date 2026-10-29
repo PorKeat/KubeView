@@ -1,6 +1,6 @@
 # Resource Coverage Plan (RC1–RC5)
 
-> Status: RC1–RC4 implemented; RC5 hardening remains. This track closes the resource-page gap against the Freelens/Lens reference sidebar. It feeds the existing roadmap phases for the resource browser (04), networking (09), storage (10), and Helm (11).
+> Status: RC1–RC5 complete. This track closes the resource-page gap against the Freelens/Lens reference sidebar. It feeds the existing roadmap phases for the resource browser (04), networking (09), storage (10), and Helm (11).
 
 ## Current Coverage
 

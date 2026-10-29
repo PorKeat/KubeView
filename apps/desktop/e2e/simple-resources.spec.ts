@@ -129,6 +129,37 @@ test.describe("KubeView simple resource pages", () => {
     });
   });
 
+  test("exposes YAML copy and guarded delete actions", async ({ page }) => {
+    await boot(page);
+    await page.getByTestId("nav-item-namespaces").click();
+    const namespaceView = page.getByTestId("simple-resource-view-namespaces");
+    await namespaceView
+      .locator('[data-testid="simple-resource-row"]')
+      .first()
+      .click();
+    await expect(
+      namespaceView.getByTestId("simple-resource-copy-yaml"),
+    ).toBeVisible();
+    await namespaceView.getByTestId("simple-resource-drawer-close").click();
+
+    await page.getByTestId("nav-item-leases").click();
+    const leaseView = page.getByTestId("simple-resource-view-leases");
+    await leaseView
+      .locator('[data-testid="simple-resource-row"]')
+      .first()
+      .click();
+    await expect(leaseView.getByTestId("simple-resource-delete")).toBeVisible();
+    await leaseView.getByTestId("simple-resource-delete").click();
+    await expect(
+      leaseView.getByTestId("simple-resource-delete-confirm"),
+    ).toBeVisible();
+    await leaseView.getByRole("button", { name: "Cancel" }).click();
+    await expect(
+      leaseView.getByTestId("simple-resource-delete-confirm"),
+    ).toHaveCount(0);
+    await leaseView.getByTestId("simple-resource-drawer-close").click();
+  });
+
   test("adds a Helm repository and browses its charts", async ({ page }) => {
     await page.addInitScript(() => {
       localStorage.setItem("kubeview_splash_seen", "true");
