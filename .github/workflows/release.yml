@@ -152,7 +152,7 @@ jobs:
         run: |
           cd dist
           find . -type f ! -name SHA256SUMS.txt -exec sha256sum {} + \
-            | sed 's#  \./#  #' > SHA256SUMS.txt
+            | sed -E 's#  \./(.*/)?#  #' > SHA256SUMS.txt
           cat SHA256SUMS.txt
 
       - name: Publish GitHub release

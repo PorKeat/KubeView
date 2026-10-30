@@ -29,6 +29,7 @@ import {
   NotificationsSettingsPanel,
   SafetySettingsPanel,
   TerminalSettingsPanel,
+  AboutSettingsPanel,
 } from "./components/SettingsPanels";
 import {
   SettingsHeading,
@@ -146,6 +147,7 @@ export function SettingsView() {
           {activeSection === "advanced" && <AdvancedSettingsPanel />}
           {activeSection === "learning" && <LearningSettingsPanel />}
           {activeSection === "shortcuts" && <ShortcutsPanel />}
+          {activeSection === "about" && <AboutSettingsPanel />}
         </div>
       </div>
     </div>

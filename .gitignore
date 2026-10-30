@@ -71,3 +71,6 @@ GEMINI.md
 .turbo/
 coverage/
 *.log
+
+# Local verification artifacts
+.artifacts/

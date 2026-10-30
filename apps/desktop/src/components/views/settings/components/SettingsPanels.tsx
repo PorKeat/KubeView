@@ -2,9 +2,13 @@
 
 import * as React from "react";
 import {
+  ArrowUpRight,
   Bell,
+  Check,
   Copy,
+  ExternalLink,
   Home,
+  Info,
   Plug,
   Plus,
   ShieldCheck,
@@ -14,6 +18,7 @@ import {
   Upload,
 } from "lucide-react";
 import { toast } from "sonner";
+import { openExternalUrl } from "@/lib/openExternal";
 import { useClusterStore } from "@/stores/clusterStore";
 import { useHelmStore } from "@/stores/helmStore";
 import {
@@ -674,6 +679,156 @@ export function AdvancedSettingsPanel() {
       <Note>
         Settings are local to this device. Importing replaces matching
         preferences with the file values.
+      </Note>
+    </SettingsSectionCard>
+  );
+}
+
+const RELEASES_URL = "https://github.com/PorKeat/KubeView/releases/latest";
+const DOWNLOADS_URL = "https://kubeview.sengporkeat.com";
+
+const UPDATE_COMMANDS = [
+  {
+    key: "homebrew",
+    label: "Homebrew",
+    platform: "macOS",
+    command: "brew upgrade --cask kubeview",
+  },
+  {
+    key: "scoop",
+    label: "Scoop",
+    platform: "Windows",
+    command: "scoop update kubeview",
+  },
+] as const;
+
+function UpdateCommandRow({
+  command,
+  label,
+  platform,
+  copied,
+  onCopy,
+}: {
+  command: string;
+  label: string;
+  platform: string;
+  copied: boolean;
+  onCopy: () => void;
+}) {
+  return (
+    <div className="flex flex-col gap-2 rounded-xl border border-[var(--border)] bg-black/[0.02] p-3 sm:flex-row sm:items-center sm:justify-between dark:bg-white/[0.02]">
+      <div className="min-w-0">
+        <div className="flex items-center gap-2">
+          <span className="text-[11px] font-semibold text-[var(--foreground)]">
+            {label}
+          </span>
+          <span className="rounded border border-[var(--border)] bg-[var(--surface)] px-1.5 py-0.2 font-mono text-[9px] text-[var(--muted)]">
+            {platform}
+          </span>
+        </div>
+        <code className="mt-1 block truncate font-mono text-[10px] text-[var(--muted)]">
+          {command}
+        </code>
+      </div>
+      <button
+        type="button"
+        data-testid={`settings-about-copy-${label.toLowerCase()}`}
+        onClick={onCopy}
+        className="inline-flex shrink-0 cursor-pointer items-center gap-1.5 rounded-lg border border-[var(--border)] bg-[var(--surface)] px-2.5 py-1.5 text-[10px] font-medium text-[var(--foreground)] transition-colors hover:bg-[var(--surface-hover)] focus-visible:ring-2 focus-visible:ring-[var(--accent)] focus-visible:outline-hidden"
+      >
+        {copied ? (
+          <Check className="h-3 w-3 text-emerald-500" aria-hidden="true" />
+        ) : (
+          <Copy className="h-3 w-3 text-[var(--muted)]" aria-hidden="true" />
+        )}
+        {copied ? "Copied" : "Copy"}
+      </button>
+    </div>
+  );
+}
+
+export function AboutSettingsPanel() {
+  const version = process.env.NEXT_PUBLIC_KUBEVIEW_VERSION ?? "dev";
+  const [copiedKey, setCopiedKey] = React.useState<string | null>(null);
+
+  const copyCommand = async (key: string, command: string) => {
+    try {
+      await navigator.clipboard.writeText(command);
+      setCopiedKey(key);
+      toast.success("Update command copied");
+      window.setTimeout(() => {
+        setCopiedKey((current) => (current === key ? null : current));
+      }, 1600);
+    } catch {
+      toast.error("Could not copy the update command");
+    }
+  };
+
+  return (
+    <SettingsSectionCard
+      id="settings-about"
+      icon={Info}
+      title="About & Updates"
+      description="Installed version, release channel, and one-line upgrade commands."
+    >
+      <div className="flex flex-col gap-3 rounded-xl border border-[var(--border)] bg-[var(--background)] p-4 sm:flex-row sm:items-center sm:justify-between">
+        <div>
+          <p className="font-mono text-[10px] uppercase tracking-wider text-[var(--muted)]">
+            Installed version
+          </p>
+          <p
+            data-testid="settings-about-version"
+            className="mt-1 font-mono text-2xl font-semibold tracking-tight text-[var(--foreground)]"
+          >
+            v{version}
+          </p>
+          <p className="mt-1 text-[10px] text-[var(--muted)]">
+            Beta channel · unsigned desktop build
+          </p>
+        </div>
+        <div className="flex flex-wrap items-center gap-2">
+          <button
+            type="button"
+            data-testid="settings-about-releases"
+            onClick={() => void openExternalUrl(RELEASES_URL)}
+            className="inline-flex cursor-pointer items-center gap-1.5 rounded-lg border border-[var(--border)] bg-[var(--surface)] px-2.5 py-1.5 text-[10px] font-medium text-[var(--foreground)] transition-colors hover:bg-[var(--surface-hover)]"
+          >
+            <ExternalLink className="h-3 w-3" aria-hidden="true" />
+            Release notes
+          </button>
+          <button
+            type="button"
+            data-testid="settings-about-downloads"
+            onClick={() => void openExternalUrl(DOWNLOADS_URL)}
+            className="inline-flex cursor-pointer items-center gap-1.5 rounded-lg border border-[var(--accent)]/25 bg-[var(--accent)]/10 px-2.5 py-1.5 text-[10px] font-semibold text-[var(--accent)] transition-colors hover:bg-[var(--accent)]/15"
+          >
+            <ArrowUpRight className="h-3 w-3" aria-hidden="true" />
+            Download latest
+          </button>
+        </div>
+      </div>
+
+      <SettingsHeading
+        label="Update KubeView"
+        description="KubeView does not self-update. Run the command for the way you installed it."
+      />
+      <div className="space-y-2">
+        {UPDATE_COMMANDS.map((item) => (
+          <UpdateCommandRow
+            key={item.key}
+            label={item.label}
+            platform={item.platform}
+            command={item.command}
+            copied={copiedKey === item.key}
+            onCopy={() => void copyCommand(item.key, item.command)}
+          />
+        ))}
+      </div>
+      <Note>
+        Homebrew upgrades an existing cask install in place. Scoop refreshes the
+        manifest from the official bucket. Direct installs should download the
+        latest DMG, EXE, AppImage, or DEB from the release page; existing app
+        data is kept. winget is not published yet.
       </Note>
     </SettingsSectionCard>
   );

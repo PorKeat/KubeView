@@ -41,6 +41,7 @@ import {
   Bell,
   Terminal,
   Plug,
+  Info,
 } from "lucide-react";
 import type { SettingsSection } from "@/stores/settingsStore";
 
@@ -149,6 +150,14 @@ export const SETTINGS_NAV_ITEMS: SettingsNavItem[] = [
     title: "Shortcuts",
     description: "Keyboard reference",
     icon: Keyboard,
+  },
+  {
+    id: "settings-about",
+    testId: "about",
+    section: "about",
+    title: "About & Updates",
+    description: "Version and upgrade commands",
+    icon: Info,
   },
 ];
 

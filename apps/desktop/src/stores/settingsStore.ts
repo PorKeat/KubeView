@@ -20,7 +20,8 @@ export type SettingsSection =
   | "integrations"
   | "advanced"
   | "learning"
-  | "shortcuts";
+  | "shortcuts"
+  | "about";
 
 export interface SettingsPreferences {
   fontSize: FontSizePreference;

@@ -199,6 +199,18 @@ cargo check --manifest-path src-tauri/Cargo.toml
 cd apps/desktop && npx playwright test
 ```
 
+### Release
+
+```bash
+# Preview the full release plan
+./scripts/release.sh --dry-run
+
+# One command: bump, verify, tag, publish, and update installers + landing
+./scripts/release.sh
+```
+
+The script updates Homebrew, Scoop, and the landing site after the GitHub release, then verifies the download URLs. See [docs/release-automation.md](docs/release-automation.md) for options and prerequisites.
+
 ---
 
 ## 🎨 Design Tokens
