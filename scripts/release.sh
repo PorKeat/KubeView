@@ -345,6 +345,12 @@ commit_and_tag() {
   info "Writing v$VERSION to package metadata"
   write_versions
 
+  info "Formatting version metadata"
+  pnpm exec prettier --write \
+    package.json \
+    apps/desktop/package.json \
+    src-tauri/tauri.conf.json >/dev/null
+
   git add package.json apps/desktop/package.json src-tauri/tauri.conf.json src-tauri/Cargo.toml src-tauri/Cargo.lock
   git commit -m "release: KubeView $VERSION" -m "Co-Authored-By: Claude <noreply@anthropic.com>"
   git tag -a "v$VERSION" -m "KubeView $VERSION"
