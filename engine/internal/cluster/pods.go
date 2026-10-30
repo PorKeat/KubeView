@@ -127,6 +127,23 @@ type RestartPodParams struct {
 	PodName     string `json:"podName"`
 }
 
+type MovePodParams struct {
+	ContextName     string `json:"contextName"`
+	Namespace       string `json:"namespace"`
+	PodName         string `json:"podName"`
+	TargetNamespace string `json:"targetNamespace,omitempty"`
+	TargetNode      string `json:"targetNode,omitempty"`
+}
+
+type MovePodResult struct {
+	Moved     bool   `json:"moved"`
+	PodName   string `json:"podName"`
+	Namespace string `json:"namespace"`
+	NodeName  string `json:"nodeName,omitempty"`
+	Mode      string `json:"mode"`
+	OwnerKind string `json:"ownerKind,omitempty"`
+}
+
 type ExecPodParams struct {
 	ContextName string   `json:"contextName"`
 	Namespace   string   `json:"namespace"`

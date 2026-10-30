@@ -6,6 +6,7 @@ import {
   ChevronDown,
   ChevronUp,
   Copy,
+  Plus,
   RefreshCw,
   Search,
   Trash2,
@@ -338,6 +339,10 @@ export function SimpleResourcesView({ kind }: { kind: SimpleResourceKind }) {
   const config = SIMPLE_RESOURCE_CONFIGS[kind];
   const currentContext = useClusterStore((state) => state.currentContext);
   const currentNamespace = useClusterStore((state) => state.currentNamespace);
+  const openCreateNamespace = useClusterStore(
+    (state) => state.openCreateNamespace,
+  );
+  const namespaceRevision = useClusterStore((state) => state.namespaceRevision);
   const [items, setItems] = React.useState<SimpleResourceItem[]>([]);
   const [totalCount, setTotalCount] = React.useState(0);
   const [truncated, setTruncated] = React.useState(false);
@@ -355,6 +360,7 @@ export function SimpleResourcesView({ kind }: { kind: SimpleResourceKind }) {
   const requestId = React.useRef(0);
 
   const namespace = config.namespaceScoped ? currentNamespace : "all";
+  const reloadRevision = kind === "namespaces" ? namespaceRevision : 0;
 
   const load = React.useCallback(async () => {
     if (!currentContext) {
@@ -390,7 +396,7 @@ export function SimpleResourcesView({ kind }: { kind: SimpleResourceKind }) {
     return () => {
       requestId.current += 1;
     };
-  }, [load]);
+  }, [load, reloadRevision]);
 
   const filteredItems = React.useMemo(() => {
     const query = search.trim().toLowerCase();
@@ -465,20 +471,34 @@ export function SimpleResourcesView({ kind }: { kind: SimpleResourceKind }) {
               </p>
             </div>
           </div>
-          <button
-            type="button"
-            onClick={() => void load()}
-            disabled={isLoading}
-            className="inline-flex shrink-0 items-center gap-1.5 rounded-md border border-[var(--border)] bg-[var(--surface)] px-2.5 py-1.5 text-xs font-medium text-[var(--foreground)] transition-colors hover:bg-[var(--surface-hover)] cursor-pointer focus-visible:ring-2 focus-visible:ring-[var(--accent)] focus-visible:outline-hidden disabled:cursor-wait disabled:opacity-60"
-          >
-            <RefreshCw
-              className={cn(
-                "h-3.5 w-3.5 text-[var(--muted)]",
-                isLoading && "animate-spin",
-              )}
-            />
-            Refresh
-          </button>
+          <div className="flex shrink-0 items-center gap-2">
+            {kind === "namespaces" && (
+              <button
+                type="button"
+                data-testid="namespaces-create"
+                onClick={openCreateNamespace}
+                aria-label="Create namespace"
+                className="inline-flex cursor-pointer items-center gap-1.5 rounded-md bg-[var(--accent)] px-2.5 py-1.5 text-xs font-semibold text-white shadow-sm transition-colors hover:bg-[var(--accent-hover)] focus-visible:ring-2 focus-visible:ring-[var(--accent)] focus-visible:outline-hidden"
+              >
+                <Plus className="h-3.5 w-3.5" aria-hidden="true" />
+                <span className="hidden sm:inline">Create namespace</span>
+              </button>
+            )}
+            <button
+              type="button"
+              onClick={() => void load()}
+              disabled={isLoading}
+              className="inline-flex shrink-0 items-center gap-1.5 rounded-md border border-[var(--border)] bg-[var(--surface)] px-2.5 py-1.5 text-xs font-medium text-[var(--foreground)] transition-colors hover:bg-[var(--surface-hover)] cursor-pointer focus-visible:ring-2 focus-visible:ring-[var(--accent)] focus-visible:outline-hidden disabled:cursor-wait disabled:opacity-60"
+            >
+              <RefreshCw
+                className={cn(
+                  "h-3.5 w-3.5 text-[var(--muted)]",
+                  isLoading && "animate-spin",
+                )}
+              />
+              Refresh
+            </button>
+          </div>
         </div>
 
         <div className="flex flex-col gap-2 rounded-xl border border-[var(--border)] bg-[var(--surface)] p-2.5 lg:flex-row lg:items-center">

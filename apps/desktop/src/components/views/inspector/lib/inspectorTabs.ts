@@ -5,14 +5,12 @@ import {
   FileCode,
   HeartPulse,
   LayoutDashboard,
-  Pencil,
   Sparkles,
 } from "lucide-react";
 import type { PodSummary } from "@kubeview/contracts";
 
 export type InspectorTabId =
   | "overview"
-  | "edit"
   | "instances"
   | "containers"
   | "conditions"
@@ -29,8 +27,6 @@ export interface InspectorTabItem {
 
 export interface GetInspectorTabsParams {
   isConfigStorageResource: boolean;
-  canEditConfigStorage: boolean;
-  canEditGenericResource: boolean;
   isAccessResource: boolean;
   isCRD: boolean;
   isWorkload: boolean;
@@ -43,8 +39,6 @@ export interface GetInspectorTabsParams {
 
 export function getInspectorTabs({
   isConfigStorageResource,
-  canEditConfigStorage,
-  canEditGenericResource,
   isAccessResource,
   isCRD,
   isWorkload,
@@ -71,16 +65,6 @@ export function getInspectorTabs({
           },
         ]
       : []),
-    ...(canEditGenericResource
-      ? [
-          {
-            id: "edit" as const,
-            label: "Edit",
-            icon: Pencil,
-            count: null,
-          },
-        ]
-      : []),
     { id: "yaml", label: "YAML", icon: FileCode, count: null },
   ];
 
@@ -92,16 +76,6 @@ export function getInspectorTabs({
         icon: LayoutDashboard,
         count: null,
       },
-      ...(canEditConfigStorage || canEditGenericResource
-        ? [
-            {
-              id: "edit" as const,
-              label: "Edit",
-              icon: Pencil,
-              count: null,
-            },
-          ]
-        : []),
       { id: "yaml", label: "YAML", icon: FileCode, count: null },
     ];
   }
@@ -120,16 +94,6 @@ export function getInspectorTabs({
               id: "instances" as const,
               label: "Instances",
               icon: Box,
-              count: null,
-            },
-          ]
-        : []),
-      ...(canEditGenericResource
-        ? [
-            {
-              id: "edit" as const,
-              label: "Edit",
-              icon: Pencil,
               count: null,
             },
           ]
@@ -173,16 +137,6 @@ export function getInspectorTabs({
       icon: Bell,
       count: liveEventsCount > 0 ? liveEventsCount : null,
     },
-    ...(canEditGenericResource
-      ? [
-          {
-            id: "edit" as const,
-            label: "Edit",
-            icon: Pencil,
-            count: null,
-          },
-        ]
-      : []),
     { id: "yaml", label: "YAML", icon: FileCode, count: null },
   ];
 }

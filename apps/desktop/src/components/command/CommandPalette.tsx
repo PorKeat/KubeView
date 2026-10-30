@@ -32,6 +32,7 @@ import {
   Boxes,
   GraduationCap,
   FolderTree,
+  FolderPlus,
   History,
   Waypoints,
   Route,
@@ -59,6 +60,7 @@ export function CommandPalette() {
     setCurrentContext,
     setCurrentNamespace,
     openInspector,
+    openCreateNamespace,
     availableContexts,
     availableNamespaces,
     openKubeconfigModal,
@@ -342,6 +344,17 @@ export function CommandPalette() {
               >
                 <FolderTree className="w-4 h-4 text-amber-500 dark:text-amber-400" />
                 <span>Namespaces</span>
+              </Command.Item>
+              <Command.Item
+                onSelect={() => {
+                  navigateTo("namespaces", "Namespaces");
+                  openCreateNamespace();
+                }}
+                value="Create Namespace new namespace partition team environment"
+                className="flex items-center gap-2.5 px-2.5 py-2 rounded-md cursor-pointer hover:bg-[var(--surface-hover)] text-[var(--foreground)] transition-colors"
+              >
+                <FolderPlus className="w-4 h-4 text-emerald-500 dark:text-emerald-400" />
+                <span>Create Namespace</span>
               </Command.Item>
               <Command.Item
                 onSelect={() => {

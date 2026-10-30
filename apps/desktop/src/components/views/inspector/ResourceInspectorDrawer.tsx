@@ -27,6 +27,7 @@ export function ResourceInspectorDrawer() {
     openExecModal,
     openRestartConfirm,
     openDeleteConfirm,
+    openMovePod,
     loadConfigMaps,
     loadSecrets,
     openInspector,
@@ -34,8 +35,12 @@ export function ResourceInspectorDrawer() {
 
   const [activeTab, setActiveTab] = React.useState<InspectorTabId>("overview");
   const [isEditorMaximized, setIsEditorMaximized] = React.useState(false);
+  const [isYamlEditing, setIsYamlEditing] = React.useState(false);
+  const [yamlEditInitialMode, setYamlEditInitialMode] = React.useState<
+    "default" | "yaml"
+  >("default");
   const [pendingGuard, setPendingGuard] = React.useState<
-    InspectorTabId | "close" | null
+    InspectorTabId | "close" | "exit-edit" | null
   >(null);
 
   const requestClose = React.useCallback(() => {
@@ -48,14 +53,30 @@ export function ResourceInspectorDrawer() {
 
   const requestTab = React.useCallback(
     (tab: InspectorTabId) => {
-      if (activeTab === "edit" && tab !== "edit" && isInspectorEditDirty) {
+      if (tab === activeTab) return;
+      if (activeTab === "yaml" && isYamlEditing && isInspectorEditDirty) {
         setPendingGuard(tab);
         return;
       }
       setActiveTab(tab);
+      if (tab !== "yaml") setIsYamlEditing(false);
     },
-    [activeTab, isInspectorEditDirty],
+    [activeTab, isYamlEditing, isInspectorEditDirty],
   );
+
+  const startEditingYaml = React.useCallback(() => {
+    setActiveTab("yaml");
+    setYamlEditInitialMode("yaml");
+    setIsYamlEditing(true);
+  }, []);
+
+  const requestExitEditingYaml = React.useCallback(() => {
+    if (isInspectorEditDirty) {
+      setPendingGuard("exit-edit");
+      return;
+    }
+    setIsYamlEditing(false);
+  }, [isInspectorEditDirty]);
 
   const continueAfterDiscard = () => {
     const next = pendingGuard;
@@ -63,7 +84,10 @@ export function ResourceInspectorDrawer() {
     setInspectorEditDirty(false);
     if (next === "close") {
       closeInspector();
+    } else if (next === "exit-edit") {
+      setIsYamlEditing(false);
     } else if (next) {
+      setIsYamlEditing(false);
       setActiveTab(next);
     }
   };
@@ -147,10 +171,10 @@ export function ResourceInspectorDrawer() {
   }, [inspectedResourceKey]);
 
   React.useEffect(() => {
-    if (!isInspectorOpen || activeTab !== "edit") {
+    if (!isInspectorOpen || activeTab !== "yaml" || !isYamlEditing) {
       setIsEditorMaximized(false);
     }
-  }, [isInspectorOpen, activeTab]);
+  }, [isInspectorOpen, activeTab, isYamlEditing]);
 
   const actions = useInspectorActions({
     currentResource,
@@ -179,13 +203,14 @@ export function ResourceInspectorDrawer() {
   const canEditGenericResource = Boolean(editTarget) && !canEditConfigStorage;
   const canEditResource = canEditConfigStorage || canEditGenericResource;
 
-  // Reset to the overview tab whenever a different resource is inspected.
+  // Reset tabs whenever a different resource is inspected. Resources opened
+  // through an "Edit" affordance land on the YAML tab with editing enabled.
   React.useEffect(() => {
-    setActiveTab(
-      currentResource?.initialTab === "edit" && canEditResource
-        ? "edit"
-        : "overview",
-    );
+    const openInEditor =
+      currentResource?.initialTab === "edit" && canEditResource;
+    setActiveTab(openInEditor ? "yaml" : "overview");
+    setIsYamlEditing(openInEditor);
+    setYamlEditInitialMode("default");
   }, [
     currentResource?.kind,
     currentResource?.name,
@@ -201,8 +226,6 @@ export function ResourceInspectorDrawer() {
     isDeployment || isReplicaSet || isStatefulSet || isDaemonSet || isJob;
   const inspectorTabs = getInspectorTabs({
     isConfigStorageResource,
-    canEditConfigStorage,
-    canEditGenericResource,
     isAccessResource,
     isCRD,
     isWorkload,
@@ -238,7 +261,7 @@ export function ResourceInspectorDrawer() {
         data-testid="resource-inspector-drawer"
         className={cn(
           "inspector-drawer fixed inset-y-0 right-0 z-40 w-full glass-panel border-l border-[var(--border)] shadow-2xl flex flex-col select-none backdrop-blur-xl transform motion-reduce:transform-none",
-          activeTab === "edit"
+          activeTab === "yaml" && isYamlEditing
             ? isEditorMaximized
               ? "max-w-[100vw]"
               : "max-w-3xl md:max-w-4xl"
@@ -273,6 +296,17 @@ export function ResourceInspectorDrawer() {
               ? actions.handleRestartWorkload
               : undefined
           }
+          onOpenMovePod={
+            podData
+              ? () =>
+                  openMovePod({
+                    name: currentResource.name,
+                    namespace: currentResource.namespace,
+                    nodeName: podData.nodeName,
+                    controlledBy: podData.controlledBy,
+                  })
+              : undefined
+          }
           onDeleteWorkload={actions.handleDeleteWorkload}
           onToggleCronJobSuspend={
             isCronJob ? actions.handleToggleCronJobSuspend : undefined
@@ -286,7 +320,7 @@ export function ResourceInspectorDrawer() {
           onOpenExecModal={openExecModal}
           onOpenRestartConfirm={openRestartConfirm}
           onOpenDeleteConfirm={openDeleteConfirm}
-          onEditYaml={canEditResource ? () => setActiveTab("edit") : undefined}
+          onEditYaml={canEditResource ? startEditingYaml : undefined}
         />
 
         {/* Segmented Tabs Bar (Pods and Workloads) */}
@@ -301,6 +335,13 @@ export function ResourceInspectorDrawer() {
         {/* Drawer Content */}
         <InspectorTabContent
           activeTab={activeTab}
+          canEditResource={canEditResource}
+          isYamlEditing={isYamlEditing}
+          yamlEditInitialMode={
+            yamlEditInitialMode === "yaml" ? "yaml" : undefined
+          }
+          onStartEditingYaml={startEditingYaml}
+          onExitEditingYaml={requestExitEditingYaml}
           currentResource={currentResource}
           isNode={isNode}
           isAccessResource={isAccessResource}
@@ -343,7 +384,7 @@ export function ResourceInspectorDrawer() {
           onFilterPodsForNode={actions.handleFilterPodsForNode}
           onInspectPod={openInspector}
           onViewAllPods={actions.handleViewAllPods}
-          onEditResource={() => setActiveTab("edit")}
+          onEditResource={startEditingYaml}
           onViewPods={actions.handleViewPodsForWorkload}
           onScale={actions.handleScaleWorkload}
           onRestart={actions.handleRestartWorkload}
@@ -379,7 +420,7 @@ export function ResourceInspectorDrawer() {
                 <p className="mt-1 text-[11px] leading-relaxed text-[var(--muted)]">
                   The YAML changes for{" "}
                   <span className="font-mono">{currentResource.name}</span> have
-                  not been applied. Leaving the Edit tab will discard them.
+                  not been applied. Leaving edit mode will discard them.
                 </p>
               </div>
             </div>

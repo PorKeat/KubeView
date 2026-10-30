@@ -14,6 +14,7 @@ const MUTATING_METHODS = new Set([
   "secrets.apply",
   "pods.delete",
   "pods.restart",
+  "pods.move",
   "pods.exec",
   "deployments.delete",
   "deployments.restart",

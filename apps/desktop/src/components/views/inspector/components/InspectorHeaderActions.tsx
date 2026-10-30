@@ -13,6 +13,7 @@ import {
   Play,
   Pencil,
   Zap,
+  ArrowRightLeft,
 } from "lucide-react";
 import { toast } from "sonner";
 import { Tooltip } from "@/components/ui/Tooltip";
@@ -38,6 +39,7 @@ export function InspectorHeaderActions({
   onOpenExecModal,
   onOpenRestartConfirm,
   onOpenDeleteConfirm,
+  onOpenMovePod,
   onCopyTitle,
   onEditYaml,
 }: {
@@ -60,6 +62,7 @@ export function InspectorHeaderActions({
   onOpenExecModal: (pod: { name: string; namespace: string }) => void;
   onOpenRestartConfirm: (pod: { name: string; namespace: string }) => void;
   onOpenDeleteConfirm: (pod: { name: string; namespace: string }) => void;
+  onOpenMovePod?: () => void;
   onCopyTitle: () => void;
   onEditYaml?: () => void;
 }) {
@@ -241,6 +244,18 @@ export function InspectorHeaderActions({
               <RotateCw className="w-4 h-4" />
             </button>
           </Tooltip>
+          {onOpenMovePod && (
+            <Tooltip content="Move Pod">
+              <button
+                onClick={onOpenMovePod}
+                data-testid="inspector-move-pod"
+                className="p-1.5 rounded-lg hover:bg-[var(--surface-hover)] text-[var(--muted)] hover:text-[var(--foreground)] transition-colors cursor-pointer"
+                aria-label="Move Pod"
+              >
+                <ArrowRightLeft className="w-4 h-4" />
+              </button>
+            </Tooltip>
+          )}
           <Tooltip content="Delete Pod">
             <button
               onClick={() =>

@@ -10,6 +10,7 @@ import {
   X,
   WrapText,
   FileCode,
+  Pencil,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Tooltip } from "@/components/ui/Tooltip";
@@ -23,6 +24,7 @@ export interface InspectorYamlTabProps {
   onRetry?: () => void;
   copiedYaml: boolean;
   resourceName?: string;
+  onEdit?: () => void;
 }
 
 export function InspectorYamlTab({
@@ -33,6 +35,7 @@ export function InspectorYamlTab({
   onRetry,
   copiedYaml,
   resourceName,
+  onEdit,
 }: InspectorYamlTabProps) {
   const [searchQuery, setSearchQuery] = React.useState("");
   const [isSearchOpen, setIsSearchOpen] = React.useState(false);
@@ -218,6 +221,24 @@ export function InspectorYamlTab({
                 <span>{copiedYaml ? "Copied" : "Copy"}</span>
               </button>
             </Tooltip>
+
+            {onEdit && (
+              <>
+                <div className="h-4 w-px bg-white/10 mx-0.5" />
+                <Tooltip content="Edit this manifest" side="bottom">
+                  <button
+                    type="button"
+                    onClick={onEdit}
+                    data-testid="inspector-yaml-edit"
+                    aria-label="Edit YAML"
+                    className="h-7 px-2.5 rounded-lg font-mono text-[11px] font-semibold bg-[var(--accent)] hover:bg-[var(--accent-hover)] text-white transition-all flex items-center gap-1.5 cursor-pointer shadow-xs active:scale-[0.98]"
+                  >
+                    <Pencil className="w-3.5 h-3.5" />
+                    <span className="hidden sm:inline">Edit</span>
+                  </button>
+                </Tooltip>
+              </>
+            )}
           </div>
         </div>
 

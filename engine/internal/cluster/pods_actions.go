@@ -8,7 +8,9 @@ import (
 	"time"
 
 	corev1 "k8s.io/api/core/v1"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/util/wait"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/kubernetes/scheme"
 	"k8s.io/client-go/rest"
@@ -72,6 +74,193 @@ func (m *Manager) RestartPod(ctx context.Context, p RestartPodParams) error {
 
 	m.InvalidateOverviewCache(p.ContextName)
 	return nil
+}
+
+// MovePod relocates a pod by recreating it. Kubernetes never moves a running
+// pod in place, so the original object is terminated and, when necessary, a
+// clean replacement is created.
+//
+//   - Standalone pods can be rescheduled, pinned to a target node, or recreated
+//     in a different namespace.
+//   - Controller-managed pods can only be rescheduled: their controller owns
+//     recreation, so the scheduler chooses the node and the namespace is fixed.
+func (m *Manager) MovePod(ctx context.Context, p MovePodParams) (*MovePodResult, error) {
+	if strings.TrimSpace(p.Namespace) == "" || strings.TrimSpace(p.PodName) == "" {
+		return nil, fmt.Errorf("namespace and podName are required")
+	}
+	targetNamespace := strings.TrimSpace(p.TargetNamespace)
+	targetNode := strings.TrimSpace(p.TargetNode)
+	if targetNamespace != "" && targetNode != "" {
+		return nil, fmt.Errorf("choose either a target node or a target namespace, not both")
+	}
+
+	client, _, err := m.GetClientForContext(p.ContextName)
+	if err != nil {
+		return nil, err
+	}
+
+	pod, err := client.CoreV1().Pods(p.Namespace).Get(ctx, p.PodName, metav1.GetOptions{})
+	if err != nil {
+		return nil, fmt.Errorf("failed to inspect pod %s for move: %w", p.PodName, err)
+	}
+
+	ownerKind := ""
+	if len(pod.OwnerReferences) > 0 {
+		owner := pod.OwnerReferences[0]
+		ownerKind = owner.Kind
+		if owner.Name != "" {
+			ownerKind = fmt.Sprintf("%s/%s", owner.Kind, owner.Name)
+		}
+	}
+	controlled := len(pod.OwnerReferences) > 0
+
+	if targetNamespace != "" {
+		if targetNamespace == pod.Namespace {
+			return nil, fmt.Errorf("pod %s is already in namespace %s", p.PodName, p.Namespace)
+		}
+		if controlled {
+			return nil, fmt.Errorf(
+				"pod %s is managed by %s; Kubernetes recreates managed pods in their current namespace, so move the owning workload instead",
+				p.PodName, ownerKind)
+		}
+		if _, err := client.CoreV1().Namespaces().Get(ctx, targetNamespace, metav1.GetOptions{}); err != nil {
+			return nil, fmt.Errorf("target namespace %s is not available: %w", targetNamespace, err)
+		}
+
+		// Create the replacement first so the original stays intact if the API
+		// rejects the copy (missing service account, quota, admission, etc.).
+		replacement := podForRecreate(pod, targetNamespace, "")
+		created, err := client.CoreV1().Pods(targetNamespace).Create(ctx, replacement, metav1.CreateOptions{})
+		if err != nil {
+			return nil, fmt.Errorf("failed to create pod copy in namespace %s: %w", targetNamespace, err)
+		}
+		if err := client.CoreV1().Pods(pod.Namespace).Delete(ctx, pod.Name, metav1.DeleteOptions{}); err != nil {
+			_ = client.CoreV1().Pods(targetNamespace).Delete(ctx, created.Name, metav1.DeleteOptions{})
+			return nil, fmt.Errorf("failed to delete original pod %s: %w (copy rolled back)", pod.Name, err)
+		}
+
+		m.InvalidateOverviewCache(p.ContextName)
+		return &MovePodResult{
+			Moved:     true,
+			PodName:   created.Name,
+			Namespace: created.Namespace,
+			NodeName:  created.Spec.NodeName,
+			Mode:      "namespace",
+		}, nil
+	}
+
+	if controlled {
+		if targetNode != "" {
+			return nil, fmt.Errorf(
+				"pod %s is managed by %s; update the owning workload's node selector or affinity and restart its rollout instead",
+				p.PodName, ownerKind)
+		}
+		if err := client.CoreV1().Pods(pod.Namespace).Delete(ctx, pod.Name, metav1.DeleteOptions{}); err != nil {
+			return nil, fmt.Errorf("failed to delete pod %s so its controller can reschedule it: %w", pod.Name, err)
+		}
+		m.InvalidateOverviewCache(p.ContextName)
+		return &MovePodResult{
+			Moved:     true,
+			PodName:   pod.Name,
+			Namespace: pod.Namespace,
+			Mode:      "reschedule",
+			OwnerKind: ownerKind,
+		}, nil
+	}
+
+	if targetNode != "" {
+		if targetNode == pod.Spec.NodeName {
+			return nil, fmt.Errorf("pod %s is already scheduled to node %s", p.PodName, targetNode)
+		}
+		if _, err := client.CoreV1().Nodes().Get(ctx, targetNode, metav1.GetOptions{}); err != nil {
+			return nil, fmt.Errorf("target node %s is not available: %w", targetNode, err)
+		}
+	}
+
+	mode := "reschedule"
+	if targetNode != "" {
+		mode = "node"
+	}
+
+	// Same-namespace recreation needs the original gone before the replacement
+	// can reuse its name. Force termination, then restore from the original
+	// spec if creation fails for any reason.
+	replacement := podForRecreate(pod, pod.Namespace, targetNode)
+	gracePeriod := int64(0)
+	if err := client.CoreV1().Pods(pod.Namespace).Delete(ctx, pod.Name, metav1.DeleteOptions{
+		GracePeriodSeconds: &gracePeriod,
+	}); err != nil {
+		return nil, fmt.Errorf("failed to delete pod %s for recreation: %w", pod.Name, err)
+	}
+	_ = waitForPodGone(ctx, client, pod.Namespace, pod.Name, 20*time.Second)
+
+	created, err := client.CoreV1().Pods(pod.Namespace).Create(ctx, replacement, metav1.CreateOptions{})
+	if err != nil {
+		restore := podForRecreate(pod, pod.Namespace, "")
+		if _, restoreErr := client.CoreV1().Pods(pod.Namespace).Create(ctx, restore, metav1.CreateOptions{}); restoreErr != nil {
+			return nil, fmt.Errorf(
+				"failed to recreate pod %s: %w; the original pod could not be restored: %v",
+				pod.Name, err, restoreErr)
+		}
+		return nil, fmt.Errorf("failed to recreate pod %s: %w (original pod restored)", pod.Name, err)
+	}
+
+	m.InvalidateOverviewCache(p.ContextName)
+	return &MovePodResult{
+		Moved:     true,
+		PodName:   created.Name,
+		Namespace: created.Namespace,
+		NodeName:  created.Spec.NodeName,
+		Mode:      mode,
+	}, nil
+}
+
+// podForRecreate builds a clean pod object from a live pod, dropping server
+// metadata, owner references, finalizers, and assigned scheduling fields.
+func podForRecreate(pod *corev1.Pod, namespace, targetNode string) *corev1.Pod {
+	spec := *pod.Spec.DeepCopy()
+	spec.NodeName = ""
+	spec.Priority = nil
+	spec.PreemptionPolicy = nil
+	if targetNode != "" {
+		if spec.NodeSelector == nil {
+			spec.NodeSelector = make(map[string]string)
+		}
+		spec.NodeSelector["kubernetes.io/hostname"] = targetNode
+	}
+	return &corev1.Pod{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:        pod.Name,
+			Namespace:   namespace,
+			Labels:      cloneStringMap(pod.Labels),
+			Annotations: cloneStringMap(pod.Annotations),
+		},
+		Spec: spec,
+	}
+}
+
+func cloneStringMap(source map[string]string) map[string]string {
+	if source == nil {
+		return nil
+	}
+	clone := make(map[string]string, len(source))
+	for key, value := range source {
+		clone[key] = value
+	}
+	return clone
+}
+
+func waitForPodGone(ctx context.Context, client kubernetes.Interface, namespace, name string, timeout time.Duration) error {
+	return wait.PollUntilContextTimeout(ctx, 200*time.Millisecond, timeout, true, func(ctx context.Context) (bool, error) {
+		_, err := client.CoreV1().Pods(namespace).Get(ctx, name, metav1.GetOptions{})
+		if apierrors.IsNotFound(err) {
+			return true, nil
+		}
+		if err != nil {
+			return false, err
+		}
+		return false, nil
+	})
 }
 
 func executeInContainer(ctx context.Context, client kubernetes.Interface, execConfig *rest.Config, namespace, podName, containerName string, cmd []string) (*ExecPodResult, error) {

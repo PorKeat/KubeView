@@ -58,6 +58,7 @@ flowchart LR
 - **Workload Controllers Breakdown:** Aggregated health counts for Deployments, StatefulSets, DaemonSets, Jobs, and CronJobs.
 - **Cluster Warning Events Ticker:** Real-time Kubernetes warning event stream with categorized warning pills.
 - **Dynamic Namespace Scoping:** Changing the active namespace instantly recalculates the entire overview metrics and node allocations for that specific namespace, with a one-click return to cluster-wide view.
+- **Namespace Creation:** Create namespaces with optional labels directly from the Namespaces page, the namespace switcher, or the command palette — the list, sidebar counts, and dropdown refresh automatically.
 
 ### 2. ⚡ Pods Management & Data Grid
 
@@ -65,6 +66,7 @@ flowchart LR
 - **High-Speed Client-Side Filtering:** Instant search by pod name, namespace, node, or IP address. Status filter pills for `All`, `Running`, `Pending`, and `Failing`.
 - **Multi-Column Sorting:** Sort by name, namespace, status, restart count, or age.
 - **Batch Workload Actions:** Multi-select pods with floating batch action bar for bulk pod restarts and deletion.
+- **Pod Relocation:** Move standalone pods to another namespace, pin them to a specific node, or reschedule them through the scheduler. Controller-managed pods are safely rescheduled by their owner with explicitly disabled unsupported moves.
 - **Empty & Offline States:** Informative state cards with suggestions, commands, and one-click namespace switching.
 
 ### 3. 🔍 Deep Resource Inspector Drawer
@@ -72,7 +74,7 @@ flowchart LR
 - **Node Inspector:** Full node metadata, architecture, OS image, container runtime, kubelet version, internal/external IPs, condition history, allocated pods list, and expandable system labels & annotations.
 - **Pod Inspector:** Real-time container state chips, container image hashes, port mappings, restart counters, environment variable viewer with copy & search, readiness/liveness probes, and volume mounts.
 - **Conditions & Events Tabs:** Historical timeline of resource conditions and real Kubernetes warning/normal events.
-- **Live YAML Tab:** Formatted YAML viewer with one-click clipboard copy and syntax highlighting.
+- **Live YAML Tab:** Formatted YAML viewer with syntax highlighting and one-click clipboard copy; click **Edit** inside the tab to modify the manifest, validate it, review the diff, and apply in place.
 - **Direct Action Triggers:** One-click shortcuts for logs, exec terminal, restart, and delete.
 
 ### 4. 💻 Troubleshooting Workbench (Logs & Shell Exec)

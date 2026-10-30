@@ -152,6 +152,28 @@ users:
       return fleetOverview;
     case "pods.list":
       return { items: [pod], totalCount: 1 };
+    case "pods.move": {
+      const targetNamespace =
+        typeof params?.targetNamespace === "string"
+          ? params.targetNamespace
+          : "";
+      const targetNode =
+        typeof params?.targetNode === "string" ? params.targetNode : "";
+      return {
+        moved: true,
+        podName: String(params?.podName ?? pod.name),
+        namespace:
+          targetNamespace || String(params?.namespace ?? pod.namespace),
+        nodeName: targetNode || undefined,
+        mode: targetNamespace
+          ? "namespace"
+          : targetNode
+            ? "node"
+            : "reschedule",
+        ownerKind:
+          targetNamespace || targetNode ? undefined : "ReplicaSet/web-7f9c",
+      };
+    }
     case "pods.diagnose":
       return {
         contextName: "mock-cluster",

@@ -38,6 +38,12 @@ export const createCoreSlice: StateCreator<ClusterState, [], [], CoreSlice> = (
       endpointModalContextName: "",
       endpointModalCurrentServer: "",
     }),
+  isCreateNamespaceOpen: false,
+  namespaceRevision: 0,
+  openCreateNamespace: () => set({ isCreateNamespaceOpen: true }),
+  closeCreateNamespace: () => set({ isCreateNamespaceOpen: false }),
+  bumpNamespaceRevision: () =>
+    set((state) => ({ namespaceRevision: state.namespaceRevision + 1 })),
   setCurrentContext: (context) => set({ currentContext: context }),
   setCurrentNamespace: (namespace) => {
     set({ currentNamespace: namespace });

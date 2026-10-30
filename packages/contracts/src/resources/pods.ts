@@ -114,6 +114,27 @@ export interface RestartPodParams {
   podName: string;
 }
 
+export interface MovePodParams {
+  contextName?: string;
+  namespace: string;
+  podName: string;
+  /** Move the pod copy into this namespace. Only standalone pods are eligible. */
+  targetNamespace?: string;
+  /** Pin the recreated pod to this node. Only standalone pods are eligible. */
+  targetNode?: string;
+}
+
+export type PodMoveMode = "reschedule" | "node" | "namespace";
+
+export interface MovePodResult {
+  moved: boolean;
+  podName: string;
+  namespace: string;
+  nodeName?: string;
+  mode: PodMoveMode;
+  ownerKind?: string;
+}
+
 export interface ExecPodParams {
   contextName?: string;
   namespace: string;

@@ -4,12 +4,20 @@ export interface PodModalTarget {
   container?: string;
 }
 
+export interface MovePodTarget {
+  name: string;
+  namespace: string;
+  nodeName?: string;
+  controlledBy?: string;
+}
+
 export interface ModalsSlice {
   // Action modals for Pods
   logsModalPod: PodModalTarget | null;
   execModalPod: PodModalTarget | null;
   deleteConfirmPod: { name: string; namespace: string } | null;
   restartConfirmPod: { name: string; namespace: string } | null;
+  movePodTarget: MovePodTarget | null;
   bulkDeleteConfirmPods: { name: string; namespace: string }[] | null;
   bulkRestartConfirmPods: { name: string; namespace: string }[] | null;
 
@@ -21,6 +29,8 @@ export interface ModalsSlice {
   closeDeleteConfirm: () => void;
   openRestartConfirm: (pod: { name: string; namespace: string }) => void;
   closeRestartConfirm: () => void;
+  openMovePod: (pod: MovePodTarget) => void;
+  closeMovePod: () => void;
   openBulkDeleteConfirm: (pods: { name: string; namespace: string }[]) => void;
   closeBulkDeleteConfirm: () => void;
   openBulkRestartConfirm: (pods: { name: string; namespace: string }[]) => void;

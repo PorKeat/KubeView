@@ -37,6 +37,7 @@ export interface InspectorHeaderProps {
   onOpenExecModal: (pod: { name: string; namespace: string }) => void;
   onOpenRestartConfirm: (pod: { name: string; namespace: string }) => void;
   onOpenDeleteConfirm: (pod: { name: string; namespace: string }) => void;
+  onOpenMovePod?: () => void;
   onEditYaml?: () => void;
 }
 
@@ -67,6 +68,7 @@ export function InspectorHeader({
   onOpenExecModal,
   onOpenRestartConfirm,
   onOpenDeleteConfirm,
+  onOpenMovePod,
   onEditYaml,
 }: InspectorHeaderProps) {
   const [copiedTitle, setCopiedTitle] = React.useState(false);
@@ -200,6 +202,7 @@ export function InspectorHeader({
         onOpenExecModal={onOpenExecModal}
         onOpenRestartConfirm={onOpenRestartConfirm}
         onOpenDeleteConfirm={onOpenDeleteConfirm}
+        onOpenMovePod={onOpenMovePod}
         onCopyTitle={handleCopyTitle}
         onEditYaml={onEditYaml}
       />

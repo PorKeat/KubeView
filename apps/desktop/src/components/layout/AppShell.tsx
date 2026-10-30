@@ -15,10 +15,12 @@ import { PodLogsModal } from "@/components/modals/PodLogsModal";
 import { PodExecModal } from "@/components/modals/PodExecModal";
 import { PodDeleteModal } from "@/components/modals/PodDeleteModal";
 import { PodRestartModal } from "@/components/modals/PodRestartModal";
+import { MovePodModal } from "@/components/modals/MovePodModal";
 import { WorkloadActionModal } from "@/components/modals/WorkloadActionModal";
 import { BulkWorkloadActionModal } from "@/components/modals/BulkWorkloadActionModal";
 import { EndpointEditModal } from "@/components/modals/EndpointEditModal";
 import { ResourceEditorModal } from "@/components/modals/ResourceEditorModal";
+import { CreateNamespaceModal } from "@/components/modals/CreateNamespaceModal";
 import { DeleteResourceModal } from "@/components/modals/DeleteResourceModal";
 import { ServiceDiagnosticsModal } from "@/components/modals/ServiceDiagnosticsModal";
 import { RbacForbiddenBridge } from "@/components/permissions/RbacForbiddenBridge";
@@ -200,10 +202,12 @@ export function AppShell() {
       <PodExecModal />
       <PodDeleteModal />
       <PodRestartModal />
+      <MovePodModal />
       <WorkloadActionModal />
       <BulkWorkloadActionModal />
       <EndpointEditModal />
       <ResourceEditorModal />
+      <CreateNamespaceModal />
       <DeleteResourceModal />
       <ServiceDiagnosticsModal />
       <RbacForbiddenBridge />

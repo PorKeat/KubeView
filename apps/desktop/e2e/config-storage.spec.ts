@@ -77,10 +77,11 @@ test.describe("KubeView Config & Storage", () => {
     await expect(
       page.locator('[data-testid="resource-inspector-drawer"]'),
     ).toBeVisible();
+    await page.locator('[data-testid="inspector-tab-yaml"]').click();
     await expect(
-      page.locator('[data-testid="inspector-tab-edit"]'),
+      page.locator('[data-testid="inspector-yaml-edit"]'),
     ).toBeVisible();
-    await page.locator('[data-testid="inspector-tab-edit"]').click();
+    await page.locator('[data-testid="inspector-yaml-edit"]').click();
     await expect(
       page.locator('[data-testid="inspector-resource-editor"]'),
     ).toBeVisible();

@@ -160,6 +160,77 @@ test.describe("KubeView simple resource pages", () => {
     await leaseView.getByTestId("simple-resource-drawer-close").click();
   });
 
+  test("creates a namespace from the page and namespace selector", async ({
+    page,
+  }) => {
+    await boot(page);
+
+    // Quick action from the header namespace selector.
+    await page
+      .locator('button[aria-label*="Select Kubernetes namespace"]')
+      .click();
+    await page.getByTestId("namespace-create").click();
+    const modal = page.getByTestId("create-namespace-modal");
+    await expect(modal).toBeVisible();
+    await modal.getByTestId("create-namespace-cancel").click();
+    await expect(modal).toHaveCount(0);
+
+    await page.getByTestId("nav-item-namespaces").click();
+    const view = page.getByTestId("simple-resource-view-namespaces");
+    await expect(
+      view.locator('[data-testid="simple-resource-row"]'),
+    ).toHaveCount(3, { timeout: 15000 });
+
+    await view.getByTestId("namespaces-create").click();
+    await expect(modal).toBeVisible();
+
+    const submit = modal.getByTestId("create-namespace-submit");
+    const nameInput = modal.getByTestId("create-namespace-name");
+    await expect(submit).toBeDisabled();
+
+    await nameInput.fill("Team Alpha");
+    await expect(submit).toBeDisabled();
+    await expect(nameInput).toHaveAttribute("aria-invalid", "true");
+
+    await nameInput.fill("team-alpha");
+    await expect(submit).toBeEnabled();
+    await expect(modal).toContainText("kind: Namespace");
+
+    await modal.getByTestId("create-namespace-add-label").click();
+    await modal.getByTestId("create-namespace-label-key-0").fill("team");
+    await modal.getByTestId("create-namespace-label-value-0").fill("alpha");
+
+    const applyRequest = page.waitForRequest((request) => {
+      if (!request.url().includes("/api/rpc")) return false;
+      try {
+        const body = request.postDataJSON() as {
+          method?: string;
+          params?: { yaml?: string };
+        };
+        return (
+          body.method === "resources.apply" &&
+          String(body.params?.yaml ?? "").includes("name: team-alpha")
+        );
+      } catch {
+        return false;
+      }
+    });
+
+    await submit.click();
+    const request = await applyRequest;
+    const payload = request.postDataJSON() as {
+      params: { yaml: string; resource: string };
+    };
+    expect(payload.params.resource).toBe("namespaces");
+    expect(payload.params.yaml).toContain('"team": "alpha"');
+
+    await expect(modal).toHaveCount(0);
+    await expect(page.getByText("Namespace team-alpha created")).toBeVisible();
+    await expect(
+      page.locator('button[aria-label*="Select Kubernetes namespace"]'),
+    ).toContainText("team-alpha");
+  });
+
   test("adds a Helm repository and browses its charts", async ({ page }) => {
     await page.addInitScript(() => {
       localStorage.setItem("kubeview_skip_boot_splash", "true");

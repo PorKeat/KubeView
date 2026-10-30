@@ -65,6 +65,34 @@ func registerActionHandlers(server *ipc.Server, mgr *cluster.Manager) {
 		return map[string]interface{}{"success": true, "restarted": p.PodName}, nil
 	})
 
+	// Method: pods.move
+	server.Register("pods.move", func(params json.RawMessage) (interface{}, *ipc.RPCError) {
+		var p cluster.MovePodParams
+		if err := json.Unmarshal(params, &p); err != nil {
+			return nil, &ipc.RPCError{
+				Code:    ipc.ErrCodeInvalidParams,
+				Message: fmt.Sprintf("Invalid params: %v", err),
+			}
+		}
+		if p.ContextName == "" {
+			if listRes, err := mgr.ListContexts(); err == nil {
+				p.ContextName = listRes.CurrentContext
+			}
+		}
+
+		ctx, cancel := context.WithTimeout(context.Background(), 45*time.Second)
+		defer cancel()
+
+		result, err := mgr.MovePod(ctx, p)
+		if err != nil {
+			return nil, &ipc.RPCError{
+				Code:    ipc.ErrCodeInternalError,
+				Message: fmt.Sprintf("Failed to move pod: %v", err),
+			}
+		}
+		return result, nil
+	})
+
 	// Method: pods.exec
 	server.Register("pods.exec", func(params json.RawMessage) (interface{}, *ipc.RPCError) {
 		var p cluster.ExecPodParams

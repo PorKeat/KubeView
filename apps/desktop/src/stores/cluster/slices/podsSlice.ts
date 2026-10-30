@@ -4,6 +4,8 @@ import type {
   ExecPodParams,
   ExecPodResult,
   ListPodsResult,
+  MovePodParams,
+  MovePodResult,
   PodLogsParams,
   PodLogsResult,
   RestartPodParams,
@@ -122,6 +124,16 @@ export const createPodsSlice: StateCreator<ClusterState, [], [], PodsSlice> = (
     // Refresh live pods list and overview telemetry
     await get().loadPods();
     await get().loadClusterOverview();
+  },
+  movePod: async (params: MovePodParams) => {
+    const targetCtx = params.contextName || get().currentContext;
+    const result = await invokeRpc<MovePodResult>("pods.move", {
+      ...params,
+      contextName: targetCtx,
+    });
+    await get().loadPods();
+    await get().loadClusterOverview();
+    return result;
   },
   bulkDeletePods: async (
     pods: { name: string; namespace: string }[],

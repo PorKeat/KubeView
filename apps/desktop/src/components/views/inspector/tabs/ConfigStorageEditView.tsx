@@ -13,6 +13,7 @@ import { cn } from "@/lib/utils";
 import type { SelectedResource } from "@/stores/clusterStore";
 import { useClusterStore } from "@/stores/clusterStore";
 import { InspectorResourceEditor } from "./InspectorResourceEditor";
+import { InspectorExitEditButton } from "../components/InspectorExitEditButton";
 
 type ConfigStorageEditorMode = "form" | "yaml";
 
@@ -68,6 +69,8 @@ export function ConfigStorageEditView({
   onToggleEditorMaximized,
   onClose,
   onSaved,
+  initialMode,
+  onExitEdit,
 }: {
   currentResource: SelectedResource;
   data: ConfigMapSummary | SecretSummary;
@@ -75,12 +78,14 @@ export function ConfigStorageEditView({
   onToggleEditorMaximized: () => void;
   onClose: () => void;
   onSaved: () => void;
+  initialMode?: ConfigStorageEditorMode;
+  onExitEdit?: () => void;
 }) {
   const currentContext = useClusterStore((state) => state.currentContext);
   const isConfigMap = currentResource.kind === "ConfigMap";
-  const [mode, setMode] = React.useState<ConfigStorageEditorMode>(
-    isConfigMap ? "yaml" : "form",
-  );
+  const defaultMode: ConfigStorageEditorMode =
+    initialMode ?? (isConfigMap ? "yaml" : "form");
+  const [mode, setMode] = React.useState<ConfigStorageEditorMode>(defaultMode);
   const [formDirty, setFormDirty] = React.useState(false);
   const [secretRevealed, setSecretRevealed] = React.useState(false);
   const [isRevealingSecret, setIsRevealingSecret] = React.useState(false);
@@ -91,13 +96,13 @@ export function ConfigStorageEditView({
   );
 
   React.useEffect(() => {
-    setMode(isConfigMap ? "yaml" : "form");
+    setMode(defaultMode);
     setFormDirty(false);
     setSecretRevealed(false);
     setRevealError(null);
     setIsRevealingSecret(false);
   }, [
-    isConfigMap,
+    defaultMode,
     currentResource.kind,
     currentResource.name,
     currentResource.namespace,
@@ -148,6 +153,7 @@ export function ConfigStorageEditView({
           values visible
         </span>
       )}
+      {onExitEdit && <InspectorExitEditButton onClick={onExitEdit} />}
     </div>
   );
 

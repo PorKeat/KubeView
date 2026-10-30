@@ -1,7 +1,15 @@
 "use client";
 
 import * as React from "react";
-import { Layers, ChevronDown, Check, Search, X, Globe } from "lucide-react";
+import {
+  Layers,
+  ChevronDown,
+  Check,
+  Search,
+  X,
+  Globe,
+  Plus,
+} from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
 import { useClusterStore } from "@/stores/clusterStore";
 import { toast } from "sonner";
@@ -17,8 +25,13 @@ export function NamespaceSelectorDropdown({
   variant = "header",
   className,
 }: NamespaceSelectorDropdownProps) {
-  const { currentNamespace, availableNamespaces, setCurrentNamespace, pods } =
-    useClusterStore();
+  const {
+    currentNamespace,
+    availableNamespaces,
+    setCurrentNamespace,
+    pods,
+    openCreateNamespace,
+  } = useClusterStore();
   const [search, setSearch] = React.useState("");
   const [filterCategory, setFilterCategory] = React.useState<
     "all" | "workloads" | "system"
@@ -334,6 +347,21 @@ export function NamespaceSelectorDropdown({
             </div>
 
             {/* Footer Info */}
+            <button
+              type="button"
+              data-testid="namespace-create"
+              onClick={() => {
+                setIsOpen(false);
+                openCreateNamespace();
+              }}
+              className="mt-1 flex w-full cursor-pointer items-center justify-center gap-1.5 rounded-lg border border-[var(--border)] bg-black/[0.02] px-2 py-1.5 text-[11px] font-medium text-[var(--foreground)] transition-colors hover:bg-[var(--surface-hover)] focus-visible:ring-1 focus-visible:ring-[var(--accent)] focus-visible:outline-hidden dark:bg-white/[0.02]"
+            >
+              <Plus
+                className="h-3.5 w-3.5 text-[var(--accent)]"
+                aria-hidden="true"
+              />
+              Create namespace
+            </button>
             <div className="px-2.5 py-1.5 mt-1 border-t border-[var(--border)] flex items-center justify-between text-[11px] text-[var(--muted)] font-mono tabular-nums">
               <span>
                 Active: {currentNamespace === "all" ? "All" : currentNamespace}

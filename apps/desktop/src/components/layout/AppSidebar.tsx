@@ -76,6 +76,7 @@ export function AppSidebar() {
   >({});
   const [simpleResourceCounts, setSimpleResourceCounts] =
     React.useState<SimpleResourceCountsResult | null>(null);
+  const namespaceRevision = useClusterStore((state) => state.namespaceRevision);
 
   React.useEffect(() => {
     let cancelled = false;
@@ -95,7 +96,7 @@ export function AppSidebar() {
     return () => {
       cancelled = true;
     };
-  }, [currentContext]);
+  }, [currentContext, namespaceRevision]);
   const isSettingsActive = activeTabId === "settings";
   const isLearningActive = activeTabId === "learning";
   const isCatalogActive =

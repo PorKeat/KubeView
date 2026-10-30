@@ -34,6 +34,13 @@ export interface CoreSlice {
   openEndpointModal: (contextName: string, currentServer: string) => void;
   closeEndpointModal: () => void;
 
+  // Namespace creation
+  isCreateNamespaceOpen: boolean;
+  namespaceRevision: number;
+  openCreateNamespace: () => void;
+  closeCreateNamespace: () => void;
+  bumpNamespaceRevision: () => void;
+
   setCurrentContext: (context: string) => void;
   setCurrentNamespace: (namespace: string) => void;
   setConnectionStatus: (

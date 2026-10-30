@@ -23,6 +23,7 @@ import type {
 import { PodTroubleshootingAssistant } from "@/components/views/troubleshooting";
 import { ConfigStorageEditView } from "../tabs/ConfigStorageEditView";
 import { InspectorResourceEditor } from "../tabs/InspectorResourceEditor";
+import { InspectorExitEditButton } from "./InspectorExitEditButton";
 
 import { InspectorNodeOverview } from "../tabs/InspectorNodeOverview";
 import { InspectorPodOverview } from "../tabs/InspectorPodOverview";
@@ -52,6 +53,11 @@ import type { InspectorTabId } from "../lib/inspectorTabs";
 
 export interface InspectorTabContentProps {
   activeTab: InspectorTabId;
+  canEditResource: boolean;
+  isYamlEditing: boolean;
+  yamlEditInitialMode?: "form" | "yaml";
+  onStartEditingYaml?: () => void;
+  onExitEditingYaml: () => void;
   currentResource: SelectedResource;
   isNode: boolean;
   isAccessResource: boolean;
@@ -125,6 +131,11 @@ export interface InspectorTabContentProps {
 
 export function InspectorTabContent({
   activeTab,
+  canEditResource,
+  isYamlEditing,
+  yamlEditInitialMode,
+  onStartEditingYaml,
+  onExitEditingYaml,
   currentResource,
   isNode,
   isAccessResource,
@@ -182,38 +193,58 @@ export function InspectorTabContent({
   onOpenLogsModal,
   onOpenExecModal,
 }: InspectorTabContentProps) {
-  if (activeTab === "edit" && !editableConfigStorageData) {
+  if (activeTab === "yaml" && isYamlEditing && canEditResource) {
+    if (editableConfigStorageData) {
+      return (
+        <div className="flex min-h-0 flex-1 overflow-hidden">
+          <ConfigStorageEditView
+            currentResource={currentResource}
+            data={editableConfigStorageData}
+            initialMode={yamlEditInitialMode}
+            isEditorMaximized={isEditorMaximized}
+            onToggleEditorMaximized={onToggleEditorMaximized}
+            onExitEdit={onExitEditingYaml}
+            onClose={onClose}
+            onSaved={() => {
+              if (isConfigMap) {
+                void loadConfigMaps(currentResource.namespace);
+              } else {
+                void loadSecrets(currentResource.namespace);
+              }
+              onReloadYaml();
+            }}
+          />
+        </div>
+      );
+    }
+
     return (
       <div className="flex-1 min-h-0 overflow-hidden">
         <InspectorResourceEditor
           currentResource={currentResource}
           isMaximized={isEditorMaximized}
           onToggleMaximize={onToggleEditorMaximized}
+          headerAccessory={
+            <InspectorExitEditButton onClick={onExitEditingYaml} />
+          }
+          onApplied={onReloadYaml}
         />
       </div>
     );
   }
 
-  if (activeTab === "edit" && editableConfigStorageData) {
-    return (
-      <div className="flex min-h-0 flex-1 overflow-hidden">
-        <ConfigStorageEditView
-          currentResource={currentResource}
-          data={editableConfigStorageData}
-          isEditorMaximized={isEditorMaximized}
-          onToggleEditorMaximized={onToggleEditorMaximized}
-          onClose={onClose}
-          onSaved={() => {
-            if (isConfigMap) {
-              void loadConfigMaps(currentResource.namespace);
-            } else {
-              void loadSecrets(currentResource.namespace);
-            }
-          }}
-        />
-      </div>
-    );
-  }
+  const yamlView = (
+    <InspectorYamlTab
+      yaml={liveYaml}
+      isLoading={isLoadingYaml}
+      onCopy={onCopyYaml}
+      onDownload={onDownloadYaml}
+      onRetry={onReloadYaml}
+      copiedYaml={copiedYaml}
+      resourceName={currentResource?.name}
+      onEdit={canEditResource ? onStartEditingYaml : undefined}
+    />
+  );
 
   return (
     <div className="flex-1 overflow-y-auto p-3 sm:p-4 space-y-4">
@@ -236,17 +267,7 @@ export function InspectorTabContent({
           {isCRD && activeTab === "instances" && accessData && (
             <InspectorCRDInstances crd={accessData as CRDSummary} />
           )}
-          {activeTab === "yaml" && (
-            <InspectorYamlTab
-              yaml={liveYaml}
-              isLoading={isLoadingYaml}
-              onCopy={onCopyYaml}
-              onDownload={onDownloadYaml}
-              onRetry={onReloadYaml}
-              copiedYaml={copiedYaml}
-              resourceName={currentResource?.name}
-            />
-          )}
+          {activeTab === "yaml" && yamlView}
         </>
       ) : isConfigStorageResource ? (
         <>
@@ -256,17 +277,7 @@ export function InspectorTabContent({
               data={configStorageData}
             />
           )}
-          {activeTab === "yaml" && (
-            <InspectorYamlTab
-              yaml={liveYaml}
-              isLoading={isLoadingYaml}
-              onCopy={onCopyYaml}
-              onDownload={onDownloadYaml}
-              onRetry={onReloadYaml}
-              copiedYaml={copiedYaml}
-              resourceName={currentResource?.name}
-            />
-          )}
+          {activeTab === "yaml" && yamlView}
         </>
       ) : isNetworkingResource ? (
         <>
@@ -278,17 +289,7 @@ export function InspectorTabContent({
             />
           )}
 
-          {activeTab === "yaml" && (
-            <InspectorYamlTab
-              yaml={liveYaml}
-              isLoading={isLoadingYaml}
-              onCopy={onCopyYaml}
-              onDownload={onDownloadYaml}
-              onRetry={onReloadYaml}
-              copiedYaml={copiedYaml}
-              resourceName={currentResource?.name}
-            />
-          )}
+          {activeTab === "yaml" && yamlView}
         </>
       ) : (
         <>
@@ -385,17 +386,7 @@ export function InspectorTabContent({
             </>
           )}
 
-          {activeTab === "yaml" && (
-            <InspectorYamlTab
-              yaml={liveYaml}
-              isLoading={isLoadingYaml}
-              onCopy={onCopyYaml}
-              onDownload={onDownloadYaml}
-              onRetry={onReloadYaml}
-              copiedYaml={copiedYaml}
-              resourceName={currentResource?.name}
-            />
-          )}
+          {activeTab === "yaml" && yamlView}
         </>
       )}
     </div>

@@ -4,6 +4,8 @@ import type {
   PodLogsResult,
   DeletePodParams,
   RestartPodParams,
+  MovePodParams,
+  MovePodResult,
   ExecPodParams,
   ExecPodResult,
 } from "@kubeview/contracts";
@@ -23,6 +25,7 @@ export interface PodsSlice {
   getPodLogs: (params: PodLogsParams) => Promise<PodLogsResult>;
   deletePod: (params: DeletePodParams) => Promise<void>;
   restartPod: (params: RestartPodParams) => Promise<void>;
+  movePod: (params: MovePodParams) => Promise<MovePodResult>;
   bulkDeletePods: (
     pods: { name: string; namespace: string }[],
     force?: boolean,
