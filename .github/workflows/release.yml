@@ -176,6 +176,7 @@ jobs:
           fi
           find dist -type f ! -name SHA256SUMS.txt -print0 \
             | xargs -0 gh release upload "${RELEASE_TAG}" --clobber
+          gh release upload "${RELEASE_TAG}" dist/SHA256SUMS.txt --clobber
 
   distribute:
     needs: publish
