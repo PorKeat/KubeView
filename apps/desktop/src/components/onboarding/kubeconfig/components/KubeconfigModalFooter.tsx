@@ -30,8 +30,8 @@ export function KubeconfigModalFooter({
   rawYaml,
 }: KubeconfigModalFooterProps) {
   return (
-    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 px-6 md:px-8 py-4.5 border-t border-[var(--border)] bg-black/[0.02] dark:bg-white/[0.02] select-none">
-      <span className="text-xs text-[var(--muted)] font-mono">
+    <div className="flex flex-col gap-3 border-t border-[var(--border)] px-4 py-3 select-none sm:flex-row sm:items-center sm:justify-between sm:px-5">
+      <span className="hidden text-[10px] font-mono text-[var(--muted)] sm:inline">
         ~/.kube multi-config engine • Isolated in ~/.kubeview/clusters
       </span>
 
@@ -39,7 +39,7 @@ export function KubeconfigModalFooter({
         <button
           type="button"
           onClick={closeKubeconfigModal}
-          className="px-4 py-2 rounded-xl text-xs font-semibold text-[var(--muted)] hover:text-[var(--foreground)] hover:bg-[var(--surface-hover)] transition-colors cursor-pointer"
+          className="rounded-lg px-3 py-1.5 text-xs font-medium text-[var(--muted)] transition-colors hover:bg-[var(--surface-hover)] hover:text-[var(--foreground)] cursor-pointer"
         >
           Cancel
         </button>
@@ -49,7 +49,7 @@ export function KubeconfigModalFooter({
             type="button"
             onClick={() => handleImportDetected()}
             disabled={selectedDetectedCount === 0 || isSubmitting}
-            className="px-5 py-2 rounded-xl bg-[#F08A42] hover:bg-[#E07931] disabled:opacity-50 disabled:cursor-not-allowed text-white text-xs font-semibold shadow-md transition-all cursor-pointer flex items-center gap-2"
+            className="rounded-lg px-3.5 py-1.5 bg-[var(--accent)] hover:bg-[var(--accent-hover)] disabled:opacity-50 disabled:cursor-not-allowed text-white text-xs font-semibold transition-colors cursor-pointer inline-flex items-center gap-1.5"
           >
             {isSubmitting ? (
               <>
@@ -74,7 +74,7 @@ export function KubeconfigModalFooter({
             type="button"
             onClick={handleImportFromFiles}
             disabled={selectedValidFiles.length === 0 || isSubmitting}
-            className="px-4 py-1.5 rounded-lg bg-[#F08A42] hover:bg-[#E07931] disabled:opacity-50 disabled:cursor-not-allowed text-white text-xs font-semibold shadow-md transition-all cursor-pointer flex items-center gap-2"
+            className="rounded-lg px-3.5 py-1.5 bg-[var(--accent)] hover:bg-[var(--accent-hover)] disabled:opacity-50 disabled:cursor-not-allowed text-white text-xs font-semibold transition-colors cursor-pointer inline-flex items-center gap-1.5"
           >
             {isSubmitting ? (
               <>
@@ -99,7 +99,7 @@ export function KubeconfigModalFooter({
             type="button"
             onClick={handleImportFromPaste}
             disabled={!rawYaml.trim() || isSubmitting}
-            className="px-4 py-1.5 rounded-lg bg-[#F08A42] hover:bg-[#E07931] disabled:opacity-50 disabled:cursor-not-allowed text-white text-xs font-semibold shadow-md transition-all cursor-pointer flex items-center gap-2"
+            className="rounded-lg px-3.5 py-1.5 bg-[var(--accent)] hover:bg-[var(--accent-hover)] disabled:opacity-50 disabled:cursor-not-allowed text-white text-xs font-semibold transition-colors cursor-pointer inline-flex items-center gap-1.5"
           >
             {isSubmitting ? (
               <>
@@ -119,7 +119,7 @@ export function KubeconfigModalFooter({
           <button
             type="button"
             onClick={closeKubeconfigModal}
-            className="px-4 py-1.5 rounded-lg bg-[var(--surface-active)] hover:bg-[var(--surface-hover)] border border-[var(--border)] text-xs font-semibold text-[var(--foreground)] transition-all cursor-pointer"
+            className="px-4 py-1.5 rounded-lg bg-[var(--surface-active)] hover:bg-[var(--surface-hover)] border border-[var(--border)] text-xs font-semibold text-[var(--foreground)] transition-colors cursor-pointer"
           >
             Done
           </button>

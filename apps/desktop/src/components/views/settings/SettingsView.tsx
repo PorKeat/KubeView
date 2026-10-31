@@ -21,6 +21,7 @@ import {
   type PageSizePreference,
 } from "@/stores/settingsStore";
 import { LearningSettingsPanel } from "./components/LearningSettingsPanel";
+import { SidebarSettingsPanel } from "./components/SidebarSettingsPanel";
 import {
   ChoiceGroup,
   AdvancedSettingsPanel,
@@ -106,13 +107,13 @@ export function SettingsView() {
       className="flex-1 flex flex-col h-full overflow-hidden select-none"
     >
       <div ref={scrollRef} className="flex-1 overflow-y-auto modern-scrollbar">
-        <div className="w-full p-4 sm:p-6 lg:p-8 space-y-6">
+        <div className="w-full space-y-6 p-4 sm:p-6 lg:p-8">
           <header className="flex flex-col gap-4 border-b border-[var(--border)] pb-5 lg:flex-row lg:items-end lg:justify-between">
             <div className="min-w-0">
-              <h1 className="text-xl font-bold tracking-tight text-[var(--foreground)]">
+              <h1 className="text-base font-semibold tracking-tight text-[var(--foreground)]">
                 Settings &amp; Preferences
               </h1>
-              <p className="mt-1 max-w-2xl text-xs leading-relaxed text-[var(--muted)]">
+              <p className="mt-1 max-w-2xl text-[11px] leading-relaxed text-[var(--muted)]">
                 Personalize KubeView for this device. Changes save
                 automatically.
               </p>
@@ -140,6 +141,7 @@ export function SettingsView() {
           {activeSection === "general" && <GeneralSettingsPanel />}
           {activeSection === "safety" && <SafetySettingsPanel />}
           {activeSection === "appearance" && <AppearancePanel />}
+          {activeSection === "sidebar" && <SidebarSettingsPanel />}
           {activeSection === "data-refresh" && <DataRefreshPanel />}
           {activeSection === "notifications" && <NotificationsSettingsPanel />}
           {activeSection === "terminal" && <TerminalSettingsPanel />}
@@ -270,44 +272,14 @@ function AppearancePanel() {
         </div>
       </div>
 
-      <div className="flex flex-col gap-3 rounded-xl border border-[var(--border)] bg-black/[0.02] p-3.5 sm:flex-row sm:items-center sm:justify-between dark:bg-white/[0.02]">
-        <div className="flex min-w-0 items-start gap-3">
-          <Accessibility
-            className="mt-0.5 h-4 w-4 shrink-0 text-[var(--muted)]"
-            aria-hidden="true"
-          />
-          <div>
-            <p className="text-[11px] font-semibold text-[var(--foreground)]">
-              Reduce motion
-            </p>
-            <p className="mt-0.5 text-[10px] leading-relaxed text-[var(--muted)]">
-              Disable animated transitions and decorative motion.
-            </p>
-          </div>
-        </div>
-        <button
-          type="button"
-          role="switch"
-          aria-checked={reducedMotion}
-          aria-label="Reduce motion"
-          data-testid="settings-reduced-motion"
-          onClick={() => setReducedMotion(!reducedMotion)}
-          className={cn(
-            "relative inline-flex h-6 w-11 shrink-0 items-center rounded-full border transition-colors cursor-pointer focus-visible:ring-2 focus-visible:ring-[var(--accent)] focus-visible:outline-hidden",
-            reducedMotion
-              ? "border-[var(--accent)] bg-[var(--accent)]"
-              : "border-[var(--border)] bg-black/10 dark:bg-white/10",
-          )}
-        >
-          <span
-            className={cn(
-              "inline-block h-4 w-4 rounded-full bg-white shadow-sm transition-transform",
-              reducedMotion ? "translate-x-[22px]" : "translate-x-[3px]",
-            )}
-            aria-hidden="true"
-          />
-        </button>
-      </div>
+      <SettingsToggleRow
+        icon={Accessibility}
+        title="Reduce motion"
+        description="Disable animated transitions and decorative motion."
+        checked={reducedMotion}
+        onToggle={() => setReducedMotion(!reducedMotion)}
+        testId="settings-reduced-motion"
+      />
 
       <div className="grid gap-6 xl:grid-cols-2">
         <ChoiceGroup
@@ -478,7 +450,7 @@ function DataRefreshPanel() {
           testId="settings-refresh-focus"
         />
       </div>
-      <p className="rounded-xl border border-[var(--border)]/70 bg-black/[0.02] px-3 py-2.5 text-[10px] leading-relaxed text-[var(--muted)] dark:bg-white/[0.02]">
+      <p className="border-l-2 border-[var(--border)] pl-3 text-[10px] leading-relaxed text-[var(--muted)]">
         Auto-refresh applies to the active view. Manual refresh and live
         connection diagnostics remain available in the header.
       </p>

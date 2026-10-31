@@ -31,7 +31,6 @@ export interface SimpleResourceColumn {
   key: string;
   label: string;
   className?: string;
-  multiline?: boolean;
   render: (item: SimpleResourceItem) => React.ReactNode;
 }
 
@@ -69,20 +68,18 @@ function DetailValue({
   item,
   detailKey,
   mono = false,
-  multiline = false,
   className,
 }: {
   item: SimpleResourceItem;
   detailKey: string;
   mono?: boolean;
-  multiline?: boolean;
   className?: string;
 }) {
   const value = detail(item, detailKey);
   return (
     <span
       title={value}
-      className={`${multiline ? "line-clamp-2" : "block truncate"} ${mono ? "font-mono text-[10px]" : ""} ${className ?? ""}`}
+      className={`block truncate ${mono ? "font-mono text-[10px]" : ""} ${className ?? ""}`}
     >
       {value}
     </span>
@@ -164,14 +161,12 @@ export const SIMPLE_RESOURCE_CONFIGS: Record<
       {
         key: "message",
         label: "Message",
-        className: "w-[36%]",
-        multiline: true,
+        className: "w-[30%]",
         render: (item) => (
           <DetailValue
             item={item}
             detailKey="message"
-            multiline
-            className="text-[11px] leading-snug text-[var(--foreground)]"
+            className="text-[11px] text-[var(--foreground)]"
           />
         ),
       },

@@ -79,7 +79,7 @@ export function KubeconfigModal() {
         <Dialog.Overlay className="fixed inset-0 bg-black/55 backdrop-blur-sm z-50 animate-in fade-in duration-200" />
 
         {/* Modal Dialog Content */}
-        <Dialog.Content className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[100vw] sm:w-[95vw] max-w-4xl lg:max-w-5xl h-[100dvh] sm:h-[84vh] max-h-none sm:max-h-[820px] min-h-0 sm:min-h-[580px] bg-[var(--surface-elevated)] border border-[var(--border)] rounded-none sm:rounded-3xl shadow-2xl z-50 outline-hidden flex flex-col overflow-hidden animate-in fade-in zoom-in-95 duration-200">
+        <Dialog.Content className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[100vw] sm:w-[95vw] max-w-4xl h-[100dvh] sm:h-[84vh] max-h-none sm:max-h-[800px] min-h-0 sm:min-h-[560px] bg-[var(--surface)] border border-[var(--border)] rounded-none sm:rounded-2xl shadow-2xl z-50 outline-hidden flex flex-col overflow-hidden animate-in fade-in zoom-in-95 duration-200">
           <KubeconfigModalHeader />
 
           <KubeconfigModalTabs
@@ -91,10 +91,10 @@ export function KubeconfigModal() {
           />
 
           {/* Modal Scrollable Body */}
-          <div className="flex-1 overflow-y-auto p-4 sm:p-6 md:p-8 space-y-6">
+          <div className="flex-1 overflow-y-auto p-4 sm:p-5 space-y-4">
             {/* Inline Error Notice */}
             {errorMsg && (
-              <div className="p-3.5 rounded-xl bg-rose-500/10 border border-rose-500/20 text-rose-500 text-xs flex items-center justify-between">
+              <div className="flex items-start justify-between gap-2 border-l-2 border-rose-500/70 pl-3 text-xs text-rose-600 dark:text-rose-400">
                 <div className="flex items-center gap-2">
                   <AlertTriangle className="w-4 h-4 shrink-0" />
                   <span>{errorMsg}</span>

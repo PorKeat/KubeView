@@ -83,7 +83,7 @@ export function ChoiceGroup<T extends string | number>({
 
 function Note({ children }: { children: React.ReactNode }) {
   return (
-    <p className="rounded-xl border border-[var(--border)]/70 bg-black/[0.02] px-3 py-2.5 text-[10px] leading-relaxed text-[var(--muted)] dark:bg-white/[0.02]">
+    <p className="border-l-2 border-[var(--border)] pl-3 text-[10px] leading-relaxed text-[var(--muted)]">
       {children}
     </p>
   );
@@ -194,7 +194,7 @@ export function SafetySettingsPanel() {
       title="Safety & Guardrails"
       description="Prevent accidental changes when working against sensitive clusters."
     >
-      <div className="rounded-xl border border-amber-500/20 bg-amber-500/5 p-3.5 text-[11px] leading-relaxed text-[var(--foreground)]">
+      <div className="border-l-2 border-amber-500/60 pl-3 text-[11px] leading-relaxed text-[var(--foreground)]">
         Guardrails apply to the next mutating request. They do not modify
         Kubernetes RBAC.
       </div>
@@ -229,9 +229,9 @@ export function SafetySettingsPanel() {
           label="Protected contexts"
           description="Mutations are blocked for the selected kubeconfig contexts."
         />
-        <div className="mt-3 space-y-1.5">
+        <div className="mt-3 divide-y divide-[var(--border)] border-t border-[var(--border)]">
           {contexts.length === 0 ? (
-            <p className="text-[10px] text-[var(--muted)]">
+            <p className="py-2 text-[10px] text-[var(--muted)]">
               No kubeconfig contexts are loaded.
             </p>
           ) : (
@@ -245,7 +245,7 @@ export function SafetySettingsPanel() {
                   aria-checked={checked}
                   data-testid={`settings-protect-${context.name}`}
                   onClick={() => toggleProtectedContext(context.name)}
-                  className="flex w-full items-center justify-between gap-3 rounded-lg border border-[var(--border)] bg-[var(--surface)] px-3 py-2 text-left transition-colors hover:bg-[var(--surface-hover)] cursor-pointer"
+                  className="flex w-full items-center justify-between gap-3 py-2 text-left transition-colors hover:bg-[var(--surface-hover)] cursor-pointer"
                 >
                   <span className="min-w-0">
                     <span className="block truncate font-mono text-[11px] text-[var(--foreground)]">
@@ -504,16 +504,16 @@ export function IntegrationsSettingsPanel() {
           label="Helm repositories"
           description="Used by the Charts page. URLs are fetched only when you browse."
         />
-        <div className="mt-3 space-y-1.5">
+        <div className="mt-3 divide-y divide-[var(--border)] border-t border-[var(--border)]">
           {repositories.length === 0 ? (
-            <p className="text-[10px] text-[var(--muted)]">
+            <p className="py-2 text-[10px] text-[var(--muted)]">
               No repositories configured.
             </p>
           ) : (
             repositories.map((repository) => (
               <div
                 key={repository.id}
-                className="flex items-center justify-between gap-3 rounded-lg border border-[var(--border)] bg-[var(--surface)] px-3 py-2"
+                className="flex items-center justify-between gap-3 py-2"
               >
                 <span className="min-w-0">
                   <span className="block truncate text-[11px] font-medium text-[var(--foreground)]">
@@ -716,7 +716,7 @@ function UpdateCommandRow({
   onCopy: () => void;
 }) {
   return (
-    <div className="flex flex-col gap-2 rounded-xl border border-[var(--border)] bg-black/[0.02] p-3 sm:flex-row sm:items-center sm:justify-between dark:bg-white/[0.02]">
+    <div className="flex flex-col gap-2 border-b border-[var(--border)] py-3 last:border-b-0 sm:flex-row sm:items-center sm:justify-between">
       <div className="min-w-0">
         <div className="flex items-center gap-2">
           <span className="text-[11px] font-semibold text-[var(--foreground)]">
@@ -771,7 +771,7 @@ export function AboutSettingsPanel() {
       title="About & Updates"
       description="Installed version, release channel, and one-line upgrade commands."
     >
-      <div className="flex flex-col gap-3 rounded-xl border border-[var(--border)] bg-[var(--background)] p-4 sm:flex-row sm:items-center sm:justify-between">
+      <div className="flex flex-col gap-3 border-b border-[var(--border)] pb-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <p className="font-mono text-[10px] uppercase tracking-wider text-[var(--muted)]">
             Installed version

@@ -5,6 +5,7 @@ import {
   FolderOpen,
   FileCode,
   SlidersHorizontal,
+  type LucideIcon,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { KubeconfigModalTab } from "../hooks/useKubeconfigImport";
@@ -22,72 +23,73 @@ export function KubeconfigModalTabs({
   discoveredCount: number;
   availableContextsCount: number;
 }) {
+  const tabs: Array<{
+    id: KubeconfigModalTab;
+    label: string;
+    icon: LucideIcon;
+    count?: number;
+  }> = [
+    {
+      id: "auto",
+      label: "Auto-Detected (~/.kube)",
+      icon: Sparkles,
+      count: detectedCount,
+    },
+    {
+      id: "browse",
+      label: "Add via File / Folder",
+      icon: FolderOpen,
+      count: discoveredCount,
+    },
+    { id: "paste", label: "Paste Raw YAML", icon: FileCode },
+    {
+      id: "manage",
+      label: "Manage Clusters",
+      icon: SlidersHorizontal,
+      count: availableContextsCount,
+    },
+  ];
+
   return (
-    <div className="flex items-center gap-1 sm:gap-2 px-3 sm:px-6 md:px-8 pt-3 border-b border-[var(--border)] bg-black/[0.02] dark:bg-white/[0.02] select-none overflow-x-auto scrollbar-none">
-      <button
-        onClick={() => onSelectTab("auto")}
-        className={cn(
-          "flex items-center gap-2 px-3.5 py-2.5 text-xs sm:text-sm font-semibold border-b-2 rounded-t-xl transition-all cursor-pointer shrink-0",
-          activeTab === "auto"
-            ? "border-[#F08A42] text-[#F08A42] bg-[#F08A42]/5"
-            : "border-transparent text-[var(--muted)] hover:text-[var(--foreground)] hover:bg-[var(--surface-hover)]",
-        )}
-      >
-        <Sparkles className="w-4 h-4" />
-        <span>Auto-Detected (~/.kube)</span>
-        {detectedCount > 0 && (
-          <span className="px-1.5 py-0.5 text-[10px] rounded-full bg-[#F08A42]/20 text-[#F08A42] font-mono font-medium">
-            {detectedCount}
-          </span>
-        )}
-      </button>
-
-      <button
-        onClick={() => onSelectTab("browse")}
-        className={cn(
-          "flex items-center gap-2 px-3.5 py-2.5 text-xs sm:text-sm font-semibold border-b-2 rounded-t-xl transition-all cursor-pointer shrink-0",
-          activeTab === "browse"
-            ? "border-[#F08A42] text-[#F08A42] bg-[#F08A42]/5"
-            : "border-transparent text-[var(--muted)] hover:text-[var(--foreground)] hover:bg-[var(--surface-hover)]",
-        )}
-      >
-        <FolderOpen className="w-4 h-4" />
-        <span>Add via File / Folder</span>
-        {discoveredCount > 0 && (
-          <span className="px-1.5 py-0.5 text-[10px] rounded-full bg-[#F08A42]/20 text-[#F08A42] font-mono font-medium">
-            {discoveredCount}
-          </span>
-        )}
-      </button>
-
-      <button
-        onClick={() => onSelectTab("paste")}
-        className={cn(
-          "flex items-center gap-2 px-3.5 py-2.5 text-xs sm:text-sm font-semibold border-b-2 rounded-t-xl transition-all cursor-pointer shrink-0",
-          activeTab === "paste"
-            ? "border-[#F08A42] text-[#F08A42] bg-[#F08A42]/5"
-            : "border-transparent text-[var(--muted)] hover:text-[var(--foreground)] hover:bg-[var(--surface-hover)]",
-        )}
-      >
-        <FileCode className="w-4 h-4" />
-        <span>Paste Raw YAML</span>
-      </button>
-
-      <button
-        onClick={() => onSelectTab("manage")}
-        className={cn(
-          "flex items-center gap-2 px-3.5 py-2.5 text-xs sm:text-sm font-semibold border-b-2 rounded-t-xl transition-all cursor-pointer shrink-0",
-          activeTab === "manage"
-            ? "border-[#F08A42] text-[#F08A42] bg-[#F08A42]/5"
-            : "border-transparent text-[var(--muted)] hover:text-[var(--foreground)] hover:bg-[var(--surface-hover)]",
-        )}
-      >
-        <SlidersHorizontal className="w-4 h-4" />
-        <span>Manage Clusters</span>
-        <span className="px-1.5 py-0.5 text-[10px] rounded-full bg-black/10 dark:bg-white/10 text-[var(--foreground)] font-mono font-medium">
-          {availableContextsCount}
-        </span>
-      </button>
+    <div className="flex items-center gap-1 overflow-x-auto border-b border-[var(--border)] px-2 pt-1 scrollbar-none sm:px-4">
+      {tabs.map((tab) => {
+        const Icon = tab.icon;
+        const active = activeTab === tab.id;
+        return (
+          <button
+            key={tab.id}
+            type="button"
+            onClick={() => onSelectTab(tab.id)}
+            className={cn(
+              "flex shrink-0 items-center gap-1.5 border-b-2 px-2.5 py-2 text-xs font-medium transition-colors cursor-pointer",
+              active
+                ? "border-[var(--accent)] text-[var(--foreground)]"
+                : "border-transparent text-[var(--muted)] hover:text-[var(--foreground)]",
+            )}
+          >
+            <Icon
+              className={cn(
+                "h-3.5 w-3.5",
+                active ? "text-[var(--accent)]" : "text-[var(--muted)]",
+              )}
+              aria-hidden="true"
+            />
+            <span>{tab.label}</span>
+            {tab.count !== undefined && tab.count > 0 && (
+              <span
+                className={cn(
+                  "rounded-full px-1.5 py-0.5 font-mono text-[9px] tabular-nums",
+                  active
+                    ? "bg-[var(--accent)]/15 text-[var(--accent)]"
+                    : "bg-[var(--surface-hover)] text-[var(--muted)]",
+                )}
+              >
+                {tab.count}
+              </span>
+            )}
+          </button>
+        );
+      })}
     </div>
   );
 }

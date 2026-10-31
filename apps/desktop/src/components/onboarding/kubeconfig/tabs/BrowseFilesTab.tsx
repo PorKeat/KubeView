@@ -66,9 +66,9 @@ export function BrowseFilesTab({
     <div className="space-y-4">
       {/* Auto-detected banner hint */}
       {detectedSystemConfigs.some((c) => !c.isImported) && (
-        <div className="p-3.5 rounded-xl bg-[#F08A42]/10 border border-[#F08A42]/25 flex items-center justify-between text-xs">
+        <div className="flex items-center justify-between gap-3 border-l-2 border-[var(--accent)]/60 pl-3 text-xs">
           <div className="flex items-center gap-2.5">
-            <Sparkles className="w-4 h-4 text-[#F08A42] shrink-0" />
+            <Sparkles className="w-4 h-4 text-[var(--accent)] shrink-0" />
             <div>
               <span className="font-semibold text-[var(--foreground)] block">
                 Auto-Detected System Cluster Configs Found!
@@ -83,7 +83,7 @@ export function BrowseFilesTab({
           </div>
           <button
             onClick={() => setActiveTab("auto")}
-            className="px-3 py-1.5 rounded-lg bg-[#F08A42] hover:bg-[#E07931] text-white text-xs font-semibold shrink-0 cursor-pointer shadow-xs transition-all"
+            className="px-3 py-1.5 rounded-lg bg-[var(--accent)] hover:bg-[var(--accent-hover)] text-white text-xs font-semibold shrink-0 cursor-pointer shadow-xs transition-all"
           >
             View & Select
           </button>
@@ -119,13 +119,13 @@ export function BrowseFilesTab({
         onDragLeave={() => setIsDragging(false)}
         onDrop={handleDrop}
         className={cn(
-          "border-2 border-dashed rounded-2xl p-6 flex flex-col items-center justify-center text-center transition-all relative overflow-hidden",
+          "flex flex-col items-center justify-center rounded-xl border-2 border-dashed p-6 text-center transition-colors relative overflow-hidden",
           isDragging
-            ? "border-[#F08A42] bg-[#F08A42]/8 scale-[0.99]"
-            : "border-[var(--border)] hover:border-[#F08A42]/60 hover:bg-black/[0.015] dark:hover:bg-white/[0.015]",
+            ? "border-[var(--accent)] bg-[var(--accent)]/8 scale-[0.99]"
+            : "border-[var(--border)] hover:border-[var(--accent)]/60 hover:bg-black/[0.015] dark:hover:bg-white/[0.015]",
         )}
       >
-        <div className="w-12 h-12 rounded-2xl bg-[#F08A42]/10 border border-[#F08A42]/20 flex items-center justify-center text-[#F08A42] mb-3">
+        <div className="mb-3 flex h-10 w-10 items-center justify-center rounded-xl bg-[var(--accent)]/10 text-[var(--accent)]">
           <FolderOpen className="w-6 h-6" />
         </div>
 
@@ -145,14 +145,14 @@ export function BrowseFilesTab({
             onClick={() => fileInputRef.current?.click()}
             className="px-3.5 py-1.5 rounded-lg bg-[var(--surface-active)] text-xs font-semibold text-[var(--foreground)] border border-[var(--border)] hover:border-black/20 dark:hover:border-white/20 hover:text-[var(--foreground)] transition-all flex items-center gap-1.5 cursor-pointer shadow-xs"
           >
-            <FileCode className="w-3.5 h-3.5 text-[#F08A42]" />
+            <FileCode className="w-3.5 h-3.5 text-[var(--accent)]" />
             <span>Choose File(s)</span>
           </button>
 
           <button
             type="button"
             onClick={() => folderInputRef.current?.click()}
-            className="px-3.5 py-1.5 rounded-lg bg-[#F08A42]/10 text-xs font-semibold text-[#F08A42] border border-[#F08A42]/30 hover:bg-[#F08A42]/20 transition-all flex items-center gap-1.5 cursor-pointer shadow-xs"
+            className="px-3.5 py-1.5 rounded-lg bg-[var(--accent)]/10 text-xs font-semibold text-[var(--accent)] border border-[var(--accent)]/30 hover:bg-[var(--accent)]/20 transition-all flex items-center gap-1.5 cursor-pointer shadow-xs"
           >
             <Folder className="w-3.5 h-3.5" />
             <span>Choose Entire Folder</span>
@@ -163,17 +163,17 @@ export function BrowseFilesTab({
       {/* Loading indicator while parsing files */}
       {isReadingFiles && (
         <div className="py-4 flex items-center justify-center gap-2 text-xs text-[var(--muted)]">
-          <Loader2 className="w-4 h-4 animate-spin text-[#F08A42]" />
+          <Loader2 className="w-4 h-4 animate-spin text-[var(--accent)]" />
           <span>Scanning and parsing Kubeconfig files...</span>
         </div>
       )}
 
       {/* SINGLE FILE PREVIEW */}
       {discoveredFiles.length === 1 && !isReadingFiles && (
-        <div className="p-3.5 rounded-xl bg-black/[0.03] dark:bg-white/[0.03] border border-[var(--border)] space-y-3">
+        <div className="space-y-3 border-b border-[var(--border)] pb-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2.5 min-w-0">
-              <FileCheck className="w-4 h-4 text-[#F08A42] shrink-0" />
+              <FileCheck className="w-4 h-4 text-[var(--accent)] shrink-0" />
               <div className="truncate">
                 <span className="text-xs font-semibold text-[var(--foreground)] truncate block">
                   {discoveredFiles[0].name}
@@ -202,7 +202,7 @@ export function BrowseFilesTab({
               {discoveredFiles[0].contexts.map((ctx) => (
                 <span
                   key={ctx}
-                  className="px-2 py-0.5 text-[10px] font-mono rounded-md bg-[#F08A42]/10 text-[#F08A42] border border-[#F08A42]/20"
+                  className="px-2 py-0.5 text-[10px] font-mono rounded-md bg-[var(--accent)]/10 text-[var(--accent)] border border-[var(--accent)]/20"
                 >
                   ctx: {ctx}
                 </span>
@@ -220,7 +220,7 @@ export function BrowseFilesTab({
               value={singleAliasName}
               onChange={(e) => setSingleAliasName(e.target.value)}
               placeholder="e.g. production-cluster"
-              className="w-full px-3 py-1.5 text-xs bg-[var(--background)] border border-[var(--border)] rounded-lg text-[var(--foreground)] outline-hidden focus:border-[#F08A42]"
+              className="w-full px-3 py-1.5 text-xs bg-[var(--background)] border border-[var(--border)] rounded-lg text-[var(--foreground)] outline-hidden focus:border-[var(--accent)]"
             />
           </div>
         </div>
@@ -230,13 +230,13 @@ export function BrowseFilesTab({
       {discoveredFiles.length > 1 && !isReadingFiles && (
         <div className="space-y-3">
           {/* Discovery Header Banner */}
-          <div className="flex items-center justify-between p-3 rounded-xl bg-black/[0.03] dark:bg-white/[0.03] border border-[var(--border)] text-xs">
+          <div className="flex items-center justify-between border-b border-[var(--border)] pb-2 text-xs">
             <div className="flex items-center gap-2 min-w-0">
-              <Folder className="w-4 h-4 text-[#F08A42] shrink-0" />
+              <Folder className="w-4 h-4 text-[var(--accent)] shrink-0" />
               <span className="font-semibold text-[var(--foreground)] truncate">
                 {folderName ? `Folder: ${folderName}` : "Multi-File Selection"}
               </span>
-              <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-[#F08A42]/15 text-[#F08A42]">
+              <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-[var(--accent)]/15 text-[var(--accent)]">
                 {selectedValidFiles.length} of {discoveredFiles.length} selected
               </span>
             </div>
@@ -249,7 +249,7 @@ export function BrowseFilesTab({
                     selectedValidFiles.length !== discoveredFiles.length,
                   )
                 }
-                className="text-[11px] text-[#F08A42] hover:underline font-medium cursor-pointer"
+                className="text-[11px] text-[var(--accent)] hover:underline font-medium cursor-pointer"
               >
                 {selectedValidFiles.length === discoveredFiles.length
                   ? "Deselect All"
@@ -266,25 +266,25 @@ export function BrowseFilesTab({
           </div>
 
           {/* Scrollable Discovered Items List */}
-          <div className="max-h-60 overflow-y-auto space-y-2 pr-1">
+          <div className="max-h-60 divide-y divide-[var(--border)] overflow-y-auto border-t border-b border-[var(--border)] pr-1">
             {discoveredFiles.map((file) => (
               <div
                 key={file.id}
                 onClick={() => file.isValid && toggleFileSelection(file.id)}
                 className={cn(
-                  "flex items-center justify-between p-3 rounded-xl border transition-all cursor-pointer group text-xs",
+                  "flex items-center justify-between border-l-2 py-2.5 pl-3 pr-1 transition-colors group text-xs",
                   !file.isValid
-                    ? "opacity-50 bg-black/[0.01] border-[var(--border)] cursor-not-allowed"
+                    ? "cursor-not-allowed border-transparent opacity-50"
                     : file.selected
-                      ? "bg-[#F08A42]/8 border-[#F08A42]/40"
-                      : "bg-black/[0.02] dark:bg-white/[0.02] border-[var(--border)] hover:border-black/20 dark:hover:border-white/20",
+                      ? "cursor-pointer border-[var(--accent)] bg-[var(--accent)]/[0.04]"
+                      : "cursor-pointer border-transparent hover:bg-[var(--surface-hover)]",
                 )}
               >
                 <div className="flex items-center gap-3 min-w-0 pr-2">
                   {/* Checkbox */}
                   <div className="text-[var(--muted)] group-hover:text-[var(--foreground)] transition-colors shrink-0">
                     {file.selected ? (
-                      <CheckSquare className="w-4 h-4 text-[#F08A42]" />
+                      <CheckSquare className="w-4 h-4 text-[var(--accent)]" />
                     ) : (
                       <Square className="w-4 h-4" />
                     )}
@@ -343,7 +343,7 @@ export function BrowseFilesTab({
       )}
 
       {/* Safety Guarantee Info */}
-      <div className="flex items-start gap-2.5 p-3 rounded-xl bg-blue-500/5 border border-blue-500/15 text-[11px] text-[var(--muted)]">
+      <div className="flex items-start gap-2.5 border-l-2 border-blue-500/40 pl-3 text-[11px] text-[var(--muted)]">
         <Shield className="w-4 h-4 text-blue-500 shrink-0 mt-0.5" />
         <span>
           Discovered configurations are safely copied to your isolated{" "}

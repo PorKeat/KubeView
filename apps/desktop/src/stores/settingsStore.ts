@@ -14,6 +14,7 @@ export type SettingsSection =
   | "general"
   | "safety"
   | "appearance"
+  | "sidebar"
   | "data-refresh"
   | "notifications"
   | "terminal"
@@ -31,6 +32,11 @@ export interface SettingsPreferences {
   startupPage: StartupPagePreference;
   showClusterRail: boolean;
   sidebarDefaultCollapsed: boolean;
+  showSidebarBadges: boolean;
+  hiddenSidebarItems: string[];
+  hiddenSidebarGroups: string[];
+  sidebarItemOrder: Record<string, string[]>;
+  sidebarGroupOrder: string[];
   readOnlyMode: boolean;
   disableExec: boolean;
   protectProduction: boolean;
@@ -41,6 +47,7 @@ export interface SettingsPreferences {
   notifyWarningsOnly: boolean;
   notificationSound: boolean;
   defaultShell: string;
+  localTerminalShell: string;
   logTailLines: LogTailPreference;
   logFontSize: LogFontSizePreference;
   logTimestamps: boolean;
@@ -66,6 +73,11 @@ export const DEFAULT_PREFERENCES: SettingsPreferences = {
   startupPage: "overview",
   showClusterRail: true,
   sidebarDefaultCollapsed: false,
+  showSidebarBadges: true,
+  hiddenSidebarItems: [],
+  hiddenSidebarGroups: [],
+  sidebarItemOrder: {},
+  sidebarGroupOrder: [],
   readOnlyMode: false,
   disableExec: false,
   protectProduction: false,
@@ -76,6 +88,7 @@ export const DEFAULT_PREFERENCES: SettingsPreferences = {
   notifyWarningsOnly: true,
   notificationSound: false,
   defaultShell: "auto",
+  localTerminalShell: "auto",
   logTailLines: 500,
   logFontSize: "md",
   logTimestamps: true,

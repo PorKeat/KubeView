@@ -168,6 +168,14 @@ export function CommandPalette() {
                 onSelect={() => navigateTo("gitops", "GitOps Drift")}
               />
               <Command.Item
+                onSelect={() => navigateTo("terminal", "Terminal")}
+                value="Terminal local shell command kubectl helm"
+                className="flex items-center gap-2.5 px-2.5 py-2 rounded-md cursor-pointer hover:bg-[var(--surface-hover)] text-[var(--foreground)] transition-colors"
+              >
+                <Terminal className="w-4 h-4 text-cyan-500 dark:text-cyan-400" />
+                <span>Terminal</span>
+              </Command.Item>
+              <Command.Item
                 onSelect={() => navigateTo("pods", "Pods")}
                 className="flex items-center gap-2.5 px-2.5 py-2 rounded-md cursor-pointer hover:bg-[var(--surface-hover)] text-[var(--foreground)] transition-colors"
               >

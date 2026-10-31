@@ -288,6 +288,17 @@ export const PAGE_GUIDES: Record<string, PageGuide> = {
     pathId: "first-steps",
     lessonId: "everything-is-a-resource",
   },
+  terminal: {
+    title: "Terminal",
+    beginner:
+      "The Terminal page runs a shell on your own computer. It is not a shell inside a Pod; use Pod exec for that.",
+    intermediate:
+      "The selected context is exposed through KUBECONFIG when KubeView can resolve its file. Local terminal access is opt-in in Settings.",
+    advanced:
+      "Commands run with your user privileges and your machine's environment. Anything typed here can affect local files and any cluster your kubeconfig can reach.",
+    pathId: "first-steps",
+    lessonId: "contexts-and-namespaces",
+  },
   pods: {
     title: "Pods",
     beginner:

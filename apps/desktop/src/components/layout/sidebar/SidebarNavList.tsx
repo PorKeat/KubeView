@@ -134,15 +134,16 @@ export function SidebarNavList({
 
                         {!sidebarCollapsed && item.badge !== undefined && (
                           <span
+                            data-testid={`nav-badge-${item.id}`}
                             className={cn(
-                              "px-1.5 py-0.2 rounded text-[11px] font-mono font-medium shrink-0 ml-1.5 border tracking-tight tabular-nums",
+                              "ml-1.5 inline-flex h-4 min-w-4 shrink-0 items-center justify-center rounded-full bg-black/[0.05] px-1 font-mono text-[10px] font-medium leading-none tracking-tight tabular-nums dark:bg-white/[0.06]",
                               item.badgeVariant === "soon"
-                                ? "bg-black/[0.03] dark:bg-white/[0.03] text-[var(--muted)] border-black/[0.06] dark:border-white/[0.06] opacity-75"
+                                ? "text-[var(--muted)] opacity-60"
                                 : item.badgeVariant === "warning"
-                                  ? "bg-amber-500/15 text-amber-500 dark:text-amber-400 border-amber-500/25"
+                                  ? "text-amber-600 dark:text-amber-400"
                                   : item.badgeVariant === "accent"
-                                    ? "bg-[var(--accent)]/15 text-[var(--accent)] border-[var(--accent)]/25"
-                                    : "text-[var(--muted)] bg-black/[0.04] dark:bg-white/[0.06] border-black/10 dark:border-white/10",
+                                    ? "text-[var(--accent)]"
+                                    : "text-[var(--muted)]",
                             )}
                           >
                             {item.badge}

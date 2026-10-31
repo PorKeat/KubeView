@@ -13,7 +13,12 @@ import {
   ArrowRight,
 } from "lucide-react";
 import type { DetectedContextInfo } from "@kubeview/contracts";
-import { isInternalEndpoint, replaceEndpointHost } from "@/lib/endpointUtils";
+import {
+  isInternalEndpoint,
+  joinEndpoint,
+  replaceEndpointHost,
+  splitEndpoint,
+} from "@/lib/endpointUtils";
 import { cn } from "@/lib/utils";
 import { getProviderBadge } from "../types";
 
@@ -46,212 +51,215 @@ export function AutoDetectTab({
   isSubmitting,
   setActiveTab,
 }: AutoDetectTabProps) {
+  const available = detectedSystemConfigs.filter((c) => !c.isImported);
+
   const toggleSelectAllDetected = () => {
-    const nonImported = detectedSystemConfigs.filter((c) => !c.isImported);
-    if (
-      selectedDetected.size === nonImported.length &&
-      nonImported.length > 0
-    ) {
+    if (selectedDetected.size === available.length && available.length > 0) {
       setSelectedDetected(new Set());
     } else {
       setSelectedDetected(
-        new Set(nonImported.map((c) => `${c.filePath}::${c.contextName}`)),
+        new Set(available.map((c) => `${c.filePath}::${c.contextName}`)),
       );
     }
   };
 
+  const toggleItem = (itemKey: string) => {
+    const next = new Set(selectedDetected);
+    if (next.has(itemKey)) next.delete(itemKey);
+    else next.add(itemKey);
+    setSelectedDetected(next);
+  };
+
   return (
     <div className="space-y-4">
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-4 rounded-2xl bg-black/[0.02] dark:bg-white/[0.02] border border-[var(--border)]">
+      <div className="flex flex-col justify-between gap-3 border-b border-[var(--border)] pb-3 sm:flex-row sm:items-center">
         <div>
-          <h4 className="text-xs font-bold text-[var(--foreground)] uppercase tracking-wider flex items-center gap-2">
-            <Sparkles className="w-4 h-4 text-[#F08A42]" />
-            <span>Auto-Detected System Clusters</span>
+          <h4 className="flex items-center gap-2 text-xs font-semibold text-[var(--foreground)]">
+            <Sparkles className="h-3.5 w-3.5 text-[var(--accent)]" />
+            Auto-Detected System Clusters
           </h4>
-          <p className="text-xs text-[var(--muted)] mt-1">
+          <p className="mt-1 text-[11px] leading-relaxed text-[var(--muted)]">
             Scanned standard OS paths: <code>~/.kube/config</code>,{" "}
             <code>~/.kube/kubeconfig</code>, <code>$KUBECONFIG</code>. Select
             which clusters to add.
           </p>
         </div>
         <button
+          type="button"
           onClick={() => detectSystemConfigs()}
           disabled={isDetectingConfigs}
-          className="flex items-center gap-2 px-3.5 py-1.5 rounded-xl border border-[var(--border)] hover:bg-[var(--surface-hover)] text-xs font-semibold text-[var(--muted)] hover:text-[var(--foreground)] transition-colors cursor-pointer shrink-0 self-start sm:self-auto"
+          className="inline-flex shrink-0 cursor-pointer items-center gap-1.5 self-start rounded-lg border border-[var(--border)] px-2.5 py-1.5 text-[11px] font-medium text-[var(--muted)] transition-colors hover:bg-[var(--surface-hover)] hover:text-[var(--foreground)] disabled:opacity-50 sm:self-auto"
         >
           <RotateCw
             className={cn(
-              "w-3.5 h-3.5",
-              isDetectingConfigs && "animate-spin text-[#F08A42]",
+              "h-3 w-3",
+              isDetectingConfigs && "animate-spin text-[var(--accent)]",
             )}
+            aria-hidden="true"
           />
-          <span>Re-Scan</span>
+          Re-Scan
         </button>
       </div>
 
       {isDetectingConfigs ? (
-        <div className="py-16 flex flex-col items-center justify-center text-[var(--muted)] gap-3">
-          <RotateCw className="w-6 h-6 animate-spin text-[#F08A42]" />
-          <span className="text-xs font-medium">
+        <div className="flex flex-col items-center justify-center gap-2 py-14 text-[var(--muted)]">
+          <RotateCw
+            className="h-5 w-5 animate-spin text-[var(--accent)]"
+            aria-hidden="true"
+          />
+          <span className="text-[11px]">
             Scanning OS directories for Kubernetes configurations...
           </span>
         </div>
       ) : detectedSystemConfigs.length === 0 ? (
-        <div className="py-16 border-2 border-dashed border-[var(--border)] rounded-3xl flex flex-col items-center justify-center text-center p-8 text-[var(--muted)]">
-          <div className="w-12 h-12 rounded-2xl bg-black/5 dark:bg-white/5 flex items-center justify-center mb-3">
-            <Info className="w-6 h-6 opacity-40 text-[var(--foreground)]" />
-          </div>
-          <span className="text-sm font-semibold text-[var(--foreground)]">
-            No Kubeconfigs Found in ~/.kube
+        <div className="flex flex-col items-center justify-center py-14 text-center">
+          <Info className="h-5 w-5 text-[var(--muted)]" aria-hidden="true" />
+          <span className="mt-2 text-xs font-semibold text-[var(--foreground)]">
+            No kubeconfigs found in ~/.kube
           </span>
-          <p className="text-xs max-w-md mt-1.5 leading-relaxed">
+          <p className="mt-1 max-w-md text-[11px] leading-relaxed text-[var(--muted)]">
             We scanned standard OS paths but didn&apos;t find any kubeconfig
-            files. You can manually pick files, select a folder, or paste YAML
-            using the other tabs.
+            files. You can pick files, select a folder, or paste YAML using the
+            other tabs.
           </p>
-          <div className="flex items-center gap-3 mt-4">
+          <div className="mt-3 flex items-center gap-2">
             <button
+              type="button"
               onClick={() => setActiveTab("browse")}
-              className="px-4 py-2 rounded-xl bg-[var(--surface-active)] hover:bg-[var(--surface-hover)] border border-[var(--border)] text-xs font-semibold text-[var(--foreground)] transition-all cursor-pointer"
+              className="cursor-pointer rounded-lg border border-[var(--border)] bg-[var(--surface)] px-3 py-1.5 text-[11px] font-medium text-[var(--foreground)] transition-colors hover:bg-[var(--surface-hover)]"
             >
               Pick Files or Folder
             </button>
             <button
+              type="button"
               onClick={() => setActiveTab("paste")}
-              className="px-4 py-2 rounded-xl bg-[var(--surface-active)] hover:bg-[var(--surface-hover)] border border-[var(--border)] text-xs font-semibold text-[var(--foreground)] transition-all cursor-pointer"
+              className="cursor-pointer rounded-lg border border-[var(--border)] bg-[var(--surface)] px-3 py-1.5 text-[11px] font-medium text-[var(--foreground)] transition-colors hover:bg-[var(--surface-hover)]"
             >
               Paste YAML
             </button>
           </div>
         </div>
       ) : (
-        <div className="space-y-3">
-          {/* Bulk Selection Header */}
-          <div className="flex items-center justify-between px-2 py-1 text-xs">
+        <div className="space-y-2">
+          <div className="flex items-center justify-between gap-2 px-1">
             <button
+              type="button"
               onClick={toggleSelectAllDetected}
-              className="flex items-center gap-2.5 text-[var(--muted)] hover:text-[var(--foreground)] cursor-pointer font-medium"
+              className="flex cursor-pointer items-center gap-2 text-[11px] font-medium text-[var(--muted)] transition-colors hover:text-[var(--foreground)]"
             >
               {selectedDetected.size > 0 &&
-              selectedDetected.size ===
-                detectedSystemConfigs.filter((c) => !c.isImported).length ? (
-                <CheckSquare className="w-4 h-4 text-[#F08A42]" />
+              selectedDetected.size === available.length ? (
+                <CheckSquare
+                  className="h-3.5 w-3.5 text-[var(--accent)]"
+                  aria-hidden="true"
+                />
               ) : selectedDetected.size > 0 ? (
-                <CheckSquare className="w-4 h-4 text-[#F08A42] opacity-70" />
+                <CheckSquare
+                  className="h-3.5 w-3.5 text-[var(--accent)] opacity-70"
+                  aria-hidden="true"
+                />
               ) : (
-                <Square className="w-4 h-4" />
+                <Square className="h-3.5 w-3.5" aria-hidden="true" />
               )}
-              <span>
-                Select All (
-                {detectedSystemConfigs.filter((c) => !c.isImported).length}{" "}
-                Available)
-              </span>
+              Select All ({available.length} Available)
             </button>
 
             {selectedDetected.size > 0 && (
               <button
+                type="button"
                 onClick={() => handleImportDetected()}
                 disabled={isSubmitting}
-                className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-[#F08A42] hover:bg-[#E07931] text-white text-xs font-semibold shadow-md transition-all cursor-pointer"
+                className="inline-flex cursor-pointer items-center gap-1 rounded-lg bg-[var(--accent)] px-2.5 py-1.5 text-[11px] font-semibold text-white transition-colors hover:bg-[var(--accent-hover)] disabled:opacity-50"
               >
-                <Plus className="w-3.5 h-3.5" />
-                <span>Import Selected ({selectedDetected.size})</span>
+                <Plus className="h-3 w-3" aria-hidden="true" />
+                Import Selected ({selectedDetected.size})
               </button>
             )}
           </div>
 
-          {/* Cards List */}
-          <div className="space-y-2.5">
+          <div className="divide-y divide-[var(--border)] border-t border-[var(--border)]">
             {detectedSystemConfigs.map((c) => {
               const itemKey = `${c.filePath}::${c.contextName}`;
               const isSelected = selectedDetected.has(itemKey);
               const isInternal = isInternalEndpoint(c.server);
-              const effectiveServer = overrideEndpoints[itemKey]
-                ? replaceEndpointHost(c.server, overrideEndpoints[itemKey])
+              const overrideValue = overrideEndpoints[itemKey];
+              const baseParts = splitEndpoint(c.server);
+              const overrideParts = overrideValue
+                ? splitEndpoint(
+                    overrideValue.includes("://")
+                      ? overrideValue
+                      : `${overrideValue}:${baseParts.port}`,
+                  )
+                : baseParts;
+              const effectiveServer = overrideValue
+                ? replaceEndpointHost(c.server, overrideValue)
                 : c.server;
 
               return (
                 <div
                   key={itemKey}
-                  onClick={() => {
-                    if (!c.isImported) {
-                      const next = new Set(selectedDetected);
-                      if (next.has(itemKey)) {
-                        next.delete(itemKey);
-                      } else {
-                        next.add(itemKey);
-                      }
-                      setSelectedDetected(next);
-                    }
-                  }}
+                  onClick={() => !c.isImported && toggleItem(itemKey)}
                   className={cn(
-                    "p-4 rounded-2xl border transition-all flex flex-col gap-3",
+                    "border-l-2 py-3 pl-3 pr-1 transition-colors",
                     c.isImported
-                      ? "bg-slate-50/50 dark:bg-white/[0.02] border-[var(--border)] opacity-85"
+                      ? "border-transparent opacity-60"
                       : isSelected
-                        ? "bg-[#F08A42]/10 border-[#F08A42] shadow-sm cursor-pointer"
-                        : "bg-slate-50 dark:bg-black/30 border border-[var(--border)] hover:border-slate-300 dark:hover:border-white/20 cursor-pointer",
+                        ? "cursor-pointer border-[var(--accent)] bg-[var(--accent)]/[0.04]"
+                        : "cursor-pointer border-transparent hover:bg-[var(--surface-hover)]",
                   )}
                 >
-                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3.5 w-full">
-                    <div className="flex items-center gap-3.5 min-w-0">
+                  <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                    <div className="flex min-w-0 items-center gap-3">
                       <div
                         className="shrink-0"
-                        onClick={(e) => e.stopPropagation()}
+                        onClick={(event) => event.stopPropagation()}
                       >
                         {c.isImported ? (
-                          <div className="w-5 h-5 rounded-lg bg-emerald-500/20 text-emerald-500 flex items-center justify-center">
-                            <Check className="w-3.5 h-3.5" />
-                          </div>
+                          <span className="flex h-4 w-4 items-center justify-center rounded-full bg-emerald-500/15 text-emerald-500">
+                            <Check className="h-3 w-3" aria-hidden="true" />
+                          </span>
                         ) : (
                           <input
                             type="checkbox"
                             checked={isSelected}
-                            onChange={() => {
-                              const next = new Set(selectedDetected);
-                              if (next.has(itemKey)) {
-                                next.delete(itemKey);
-                              } else {
-                                next.add(itemKey);
-                              }
-                              setSelectedDetected(next);
-                            }}
-                            className="w-4 h-4 rounded accent-[#F08A42] cursor-pointer"
+                            onChange={() => toggleItem(itemKey)}
+                            aria-label={`Select ${c.contextName}`}
+                            className="h-3.5 w-3.5 cursor-pointer accent-[var(--accent)]"
                           />
                         )}
                       </div>
 
                       <div className="min-w-0">
-                        <div className="flex items-center gap-2 flex-wrap">
-                          <span className="font-mono font-bold text-sm text-[var(--foreground)] truncate">
+                        <div className="flex flex-wrap items-center gap-1.5">
+                          <span className="truncate font-mono text-xs font-semibold text-[var(--foreground)]">
                             {c.contextName}
                           </span>
                           {getProviderBadge(c.provider)}
                           {isInternal && (
-                            <span className="px-1.5 py-0.5 text-[9px] font-mono rounded bg-amber-500/15 text-amber-600 dark:text-amber-400 border border-amber-500/30">
-                              Internal Domain
+                            <span className="rounded border border-amber-500/30 bg-amber-500/15 px-1.5 py-0.5 font-mono text-[9px] text-amber-600 dark:text-amber-400">
+                              Internal
                             </span>
                           )}
                           {c.authType && (
-                            <span className="px-1.5 py-0.5 text-[9px] font-mono rounded bg-black/5 dark:bg-white/5 text-[var(--muted)] border border-[var(--border)]">
+                            <span className="rounded border border-[var(--border)] bg-black/5 px-1.5 py-0.5 font-mono text-[9px] text-[var(--muted)] dark:bg-white/5">
                               auth: {c.authType}
                             </span>
                           )}
                         </div>
-                        <div className="flex items-center gap-2 text-xs text-[var(--muted)] font-mono mt-1 flex-wrap">
+                        <div className="mt-0.5 flex flex-wrap items-center gap-2 font-mono text-[10px] text-[var(--muted)]">
                           <span
                             className={cn(
-                              "font-medium",
-                              overrideEndpoints[itemKey]
-                                ? "text-[#F08A42]"
+                              "truncate font-medium",
+                              overrideValue
+                                ? "text-[var(--accent)]"
                                 : "text-[var(--foreground)]",
                             )}
                           >
                             {effectiveServer || "local server"}
                           </span>
-                          <span>•</span>
+                          <span aria-hidden="true">·</span>
                           <span
-                            className="truncate max-w-sm text-[11px]"
+                            className="max-w-sm truncate"
                             title={c.filePath}
                           >
                             {c.filePath}
@@ -261,68 +269,128 @@ export function AutoDetectTab({
                     </div>
 
                     <div
-                      className="shrink-0 flex items-center gap-2 self-end sm:self-auto"
-                      onClick={(e) => e.stopPropagation()}
+                      className="flex shrink-0 items-center gap-2 self-end sm:self-auto"
+                      onClick={(event) => event.stopPropagation()}
                     >
                       {c.isImported ? (
-                        <span className="px-3 py-1.5 rounded-xl text-xs font-semibold bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20 flex items-center gap-1.5">
-                          <Check className="w-3.5 h-3.5" />
-                          <span>Added</span>
+                        <span className="inline-flex items-center gap-1 rounded-full border border-emerald-500/20 bg-emerald-500/10 px-2.5 py-1 text-[10px] font-semibold text-emerald-600 dark:text-emerald-400">
+                          <Check className="h-3 w-3" aria-hidden="true" />
+                          Added
                         </span>
                       ) : (
                         <button
+                          type="button"
                           onClick={() => handleImportDetected(c)}
                           disabled={isSubmitting}
-                          className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-[#F08A42] hover:bg-[#E07931] text-white text-xs font-semibold shadow-xs transition-all cursor-pointer"
+                          className="inline-flex cursor-pointer items-center gap-1.5 rounded-lg bg-[var(--accent)] px-3 py-1.5 text-[11px] font-semibold text-white transition-colors hover:bg-[var(--accent-hover)] disabled:opacity-50"
                         >
-                          <span>Add to KubeView</span>
-                          <ArrowRight className="w-3.5 h-3.5" />
+                          Add to KubeView
+                          <ArrowRight className="h-3 w-3" aria-hidden="true" />
                         </button>
                       )}
                     </div>
                   </div>
 
-                  {/* Internal Domain IP Input Prompt */}
                   {!c.isImported && isInternal && (
                     <div
-                      className="pt-2.5 border-t border-[var(--border)] space-y-1.5 w-full text-left"
-                      onClick={(e) => e.stopPropagation()}
+                      className="mt-2.5 space-y-1.5 border-t border-[var(--border)] pt-2.5"
+                      onClick={(event) => event.stopPropagation()}
                     >
-                      <div className="flex items-center justify-between text-[11px]">
-                        <span className="flex items-center gap-1.5 text-amber-600 dark:text-amber-400 font-medium">
-                          <AlertTriangle className="w-3.5 h-3.5 shrink-0" />
-                          Internal hostname detected. Enter node IP to connect
-                          from this computer:
+                      <div className="flex flex-wrap items-center justify-between gap-2 text-[10px]">
+                        <span className="flex items-center gap-1.5 font-medium text-amber-600 dark:text-amber-400">
+                          <AlertTriangle
+                            className="h-3.5 w-3.5 shrink-0"
+                            aria-hidden="true"
+                          />
+                          Internal hostname — enter the node IP and port:
                         </span>
-                        {suggestedIps.length > 0 &&
-                          !overrideEndpoints[itemKey] && (
-                            <button
-                              type="button"
-                              onClick={() =>
-                                setOverrideEndpoints({
-                                  ...overrideEndpoints,
-                                  [itemKey]: suggestedIps[0].ip,
-                                })
-                              }
-                              className="text-[10px] text-[#F08A42] hover:underline font-mono cursor-pointer"
-                            >
-                              Use {suggestedIps[0].ip}
-                            </button>
-                          )}
+                        {suggestedIps.length > 0 && !overrideValue && (
+                          <button
+                            type="button"
+                            onClick={() =>
+                              setOverrideEndpoints({
+                                ...overrideEndpoints,
+                                [itemKey]: joinEndpoint(
+                                  baseParts.protocol,
+                                  suggestedIps[0].ip,
+                                  baseParts.port,
+                                ),
+                              })
+                            }
+                            className="cursor-pointer font-mono text-[10px] text-[var(--accent)] hover:underline"
+                          >
+                            Use {suggestedIps[0].ip}
+                          </button>
+                        )}
                       </div>
 
                       <div className="flex items-center gap-2">
                         <input
                           type="text"
-                          placeholder="Enter Master IP (e.g. 10.1.16.11)"
-                          value={overrideEndpoints[itemKey] || ""}
-                          onChange={(e) =>
+                          data-testid={`detected-host-${itemKey}`}
+                          placeholder="Master IP / hostname (e.g. 10.1.16.11)"
+                          value={overrideValue ? overrideParts.host : ""}
+                          onChange={(event) => {
+                            const raw = event.target.value.trim();
+                            const next = { ...overrideEndpoints };
+                            if (!raw) {
+                              delete next[itemKey];
+                            } else if (
+                              raw.includes("://") ||
+                              /^[^:]+:\d+$/.test(raw)
+                            ) {
+                              const parsed = splitEndpoint(raw);
+                              next[itemKey] = joinEndpoint(
+                                parsed.protocol,
+                                parsed.host,
+                                parsed.port,
+                              );
+                            } else {
+                              next[itemKey] = joinEndpoint(
+                                baseParts.protocol,
+                                raw,
+                                overrideParts.port,
+                              );
+                            }
+                            setOverrideEndpoints(next);
+                          }}
+                          className="min-w-0 flex-1 rounded-lg border border-[var(--border)] bg-[var(--background)] px-3 py-1.5 font-mono text-xs text-[var(--foreground)] outline-hidden placeholder:text-[var(--muted)]/50 focus:border-[var(--accent)]"
+                          aria-label="Master IP or hostname"
+                        />
+                        <span className="font-mono text-xs text-[var(--muted)]">
+                          :
+                        </span>
+                        <input
+                          type="text"
+                          inputMode="numeric"
+                          data-testid={`detected-port-${itemKey}`}
+                          value={
+                            overrideValue ? overrideParts.port : baseParts.port
+                          }
+                          onChange={(event) => {
+                            if (!overrideValue) return;
+                            const port = event.target.value.replace(
+                              /[^\d]/g,
+                              "",
+                            );
+                            const host = overrideParts.host;
+                            if (!host || !port) return;
                             setOverrideEndpoints({
                               ...overrideEndpoints,
-                              [itemKey]: e.target.value,
-                            })
+                              [itemKey]: joinEndpoint(
+                                baseParts.protocol,
+                                host,
+                                port,
+                              ),
+                            });
+                          }}
+                          disabled={!overrideValue}
+                          maxLength={5}
+                          className="w-20 rounded-lg border border-[var(--border)] bg-[var(--background)] px-2.5 py-1.5 font-mono text-xs tabular-nums text-[var(--foreground)] outline-hidden focus:border-[var(--accent)] disabled:opacity-50"
+                          aria-label="Master port"
+                          title={
+                            overrideValue ? "Master port" : "Enter a host first"
                           }
-                          className="flex-1 px-3 py-1.5 text-xs font-mono bg-[var(--background)] border border-[var(--border)] rounded-lg text-[var(--foreground)] placeholder:text-[var(--muted)]/50 focus:border-[#F08A42] outline-none"
                         />
                       </div>
                     </div>

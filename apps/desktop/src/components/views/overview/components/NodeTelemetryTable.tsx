@@ -25,7 +25,7 @@ export function NodeTelemetryTable({
   onFilterPodsForNode,
 }: NodeTelemetryTableProps) {
   return (
-    <div className="border border-[var(--border)] rounded-xl overflow-hidden bg-[var(--surface)]">
+    <div className="overflow-hidden">
       <div className="overflow-y-auto overflow-x-hidden">
         <table className="w-full text-left font-mono text-xs table-fixed">
           <thead>

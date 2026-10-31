@@ -281,9 +281,10 @@ func (m *Manager) ImportDetectedContexts(params ImportDetectedContextsParams) (*
 				clCopy.Server = newSrv
 			}
 			if item.Insecure != nil && *item.Insecure {
+				// Preserve any imported CA bundle; it is ignored while
+				// verification is off and remains available if it is turned
+				// back on.
 				clCopy.InsecureSkipTLSVerify = true
-				clCopy.CertificateAuthorityData = nil
-				clCopy.CertificateAuthority = ""
 			}
 			singleCfg.Clusters[targetClusterName] = &clCopy
 		}

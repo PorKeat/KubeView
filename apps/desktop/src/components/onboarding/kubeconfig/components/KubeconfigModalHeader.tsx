@@ -6,30 +6,30 @@ import { Tooltip } from "@/components/ui/Tooltip";
 
 export function KubeconfigModalHeader() {
   return (
-    <div className="flex items-center justify-between gap-3 px-4 sm:px-6 md:px-8 py-4 sm:py-5 border-b border-[var(--border)] select-none">
-      <div className="flex min-w-0 flex-1 items-center gap-2.5 sm:gap-3.5">
-        <div className="w-10 h-10 rounded-2xl bg-[#F08A42]/15 border border-[#F08A42]/30 flex items-center justify-center text-[#F08A42] shrink-0 shadow-[0_0_15px_rgba(240,138,66,0.15)]">
-          <Server className="w-5 h-5" />
-        </div>
+    <div className="flex items-center justify-between gap-3 border-b border-[var(--border)] px-4 py-4 select-none sm:px-5">
+      <div className="flex min-w-0 flex-1 items-center gap-2.5">
+        <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-[var(--accent)]/10 text-[var(--accent)]">
+          <Server className="w-4 h-4" aria-hidden="true" />
+        </span>
         <div>
-          <Dialog.Title className="text-sm sm:text-base font-bold text-[var(--foreground)] tracking-tight">
-            Kubeconfig & Cluster Management
+          <Dialog.Title className="text-sm font-semibold text-[var(--foreground)]">
+            Kubeconfig &amp; Cluster Management
           </Dialog.Title>
-          <Dialog.Description className="hidden sm:block text-xs text-[var(--muted)] mt-0.5">
+          <Dialog.Description className="hidden text-[11px] text-[var(--muted)] mt-0.5 sm:block">
             Scan system directories (~/.kube), import files, select folders, or
             paste YAML configurations
           </Dialog.Description>
         </div>
       </div>
 
-      <div className="flex items-center gap-3">
-        <span className="hidden sm:inline-block px-2.5 py-1 text-[11px] font-mono text-[var(--muted)] rounded-lg border border-[var(--border)] bg-black/[0.02] dark:bg-white/[0.02]">
-          Esc to close
-        </span>
+      <div className="flex items-center gap-2">
+        <kbd className="hidden rounded border border-[var(--border)] bg-black/[0.03] px-1.5 py-0.5 font-mono text-[9px] text-[var(--muted)] sm:inline-block dark:bg-white/[0.04]">
+          Esc
+        </kbd>
         <Tooltip content="Close dialog" shortcut="Esc">
           <Dialog.Close asChild>
             <button
-              className="p-2 rounded-xl hover:bg-[var(--surface-hover)] text-[var(--muted)] hover:text-[var(--foreground)] transition-colors cursor-pointer"
+              className="rounded-md p-1.5 text-[var(--muted)] transition-colors hover:bg-[var(--surface-hover)] hover:text-[var(--foreground)] cursor-pointer"
               aria-label="Close dialog"
             >
               <X className="w-4 h-4" aria-hidden="true" />

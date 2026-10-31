@@ -146,9 +146,9 @@ func (m *Manager) UpdateEndpoint(contextName, newServerUrl string, insecure ...b
 					clusterObj.Server = newServerUrl
 					if len(insecure) > 0 {
 						if insecure[0] {
+							// Keep the CA bundle so enabling verification later
+							// does not leave the context without trust material.
 							clusterObj.InsecureSkipTLSVerify = true
-							clusterObj.CertificateAuthorityData = nil
-							clusterObj.CertificateAuthority = ""
 						} else {
 							clusterObj.InsecureSkipTLSVerify = false
 						}
@@ -175,9 +175,9 @@ func (m *Manager) UpdateEndpoint(contextName, newServerUrl string, insecure ...b
 						clObj.Server = newServerUrl
 						if len(insecure) > 0 {
 							if insecure[0] {
+								// Preserve the CA data for the same reason as the
+								// on-disk kubeconfig path above.
 								clObj.InsecureSkipTLSVerify = true
-								clObj.CertificateAuthorityData = nil
-								clObj.CertificateAuthority = ""
 							} else {
 								clObj.InsecureSkipTLSVerify = false
 							}

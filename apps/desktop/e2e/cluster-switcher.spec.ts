@@ -86,6 +86,29 @@ test.describe("KubeView UI - Cluster Context Switcher & Configuration", () => {
     await expect(endpointInput).not.toBeVisible();
   });
 
+  test("updates the API server preview live from host and port", async ({
+    page,
+  }) => {
+    await page.locator('[data-testid="context-switcher-trigger"]').click();
+    await page
+      .locator('[data-testid="configure-endpoint-btn"]')
+      .first()
+      .click();
+
+    const hostInput = page.getByTestId("endpoint-modal-input");
+    const portInput = page.getByTestId("endpoint-modal-port");
+
+    await hostInput.fill("10.1.99.99");
+    await portInput.fill("7443");
+    await expect(page.getByText("https://10.1.99.99:7443")).toBeVisible();
+
+    // Pasting a full URL splits it into host and port automatically.
+    await hostInput.fill("https://10.1.99.99:8443");
+    await expect(hostInput).toHaveValue("10.1.99.99");
+    await expect(portInput).toHaveValue("8443");
+    await expect(page.getByText("https://10.1.99.99:8443")).toBeVisible();
+  });
+
   test("switches active context smoothly", async ({ page }) => {
     const trigger = page.locator('[data-testid="context-switcher-trigger"]');
     await trigger.click();

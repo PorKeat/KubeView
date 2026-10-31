@@ -49,7 +49,7 @@ export function LearningSettingsPanel() {
 
       <div
         data-testid="settings-learning-panel"
-        className="rounded-xl border border-[var(--border)] bg-black/[0.02] p-3.5 dark:bg-white/[0.02]"
+        className="border-b border-[var(--border)] pb-4"
       >
         <div className="flex flex-wrap items-center justify-between gap-2">
           <div>

@@ -28,6 +28,7 @@ import {
   ShieldCheck,
   GitBranch,
   GraduationCap,
+  Terminal,
   FolderTree,
   History,
   Waypoints,
@@ -79,6 +80,8 @@ export function TabBar() {
         return Server;
       case "gitops":
         return GitBranch;
+      case "terminal":
+        return Terminal;
       case "learning":
         return GraduationCap;
       case "namespaces":

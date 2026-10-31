@@ -10,7 +10,11 @@ import { cn } from "@/lib/utils";
 import { invokeRpc } from "@/lib/ipc";
 import type { SimpleResourceCountsResult } from "@kubeview/contracts";
 import { Tooltip } from "@/components/ui/Tooltip";
-import { buildNavigationGroups, type NavItem } from "./sidebar/navConfig";
+import {
+  buildNavigationGroups,
+  customizeNavigationGroups,
+  type NavItem,
+} from "./sidebar/navConfig";
 import { SidebarNavList } from "./sidebar/SidebarNavList";
 import { SidebarSettingsNav } from "./sidebar/SidebarSettingsNav";
 import { SidebarFooter } from "./sidebar/SidebarFooter";
@@ -31,10 +35,16 @@ export function AppSidebar() {
   const { activeTabId, previousTabId, openTabs, openTab, setActiveTab } =
     useTabStore();
   const { activeSection, setActiveSection } = useSettingsStore();
+  const showSidebarBadges = useSettingsStore((s) => s.showSidebarBadges);
+  const hiddenSidebarItems = useSettingsStore((s) => s.hiddenSidebarItems);
+  const hiddenSidebarGroups = useSettingsStore((s) => s.hiddenSidebarGroups);
+  const sidebarItemOrder = useSettingsStore((s) => s.sidebarItemOrder);
+  const sidebarGroupOrder = useSettingsStore((s) => s.sidebarGroupOrder);
   const loadContexts = useClusterStore((state) => state.loadContexts);
   const {
     availableContexts,
     currentContext,
+    connectionStatus,
     clusterOverview,
     totalPodsCount,
     pods,
@@ -165,54 +175,63 @@ export function AppSidebar() {
 
   const navigationGroups = React.useMemo(
     () =>
-      buildNavigationGroups({
-        contextCount: availableContexts.length,
-        pods: realPodsCount,
-        deployments: deploymentCount,
-        replicaSets: replicaSetCount,
-        statefulSets: statefulSetCount,
-        daemonSets: daemonSetCount,
-        jobsAndCronJobs: jobsAndCronJobsCount,
-        services: serviceCount,
-        endpoints: endpointCount,
-        ingressGateway: ingressGatewayCount,
-        networkPolicies: networkPolicyCount,
-        activePortForwards: activePortForwardCount,
-        configMaps: configMapCount,
-        secrets: secretCount,
-        persistentVolumes: persistentVolumeCount,
-        storageClasses: storageClassCount,
-        serviceAccounts: serviceAccountCount,
-        rbac: rbacCount,
-        crds: crdCount,
-        namespaces: simpleResourceCounts?.namespaces ?? 0,
-        events: simpleResourceCounts?.events ?? 0,
-        replicationControllers:
-          simpleResourceCounts?.replicationControllers ?? 0,
-        endpointSlices: simpleResourceCounts?.endpointSlices ?? 0,
-        ingressClasses: simpleResourceCounts?.ingressClasses ?? 0,
-        persistentVolumeClaims:
-          simpleResourceCounts?.persistentVolumeClaims ?? 0,
-        horizontalPodAutoscalers:
-          simpleResourceCounts?.horizontalPodAutoscalers ?? 0,
-        verticalPodAutoscalers:
-          simpleResourceCounts?.verticalPodAutoscalers ?? 0,
-        podDisruptionBudgets: simpleResourceCounts?.podDisruptionBudgets ?? 0,
-        resourceQuotas: simpleResourceCounts?.resourceQuotas ?? 0,
-        limitRanges: simpleResourceCounts?.limitRanges ?? 0,
-        priorityClasses: simpleResourceCounts?.priorityClasses ?? 0,
-        runtimeClasses: simpleResourceCounts?.runtimeClasses ?? 0,
-        leases: simpleResourceCounts?.leases ?? 0,
-        mutatingWebhookConfigurations:
-          simpleResourceCounts?.mutatingWebhookConfigurations ?? 0,
-        validatingWebhookConfigurations:
-          simpleResourceCounts?.validatingWebhookConfigurations ?? 0,
-        validatingAdmissionPolicies:
-          simpleResourceCounts?.validatingAdmissionPolicies ?? 0,
-        validatingAdmissionPolicyBindings:
-          simpleResourceCounts?.validatingAdmissionPolicyBindings ?? 0,
-        helmReleases: simpleResourceCounts?.helmReleases ?? 0,
-      }),
+      customizeNavigationGroups(
+        buildNavigationGroups({
+          contextCount: availableContexts.length,
+          pods: realPodsCount,
+          deployments: deploymentCount,
+          replicaSets: replicaSetCount,
+          statefulSets: statefulSetCount,
+          daemonSets: daemonSetCount,
+          jobsAndCronJobs: jobsAndCronJobsCount,
+          services: serviceCount,
+          endpoints: endpointCount,
+          ingressGateway: ingressGatewayCount,
+          networkPolicies: networkPolicyCount,
+          activePortForwards: activePortForwardCount,
+          configMaps: configMapCount,
+          secrets: secretCount,
+          persistentVolumes: persistentVolumeCount,
+          storageClasses: storageClassCount,
+          serviceAccounts: serviceAccountCount,
+          rbac: rbacCount,
+          crds: crdCount,
+          namespaces: simpleResourceCounts?.namespaces ?? 0,
+          events: simpleResourceCounts?.events ?? 0,
+          replicationControllers:
+            simpleResourceCounts?.replicationControllers ?? 0,
+          endpointSlices: simpleResourceCounts?.endpointSlices ?? 0,
+          ingressClasses: simpleResourceCounts?.ingressClasses ?? 0,
+          persistentVolumeClaims:
+            simpleResourceCounts?.persistentVolumeClaims ?? 0,
+          horizontalPodAutoscalers:
+            simpleResourceCounts?.horizontalPodAutoscalers ?? 0,
+          verticalPodAutoscalers:
+            simpleResourceCounts?.verticalPodAutoscalers ?? 0,
+          podDisruptionBudgets: simpleResourceCounts?.podDisruptionBudgets ?? 0,
+          resourceQuotas: simpleResourceCounts?.resourceQuotas ?? 0,
+          limitRanges: simpleResourceCounts?.limitRanges ?? 0,
+          priorityClasses: simpleResourceCounts?.priorityClasses ?? 0,
+          runtimeClasses: simpleResourceCounts?.runtimeClasses ?? 0,
+          leases: simpleResourceCounts?.leases ?? 0,
+          mutatingWebhookConfigurations:
+            simpleResourceCounts?.mutatingWebhookConfigurations ?? 0,
+          validatingWebhookConfigurations:
+            simpleResourceCounts?.validatingWebhookConfigurations ?? 0,
+          validatingAdmissionPolicies:
+            simpleResourceCounts?.validatingAdmissionPolicies ?? 0,
+          validatingAdmissionPolicyBindings:
+            simpleResourceCounts?.validatingAdmissionPolicyBindings ?? 0,
+          helmReleases: simpleResourceCounts?.helmReleases ?? 0,
+        }),
+        {
+          showBadges: showSidebarBadges && connectionStatus !== "offline",
+          hiddenItems: hiddenSidebarItems,
+          hiddenGroups: hiddenSidebarGroups,
+          itemOrder: sidebarItemOrder,
+          groupOrder: sidebarGroupOrder,
+        },
+      ),
     [
       availableContexts.length,
       realPodsCount,
@@ -234,6 +253,12 @@ export function AppSidebar() {
       rbacCount,
       crdCount,
       simpleResourceCounts,
+      showSidebarBadges,
+      connectionStatus,
+      hiddenSidebarItems,
+      hiddenSidebarGroups,
+      sidebarItemOrder,
+      sidebarGroupOrder,
     ],
   );
 
@@ -497,14 +522,35 @@ export function AppSidebar() {
             />
           )}
           {!isSettingsActive && !isCatalogActive && (
-            <SidebarNavList
-              groups={navigationGroups}
-              collapsedGroups={collapsedGroups}
-              sidebarCollapsed={sidebarCollapsed}
-              activeTabId={activeTabId}
-              onToggleGroup={toggleGroup}
-              onItemClick={handleItemClick}
-            />
+            <>
+              <SidebarNavList
+                groups={navigationGroups}
+                collapsedGroups={collapsedGroups}
+                sidebarCollapsed={sidebarCollapsed}
+                activeTabId={activeTabId}
+                onToggleGroup={toggleGroup}
+                onItemClick={handleItemClick}
+              />
+              {navigationGroups.length === 0 && (
+                <div className="rounded-xl border border-dashed border-[var(--border)] bg-black/[0.02] p-3 text-center dark:bg-white/[0.02]">
+                  <p className="text-[10px] leading-relaxed text-[var(--muted)]">
+                    All sidebar sections are hidden.
+                  </p>
+                  {!sidebarCollapsed && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setActiveSection("sidebar");
+                        handleOpenSettings();
+                      }}
+                      className="mt-2 inline-flex items-center justify-center rounded-md border border-[var(--border)] bg-[var(--surface)] px-2.5 py-1 text-[10px] font-medium text-[var(--foreground)] transition-colors hover:bg-[var(--surface-hover)] cursor-pointer focus-visible:ring-2 focus-visible:ring-[var(--accent)] focus-visible:outline-hidden"
+                    >
+                      Customize sidebar
+                    </button>
+                  )}
+                </div>
+              )}
+            </>
           )}
         </div>
 

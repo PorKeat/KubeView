@@ -649,7 +649,7 @@ export function ClusterCatalogView() {
         </div>
       ) : (
         <>
-          <div className="mt-3 flex flex-col gap-2 rounded-xl border border-[var(--border)] bg-[var(--surface)] p-2.5 lg:flex-row lg:items-center">
+          <div className="mt-3 flex min-h-11 flex-col gap-2 border-b border-[var(--border)] pb-2 lg:flex-row lg:items-center">
             <div className="relative min-w-0 flex-1">
               <Search className="pointer-events-none absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-[var(--muted)]" />
               <input
@@ -658,7 +658,7 @@ export function ClusterCatalogView() {
                 onChange={(event) => setSearch(event.target.value)}
                 placeholder="Filter clusters by name, server, provider..."
                 aria-label="Filter clusters"
-                className="w-full rounded-lg border border-[var(--border)] bg-black/[0.03] py-1.5 pl-8 pr-2.5 font-mono text-xs text-[var(--foreground)] outline-hidden transition-all placeholder:text-[var(--muted)] focus:border-[var(--accent)] dark:bg-black/30"
+                className="w-full rounded-lg border border-[var(--border)] bg-slate-50 py-1 pl-8 pr-2.5 font-mono text-xs text-[var(--foreground)] outline-hidden transition-all placeholder:text-[var(--muted)] focus:border-[var(--accent)] dark:bg-black/30"
               />
             </div>
 
@@ -719,7 +719,7 @@ export function ClusterCatalogView() {
             </span>
           </div>
 
-          <div className="mt-3 overflow-y-auto overflow-x-hidden rounded-xl border border-[var(--border)] bg-[var(--surface)]">
+          <div className="mt-3 overflow-x-auto">
             <table className="w-full table-fixed border-collapse text-left text-xs">
               <colgroup>
                 <col className="w-9" />

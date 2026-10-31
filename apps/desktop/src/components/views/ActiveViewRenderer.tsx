@@ -5,6 +5,7 @@ import { useTabStore } from "@/stores/tabStore";
 import { ClusterOverviewView } from "./ClusterOverviewView";
 import { TopologyView } from "./topology/TopologyView";
 import { GitOpsView } from "./gitops/GitOpsView";
+import { TerminalView } from "./terminal/TerminalView";
 import { LearningCenterView } from "./learning/LearningCenterView";
 import { FleetCatalogView } from "./fleet/FleetCatalogView";
 import { HelmChartsView } from "./helm/HelmChartsView";
@@ -49,6 +50,10 @@ export function ActiveViewRenderer() {
 
         if (activeTabId === "topology") {
           return <TopologyView />;
+        }
+
+        if (activeTabId === "terminal") {
+          return <TerminalView />;
         }
 
         if (activeTabId === "namespaces") {

@@ -33,7 +33,7 @@ export function GitOpsResourceTable({
   return (
     <div
       data-testid="gitops-resource-table"
-      className="overflow-y-auto overflow-x-hidden rounded-xl border border-[var(--border)] bg-[var(--surface)]"
+      className="overflow-y-auto overflow-x-hidden"
     >
       <table className="w-full text-left text-[10px]">
         <thead className="border-b border-[var(--border)] bg-[var(--surface-hover)]/40 text-[9px] uppercase tracking-wider text-[var(--muted)]">

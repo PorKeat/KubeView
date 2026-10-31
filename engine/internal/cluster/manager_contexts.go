@@ -3,6 +3,7 @@ package cluster
 import (
 	"fmt"
 	"sort"
+	"strings"
 
 	"k8s.io/client-go/tools/clientcmd"
 	clientcmdapi "k8s.io/client-go/tools/clientcmd/api"
@@ -13,6 +14,31 @@ func (m *Manager) GetConfigPath() string {
 	m.mu.RLock()
 	defer m.mu.RUnlock()
 	return m.configPath
+}
+
+// ConfigFileForContext returns the managed kubeconfig file that defines the
+// given context. The terminal uses it to point KUBECONFIG at the selected
+// context while keeping credentials on disk.
+func (m *Manager) ConfigFileForContext(contextName string) (string, bool) {
+	contextName = strings.TrimSpace(contextName)
+	if contextName == "" {
+		return "", false
+	}
+
+	m.mu.RLock()
+	configPath := m.configPath
+	m.mu.RUnlock()
+
+	for _, filePath := range discoverConfigFiles(configPath) {
+		cfg, err := clientcmd.LoadFromFile(filePath)
+		if err != nil || cfg == nil {
+			continue
+		}
+		if _, ok := cfg.Contexts[contextName]; ok {
+			return filePath, true
+		}
+	}
+	return "", false
 }
 
 // ListContexts returns all contexts present in the kubeconfig with safe metadata

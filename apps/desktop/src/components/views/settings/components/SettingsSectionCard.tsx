@@ -17,24 +17,21 @@ export function SettingsSectionCard({
   children: React.ReactNode;
 }) {
   return (
-    <section
-      id={id}
-      className="scroll-mt-6 overflow-hidden rounded-2xl border border-[var(--border)] bg-[var(--surface)] shadow-2xs"
-    >
-      <div className="flex items-start gap-2.5 border-b border-[var(--border)] px-4 py-4 sm:px-5">
-        <span className="mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-lg border border-[var(--border)] bg-black/[0.03] text-[var(--muted)] dark:bg-white/[0.04]">
-          <Icon className="h-3.5 w-3.5" aria-hidden="true" />
+    <section id={id} className="scroll-mt-6">
+      <div className="flex items-start gap-2.5 border-b border-[var(--border)] pb-3">
+        <span className="mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center text-[var(--muted)]">
+          <Icon className="h-4 w-4" aria-hidden="true" />
         </span>
         <div>
-          <h2 className="text-xs font-semibold text-[var(--foreground)]">
+          <h2 className="text-sm font-semibold text-[var(--foreground)]">
             {title}
           </h2>
-          <p className="mt-0.5 text-[10px] leading-relaxed text-[var(--muted)]">
+          <p className="mt-0.5 text-[11px] leading-relaxed text-[var(--muted)]">
             {description}
           </p>
         </div>
       </div>
-      <div className="space-y-5 p-4 sm:p-5">{children}</div>
+      <div className="space-y-5 pt-4">{children}</div>
     </section>
   );
 }
@@ -74,7 +71,7 @@ export function SettingsToggleRow({
   testId: string;
 }) {
   return (
-    <div className="flex flex-col gap-3 rounded-xl border border-[var(--border)] bg-black/[0.02] p-3.5 sm:flex-row sm:items-center sm:justify-between dark:bg-white/[0.02]">
+    <div className="flex flex-col gap-3 border-b border-[var(--border)] py-3 last:border-b-0 sm:flex-row sm:items-center sm:justify-between">
       <div className="flex min-w-0 items-start gap-3">
         <Icon
           className="mt-0.5 h-4 w-4 shrink-0 text-[var(--muted)]"

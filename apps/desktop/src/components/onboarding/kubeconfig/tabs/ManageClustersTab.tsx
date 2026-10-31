@@ -29,14 +29,14 @@ export function ManageClustersTab({
 }: ManageClustersTabProps) {
   return (
     <div className="space-y-3">
-      <div className="flex items-center justify-between text-xs text-[var(--muted)]">
-        <span>Available Contexts in KubeView</span>
-        <span className="font-mono text-[11px]">
+      <div className="flex items-center justify-between text-[11px] text-[var(--muted)]">
+        <span>Available contexts in KubeView</span>
+        <span className="font-mono text-[10px] tabular-nums">
           {availableContexts.length} total
         </span>
       </div>
 
-      <div className="max-h-72 overflow-y-auto space-y-1.5 pr-1">
+      <div className="max-h-80 divide-y divide-[var(--border)] overflow-y-auto border-y border-[var(--border)] pr-1">
         {availableContexts.map((ctx) => {
           const isSelected = ctx.name === currentContext;
           const isInternal = isInternalEndpoint(ctx.server);
@@ -50,57 +50,53 @@ export function ManageClustersTab({
                 }
               }}
               className={cn(
-                "flex items-center justify-between p-3 rounded-xl border transition-all cursor-pointer group",
+                "group flex items-center justify-between gap-3 border-l-2 py-3 pl-3 pr-1 transition-colors",
                 isSelected
-                  ? "bg-[#F08A42]/10 border-[#F08A42]/40 shadow-xs"
-                  : "bg-black/[0.02] dark:bg-white/[0.02] border-[var(--border)] hover:border-black/20 dark:hover:border-white/20 hover:bg-[var(--surface-hover)]",
+                  ? "border-[var(--accent)] bg-[var(--accent)]/[0.04]"
+                  : "cursor-pointer border-transparent hover:bg-[var(--surface-hover)]",
               )}
             >
-              <div className="flex items-center gap-3 min-w-0 pr-2">
-                <div
+              <div className="flex min-w-0 items-center gap-2.5">
+                <Server
                   className={cn(
-                    "w-8 h-8 rounded-lg flex items-center justify-center shrink-0 border",
-                    isSelected
-                      ? "bg-[#F08A42]/20 text-[#F08A42] border-[#F08A42]/40"
-                      : "bg-black/5 dark:bg-white/5 text-[var(--muted)] border-[var(--border)]",
+                    "h-3.5 w-3.5 shrink-0",
+                    isSelected ? "text-[var(--accent)]" : "text-[var(--muted)]",
                   )}
-                >
-                  <Server className="w-4 h-4" />
-                </div>
-
+                  aria-hidden="true"
+                />
                 <div className="min-w-0">
-                  <div className="flex items-center gap-2 flex-wrap">
-                    <span className="text-xs font-semibold text-[var(--foreground)] truncate">
+                  <div className="flex flex-wrap items-center gap-1.5">
+                    <span className="truncate text-xs font-semibold text-[var(--foreground)]">
                       {ctx.name}
                     </span>
                     {getProviderBadge(ctx.provider)}
                     {isSelected && (
-                      <span className="px-1.5 py-0.2 text-[9px] font-mono font-medium rounded-full bg-[#F08A42]/20 text-[#F08A42] border border-[#F08A42]/30">
-                        ACTIVE
+                      <span className="rounded-full bg-[var(--accent)]/15 px-1.5 py-0.5 font-mono text-[9px] font-medium text-[var(--accent)]">
+                        Active
                       </span>
                     )}
                     {isInternal && (
-                      <span className="px-1.5 py-0.2 text-[9px] font-mono font-medium rounded-full bg-amber-500/15 text-amber-500 border border-amber-500/30">
-                        INTERNAL HOST
+                      <span className="rounded border border-amber-500/30 bg-amber-500/15 px-1.5 py-0.5 font-mono text-[9px] text-amber-600 dark:text-amber-400">
+                        Internal
                       </span>
                     )}
                   </div>
-                  <span className="text-[10px] text-[var(--muted)] font-mono truncate block mt-0.5">
+                  <span className="mt-0.5 block truncate font-mono text-[10px] text-[var(--muted)]">
                     {ctx.server}
                   </span>
                 </div>
               </div>
 
-              <div className="flex items-center gap-2 shrink-0">
+              <div className="flex shrink-0 items-center gap-1">
                 {isSelected ? (
-                  <div className="flex items-center gap-1.5 text-xs text-[#F08A42] font-medium">
-                    <Check className="w-4 h-4" />
-                    <span>Current</span>
-                  </div>
+                  <span className="flex items-center gap-1 text-[10px] font-medium text-[var(--accent)]">
+                    <Check className="h-3 w-3" aria-hidden="true" />
+                    Current
+                  </span>
                 ) : (
                   <button
                     type="button"
-                    className="px-2.5 py-1 text-xs rounded-lg bg-[var(--surface-active)] text-[var(--muted)] group-hover:text-[var(--foreground)] group-hover:border-black/20 dark:group-hover:border-white/20 border border-[var(--border)] transition-colors cursor-pointer"
+                    className="cursor-pointer rounded-md px-2 py-1 text-[10px] font-medium text-[var(--muted)] transition-colors group-hover:bg-[var(--surface-hover)] group-hover:text-[var(--foreground)]"
                   >
                     Connect
                   </button>
@@ -108,20 +104,24 @@ export function ManageClustersTab({
 
                 <button
                   type="button"
-                  onClick={(e) => {
-                    e.stopPropagation();
+                  onClick={(event) => {
+                    event.stopPropagation();
                     openEndpointModal(ctx.name, ctx.server);
                   }}
-                  className="p-1.5 rounded-lg hover:bg-black/10 dark:hover:bg-white/10 text-[var(--muted)] hover:text-[var(--foreground)] transition-colors cursor-pointer"
-                  title="Configure API Server IP / Endpoint"
+                  className="cursor-pointer rounded-md p-1.5 text-[var(--muted)] transition-colors hover:bg-[var(--surface-hover)] hover:text-[var(--foreground)]"
+                  title="Configure API server IP / endpoint"
+                  aria-label={`Configure endpoint for ${ctx.name}`}
                 >
-                  <SlidersHorizontal className="w-3.5 h-3.5" />
+                  <SlidersHorizontal
+                    className="h-3.5 w-3.5"
+                    aria-hidden="true"
+                  />
                 </button>
 
                 <button
                   type="button"
-                  onClick={(e) => {
-                    e.stopPropagation();
+                  onClick={(event) => {
+                    event.stopPropagation();
                     if (
                       confirm(
                         `Remove cluster context '${ctx.name}' from KubeView?`,
@@ -131,10 +131,11 @@ export function ManageClustersTab({
                       toast.success(`Removed context '${ctx.name}'`);
                     }
                   }}
-                  className="p-1.5 rounded-lg hover:bg-black/10 dark:hover:bg-white/10 text-[var(--muted)] hover:text-rose-500 transition-colors cursor-pointer"
+                  className="cursor-pointer rounded-md p-1.5 text-[var(--muted)] transition-colors hover:bg-rose-500/10 hover:text-rose-500"
                   title="Remove this context"
+                  aria-label={`Remove ${ctx.name}`}
                 >
-                  <Trash2 className="w-3.5 h-3.5" />
+                  <Trash2 className="h-3.5 w-3.5" aria-hidden="true" />
                 </button>
               </div>
             </div>
@@ -142,21 +143,21 @@ export function ManageClustersTab({
         })}
 
         {availableContexts.length === 0 && (
-          <div className="text-center py-8 text-xs text-[var(--muted)]">
+          <div className="py-8 text-center text-[11px] text-[var(--muted)]">
             No cluster contexts configured yet. Import your first kubeconfig
             using the tabs above.
           </div>
         )}
       </div>
 
-      {/* Add More Contexts Trigger Button & Reset Button */}
-      <div className="pt-2 border-t border-[var(--border)] space-y-2">
+      <div className="flex flex-col gap-1">
         <button
+          type="button"
           onClick={() => setActiveTab("browse")}
-          className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl border border-dashed border-[var(--border)] hover:border-black/30 dark:hover:border-white/30 hover:bg-black/[0.02] dark:hover:bg-white/[0.02] text-xs text-[var(--muted)] hover:text-[var(--foreground)] transition-all cursor-pointer font-medium"
+          className="flex w-full cursor-pointer items-center justify-center gap-1.5 rounded-lg py-2 text-[11px] font-medium text-[var(--muted)] transition-colors hover:bg-[var(--surface-hover)] hover:text-[var(--foreground)]"
         >
-          <Plus className="w-4 h-4" />
-          <span>Import More Kubeconfigs or Select a Folder</span>
+          <Plus className="h-3.5 w-3.5" aria-hidden="true" />
+          Import more kubeconfigs or select a folder
         </button>
 
         {availableContexts.length > 0 && (
@@ -174,10 +175,10 @@ export function ManageClustersTab({
                 );
               }
             }}
-            className="w-full flex items-center justify-center gap-2 py-1.5 rounded-xl text-xs text-rose-500/80 hover:text-rose-500 hover:bg-rose-500/10 border border-rose-500/20 transition-all cursor-pointer font-medium"
+            className="flex w-full cursor-pointer items-center justify-center gap-1.5 rounded-lg py-1.5 text-[10px] font-medium text-rose-500/80 transition-colors hover:bg-rose-500/10 hover:text-rose-500"
           >
-            <Trash2 className="w-3.5 h-3.5" />
-            <span>Reset All Clusters (Clean Slate)</span>
+            <Trash2 className="h-3 w-3" aria-hidden="true" />
+            Reset all clusters (clean slate)
           </button>
         )}
       </div>

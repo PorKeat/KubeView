@@ -15,7 +15,11 @@ import {
   Trash2,
 } from "lucide-react";
 import { useClusterStore } from "@/stores/clusterStore";
-import { isInternalEndpoint, replaceEndpointHost } from "@/lib/endpointUtils";
+import {
+  isInternalEndpoint,
+  joinEndpoint,
+  splitEndpoint,
+} from "@/lib/endpointUtils";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { Tooltip } from "@/components/ui/Tooltip";
@@ -32,7 +36,9 @@ export function EndpointEditModal() {
     availableContexts,
   } = useClusterStore();
 
-  const [inputVal, setInputVal] = React.useState("");
+  const [hostVal, setHostVal] = React.useState("");
+  const [portVal, setPortVal] = React.useState("6443");
+  const [protocol, setProtocol] = React.useState<"http:" | "https:">("https:");
   const [skipTLS, setSkipTLS] = React.useState(false);
   const [isSaving, setIsSaving] = React.useState(false);
   const [copiedHosts, setCopiedHosts] = React.useState(false);
@@ -75,18 +81,49 @@ export function EndpointEditModal() {
 
   React.useEffect(() => {
     if (isEndpointModalOpen) {
-      setInputVal(endpointModalCurrentServer || "");
+      const parts = splitEndpoint(endpointModalCurrentServer || "");
+      setHostVal(parts.host);
+      setPortVal(parts.port);
+      setProtocol(parts.protocol);
       setSkipTLS(false);
     }
   }, [isEndpointModalOpen, endpointModalCurrentServer]);
 
   const isInternal = isInternalEndpoint(endpointModalCurrentServer);
 
-  // Formatted destination preview
-  const resolvedServer = React.useMemo(() => {
-    if (!inputVal.trim()) return endpointModalCurrentServer;
-    return replaceEndpointHost(endpointModalCurrentServer, inputVal.trim());
-  }, [endpointModalCurrentServer, inputVal]);
+  const currentParts = React.useMemo(
+    () => splitEndpoint(endpointModalCurrentServer || ""),
+    [endpointModalCurrentServer],
+  );
+  const currentNormalized = joinEndpoint(
+    currentParts.protocol,
+    currentParts.host,
+    currentParts.port,
+  );
+
+  // The target preview updates on every keystroke. Host, port, and scheme stay
+  // independently editable so pasting a full URL or typing just an IP works.
+  const resolvedServer = React.useMemo(
+    () => (hostVal.trim() ? joinEndpoint(protocol, hostVal, portVal) : ""),
+    [hostVal, portVal, protocol],
+  );
+
+  const portNumber = Number(portVal);
+  const isPortValid =
+    /^\d+$/.test(portVal) && portNumber >= 1 && portNumber <= 65535;
+  const hasChanges =
+    Boolean(resolvedServer) && resolvedServer !== currentNormalized;
+
+  const handleHostChange = (value: string) => {
+    if (value.includes("://") || /^[^:]+:\d+$/.test(value)) {
+      const parts = splitEndpoint(value);
+      setHostVal(parts.host);
+      setPortVal(parts.port);
+      setProtocol(parts.protocol);
+      return;
+    }
+    setHostVal(value);
+  };
 
   const handleSave = async (autoSwitch = true) => {
     if (!resolvedServer || !endpointModalContextName) return;
@@ -104,7 +141,7 @@ export function EndpointEditModal() {
     }
   };
 
-  const hostsEntry = `sudo sh -c 'echo "${inputVal.trim() || "<node-ip>"} ${currentHost}" >> /etc/hosts'`;
+  const hostsEntry = `sudo sh -c 'echo "${hostVal.trim() || "<node-ip>"} ${currentHost}" >> /etc/hosts'`;
 
   const handleCopyHosts = () => {
     navigator.clipboard.writeText(hostsEntry);
@@ -122,16 +159,16 @@ export function EndpointEditModal() {
         <Dialog.Overlay className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 animate-in fade-in duration-200" />
         <Dialog.Content
           aria-describedby="endpoint-modal-description"
-          className="fixed left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 flex w-[calc(100%-2rem)] max-w-lg max-h-[90dvh] flex-col overflow-hidden rounded-2xl border border-[var(--border)] bg-[var(--surface-elevated)] shadow-2xl z-50 animate-in fade-in zoom-in-95 duration-200 outline-none select-none"
+          className="fixed left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 flex w-[calc(100%-2rem)] max-w-lg max-h-[90dvh] flex-col overflow-hidden rounded-2xl border border-[var(--border)] bg-[var(--surface)] shadow-2xl z-50 animate-in fade-in zoom-in-95 duration-200 outline-none select-none"
         >
           {/* Header */}
-          <div className="flex shrink-0 items-start justify-between border-b border-[var(--border)] px-4 pb-4 pt-4 sm:px-6 sm:pt-6">
+          <div className="flex shrink-0 items-start justify-between border-b border-[var(--border)] px-4 py-4 sm:px-5">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-xl bg-[var(--accent)]/10 border border-[var(--accent)]/20 flex items-center justify-center text-[var(--accent)]">
+              <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-[var(--accent)]/10 text-[var(--accent)]">
                 <Server className="w-5 h-5" />
               </div>
               <div>
-                <Dialog.Title className="text-base font-bold text-[var(--foreground)] tracking-tight">
+                <Dialog.Title className="text-sm font-semibold text-[var(--foreground)]">
                   Configure API Server Endpoint
                 </Dialog.Title>
                 <div className="flex items-center gap-2 mt-0.5">
@@ -164,7 +201,7 @@ export function EndpointEditModal() {
           >
             {/* Informational Guidance Note */}
             {isInternal ? (
-              <div className="p-3.5 rounded-xl bg-amber-500/10 border border-amber-500/25 space-y-1.5">
+              <div className="space-y-1.5 border-l-2 border-amber-500/60 pl-3">
                 <div className="flex items-center gap-2 text-xs font-semibold text-amber-600 dark:text-amber-400">
                   <AlertTriangle className="w-4 h-4 shrink-0" />
                   <span>Internal Domain Requires Node IP Address</span>
@@ -180,7 +217,7 @@ export function EndpointEditModal() {
                 </p>
               </div>
             ) : (
-              <div className="p-3 rounded-xl bg-black/[0.02] dark:bg-white/[0.02] border border-[var(--border)] text-xs text-[var(--muted)] flex items-center gap-2">
+              <div className="flex items-center gap-2 border-l-2 border-[var(--accent)]/40 pl-3 text-xs text-[var(--muted)]">
                 <Info className="w-4 h-4 text-[var(--accent)] shrink-0" />
                 <span>
                   Update the API server address or proxy port for this cluster.
@@ -200,7 +237,7 @@ export function EndpointEditModal() {
                     <button
                       key={sug.ip}
                       type="button"
-                      onClick={() => setInputVal(sug.ip)}
+                      onClick={() => setHostVal(sug.ip)}
                       className="px-2.5 py-1 rounded-lg bg-[var(--accent)]/10 hover:bg-[var(--accent)]/20 border border-[var(--accent)]/30 text-xs font-mono text-[var(--accent)] flex items-center gap-1.5 transition-all cursor-pointer"
                       title={`From: ${sug.source}`}
                     >
@@ -214,30 +251,49 @@ export function EndpointEditModal() {
               </div>
             )}
 
-            {/* Input Field */}
+            {/* Input Fields */}
             <div className="space-y-1.5">
               <label className="text-xs font-semibold text-[var(--foreground)] block">
-                Enter Node IP or New Server URL:
+                Node IP / Hostname and Port
               </label>
-              <div className="relative">
+              <div className="flex items-center gap-2">
                 <input
                   type="text"
                   data-testid="endpoint-modal-input"
-                  value={inputVal}
-                  onChange={(e) => setInputVal(e.target.value)}
-                  placeholder="e.g. 10.1.16.11 or https://10.1.16.11:6443"
-                  className="w-full px-3.5 py-2 text-xs font-mono bg-[var(--background)] border border-[var(--border)] rounded-xl text-[var(--foreground)] placeholder:text-[var(--muted)]/50 outline-hidden focus:border-[var(--accent)] transition-colors"
+                  value={hostVal}
+                  onChange={(e) => handleHostChange(e.target.value)}
+                  placeholder="e.g. 10.1.16.11"
+                  className="min-w-0 flex-1 rounded-lg border border-[var(--border)] bg-[var(--background)] px-3 py-1.5 font-mono text-xs text-[var(--foreground)] outline-hidden transition-colors placeholder:text-[var(--muted)]/50 focus:border-[var(--accent)]"
                   autoFocus
+                />
+                <span className="font-mono text-xs text-[var(--muted)]">:</span>
+                <input
+                  type="text"
+                  inputMode="numeric"
+                  data-testid="endpoint-modal-port"
+                  value={portVal}
+                  onChange={(e) =>
+                    setPortVal(e.target.value.replace(/[^\d]/g, ""))
+                  }
+                  placeholder="6443"
+                  maxLength={5}
+                  className="w-20 rounded-lg border border-[var(--border)] bg-[var(--background)] px-2.5 py-1.5 font-mono text-xs tabular-nums text-[var(--foreground)] outline-hidden transition-colors placeholder:text-[var(--muted)]/50 focus:border-[var(--accent)]"
+                  aria-label="API server port"
                 />
               </div>
 
               {/* Resolved Target Display */}
-              <div className="flex items-center justify-between text-[11px] pt-1">
+              <div className="flex items-center justify-between gap-3 pt-1 text-[11px]">
                 <span className="text-[var(--muted)]">Resulting Target:</span>
-                <span className="font-mono text-[var(--accent)] font-semibold">
-                  {resolvedServer}
+                <span className="truncate font-mono text-[var(--accent)] font-semibold">
+                  {resolvedServer || "—"}
                 </span>
               </div>
+              {!isPortValid && portVal !== "" && (
+                <p className="text-[10px] text-rose-500">
+                  Port must be between 1 and 65535.
+                </p>
+              )}
 
               {/* Skip TLS Verify Toggle */}
               <label className="flex items-center gap-2 pt-1 text-xs text-[var(--foreground)] cursor-pointer select-none">
@@ -260,7 +316,7 @@ export function EndpointEditModal() {
 
             {/* Optional /etc/hosts tip */}
             {isInternal && (
-              <div className="p-3 rounded-xl bg-black/[0.03] dark:bg-black/40 border border-[var(--border)] space-y-1.5">
+              <div className="space-y-1.5 border-t border-[var(--border)] pt-2.5">
                 <div className="flex items-center justify-between text-[11px] text-[var(--muted)]">
                   <span className="flex items-center gap-1.5 font-medium text-[var(--foreground)]">
                     <Terminal className="w-3.5 h-3.5 text-[var(--muted)]" />
@@ -297,7 +353,7 @@ export function EndpointEditModal() {
                 await deleteContext(target);
                 toast.success(`Removed cluster: ${target}`);
               }}
-              className="flex items-center gap-1.5 px-3 py-2 text-xs font-medium text-rose-500 hover:text-rose-400 hover:bg-rose-500/10 rounded-xl transition-colors cursor-pointer border border-rose-500/20"
+              className="inline-flex items-center gap-1.5 rounded-lg border border-rose-500/20 px-3 py-1.5 text-xs font-medium text-rose-500 transition-colors hover:bg-rose-500/10 hover:text-rose-400 cursor-pointer"
             >
               <Trash2 className="w-3.5 h-3.5" />
               <span>Remove Cluster</span>
@@ -309,7 +365,7 @@ export function EndpointEditModal() {
                 data-testid="endpoint-modal-cancel"
                 onClick={closeEndpointModal}
                 disabled={isSaving}
-                className="px-4 py-2 rounded-xl text-xs font-medium text-[var(--muted)] hover:text-[var(--foreground)] hover:bg-[var(--surface-hover)] border border-[var(--border)] transition-colors cursor-pointer"
+                className="rounded-lg border border-[var(--border)] px-3 py-1.5 text-xs font-medium text-[var(--muted)] transition-colors hover:bg-[var(--surface-hover)] hover:text-[var(--foreground)] cursor-pointer"
               >
                 Cancel
               </button>
@@ -317,10 +373,8 @@ export function EndpointEditModal() {
                 type="button"
                 data-testid="endpoint-modal-save"
                 onClick={() => handleSave(true)}
-                disabled={
-                  isSaving || resolvedServer === endpointModalCurrentServer
-                }
-                className="px-4 py-2 rounded-xl text-xs font-semibold bg-[var(--accent)] hover:bg-[var(--accent-hover)] disabled:opacity-50 text-white shadow-md transition-all cursor-pointer flex items-center gap-1.5"
+                disabled={isSaving || !hasChanges || !isPortValid}
+                className="inline-flex items-center gap-1.5 rounded-lg bg-[var(--accent)] px-3.5 py-1.5 text-xs font-semibold text-white transition-colors hover:bg-[var(--accent-hover)] disabled:opacity-50 cursor-pointer"
               >
                 {isSaving ? (
                   <RotateCw className="w-3.5 h-3.5 animate-spin" />

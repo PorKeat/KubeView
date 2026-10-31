@@ -29,6 +29,43 @@ export function isInternalEndpoint(serverUrl: string): boolean {
   }
 }
 
+export interface EndpointParts {
+  protocol: "http:" | "https:";
+  host: string;
+  port: string;
+}
+
+/** Splits a server URL (or host, or host:port) into editable parts. */
+export function splitEndpoint(serverUrl: string): EndpointParts {
+  const raw = serverUrl.trim();
+  try {
+    const url = new URL(raw.includes("://") ? raw : `https://${raw}`);
+    return {
+      protocol: url.protocol === "http:" ? "http:" : "https:",
+      host: url.hostname,
+      port: url.port || "6443",
+    };
+  } catch {
+    return {
+      protocol: "https:",
+      host: raw,
+      port: "6443",
+    };
+  }
+}
+
+/** Builds a normalized server URL from editable parts. */
+export function joinEndpoint(
+  protocol: string,
+  host: string,
+  port: string,
+): string {
+  const scheme = protocol === "http:" ? "http:" : "https:";
+  const trimmedHost = host.trim();
+  const trimmedPort = port.trim() || "6443";
+  return `${scheme}//${trimmedHost}:${trimmedPort}`;
+}
+
 /**
  * Replaces the hostname in serverUrl with newHostOrIp, preserving scheme and port.
  * e.g. ("https://lb.kubesphere.local:6443", "10.1.16.11") -> "https://10.1.16.11:6443"

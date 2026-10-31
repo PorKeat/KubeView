@@ -126,8 +126,8 @@ export function OfflineState({ className }: { className?: string }) {
       >
         <div className="absolute w-96 h-96 bg-[#F08A42]/10 rounded-full blur-3xl pointer-events-none -top-24" />
 
-        <div className="relative z-10 max-w-md w-full p-8 rounded-3xl glass-panel border border-[var(--border)] shadow-2xl space-y-5 text-center">
-          <div className="relative mx-auto w-16 h-16 rounded-2xl bg-[#F08A42]/10 border border-[#F08A42]/30 flex items-center justify-center text-[#F08A42] shadow-[0_0_24px_rgba(240,138,66,0.2)]">
+        <div className="relative z-10 max-w-md w-full space-y-5 text-center">
+          <div className="relative mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-[#F08A42]/10 text-[#F08A42]">
             <Layers className="w-8 h-8" />
           </div>
 
@@ -145,7 +145,7 @@ export function OfflineState({ className }: { className?: string }) {
           </div>
 
           {detectedSystemConfigs.length > 0 && (
-            <div className="p-3 rounded-2xl bg-[#F08A42]/10 border border-[#F08A42]/25 flex items-center justify-between text-left">
+            <div className="flex items-center justify-between gap-3 border-l-2 border-[#F08A42]/50 pl-3 text-left">
               <div className="flex items-center gap-2.5">
                 <Sparkles className="w-4 h-4 text-[#F08A42] shrink-0" />
                 <div>
@@ -196,9 +196,9 @@ export function OfflineState({ className }: { className?: string }) {
         className,
       )}
     >
-      <div className="relative z-10 max-w-lg w-full p-6 sm:p-7 rounded-2xl bg-[var(--surface)] border border-[var(--border)] shadow-xl space-y-4 text-center">
+      <div className="relative z-10 max-w-xl w-full space-y-5 text-center">
         {/* Offline Icon */}
-        <div className="w-12 h-12 rounded-xl bg-rose-500/10 border border-rose-500/20 flex items-center justify-center text-rose-500 dark:text-rose-400 mx-auto">
+        <div className="w-12 h-12 rounded-xl bg-rose-500/10 flex items-center justify-center text-rose-500 dark:text-rose-400 mx-auto">
           <ServerOff className="w-6 h-6" />
         </div>
 
@@ -216,8 +216,8 @@ export function OfflineState({ className }: { className?: string }) {
           </p>
         </div>
 
-        {/* API Server Endpoint & Quick Reconnect Box */}
-        <div className="p-3.5 rounded-xl bg-[var(--surface-active)]/40 border border-[var(--border)] text-left space-y-2.5">
+        {/* API Server Endpoint & Quick Reconnect */}
+        <div className="text-left space-y-2.5 border-b border-[var(--border)] pb-4">
           <div className="flex items-center justify-between text-xs">
             <span className="font-medium text-[var(--foreground)]">
               API Endpoint
@@ -273,7 +273,7 @@ export function OfflineState({ className }: { className?: string }) {
           {/* Quick Bypass button if TLS stage failed */}
           {diagnosticResult?.stages?.tls &&
             !diagnosticResult.stages.tls.passed && (
-              <div className="p-2 rounded-lg bg-amber-500/10 border border-amber-500/20 flex items-center justify-between gap-2">
+              <div className="flex items-center justify-between gap-2 border-l-2 border-amber-500/50 pl-2.5">
                 <span className="text-[11px] text-amber-600 dark:text-amber-400">
                   TLS certificate mismatch
                 </span>

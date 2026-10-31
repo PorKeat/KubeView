@@ -141,7 +141,7 @@ export function KubeconfigEditModal({
         aria-labelledby="kubeconfig-edit-title"
         data-testid="kubeconfig-edit-modal"
         className={cn(
-          "flex max-h-[92dvh] w-full flex-col overflow-hidden rounded-2xl border border-[var(--border)] bg-[var(--surface-elevated)] shadow-2xl animate-in fade-in zoom-in-95 duration-150",
+          "flex max-h-[92dvh] w-full flex-col overflow-hidden rounded-2xl border border-[var(--border)] bg-[var(--surface)] shadow-2xl animate-in fade-in zoom-in-95 duration-150",
           mode === "yaml" ? "max-w-4xl" : "max-w-lg",
         )}
       >
@@ -333,7 +333,7 @@ export function KubeconfigEditModal({
                 ))}
               </div>
 
-              <div className="flex items-start gap-2 rounded-lg border border-[var(--border)] bg-[var(--surface)] px-2.5 py-2 text-[10px] leading-4 text-[var(--muted)]">
+              <div className="flex items-start gap-2 border-l-2 border-[var(--border)] pl-3 text-[10px] leading-4 text-[var(--muted)]">
                 <Pencil
                   className="mt-0.5 h-3.5 w-3.5 shrink-0"
                   aria-hidden="true"

@@ -671,7 +671,7 @@ export function TopologyView() {
         ))}
       </div>
 
-      <section className="mt-4 rounded-2xl border border-[var(--border)] bg-[var(--surface)] p-4">
+      <section className="mt-4 border-b border-[var(--border)] pb-4">
         <div className="flex flex-wrap items-center justify-between gap-2">
           <div>
             <h2 className="text-xs font-semibold text-[var(--foreground)]">
@@ -719,7 +719,7 @@ export function TopologyView() {
       </section>
 
       <div className="mt-4 grid gap-3 lg:grid-cols-2">
-        <section className="rounded-2xl border border-[var(--border)] bg-[var(--surface)] p-4">
+        <section className="border-b border-[var(--border)] pb-4">
           <div className="flex items-center justify-between gap-2">
             <div>
               <h2 className="text-xs font-semibold text-[var(--foreground)]">
@@ -753,7 +753,7 @@ export function TopologyView() {
           </div>
         </section>
 
-        <section className="rounded-2xl border border-[var(--border)] bg-[var(--surface)] p-4">
+        <section className="border-b border-[var(--border)] pb-4">
           <div className="flex items-center justify-between gap-2">
             <div>
               <h2 className="text-xs font-semibold text-[var(--foreground)]">

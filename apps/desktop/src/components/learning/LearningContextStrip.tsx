@@ -42,7 +42,8 @@ export function LearningContextStrip() {
     !guide ||
     isDismissed ||
     activeTabId === "learning" ||
-    activeTabId === "settings"
+    activeTabId === "settings" ||
+    activeTabId === "terminal"
   ) {
     return null;
   }

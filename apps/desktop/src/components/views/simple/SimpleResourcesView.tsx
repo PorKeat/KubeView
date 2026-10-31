@@ -2,9 +2,10 @@
 
 import * as React from "react";
 import {
+  ArrowDown,
+  ArrowUp,
+  ArrowUpDown,
   Check,
-  ChevronDown,
-  ChevronUp,
   Copy,
   Plus,
   RefreshCw,
@@ -21,7 +22,7 @@ import type {
 import { invokeRpc } from "@/lib/ipc";
 import { useClusterStore } from "@/stores/clusterStore";
 import { cn } from "@/lib/utils";
-import { EmptyState, ErrorBanner } from "@/components/ui";
+import { EmptyState, ErrorBanner, Tooltip } from "@/components/ui";
 import { useSlideSheetMount } from "@/components/ui/useSlideSheetMount";
 import { toast } from "sonner";
 import {
@@ -352,7 +353,6 @@ export function SimpleResourcesView({ kind }: { kind: SimpleResourceKind }) {
   );
   const namespaceRevision = useClusterStore((state) => state.namespaceRevision);
   const [items, setItems] = React.useState<SimpleResourceItem[]>([]);
-  const [totalCount, setTotalCount] = React.useState(0);
   const [truncated, setTruncated] = React.useState(false);
   const [isLoading, setIsLoading] = React.useState(true);
   const [error, setError] = React.useState<string | null>(null);
@@ -387,13 +387,11 @@ export function SimpleResourcesView({ kind }: { kind: SimpleResourceKind }) {
       );
       if (requestId.current !== id) return;
       setItems(result.items ?? []);
-      setTotalCount(result.totalCount ?? result.items?.length ?? 0);
       setTruncated(Boolean(result.truncated));
       setAvailable(result.available !== false);
     } catch (loadError) {
       if (requestId.current !== id) return;
       setItems([]);
-      setTotalCount(0);
       setError(errorMessage(loadError));
     } finally {
       if (requestId.current === id) setIsLoading(false);
@@ -406,6 +404,17 @@ export function SimpleResourcesView({ kind }: { kind: SimpleResourceKind }) {
       requestId.current += 1;
     };
   }, [load, reloadRevision]);
+
+  const filterCounts = React.useMemo(() => {
+    const filterConfig = config.filter;
+    if (!filterConfig) return {} as Record<string, number>;
+    return Object.fromEntries(
+      filterConfig.options.map((option) => [
+        option,
+        items.filter((item) => filterConfig.predicate(item, option)).length,
+      ]),
+    ) as Record<string, number>;
+  }, [config.filter, items]);
 
   const filteredItems = React.useMemo(() => {
     const query = search.trim().toLowerCase();
@@ -459,62 +468,21 @@ export function SimpleResourcesView({ kind }: { kind: SimpleResourceKind }) {
       data-testid={`simple-resource-view-${kind}`}
       className="flex h-full w-full flex-1 select-none flex-col overflow-hidden"
     >
-      <div className="flex shrink-0 flex-col gap-3 border-b border-[var(--border)] px-4 pb-3 pt-4 md:px-5 lg:px-6">
-        <div className="flex flex-col justify-between gap-3 sm:flex-row sm:items-center">
-          <div className="flex min-w-0 items-start gap-3">
+      <div className="flex min-h-11 shrink-0 flex-wrap items-center justify-between gap-2 border-b border-[var(--border)] px-2 py-1.5 glass-panel sm:px-3 lg:flex-nowrap lg:gap-3">
+        <div className="flex min-w-0 flex-1 flex-wrap items-center gap-2 sm:gap-3">
+          <h1
+            className="flex shrink-0 items-center gap-2 text-xs font-semibold text-[var(--foreground)]"
+            title={config.description}
+          >
             <config.icon
-              className="h-4 w-4 shrink-0 text-[var(--accent)]"
+              className="h-3.5 w-3.5 shrink-0 text-[var(--accent)]"
               aria-hidden="true"
             />
-            <div className="min-w-0">
-              <div className="flex flex-wrap items-center gap-2">
-                <h1 className="text-sm font-semibold tracking-tight text-[var(--foreground)]">
-                  {config.title}
-                </h1>
-                <span className="rounded border border-[var(--border)] bg-[var(--surface-active)] px-2 py-0.5 font-mono text-[10px] text-[var(--foreground)]">
-                  {totalCount} {totalCount === 1 ? "item" : "items"}
-                </span>
-                <span className="font-mono text-[10px] text-[var(--muted)]">
-                  {scopeLabel}
-                </span>
-              </div>
-              <p className="mt-1 max-w-2xl text-[11px] text-[var(--muted)]">
-                {config.description}
-              </p>
-            </div>
-          </div>
-          <div className="flex shrink-0 items-center gap-2">
-            {kind === "namespaces" && (
-              <button
-                type="button"
-                data-testid="namespaces-create"
-                onClick={openCreateNamespace}
-                aria-label="Create namespace"
-                className="inline-flex cursor-pointer items-center gap-1.5 rounded-md bg-[var(--accent)] px-2.5 py-1.5 text-xs font-semibold text-white shadow-sm transition-colors hover:bg-[var(--accent-hover)] focus-visible:ring-2 focus-visible:ring-[var(--accent)] focus-visible:outline-hidden"
-              >
-                <Plus className="h-3.5 w-3.5" aria-hidden="true" />
-                <span className="hidden sm:inline">Create namespace</span>
-              </button>
-            )}
-            <button
-              type="button"
-              onClick={() => void load()}
-              disabled={isLoading}
-              className="inline-flex shrink-0 items-center gap-1.5 rounded-md border border-[var(--border)] bg-[var(--surface)] px-2.5 py-1.5 text-xs font-medium text-[var(--foreground)] transition-colors hover:bg-[var(--surface-hover)] cursor-pointer focus-visible:ring-2 focus-visible:ring-[var(--accent)] focus-visible:outline-hidden disabled:cursor-wait disabled:opacity-60"
-            >
-              <RefreshCw
-                className={cn(
-                  "h-3.5 w-3.5 text-[var(--muted)]",
-                  isLoading && "animate-spin",
-                )}
-              />
-              Refresh
-            </button>
-          </div>
-        </div>
+            {config.title}
+          </h1>
+          <span className="hidden h-3 w-px bg-[var(--border)] sm:block" />
 
-        <div className="flex flex-col gap-2 rounded-xl border border-[var(--border)] bg-[var(--surface)] p-2.5 lg:flex-row lg:items-center">
-          <div className="relative min-w-0 flex-1">
+          <div className="relative min-w-0 w-full max-w-sm flex-1 sm:w-auto">
             <Search className="pointer-events-none absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-[var(--muted)]" />
             <input
               type="text"
@@ -522,44 +490,105 @@ export function SimpleResourcesView({ kind }: { kind: SimpleResourceKind }) {
               onChange={(event) => setSearch(event.target.value)}
               placeholder={config.searchPlaceholder}
               aria-label={`Search ${config.title}`}
-              className="w-full rounded-lg border border-[var(--border)] bg-black/[0.03] py-1.5 pl-8 pr-2.5 font-mono text-xs text-[var(--foreground)] outline-hidden transition-all placeholder:text-[var(--muted)] focus:border-[var(--accent)] dark:bg-black/30"
+              className="w-full rounded-lg border border-[var(--border)] bg-slate-50 py-1 pl-8 pr-7 font-mono text-xs text-[var(--foreground)] outline-hidden transition-all placeholder:text-[var(--muted)] focus:border-[var(--accent)] dark:bg-black/30"
             />
+            {search && (
+              <Tooltip content="Clear search">
+                <button
+                  type="button"
+                  onClick={() => setSearch("")}
+                  aria-label="Clear search"
+                  className="absolute right-2 top-1/2 -translate-y-1/2 cursor-pointer text-[var(--muted)] hover:text-[var(--foreground)]"
+                >
+                  <X className="h-3 w-3" aria-hidden="true" />
+                </button>
+              </Tooltip>
+            )}
           </div>
 
           {config.filter && (
             <div
               role="group"
               aria-label={`Filter ${config.title}`}
-              className="flex max-w-full shrink-0 items-center gap-1 overflow-x-auto rounded-lg border border-[var(--border)] bg-black/[0.03] p-0.5 dark:bg-black/30"
+              className="relative flex max-w-full min-w-0 shrink-0 items-center gap-1 overflow-x-auto whitespace-nowrap rounded-lg border border-[var(--border)] bg-slate-100/80 p-0.5 text-xs select-none dark:bg-black/30"
             >
-              {config.filter.options.map((option) => (
-                <button
-                  key={option}
-                  type="button"
-                  aria-pressed={filter === option}
-                  onClick={() => setFilter(option)}
-                  className={cn(
-                    "shrink-0 rounded-md px-2.5 py-0.5 text-[10px] font-medium transition-colors cursor-pointer focus-visible:ring-2 focus-visible:ring-[var(--accent)] focus-visible:outline-hidden",
-                    filter === option
-                      ? "border border-[var(--border)]/70 bg-[var(--surface)] font-semibold text-[var(--foreground)] shadow-xs"
-                      : "text-[var(--muted)] hover:text-[var(--foreground)]",
-                  )}
-                >
-                  {option}
-                </button>
-              ))}
+              {config.filter.options.map((option) => {
+                const count = filterCounts[option] ?? 0;
+                const isActive = filter === option;
+                return (
+                  <button
+                    key={option}
+                    type="button"
+                    aria-label={option}
+                    aria-pressed={isActive}
+                    onClick={() => setFilter(option)}
+                    className={cn(
+                      "relative z-10 flex items-center gap-1.5 rounded-md px-2.5 py-0.5 text-[11px] font-medium transition-colors cursor-pointer focus-visible:ring-2 focus-visible:ring-[var(--accent)] outline-hidden",
+                      isActive
+                        ? "border border-[var(--border)]/70 bg-white font-semibold text-[var(--foreground)] shadow-xs dark:bg-white/[0.12] dark:text-white"
+                        : "border border-transparent text-[var(--muted)] hover:text-[var(--foreground)]",
+                    )}
+                  >
+                    <span>{option}</span>
+                    <span
+                      className={cn(
+                        "font-mono text-[10px] tabular-nums",
+                        option === "Warning" && count > 0
+                          ? "font-semibold text-rose-500"
+                          : "text-[var(--muted)]",
+                      )}
+                    >
+                      {count}
+                    </span>
+                  </button>
+                );
+              })}
             </div>
           )}
+        </div>
 
-          <span className="shrink-0 font-mono text-[10px] text-[var(--muted)]">
-            {filteredItems.length} shown
-            {truncated ? " · capped at 500" : ""}
+        <div className="flex max-w-full shrink-0 flex-wrap items-center gap-2 text-xs text-[var(--muted)]">
+          <span className="font-mono text-[11px]">
+            {scopeLabel} · {filteredItems.length}{" "}
+            {filteredItems.length === 1 ? "item" : "items"}
+            {truncated ? " · capped" : ""}
           </span>
+          <div className="h-3 w-px bg-[var(--border)]" />
+          {kind === "namespaces" && (
+            <Tooltip content="Create namespace">
+              <button
+                type="button"
+                data-testid="namespaces-create"
+                onClick={openCreateNamespace}
+                aria-label="Create namespace"
+                className="cursor-pointer rounded-lg p-1.5 text-[var(--muted)] transition-colors hover:bg-[var(--surface-hover)] hover:text-[var(--foreground)] focus-visible:ring-2 focus-visible:ring-[var(--accent)] outline-hidden"
+              >
+                <Plus className="h-3.5 w-3.5" aria-hidden="true" />
+              </button>
+            </Tooltip>
+          )}
+          <Tooltip content={`Refresh ${config.title.toLowerCase()}`}>
+            <button
+              type="button"
+              onClick={() => void load()}
+              disabled={isLoading}
+              aria-label={`Refresh ${config.title}`}
+              className="cursor-pointer rounded-lg p-1.5 text-[var(--muted)] transition-colors hover:bg-[var(--surface-hover)] hover:text-[var(--foreground)] focus-visible:ring-2 focus-visible:ring-[var(--accent)] outline-hidden disabled:cursor-wait disabled:opacity-60"
+            >
+              <RefreshCw
+                className={cn(
+                  "h-3.5 w-3.5",
+                  isLoading && "animate-spin text-[var(--accent)]",
+                )}
+                aria-hidden="true"
+              />
+            </button>
+          </Tooltip>
         </div>
       </div>
 
       {error && (
-        <div className="mt-3 shrink-0 px-4 md:px-5 lg:px-6">
+        <div className="mt-2 shrink-0 px-3">
           <ErrorBanner
             message={error}
             title={`Unable to load ${config.title.toLowerCase()}`}
@@ -570,18 +599,28 @@ export function SimpleResourcesView({ kind }: { kind: SimpleResourceKind }) {
       )}
 
       {isLoading && items.length === 0 ? (
-        <div className="mx-4 mt-3 min-h-0 flex-1 overflow-hidden rounded-xl border border-[var(--border)] bg-[var(--surface)] md:mx-5 lg:mx-6">
-          <div className="space-y-2 p-3">
-            {Array.from({ length: 5 }).map((_, index) => (
+        <div className="flex-1 min-h-0 overflow-hidden">
+          <div className="flex h-8 items-center gap-4 border-b border-[var(--border)] bg-[var(--surface)] px-3">
+            {[112, 88, 64, 48].map((width) => (
               <div
-                key={index}
-                className="h-8 animate-pulse rounded-md bg-[var(--surface-hover)]"
+                key={width}
+                className="h-2.5 animate-pulse rounded bg-[var(--surface-hover)]"
+                style={{ width }}
               />
+            ))}
+          </div>
+          <div className="divide-y divide-[var(--border)]">
+            {Array.from({ length: 8 }).map((_, index) => (
+              <div key={index} className="flex h-10 items-center gap-4 px-3">
+                <div className="h-2.5 w-40 animate-pulse rounded bg-[var(--surface-hover)]" />
+                <div className="h-2.5 w-24 animate-pulse rounded bg-[var(--surface-hover)]" />
+                <div className="ml-auto h-2.5 w-12 animate-pulse rounded bg-[var(--surface-hover)]" />
+              </div>
             ))}
           </div>
         </div>
       ) : filteredItems.length === 0 ? (
-        <div className="mx-4 mt-3 min-h-0 flex-1 md:mx-5 lg:mx-6">
+        <div className="flex min-h-0 flex-1 flex-col justify-center overflow-y-auto">
           <EmptyState
             variant={search || filter !== "All" ? "search" : "empty"}
             title={
@@ -614,11 +653,17 @@ export function SimpleResourcesView({ kind }: { kind: SimpleResourceKind }) {
           />
         </div>
       ) : (
-        <div className="mx-4 mb-4 mt-3 min-h-0 flex-1 overflow-y-auto overflow-x-hidden rounded-xl border border-[var(--border)] bg-[var(--surface)] md:mx-5 lg:mx-6">
+        <div className="flex-1 overflow-y-auto overflow-x-hidden min-h-0">
           <table className="w-full table-fixed border-collapse text-left text-xs">
-            <thead>
-              <tr className="border-b border-[var(--border)] font-mono text-[9px] uppercase tracking-[0.12em] text-[var(--muted)]">
-                <th scope="col" className="w-[26%] px-3 py-2 font-medium">
+            <thead className="sticky top-0 z-10 border-b border-[var(--border)] bg-[var(--surface)] select-none">
+              <tr className="h-8 text-[11px] font-semibold uppercase tracking-wider text-[var(--muted)]">
+                <th
+                  scope="col"
+                  className={cn(
+                    "px-3 py-1 font-semibold",
+                    config.namespaceScoped ? "w-[22%]" : "w-[26%]",
+                  )}
+                >
                   <SortButton
                     label={config.nameLabel ?? "Name"}
                     active={sort.key === "name"}
@@ -626,16 +671,21 @@ export function SimpleResourcesView({ kind }: { kind: SimpleResourceKind }) {
                     onClick={() => toggleSort("name")}
                   />
                 </th>
+                {config.namespaceScoped && (
+                  <th scope="col" className="w-[12%] px-3 py-1 font-semibold">
+                    Namespace
+                  </th>
+                )}
                 {config.columns.map((column) => (
                   <th
                     key={column.key}
                     scope="col"
-                    className={cn("px-3 py-2 font-medium", column.className)}
+                    className={cn("px-3 py-1 font-semibold", column.className)}
                   >
                     {column.label}
                   </th>
                 ))}
-                <th scope="col" className="w-[10%] px-3 py-2 font-medium">
+                <th scope="col" className="w-[10%] px-3 py-1 font-semibold">
                   <SortButton
                     label="Status"
                     active={sort.key === "status"}
@@ -646,7 +696,7 @@ export function SimpleResourcesView({ kind }: { kind: SimpleResourceKind }) {
                 <th
                   scope="col"
                   className={cn(
-                    "px-3 py-2 font-medium",
+                    "px-3 py-1 font-semibold",
                     config.ageLabel ? "w-[10%]" : "w-[6%]",
                   )}
                 >
@@ -659,7 +709,7 @@ export function SimpleResourcesView({ kind }: { kind: SimpleResourceKind }) {
                 </th>
               </tr>
             </thead>
-            <tbody>
+            <tbody className="divide-y divide-[var(--border)]">
               {filteredItems.map((item) => (
                 <tr
                   key={`${item.namespace ?? ""}/${item.name}`}
@@ -673,45 +723,42 @@ export function SimpleResourcesView({ kind }: { kind: SimpleResourceKind }) {
                     }
                   }}
                   tabIndex={0}
-                  className="cursor-pointer border-b border-[var(--border)]/70 transition-colors last:border-b-0 hover:bg-[var(--surface-hover)] focus-visible:bg-[var(--surface-hover)] focus-visible:outline-hidden"
+                  className="cursor-pointer transition-colors hover:bg-[var(--surface-hover)] focus-visible:bg-[var(--surface-hover)] focus-visible:outline-hidden"
                 >
-                  <td className="px-3 py-2.5">
+                  <td className="px-3 py-1">
                     <div className="flex min-w-0 items-center gap-2.5">
                       <config.icon
                         className="h-3.5 w-3.5 shrink-0 text-[var(--muted)]"
                         aria-hidden="true"
                       />
-                      <div className="min-w-0">
-                        <div
-                          className={cn(
-                            "truncate font-medium text-[var(--foreground)]",
-                            config.primaryMono && "font-mono text-[11px]",
-                          )}
-                          title={config.primary(item)}
-                        >
-                          {config.primary(item)}
-                        </div>
-                        {config.secondary && (
-                          <div className="truncate font-mono text-[10px] text-[var(--muted)]">
-                            {config.secondary(item)}
-                          </div>
+                      <div
+                        className={cn(
+                          "min-w-0 truncate font-medium text-[var(--foreground)]",
+                          config.primaryMono && "font-mono text-[11px]",
                         )}
+                        title={config.primary(item)}
+                      >
+                        {config.primary(item)}
                       </div>
                     </div>
                   </td>
+                  {config.namespaceScoped && (
+                    <td className="truncate px-3 py-1 font-mono text-[10px] text-[var(--muted)]">
+                      {item.namespace || "—"}
+                    </td>
+                  )}
                   {config.columns.map((column) => (
                     <td
                       key={column.key}
                       className={cn(
-                        "px-3 py-2.5 text-[var(--muted)]",
-                        column.multiline ? "align-top" : "truncate",
+                        "truncate px-3 py-1 text-[var(--muted)]",
                         column.className,
                       )}
                     >
                       {column.render(item)}
                     </td>
                   ))}
-                  <td className="px-3 py-2.5">
+                  <td className="px-3 py-1">
                     <span
                       className={cn(
                         "inline-flex items-center truncate font-mono text-[10px] font-medium",
@@ -721,7 +768,7 @@ export function SimpleResourcesView({ kind }: { kind: SimpleResourceKind }) {
                       {item.status}
                     </span>
                   </td>
-                  <td className="px-3 py-2.5 font-mono text-[10px] tabular-nums text-[var(--muted)]">
+                  <td className="px-3 py-1 font-mono text-[10px] tabular-nums text-[var(--muted)]">
                     {item.age}
                   </td>
                 </tr>
@@ -766,17 +813,26 @@ function SortButton({
       onClick={onClick}
       aria-pressed={active}
       className={cn(
-        "inline-flex items-center gap-1 rounded text-[9px] uppercase tracking-[0.12em] transition-colors cursor-pointer hover:text-[var(--foreground)] focus-visible:ring-2 focus-visible:ring-[var(--accent)] focus-visible:outline-hidden",
+        "inline-flex items-center gap-1 rounded transition-colors cursor-pointer hover:text-[var(--foreground)] focus-visible:ring-2 focus-visible:ring-[var(--accent)] focus-visible:outline-hidden",
         active ? "text-[var(--foreground)]" : "text-[var(--muted)]",
       )}
     >
       {label}
-      {active &&
-        (dir === 1 ? (
-          <ChevronUp className="h-3 w-3" aria-hidden="true" />
+      {active ? (
+        dir === 1 ? (
+          <ArrowUp
+            className="h-3 w-3 text-[var(--accent)]"
+            aria-hidden="true"
+          />
         ) : (
-          <ChevronDown className="h-3 w-3" aria-hidden="true" />
-        ))}
+          <ArrowDown
+            className="h-3 w-3 text-[var(--accent)]"
+            aria-hidden="true"
+          />
+        )
+      ) : (
+        <ArrowUpDown className="h-3 w-3 opacity-30" aria-hidden="true" />
+      )}
     </button>
   );
 }

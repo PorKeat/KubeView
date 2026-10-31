@@ -35,6 +35,7 @@ import {
   Link2,
   ShipWheel,
   Monitor,
+  PanelLeft,
   Keyboard,
   Timer,
   GraduationCap,
@@ -71,96 +72,132 @@ export interface SettingsNavItem {
   icon: React.ElementType;
 }
 
-export const SETTINGS_NAV_ITEMS: SettingsNavItem[] = [
+export interface SettingsNavGroup {
+  category: string;
+  items: SettingsNavItem[];
+}
+
+export const SETTINGS_NAV_GROUPS: SettingsNavGroup[] = [
   {
-    id: "settings-general",
-    testId: "general",
-    section: "general",
-    title: "General",
-    description: "Startup and workspace",
-    icon: Home,
+    category: "Workspace",
+    items: [
+      {
+        id: "settings-general",
+        testId: "general",
+        section: "general",
+        title: "General",
+        description: "Startup and workspace",
+        icon: Home,
+      },
+      {
+        id: "settings-appearance",
+        testId: "appearance",
+        section: "appearance",
+        title: "Appearance",
+        description: "Theme, text, motion",
+        icon: Monitor,
+      },
+      {
+        id: "settings-sidebar",
+        testId: "sidebar",
+        section: "sidebar",
+        title: "Sidebar",
+        description: "Badges, visibility, and order",
+        icon: PanelLeft,
+      },
+      {
+        id: "settings-data-refresh",
+        testId: "data-refresh",
+        section: "data-refresh",
+        title: "Data & Refresh",
+        description: "Polling and table rows",
+        icon: Timer,
+      },
+    ],
   },
   {
-    id: "settings-safety",
-    testId: "safety",
-    section: "safety",
-    title: "Safety",
-    description: "Guardrails and protected contexts",
-    icon: ShieldCheck,
+    category: "Behavior",
+    items: [
+      {
+        id: "settings-safety",
+        testId: "safety",
+        section: "safety",
+        title: "Safety",
+        description: "Guardrails and protected contexts",
+        icon: ShieldCheck,
+      },
+      {
+        id: "settings-notifications",
+        testId: "notifications",
+        section: "notifications",
+        title: "Notifications",
+        description: "Alerts and desktop notices",
+        icon: Bell,
+      },
+      {
+        id: "settings-terminal",
+        testId: "terminal",
+        section: "terminal",
+        title: "Terminal & Logs",
+        description: "Shell and log display defaults",
+        icon: Terminal,
+      },
+    ],
   },
   {
-    id: "settings-appearance",
-    testId: "appearance",
-    section: "appearance",
-    title: "Appearance",
-    description: "Theme, text, motion",
-    icon: Monitor,
+    category: "Tools",
+    items: [
+      {
+        id: "settings-integrations",
+        testId: "integrations",
+        section: "integrations",
+        title: "Integrations",
+        description: "Helm, GitOps, and editor",
+        icon: Plug,
+      },
+      {
+        id: "settings-advanced",
+        testId: "advanced",
+        section: "advanced",
+        title: "Advanced",
+        description: "Timeouts and portability",
+        icon: SlidersHorizontal,
+      },
+    ],
   },
   {
-    id: "settings-notifications",
-    testId: "notifications",
-    section: "notifications",
-    title: "Notifications",
-    description: "Alerts and desktop notices",
-    icon: Bell,
-  },
-  {
-    id: "settings-terminal",
-    testId: "terminal",
-    section: "terminal",
-    title: "Terminal & Logs",
-    description: "Shell and log display defaults",
-    icon: Terminal,
-  },
-  {
-    id: "settings-integrations",
-    testId: "integrations",
-    section: "integrations",
-    title: "Integrations",
-    description: "Helm, GitOps, and editor",
-    icon: Plug,
-  },
-  {
-    id: "settings-advanced",
-    testId: "advanced",
-    section: "advanced",
-    title: "Advanced",
-    description: "Timeouts and portability",
-    icon: SlidersHorizontal,
-  },
-  {
-    id: "settings-data-refresh",
-    testId: "data-refresh",
-    section: "data-refresh",
-    title: "Data & Refresh",
-    description: "Polling and table rows",
-    icon: Timer,
-  },
-  {
-    id: "settings-learning",
-    testId: "learning",
-    section: "learning",
-    title: "Learning",
-    description: "Guided help and depth",
-    icon: GraduationCap,
-  },
-  {
-    id: "settings-shortcuts",
-    testId: "shortcuts",
-    section: "shortcuts",
-    title: "Shortcuts",
-    description: "Keyboard reference",
-    icon: Keyboard,
-  },
-  {
-    id: "settings-about",
-    testId: "about",
-    section: "about",
-    title: "About & Updates",
-    description: "Version and upgrade commands",
-    icon: Info,
+    category: "Help",
+    items: [
+      {
+        id: "settings-learning",
+        testId: "learning",
+        section: "learning",
+        title: "Learning",
+        description: "Guided help and depth",
+        icon: GraduationCap,
+      },
+      {
+        id: "settings-shortcuts",
+        testId: "shortcuts",
+        section: "shortcuts",
+        title: "Shortcuts",
+        description: "Keyboard reference",
+        icon: Keyboard,
+      },
+      {
+        id: "settings-about",
+        testId: "about",
+        section: "about",
+        title: "About & Updates",
+        description: "Version and upgrade commands",
+        icon: Info,
+      },
+    ],
   },
 ];
+
+export const SETTINGS_NAV_ITEMS: SettingsNavItem[] =
+  SETTINGS_NAV_GROUPS.flatMap((group) => group.items);
 
 export interface SidebarCounts {
   contextCount: number;
@@ -264,6 +301,11 @@ export function buildNavigationGroups(counts: SidebarCounts): NavGroup[] {
           title: "GitOps Drift",
           shortTitle: "GitOps",
           icon: GitBranch,
+        },
+        {
+          id: "terminal",
+          title: "Terminal",
+          icon: Terminal,
         },
       ],
     },
@@ -616,3 +658,111 @@ export function buildNavigationGroups(counts: SidebarCounts): NavGroup[] {
     },
   ];
 }
+
+export interface SidebarCustomization {
+  showBadges: boolean;
+  hiddenItems: string[];
+  hiddenGroups: string[];
+  itemOrder: Record<string, string[]>;
+  groupOrder: string[];
+}
+
+function orderById<T>(
+  items: T[],
+  order: string[],
+  getId: (item: T) => string,
+): T[] {
+  if (order.length === 0) return items;
+  const rank = new Map(order.map((id, index) => [id, index]));
+  return [...items].sort((a, b) => {
+    const aRank = rank.get(getId(a));
+    const bRank = rank.get(getId(b));
+    if (aRank === undefined && bRank === undefined) return 0;
+    if (aRank === undefined) return 1;
+    if (bRank === undefined) return -1;
+    return aRank - bRank;
+  });
+}
+
+export function orderNavigationGroups(
+  groups: NavGroup[],
+  groupOrder: string[],
+): NavGroup[] {
+  return orderById(groups, groupOrder, (group) => group.category);
+}
+
+export function orderNavigationItems(
+  items: NavItem[],
+  itemOrder: string[] = [],
+): NavItem[] {
+  return orderById(items, itemOrder, (item) => item.id);
+}
+
+/**
+ * Applies the Settings → Sidebar layout to the navigation. Hidden categories
+ * and empty groups disappear; item order is stored per category so adding new
+ * built-in items later still appends them in their default position.
+ */
+export function customizeNavigationGroups(
+  groups: NavGroup[],
+  customization: SidebarCustomization,
+): NavGroup[] {
+  const hiddenItems = new Set(customization.hiddenItems);
+  const hiddenGroups = new Set(customization.hiddenGroups);
+
+  return orderNavigationGroups(groups, customization.groupOrder)
+    .filter((group) => !hiddenGroups.has(group.category))
+    .map((group) => {
+      const items = orderNavigationItems(
+        group.items,
+        customization.itemOrder[group.category] ?? [],
+      )
+        .filter((item) => !hiddenItems.has(item.id))
+        .map((item) =>
+          customization.showBadges ? item : { ...item, badge: undefined },
+        );
+      return { ...group, items };
+    })
+    .filter((group) => group.items.length > 0);
+}
+
+export const EMPTY_SIDEBAR_COUNTS: SidebarCounts = {
+  contextCount: 0,
+  pods: 0,
+  deployments: 0,
+  replicaSets: 0,
+  statefulSets: 0,
+  daemonSets: 0,
+  jobsAndCronJobs: 0,
+  services: 0,
+  endpoints: 0,
+  ingressGateway: 0,
+  networkPolicies: 0,
+  activePortForwards: 0,
+  configMaps: 0,
+  secrets: 0,
+  persistentVolumes: 0,
+  storageClasses: 0,
+  serviceAccounts: 0,
+  rbac: 0,
+  crds: 0,
+  namespaces: 0,
+  events: 0,
+  replicationControllers: 0,
+  endpointSlices: 0,
+  ingressClasses: 0,
+  persistentVolumeClaims: 0,
+  horizontalPodAutoscalers: 0,
+  verticalPodAutoscalers: 0,
+  podDisruptionBudgets: 0,
+  resourceQuotas: 0,
+  limitRanges: 0,
+  priorityClasses: 0,
+  runtimeClasses: 0,
+  leases: 0,
+  mutatingWebhookConfigurations: 0,
+  validatingWebhookConfigurations: 0,
+  validatingAdmissionPolicies: 0,
+  validatingAdmissionPolicyBindings: 0,
+  helmReleases: 0,
+};
