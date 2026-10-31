@@ -192,10 +192,12 @@ export function EndpointsListView() {
                   <span
                     className={
                       address.ready
-                        ? "w-1.5 h-1.5 rounded-full bg-emerald-500"
-                        : "w-1.5 h-1.5 rounded-full bg-amber-500"
+                        ? "text-[9px] font-medium text-emerald-600 dark:text-emerald-400"
+                        : "text-[9px] font-medium text-amber-600 dark:text-amber-400"
                     }
-                  />
+                  >
+                    {address.ready ? "Ready" : "Pending"}
+                  </span>
                   <span className="text-[var(--foreground)]">{address.ip}</span>
                 </span>
               ))}

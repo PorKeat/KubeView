@@ -37,6 +37,11 @@ const pages = [
     title: "Horizontal Pod Autoscalers",
     rows: 1,
   },
+  {
+    id: "verticalpodautoscalers",
+    title: "Vertical Pod Autoscalers",
+    rows: 1,
+  },
   { id: "poddisruptionbudgets", title: "Pod Disruption Budgets", rows: 1 },
   { id: "resourcequotas", title: "Resource Quotas", rows: 1 },
   { id: "limitranges", title: "Limit Ranges", rows: 1 },
@@ -112,7 +117,7 @@ test.describe("KubeView simple resource pages", () => {
     await view.getByRole("textbox", { name: "Search Events" }).fill("");
     await expect(rows).toHaveCount(3);
 
-    await rows.first().click();
+    await rows.filter({ hasText: "BackOff" }).click();
     const drawer = page.getByTestId("simple-resource-drawer");
     await expect(drawer).toBeVisible();
     await expect(drawer).toContainText("BackOff");

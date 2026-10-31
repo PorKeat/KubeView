@@ -1,6 +1,7 @@
 "use client";
 
 import { toast } from "sonner";
+import { useShallow } from "zustand/react/shallow";
 import { useClusterStore, type SelectedResource } from "@/stores/clusterStore";
 import { useTabStore } from "@/stores/tabStore";
 import type {
@@ -56,7 +57,19 @@ export function useInspectorActions({
     loadJobs,
     openWorkloadAction,
     closeInspector,
-  } = useClusterStore();
+  } = useClusterStore(
+    useShallow((state) => ({
+      setCurrentNamespace: state.setCurrentNamespace,
+      setPodNodeFilter: state.setPodNodeFilter,
+      setPodLabelFilter: state.setPodLabelFilter,
+      setJobOwnerFilter: state.setJobOwnerFilter,
+      setJobsViewMode: state.setJobsViewMode,
+      loadPods: state.loadPods,
+      loadJobs: state.loadJobs,
+      openWorkloadAction: state.openWorkloadAction,
+      closeInspector: state.closeInspector,
+    })),
+  );
   const { openTab } = useTabStore();
 
   const handleFilterPodsForNode = (nodeName: string) => {

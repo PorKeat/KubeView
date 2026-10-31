@@ -672,6 +672,23 @@ users:
           totalCount: 1,
         };
       }
+      if (kind === "verticalpodautoscalers") {
+        return {
+          kind,
+          items: [
+            item("web-vpa", "default", "Recommended", "healthy", {
+              apiVersion: "autoscaling.k8s.io/v1",
+              target: "Deployment/web",
+              updateMode: "Auto",
+              recommendation: "web: cpu 250m, memory 256Mi",
+              recommendedContainers: "1",
+              containerPolicies: "1",
+            }),
+          ],
+          totalCount: 1,
+          available: true,
+        };
+      }
       if (kind === "poddisruptionbudgets") {
         return {
           kind,
@@ -833,6 +850,7 @@ users:
         ingressClasses: 2,
         persistentVolumeClaims: 2,
         horizontalPodAutoscalers: 1,
+        verticalPodAutoscalers: 1,
         podDisruptionBudgets: 1,
         resourceQuotas: 1,
         limitRanges: 1,

@@ -19,3 +19,27 @@ test("shows the boot splash and dismisses it smoothly", async ({ page }) => {
   await splash.click();
   await expect(splash).toHaveCount(0, { timeout: 3000 });
 });
+
+test("does not replay the boot splash on a hard refresh", async ({ page }) => {
+  await page.addInitScript(() => {
+    localStorage.removeItem("kubeview_skip_boot_splash");
+  });
+  await mockRpc(page);
+  await page.goto("/");
+
+  const splash = page.locator('[data-testid="splash-screen"]');
+  await expect(splash).toBeVisible();
+  await splash.click();
+  await expect(splash).toHaveCount(0, { timeout: 3000 });
+
+  await page.reload();
+  await expect(
+    page.locator('[data-testid="context-switcher-trigger"]'),
+  ).toBeVisible({ timeout: 15000 });
+
+  await expect(splash).toHaveCount(0);
+  const splashSeen = await page.evaluate(
+    () => document.documentElement.dataset.splashSeen,
+  );
+  expect(splashSeen).toBe("true");
+});

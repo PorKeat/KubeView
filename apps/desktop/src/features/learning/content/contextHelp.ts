@@ -78,6 +78,17 @@ export const PAGE_GUIDES: Record<string, PageGuide> = {
     pathId: "first-steps",
     lessonId: "deployments-keep-pods-alive",
   },
+  verticalpodautoscalers: {
+    title: "Vertical Pod Autoscalers",
+    beginner:
+      "A VPA recommends or applies CPU and memory requests for a workload based on observed usage.",
+    intermediate:
+      "Check the update mode and the recommendation targets. Off still produces recommendations but never restarts or resizes Pods.",
+    advanced:
+      "VPA is an addon CRD, not a built-in API. It needs a recommender and updater running, and most update modes recreate Pods to apply new requests.",
+    pathId: "first-steps",
+    lessonId: "deployments-keep-pods-alive",
+  },
   poddisruptionbudgets: {
     title: "Pod Disruption Budgets",
     beginner:

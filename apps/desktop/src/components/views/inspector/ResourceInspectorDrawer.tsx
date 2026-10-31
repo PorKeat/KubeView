@@ -2,6 +2,7 @@
 
 import * as React from "react";
 import { AlertTriangle } from "lucide-react";
+import { useShallow } from "zustand/react/shallow";
 import { useClusterStore } from "@/stores/clusterStore";
 import { cn } from "@/lib/utils";
 import { resourceTarget } from "@/lib/resourceKinds";
@@ -31,7 +32,22 @@ export function ResourceInspectorDrawer() {
     loadConfigMaps,
     loadSecrets,
     openInspector,
-  } = useClusterStore();
+  } = useClusterStore(
+    useShallow((state) => ({
+      isInspectorOpen: state.isInspectorOpen,
+      closeInspector: state.closeInspector,
+      isInspectorEditDirty: state.isInspectorEditDirty,
+      setInspectorEditDirty: state.setInspectorEditDirty,
+      openLogsModal: state.openLogsModal,
+      openExecModal: state.openExecModal,
+      openRestartConfirm: state.openRestartConfirm,
+      openDeleteConfirm: state.openDeleteConfirm,
+      openMovePod: state.openMovePod,
+      loadConfigMaps: state.loadConfigMaps,
+      loadSecrets: state.loadSecrets,
+      openInspector: state.openInspector,
+    })),
+  );
 
   const [activeTab, setActiveTab] = React.useState<InspectorTabId>("overview");
   const [isEditorMaximized, setIsEditorMaximized] = React.useState(false);
@@ -128,7 +144,6 @@ export function ResourceInspectorDrawer() {
     cronJobData,
     workloadConditions,
     nodePods,
-    pods,
   } = useInspectorResourceState(isInspectorOpen);
 
   const yaml = useInspectorYaml({
@@ -147,8 +162,8 @@ export function ResourceInspectorDrawer() {
     isServiceAccount,
     isRBACResource,
     isConfigStorageResource,
+    isEditing: isYamlEditing,
     podData,
-    pods,
   });
 
   const { liveEvents, isLoadingEvents } = useInspectorEvents({
@@ -239,7 +254,7 @@ export function ResourceInspectorDrawer() {
   return (
     <div
       className={cn(
-        "fixed inset-0 z-40 overflow-hidden transition-all duration-200 motion-reduce:transition-none",
+        "fixed inset-0 z-40 overflow-hidden",
         isMounted ? "pointer-events-auto" : "pointer-events-none",
       )}
     >
@@ -250,8 +265,8 @@ export function ResourceInspectorDrawer() {
         className={cn(
           "fixed inset-0 bg-black/40 dark:bg-black/60 backdrop-blur-[2px] transition-opacity motion-reduce:transition-none cursor-pointer",
           isMounted
-            ? "opacity-100 duration-250 ease-out"
-            : "opacity-0 duration-200 ease-in",
+            ? "opacity-100 duration-200 ease-out"
+            : "opacity-0 duration-150 ease-in",
         )}
         aria-hidden="true"
       />
@@ -260,13 +275,15 @@ export function ResourceInspectorDrawer() {
       <div
         data-testid="resource-inspector-drawer"
         className={cn(
-          "inspector-drawer fixed inset-y-0 right-0 z-40 w-full glass-panel border-l border-[var(--border)] shadow-2xl flex flex-col select-none backdrop-blur-xl transform motion-reduce:transform-none",
+          "inspector-drawer fixed inset-y-0 right-0 z-40 w-full origin-right glass-panel border-l border-[var(--border)] shadow-2xl flex flex-col select-none",
           activeTab === "yaml" && isYamlEditing
             ? isEditorMaximized
               ? "max-w-[100vw]"
               : "max-w-3xl md:max-w-4xl"
             : "max-w-xl md:max-w-2xl",
-          isMounted ? "translate-x-0" : "translate-x-full",
+          isMounted
+            ? "translate-x-0 scale-100 opacity-100"
+            : "translate-x-full scale-[0.985] opacity-0",
         )}
       >
         {/* Top Header */}
@@ -333,82 +350,88 @@ export function ResourceInspectorDrawer() {
         )}
 
         {/* Drawer Content */}
-        <InspectorTabContent
-          activeTab={activeTab}
-          canEditResource={canEditResource}
-          isYamlEditing={isYamlEditing}
-          yamlEditInitialMode={
-            yamlEditInitialMode === "yaml" ? "yaml" : undefined
-          }
-          onStartEditingYaml={startEditingYaml}
-          onExitEditingYaml={requestExitEditingYaml}
-          currentResource={currentResource}
-          isNode={isNode}
-          isAccessResource={isAccessResource}
-          isConfigStorageResource={isConfigStorageResource}
-          isNetworkingResource={isNetworkingResource}
-          isWorkload={isWorkload}
-          isCRD={isCRD}
-          isConfigMap={isConfigMap}
-          isDeployment={isDeployment}
-          isReplicaSet={isReplicaSet}
-          isStatefulSet={isStatefulSet}
-          isDaemonSet={isDaemonSet}
-          isJob={isJob}
-          isCronJob={isCronJob}
-          hasWorkloadConditions={hasWorkloadConditions}
-          nodeData={nodeData}
-          nodePods={nodePods}
-          accessData={accessData}
-          configStorageData={configStorageData}
-          editableConfigStorageData={editableConfigStorageData}
-          networkingData={networkingData}
-          deploymentData={deploymentData}
-          replicaSetData={replicaSetData}
-          statefulSetData={statefulSetData}
-          daemonSetData={daemonSetData}
-          jobData={jobData}
-          cronJobData={cronJobData}
-          workloadConditions={workloadConditions}
-          podData={podData}
-          podNodeCIDR={podNodeCIDR}
-          liveEvents={liveEvents}
-          liveYaml={yaml.liveYaml}
-          isLoadingYaml={yaml.isLoadingYaml}
-          isLoadingEvents={isLoadingEvents}
-          copiedYaml={yaml.copiedYaml}
-          isEditorMaximized={isEditorMaximized}
-          onToggleEditorMaximized={() =>
-            setIsEditorMaximized((previous) => !previous)
-          }
-          onFilterPodsForNode={actions.handleFilterPodsForNode}
-          onInspectPod={openInspector}
-          onViewAllPods={actions.handleViewAllPods}
-          onEditResource={startEditingYaml}
-          onViewPods={actions.handleViewPodsForWorkload}
-          onScale={actions.handleScaleWorkload}
-          onRestart={actions.handleRestartWorkload}
-          onDelete={actions.handleDeleteWorkload}
-          onViewJobs={actions.handleViewJobsForCronJob}
-          onTriggerCronJob={actions.handleTriggerCronJob}
-          onToggleCronJobSuspend={actions.handleToggleCronJobSuspend}
-          onCopyYaml={yaml.copyYaml}
-          onDownloadYaml={yaml.downloadYaml}
-          onReloadYaml={yaml.handleReloadYaml}
-          onClose={requestClose}
-          loadConfigMaps={loadConfigMaps}
-          loadSecrets={loadSecrets}
-          onOpenLogsModal={openLogsModal}
-          onOpenExecModal={openExecModal}
-        />
+        <div
+          key={activeTab}
+          className="flex min-h-0 flex-1 flex-col animate-fade-in motion-reduce:animate-none"
+        >
+          <InspectorTabContent
+            activeTab={activeTab}
+            canEditResource={canEditResource}
+            isYamlEditing={isYamlEditing}
+            yamlEditInitialMode={
+              yamlEditInitialMode === "yaml" ? "yaml" : undefined
+            }
+            onStartEditingYaml={startEditingYaml}
+            onExitEditingYaml={requestExitEditingYaml}
+            currentResource={currentResource}
+            isNode={isNode}
+            isAccessResource={isAccessResource}
+            isConfigStorageResource={isConfigStorageResource}
+            isNetworkingResource={isNetworkingResource}
+            isWorkload={isWorkload}
+            isCRD={isCRD}
+            isConfigMap={isConfigMap}
+            isDeployment={isDeployment}
+            isReplicaSet={isReplicaSet}
+            isStatefulSet={isStatefulSet}
+            isDaemonSet={isDaemonSet}
+            isJob={isJob}
+            isCronJob={isCronJob}
+            hasWorkloadConditions={hasWorkloadConditions}
+            nodeData={nodeData}
+            nodePods={nodePods}
+            accessData={accessData}
+            configStorageData={configStorageData}
+            editableConfigStorageData={editableConfigStorageData}
+            networkingData={networkingData}
+            deploymentData={deploymentData}
+            replicaSetData={replicaSetData}
+            statefulSetData={statefulSetData}
+            daemonSetData={daemonSetData}
+            jobData={jobData}
+            cronJobData={cronJobData}
+            workloadConditions={workloadConditions}
+            podData={podData}
+            podNodeCIDR={podNodeCIDR}
+            liveEvents={liveEvents}
+            liveYaml={yaml.liveYaml}
+            isLoadingYaml={yaml.isLoadingYaml}
+            isLiveYaml={yaml.isLive}
+            isLoadingEvents={isLoadingEvents}
+            copiedYaml={yaml.copiedYaml}
+            isEditorMaximized={isEditorMaximized}
+            onToggleEditorMaximized={() =>
+              setIsEditorMaximized((previous) => !previous)
+            }
+            onFilterPodsForNode={actions.handleFilterPodsForNode}
+            onInspectPod={openInspector}
+            onViewAllPods={actions.handleViewAllPods}
+            onEditResource={startEditingYaml}
+            onViewPods={actions.handleViewPodsForWorkload}
+            onScale={actions.handleScaleWorkload}
+            onRestart={actions.handleRestartWorkload}
+            onDelete={actions.handleDeleteWorkload}
+            onViewJobs={actions.handleViewJobsForCronJob}
+            onTriggerCronJob={actions.handleTriggerCronJob}
+            onToggleCronJobSuspend={actions.handleToggleCronJobSuspend}
+            onCopyYaml={yaml.copyYaml}
+            onDownloadYaml={yaml.downloadYaml}
+            onReloadYaml={yaml.handleReloadYaml}
+            onClose={requestClose}
+            loadConfigMaps={loadConfigMaps}
+            loadSecrets={loadSecrets}
+            onOpenLogsModal={openLogsModal}
+            onOpenExecModal={openExecModal}
+          />
+        </div>
       </div>
 
       {pendingGuard && (
         <div
           data-testid="inspector-discard-guard"
-          className="fixed inset-0 z-[70] flex items-center justify-center bg-black/50 p-4 backdrop-blur-sm"
+          className="fixed inset-0 z-[70] flex items-center justify-center bg-black/50 p-4 backdrop-blur-sm animate-in fade-in duration-150"
         >
-          <div className="w-full max-w-sm rounded-2xl border border-[var(--border)] bg-[var(--surface)] p-5 shadow-2xl">
+          <div className="w-full max-w-sm rounded-2xl border border-[var(--border)] bg-[var(--surface)] p-5 shadow-2xl animate-in zoom-in-95 duration-150">
             <div className="flex items-start gap-3">
               <div className="rounded-lg border border-amber-500/25 bg-amber-500/10 p-2 text-amber-600 dark:text-amber-400">
                 <AlertTriangle className="h-4 w-4" />

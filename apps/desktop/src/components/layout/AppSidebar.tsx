@@ -195,6 +195,8 @@ export function AppSidebar() {
           simpleResourceCounts?.persistentVolumeClaims ?? 0,
         horizontalPodAutoscalers:
           simpleResourceCounts?.horizontalPodAutoscalers ?? 0,
+        verticalPodAutoscalers:
+          simpleResourceCounts?.verticalPodAutoscalers ?? 0,
         podDisruptionBudgets: simpleResourceCounts?.podDisruptionBudgets ?? 0,
         resourceQuotas: simpleResourceCounts?.resourceQuotas ?? 0,
         limitRanges: simpleResourceCounts?.limitRanges ?? 0,
@@ -350,6 +352,7 @@ export function AppSidebar() {
       item.id === "endpointslices" ||
       item.id === "persistentvolumeclaims" ||
       item.id === "horizontalpodautoscalers" ||
+      item.id === "verticalpodautoscalers" ||
       item.id === "poddisruptionbudgets" ||
       item.id === "resourcequotas" ||
       item.id === "limitranges" ||

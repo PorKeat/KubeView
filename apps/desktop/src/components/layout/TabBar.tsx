@@ -33,6 +33,7 @@ import {
   Waypoints,
   Route,
   Activity,
+  MoveVertical,
   ArrowUp,
   Shield,
   SlidersHorizontal,
@@ -94,6 +95,8 @@ export function TabBar() {
         return HardDrive;
       case "horizontalpodautoscalers":
         return Activity;
+      case "verticalpodautoscalers":
+        return MoveVertical;
       case "poddisruptionbudgets":
         return Shield;
       case "resourcequotas":

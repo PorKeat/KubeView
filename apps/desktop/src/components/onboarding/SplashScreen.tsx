@@ -37,6 +37,20 @@ export function SplashScreen() {
       // finishing its boot sequence.
     }
 
+    // The inline boot script marks the document before first paint when this
+    // session has already shown the splash. A hard refresh should land on the
+    // restored workspace instead of replaying the loading screen.
+    if (document.documentElement.dataset.splashSeen === "true") {
+      setSplashDismissed(true);
+      return;
+    }
+
+    try {
+      sessionStorage.setItem("kubeview_splash_seen", "true");
+    } catch {
+      // Best effort only; the splash still dismisses on its timer.
+    }
+
     const timer = window.setTimeout(handleComplete, VISIBLE_DURATION);
     const handleKeyDown = (event: KeyboardEvent) => {
       if (event.key === "Escape") handleComplete();
@@ -107,7 +121,6 @@ export function SplashScreen() {
           <div className="splash-progress h-full w-full rounded-full bg-gradient-to-r from-[#F08A42] via-[#FF9E59] to-[#FFD0A8]" />
         </div>
         <div className="mt-3 flex items-center gap-2 font-mono text-[9px] uppercase tracking-[0.18em] text-[var(--muted)]">
-          <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-[var(--accent)]" />
           Preparing your workspace
         </div>
       </div>

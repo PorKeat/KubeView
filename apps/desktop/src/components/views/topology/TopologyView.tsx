@@ -264,9 +264,10 @@ function WorkloadCard({
       onClick={onOpen}
       className="group flex items-center gap-3 rounded-xl border border-[var(--border)] bg-[var(--surface)] p-3 text-left transition-colors hover:border-[var(--accent)]/40 hover:bg-[var(--surface-hover)] focus-visible:ring-2 focus-visible:ring-[var(--accent)] focus-visible:outline-hidden"
     >
-      <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-[var(--accent)]/20 bg-[var(--accent)]/10 text-[var(--accent)]">
-        <Icon className="h-4 w-4" aria-hidden="true" />
-      </span>
+      <Icon
+        className="h-4 w-4 shrink-0 text-[var(--accent)]"
+        aria-hidden="true"
+      />
       <span className="min-w-0 flex-1">
         <span className="flex items-center justify-between gap-2">
           <span className="truncate text-[11px] font-semibold text-[var(--foreground)]">

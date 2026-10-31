@@ -1,8 +1,6 @@
 "use client";
 
-import * as React from "react";
-import { Copy, Check, Box, ArrowRight } from "lucide-react";
-import { toast } from "sonner";
+import { Box, ArrowRight } from "lucide-react";
 import { SpotlightCard } from "@/components/ui";
 import { NodeTelemetryGraph } from "./NodeTelemetryGraph";
 import { cleanAlloc } from "../types";
@@ -30,25 +28,15 @@ export function NodeMatrixGrid({
   onInspectNode,
   onFilterPodsForNode,
 }: NodeMatrixGridProps) {
-  const [copiedIp, setCopiedIp] = React.useState<string | null>(null);
-
-  const handleCopyIp = (e: React.MouseEvent, ip: string) => {
-    e.stopPropagation();
-    navigator.clipboard.writeText(ip);
-    setCopiedIp(ip);
-    toast.success(`Copied Node IP: ${ip}`);
-    setTimeout(() => setCopiedIp(null), 1500);
-  };
-
   return (
     <div
       className={cn(
-        "grid gap-4 w-full",
+        "grid w-full gap-4",
         nodes.length === 1
           ? "grid-cols-1"
           : nodes.length === 2
-            ? "grid-cols-1 lg:grid-cols-2"
-            : "grid-cols-1 md:grid-cols-2 xl:grid-cols-3",
+            ? "grid-cols-1 sm:grid-cols-2"
+            : "grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4",
       )}
     >
       {nodes.map((n) => {
@@ -57,7 +45,14 @@ export function NodeMatrixGrid({
         const scopedNodePods =
           nodeScopedPodCounts[n.name] ?? (isNamespaceScoped ? 0 : n.activePods);
         const podCap = n.podCapacity || 110;
-        const availablePods = Math.max(0, podCap - n.activePods);
+        const cpuPercent =
+          effectiveMode === "usage" && n.cpuUsage
+            ? (n.cpuUsagePercent ?? 0)
+            : n.cpuPercent;
+        const memoryPercent =
+          effectiveMode === "usage" && n.memoryUsage
+            ? (n.memoryUsagePercent ?? 0)
+            : n.memoryPercent;
 
         return (
           <SpotlightCard
@@ -65,15 +60,7 @@ export function NodeMatrixGrid({
             role="button"
             tabIndex={0}
             isSelected={isSelected}
-            aria-label={`Node ${n.name}, status ${n.status}, CPU ${
-              effectiveMode === "usage" && n.cpuUsage
-                ? n.cpuUsagePercent
-                : n.cpuPercent
-            } percent, memory ${
-              effectiveMode === "usage" && n.memoryUsage
-                ? n.memoryUsagePercent
-                : n.memoryPercent
-            } percent. Press Enter or Space to inspect.`}
+            aria-label={`Node ${n.name}, status ${n.status}, CPU ${cpuPercent} percent, memory ${memoryPercent} percent. Press Enter or Space to inspect.`}
             onClick={() => onInspectNode(n)}
             onKeyDown={(e) => {
               if (e.key === "Enter" || e.key === " ") {
@@ -81,128 +68,80 @@ export function NodeMatrixGrid({
                 onInspectNode(n);
               }
             }}
-            containerClassName="cursor-pointer hover:-translate-y-0.5 active:scale-[0.99] active:translate-y-0 focus-visible:ring-2 focus-visible:ring-[var(--accent)] focus-visible:outline-hidden"
-            className="p-6 space-y-5 flex flex-col justify-between"
+            containerClassName="group/node aspect-square w-full max-w-[360px] justify-self-center cursor-pointer rounded-2xl hover:-translate-y-0.5 active:scale-[0.99] active:translate-y-0 focus-visible:ring-2 focus-visible:ring-[var(--accent)] focus-visible:outline-hidden"
+            className="flex h-full flex-col"
           >
-            {/* Top Line: Host Identity & Status */}
-            <div className="flex items-start justify-between gap-3">
-              <div className="space-y-0.5 min-w-0">
-                <div className="flex items-center gap-2.5 flex-wrap">
-                  <span className="font-mono font-bold text-lg text-[var(--foreground)] truncate tracking-tight">
+            <div className="flex h-full flex-col p-4">
+              {/* Identity */}
+              <div className="flex items-start justify-between gap-2">
+                <div className="min-w-0">
+                  <h3 className="truncate font-mono text-base font-semibold tracking-tight text-[var(--foreground)]">
                     {n.name}
-                  </span>
-                  <span className="px-3 py-0.5 rounded-full text-xs font-mono text-[var(--muted)] bg-white/[0.04] dark:bg-white/[0.06] border border-white/[0.08] dark:border-white/[0.08] shrink-0">
-                    {n.roles.join(", ") || "worker"}
-                  </span>
+                  </h3>
+                  <p className="mt-0.5 truncate font-mono text-[9px] uppercase tracking-[0.14em] text-[var(--muted)]">
+                    {(n.roles.length > 0 ? n.roles : ["worker"]).join(" · ")}
+                  </p>
                 </div>
 
-                {/* Internal IP with Quick Copy */}
-                <div className="flex items-center gap-1.5 text-xs font-mono text-[var(--muted)]">
-                  <span>{n.internalIP}</span>
-                  {n.internalIP && (
-                    <button
-                      type="button"
-                      onClick={(e) => handleCopyIp(e, n.internalIP)}
-                      className="p-0.5 rounded hover:bg-black/10 dark:hover:bg-white/10 hover:text-[var(--foreground)] transition-colors cursor-pointer"
-                      title="Copy IP address"
-                    >
-                      {copiedIp === n.internalIP ? (
-                        <Check className="w-3 h-3 text-emerald-500" />
-                      ) : (
-                        <Copy className="w-3 h-3 opacity-60 hover:opacity-100" />
-                      )}
-                    </button>
+                <span
+                  className={cn(
+                    "inline-flex shrink-0 items-center rounded-full border px-2 py-0.5 font-mono text-[10px] font-medium",
+                    isNodeReady
+                      ? "border-emerald-500/25 bg-emerald-500/10 text-emerald-400"
+                      : "border-rose-500/25 bg-rose-500/10 text-rose-400",
                   )}
-                </div>
-                {n.podCIDR && (
-                  <div className="text-[10px] font-mono text-[var(--muted)]">
-                    podCIDR:{" "}
-                    <span className="text-[var(--foreground)]">
-                      {n.podCIDR}
-                    </span>
-                  </div>
-                )}
+                >
+                  {n.status}
+                </span>
               </div>
 
-              <span
-                className={cn(
-                  "px-3 py-1 rounded-full text-xs font-medium font-mono shrink-0",
-                  isNodeReady
-                    ? "bg-emerald-500/15 text-emerald-400 border border-emerald-500/20"
-                    : "bg-rose-500/15 text-rose-400 border border-rose-500/20",
-                )}
-              >
-                {n.status}
-              </span>
-            </div>
+              {/* Core metrics */}
+              <div className="flex flex-1 items-center">
+                <NodeTelemetryGraph
+                  compact
+                  nodeName={n.name}
+                  cpuPercent={cpuPercent}
+                  cpuDisplay={
+                    effectiveMode === "usage" && n.cpuUsage
+                      ? n.cpuUsage
+                      : cleanAlloc(n.cpuAllocated)
+                  }
+                  memoryPercent={memoryPercent}
+                  memoryDisplay={
+                    effectiveMode === "usage" && n.memoryUsage
+                      ? n.memoryUsage
+                      : cleanAlloc(n.memoryAllocated)
+                  }
+                  activePods={n.activePods}
+                  podCapacity={podCap}
+                  scopedNamespace={currentNamespace}
+                  scopedPodsCount={scopedNodePods}
+                />
+              </div>
 
-            {/* Precision Telemetry Activity Graph & Key Metrics */}
-            <NodeTelemetryGraph
-              nodeName={n.name}
-              cpuPercent={
-                effectiveMode === "usage" && n.cpuUsage
-                  ? (n.cpuUsagePercent ?? 0)
-                  : n.cpuPercent
-              }
-              cpuDisplay={
-                effectiveMode === "usage" && n.cpuUsage
-                  ? n.cpuUsage
-                  : cleanAlloc(n.cpuAllocated)
-              }
-              memoryPercent={
-                effectiveMode === "usage" && n.memoryUsage
-                  ? (n.memoryUsagePercent ?? 0)
-                  : n.memoryPercent
-              }
-              memoryDisplay={
-                effectiveMode === "usage" && n.memoryUsage
-                  ? n.memoryUsage
-                  : cleanAlloc(n.memoryAllocated)
-              }
-              activePods={n.activePods}
-              podCapacity={podCap}
-              scopedNamespace={currentNamespace}
-              scopedPodsCount={scopedNodePods}
-            />
+              {/* Footer */}
+              <div className="flex items-center justify-between border-t border-[var(--border)]/60 pt-2.5">
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onFilterPodsForNode(n.name);
+                  }}
+                  title={`View pods on ${n.name}${isNamespaceScoped ? ` (${currentNamespace})` : ""}`}
+                  aria-label={`View pods on ${n.name}`}
+                  className="inline-flex h-7 w-7 items-center justify-center rounded-md text-[var(--muted)] transition-colors hover:bg-black/[0.05] hover:text-[var(--accent)] dark:hover:bg-white/[0.06] cursor-pointer"
+                >
+                  <Box className="h-3.5 w-3.5" aria-hidden="true" />
+                </button>
 
-            {/* Card Footer: Filter Workloads Affordance & Inspect Link */}
-            <div className="pt-3.5 border-t border-[var(--border)]/60 flex items-center justify-between text-xs font-mono">
-              <button
-                type="button"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  onFilterPodsForNode(n.name);
-                }}
-                title={`Filter Pods list to ${n.name}${isNamespaceScoped ? ` (${currentNamespace})` : ""}`}
-                className="text-[var(--muted)] hover:text-[var(--accent)] hover:underline inline-flex items-center gap-1.5 transition-colors cursor-pointer group/avail"
-              >
-                <Box className="w-3 h-3 text-[var(--accent)]" />
-                {isNamespaceScoped ? (
-                  <span
-                    className={cn(
-                      "tabular-nums font-mono text-xs",
-                      scopedNodePods > 0
-                        ? "text-[var(--accent)] font-semibold"
-                        : "text-[var(--muted)]",
-                    )}
-                  >
-                    {scopedNodePods} {scopedNodePods === 1 ? "pod" : "pods"} in{" "}
-                    {currentNamespace}
-                  </span>
-                ) : (
-                  <span className="tabular-nums">
-                    {n.activePods} active {n.activePods === 1 ? "pod" : "pods"}
-                    <span className="text-[var(--muted)] opacity-75 font-normal ml-1">
-                      ({availablePods} free)
-                    </span>
-                  </span>
-                )}
-              </button>
-
-              <span className="text-[var(--accent)] font-semibold flex items-center gap-1 group-hover/spotlight:translate-x-0.5 transition-transform">
-                <span>Inspect</span>
-                <ArrowRight className="w-3 h-3" aria-hidden="true" />
-              </span>
+                <span className="inline-flex items-center gap-1 font-mono text-[11px] font-semibold text-[var(--accent)]">
+                  <span>Inspect</span>
+                  <ArrowRight
+                    className="h-3 w-3 transition-transform group-hover/spotlight:translate-x-0.5 motion-reduce:transition-none"
+                    aria-hidden="true"
+                  />
+                </span>
+              </div>
             </div>
           </SpotlightCard>
         );

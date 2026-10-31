@@ -22,6 +22,7 @@ import {
   Server,
   PanelLeftClose,
   Activity,
+  MoveVertical,
   Terminal,
   FileCode,
   Shield,
@@ -427,6 +428,20 @@ export function CommandPalette() {
               >
                 <Activity className="w-4 h-4 text-blue-500 dark:text-blue-400" />
                 <span>Horizontal Pod Autoscalers</span>
+              </Command.Item>
+              <Command.Item
+                onSelect={() => {
+                  setCurrentNamespace("all");
+                  navigateTo(
+                    "verticalpodautoscalers",
+                    "Vertical Pod Autoscalers",
+                  );
+                }}
+                value="Vertical Pod Autoscalers VPA autoscaling resources recommendations"
+                className="flex items-center gap-2.5 px-2.5 py-2 rounded-md cursor-pointer hover:bg-[var(--surface-hover)] text-[var(--foreground)] transition-colors"
+              >
+                <MoveVertical className="w-4 h-4 text-cyan-500 dark:text-cyan-400" />
+                <span>Vertical Pod Autoscalers</span>
               </Command.Item>
               <Command.Item
                 onSelect={() => {

@@ -66,6 +66,8 @@ Phase 12 ──► Phase 13 ──► Phase 14 ──► Phase 15 ──► Phas
 ## 🧩 Resource Coverage Track (RC1–RC5)
 
 > The reference sidebar lists 36 resource entries. **36 are implemented**, **0 are partial**, and **0 remain**. This track closes the gap with one shared simple-resource layer instead of a bespoke slice per kind. It feeds Phases 04, 09, 10, and 11. Full plan: [resource-coverage-plan.md](docs/resource-coverage-plan.md).
+>
+> Beyond the reference inventory, KubeView also adds a discovery-driven Vertical Pod Autoscalers page for clusters running the optional `autoscaling.k8s.io` CRD.
 
 |  Phase  | Focus                        | Resources                                                                                                                                        |     Size     |    Status    |
 | :-----: | :--------------------------- | :----------------------------------------------------------------------------------------------------------------------------------------------- | :----------: | :----------: |

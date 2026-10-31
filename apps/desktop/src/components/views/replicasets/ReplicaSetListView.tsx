@@ -267,7 +267,7 @@ export function ReplicaSetListView() {
           onReload={() => loadReplicaSets(currentNamespace)}
         />
       ) : (
-        <div className="flex-1 overflow-auto min-h-0">
+        <div className="flex-1 overflow-y-auto overflow-x-hidden min-h-0">
           <table className="w-full text-left text-xs border-collapse table-fixed">
             <ReplicaSetTableHeader
               sortField={sortField}

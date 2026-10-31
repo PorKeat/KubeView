@@ -13,10 +13,8 @@ import {
   UserCheck,
   Copy,
   Check,
-  ExternalLink,
   ChevronDown,
   ChevronRight,
-  Server,
   Zap,
 } from "lucide-react";
 import { useClusterStore } from "@/stores/clusterStore";
@@ -61,7 +59,7 @@ export function ConnectionDiagnosticsDrawer({
       setIsMounted(false);
       const timer = setTimeout(() => {
         setIsRendered(false);
-      }, 250);
+      }, 300);
       return () => clearTimeout(timer);
     }
   }, [isOpen]);
@@ -117,7 +115,7 @@ export function ConnectionDiagnosticsDrawer({
       aria-modal="true"
       aria-labelledby="diagnostics-drawer-title"
       className={cn(
-        "fixed inset-0 z-50 overflow-hidden select-none transition-all duration-200 motion-reduce:transition-none",
+        "fixed inset-0 z-50 overflow-hidden select-none",
         isMounted ? "pointer-events-auto" : "pointer-events-none",
       )}
     >
@@ -126,8 +124,8 @@ export function ConnectionDiagnosticsDrawer({
         className={cn(
           "fixed inset-0 bg-black/40 dark:bg-black/60 backdrop-blur-[2px] transition-opacity motion-reduce:transition-none cursor-pointer",
           isMounted
-            ? "opacity-100 duration-250 ease-out"
-            : "opacity-0 duration-200 ease-in",
+            ? "opacity-100 duration-200 ease-out"
+            : "opacity-0 duration-150 ease-in",
         )}
         onClick={onClose}
         aria-hidden="true"
@@ -136,11 +134,10 @@ export function ConnectionDiagnosticsDrawer({
       {/* Drawer Panel: Slide sheet with spring curve ease-[cubic-bezier(0.16,1,0.3,1)] */}
       <aside
         className={cn(
-          "fixed inset-y-0 right-0 z-50 w-full max-w-lg sm:max-w-xl glass-panel border-l border-[var(--border)] shadow-2xl flex flex-col select-none backdrop-blur-xl",
-          "transform transition-transform motion-reduce:transition-none motion-reduce:transform-none",
+          "slide-sheet fixed inset-y-0 right-0 z-50 w-full max-w-lg sm:max-w-xl glass-panel border-l border-[var(--border)] shadow-2xl flex flex-col select-none origin-right",
           isMounted
-            ? "translate-x-0 duration-250 ease-[cubic-bezier(0.16,1,0.3,1)]"
-            : "translate-x-full duration-200 ease-in",
+            ? "translate-x-0 scale-100 opacity-100"
+            : "translate-x-full scale-[0.985] opacity-0",
         )}
       >
         {/* Header */}

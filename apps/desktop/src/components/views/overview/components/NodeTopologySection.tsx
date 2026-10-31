@@ -11,8 +11,6 @@ import type { NodeSummary } from "@kubeview/contracts";
 export interface NodeTopologySectionProps {
   nodes: NodeSummary[];
   readyNodesCount: number;
-  totalCpuCores: number;
-  totalMemoryGiB: number;
   selectedNode: string | null;
   nodeViewMode: "grid" | "table";
   effectiveMode: "usage" | "allocation";
@@ -28,8 +26,6 @@ export interface NodeTopologySectionProps {
 export function NodeTopologySection({
   nodes,
   readyNodesCount,
-  totalCpuCores,
-  totalMemoryGiB,
   selectedNode,
   nodeViewMode,
   effectiveMode,
@@ -41,28 +37,53 @@ export function NodeTopologySection({
   onInspectNode,
   onFilterPodsForNode,
 }: NodeTopologySectionProps) {
+  const allReady = nodes.length > 0 && readyNodesCount >= nodes.length;
+  const readinessTone =
+    readyNodesCount === 0
+      ? "text-rose-400"
+      : allReady
+        ? "text-emerald-400"
+        : "text-amber-400";
+
   return (
-    <div id="cluster-nodes-section" className="space-y-3.5 scroll-mt-6">
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-1 border-b border-[var(--border)]/60">
-        <div className="flex items-center gap-2.5 flex-wrap">
-          <Server className="w-4 h-4 text-[var(--accent)]" aria-hidden="true" />
-          <h2 className="text-sm font-semibold text-[var(--foreground)] tracking-tight">
-            Cluster Nodes
-          </h2>
-          <span className="text-xs font-mono px-2 py-0.5 rounded-md bg-[var(--surface)] border border-[var(--border)] text-[var(--foreground)] font-medium">
-            {nodes.length} {nodes.length === 1 ? "Node" : "Nodes"}
-          </span>
-          <span className="text-xs text-[var(--muted)] font-mono hidden md:inline">
-            {readyNodesCount} of {nodes.length} Ready
-            {isNamespaceScoped &&
-              ` / ${nodesHostingCount} hosting ${currentNamespace}`}
-          </span>
+    <div id="cluster-nodes-section" className="space-y-4 scroll-mt-6">
+      <div className="flex flex-col gap-3 border-b border-[var(--border)]/60 pb-3 sm:flex-row sm:items-center sm:justify-between">
+        <div className="flex min-w-0 items-center gap-2.5">
+          <Server
+            className="h-4 w-4 shrink-0 text-[var(--accent)]"
+            aria-hidden="true"
+          />
+          <div className="min-w-0">
+            <div className="flex items-center gap-2">
+              <h2 className="truncate text-sm font-semibold tracking-tight text-[var(--foreground)]">
+                Cluster Nodes
+              </h2>
+              <span className="rounded-md border border-[var(--border)] bg-[var(--surface)] px-1.5 py-0.5 font-mono text-[10px] font-medium text-[var(--muted)] tabular-nums">
+                {nodes.length} nodes
+              </span>
+            </div>
+            <div className="mt-0.5 flex flex-wrap items-center gap-x-2 gap-y-0.5 text-[11px] text-[var(--muted)]">
+              <span className={cn("font-mono tabular-nums", readinessTone)}>
+                {readyNodesCount}/{nodes.length} ready
+              </span>
+              {isNamespaceScoped && (
+                <>
+                  <span aria-hidden="true" className="opacity-40">
+                    ·
+                  </span>
+                  <span className="font-mono tabular-nums">
+                    {nodesHostingCount} hosting {currentNamespace}
+                  </span>
+                </>
+              )}
+            </div>
+          </div>
         </div>
 
         {/* View Mode Switcher: Matrix Grid vs Telemetry Table */}
         <div className="flex items-center gap-2 self-start sm:self-auto">
           <div
-            className="relative flex items-center p-0.5 rounded-lg border border-[var(--border)] bg-[var(--surface)] text-xs font-mono select-none"
+            className="relative flex items-center rounded-lg border border-[var(--border)] bg-[var(--surface)] p-0.5 text-[11px] font-mono select-none"
             role="group"
             aria-label="Nodes view mode"
           >
@@ -72,7 +93,7 @@ export function NodeTopologySection({
               aria-pressed={nodeViewMode === "grid"}
               aria-label="Grid layout view"
               className={cn(
-                "relative z-10 px-2.5 py-1 rounded-md flex items-center gap-1.5 transition-colors duration-150 cursor-pointer focus-visible:ring-2 focus-visible:ring-[var(--accent)] focus-visible:outline-hidden",
+                "relative z-10 flex h-7 items-center gap-1.5 rounded-md px-2.5 transition-colors duration-150 cursor-pointer focus-visible:ring-2 focus-visible:ring-[var(--accent)] focus-visible:outline-hidden",
                 nodeViewMode === "grid"
                   ? "text-[var(--foreground)] font-semibold"
                   : "text-[var(--muted)] hover:text-[var(--foreground)]",
@@ -95,7 +116,7 @@ export function NodeTopologySection({
               aria-pressed={nodeViewMode === "table"}
               aria-label="Table telemetry view"
               className={cn(
-                "relative z-10 px-2.5 py-1 rounded-md flex items-center gap-1.5 transition-colors duration-150 cursor-pointer focus-visible:ring-2 focus-visible:ring-[var(--accent)] focus-visible:outline-hidden",
+                "relative z-10 flex h-7 items-center gap-1.5 rounded-md px-2.5 transition-colors duration-150 cursor-pointer focus-visible:ring-2 focus-visible:ring-[var(--accent)] focus-visible:outline-hidden",
                 nodeViewMode === "table"
                   ? "text-[var(--foreground)] font-semibold"
                   : "text-[var(--muted)] hover:text-[var(--foreground)]",

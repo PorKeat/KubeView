@@ -64,9 +64,10 @@ export function GitOpsSourceForm({
       >
         <div className="flex flex-wrap items-center justify-between gap-2">
           <div className="flex min-w-0 items-center gap-2">
-            <div className="flex h-8 w-8 items-center justify-center rounded-lg border border-[var(--border)] bg-[var(--surface)]">
-              <FolderOpen className="h-4 w-4 text-[var(--accent)]" />
-            </div>
+            <FolderOpen
+              className="h-4 w-4 shrink-0 text-[var(--accent)]"
+              aria-hidden="true"
+            />
             <div className="min-w-0">
               <div className="text-[10px] font-medium text-[var(--foreground)]">
                 {isDragActive ? "Drop folder to scan" : "Local manifest folder"}

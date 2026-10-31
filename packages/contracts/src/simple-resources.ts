@@ -6,6 +6,7 @@ export type SimpleResourceKind =
   | "ingressclasses"
   | "persistentvolumeclaims"
   | "horizontalpodautoscalers"
+  | "verticalpodautoscalers"
   | "poddisruptionbudgets"
   | "resourcequotas"
   | "limitranges"
@@ -38,6 +39,8 @@ export interface SimpleResourceListResult {
   items: SimpleResourceItem[];
   totalCount: number;
   truncated?: boolean;
+  /** Present only for kinds backed by optional APIs such as CRDs. */
+  available?: boolean;
 }
 
 export interface SimpleResourceCountsResult {
@@ -48,6 +51,7 @@ export interface SimpleResourceCountsResult {
   ingressClasses: number;
   persistentVolumeClaims: number;
   horizontalPodAutoscalers: number;
+  verticalPodAutoscalers: number;
   podDisruptionBudgets: number;
   resourceQuotas: number;
   limitRanges: number;

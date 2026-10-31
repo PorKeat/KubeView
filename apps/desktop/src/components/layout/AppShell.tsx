@@ -34,6 +34,9 @@ import { useCatalogStore } from "@/stores/catalogStore";
 import { useHelmStore } from "@/stores/helmStore";
 import { useLayoutStore } from "@/stores/layoutStore";
 
+const useIsomorphicLayoutEffect =
+  typeof window !== "undefined" ? React.useLayoutEffect : React.useEffect;
+
 export function AppShell() {
   const loadContexts = useClusterStore((s) => s.loadContexts);
   const initEventListener = useClusterStore((s) => s.initEventListener);
@@ -128,7 +131,10 @@ export function AppShell() {
     return () => window.removeEventListener("focus", handleFocus);
   }, [refreshOnFocus]);
 
-  React.useEffect(() => {
+  // Restore persisted workspace state before the first paint so a hard
+  // refresh lands directly on the previous tab instead of flashing Overview.
+  useIsomorphicLayoutEffect(() => {
+    void useTabStore.persist.rehydrate();
     void useCatalogStore.persist.rehydrate();
     void useHelmStore.persist.rehydrate();
   }, []);

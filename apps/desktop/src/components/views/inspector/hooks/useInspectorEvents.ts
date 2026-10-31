@@ -26,7 +26,7 @@ export function useInspectorEvents({
   isConfigStorageResource,
   isAccessResource,
 }: UseInspectorEventsOptions) {
-  const { getPodEvents } = useClusterStore();
+  const getPodEvents = useClusterStore((state) => state.getPodEvents);
   const [liveEvents, setLiveEvents] = React.useState<PodEventItem[]>([]);
   const [isLoadingEvents, setIsLoadingEvents] = React.useState(false);
 

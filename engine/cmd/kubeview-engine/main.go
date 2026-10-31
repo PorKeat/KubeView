@@ -41,6 +41,12 @@ func main() {
 	}
 
 	// 2. Register RPC handlers
+	yamlHub := cluster.NewYAMLWatchHub(mgr, func(method string, payload interface{}) {
+		_ = server.SendNotification(method, payload)
+		streamSrv.BroadcastNotification(method, payload)
+	})
+	defer yamlHub.Close()
+
 	registerCoreHandlers(server, streamSrv)
 	registerClusterHandlers(server, mgr, diagRunner)
 	registerWorkloadHandlers(server, mgr)
@@ -49,7 +55,8 @@ func main() {
 	registerSimpleResourceHandlers(server, mgr)
 	registerHelmHandlers(server)
 	registerActionHandlers(server, mgr)
-	if err := bootstrap.RegisterContextsModule(server, mgr, getResWatcher); err != nil {
+	registerYAMLWatchHandlers(server, yamlHub)
+	if err := bootstrap.RegisterContextsModule(server, mgr, getResWatcher, yamlHub.CancelAll); err != nil {
 		server.Log("Fatal: unable to initialize contexts module: %v", err)
 		os.Exit(1)
 	}

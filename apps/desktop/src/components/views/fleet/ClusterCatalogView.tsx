@@ -483,8 +483,7 @@ export function ClusterCatalogView() {
                 {availableContexts.length === 1 ? "item" : "items"}
               </span>
               {overview && (
-                <span className="inline-flex items-center gap-1.5 rounded-full border border-emerald-500/20 bg-emerald-500/10 px-2 py-0.5 font-mono text-[9px] font-medium uppercase tracking-[0.12em] text-emerald-700 dark:text-emerald-400">
-                  <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-emerald-500" />
+                <span className="inline-flex items-center rounded-full border border-emerald-500/20 bg-emerald-500/10 px-2 py-0.5 font-mono text-[9px] font-medium uppercase tracking-[0.12em] text-emerald-700 dark:text-emerald-400">
                   Live
                 </span>
               )}
@@ -720,7 +719,7 @@ export function ClusterCatalogView() {
             </span>
           </div>
 
-          <div className="mt-3 overflow-x-auto rounded-xl border border-[var(--border)] bg-[var(--surface)]">
+          <div className="mt-3 overflow-y-auto overflow-x-hidden rounded-xl border border-[var(--border)] bg-[var(--surface)]">
             <table className="w-full table-fixed border-collapse text-left text-xs">
               <colgroup>
                 <col className="w-9" />
@@ -730,7 +729,7 @@ export function ClusterCatalogView() {
                 <col className="w-[11%]" />
                 <col className="w-[7%]" />
                 <col className="w-[9%]" />
-                <col className="w-[16%]" />
+                <col className="w-[12%]" />
               </colgroup>
               <thead>
                 <tr className="border-b border-[var(--border)] font-mono text-[9px] uppercase tracking-[0.12em] text-[var(--muted)]">
@@ -892,14 +891,10 @@ export function ClusterCatalogView() {
                       <td className="px-3 py-2.5">
                         <span
                           className={cn(
-                            "inline-flex items-center gap-1.5 font-mono text-[10px]",
+                            "inline-flex items-center font-mono text-[10px]",
                             meta.text,
                           )}
                         >
-                          <span
-                            className={cn("h-1.5 w-1.5 rounded-full", meta.dot)}
-                            aria-hidden="true"
-                          />
                           {meta.label}
                         </span>
                       </td>

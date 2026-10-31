@@ -338,8 +338,8 @@ export function HelmChartsView() {
               />
             </div>
           ) : (
-            <div className="mt-3 overflow-x-auto rounded-xl border border-[var(--border)] bg-[var(--surface)]">
-              <table className="w-full min-w-[760px] border-collapse text-left text-xs">
+            <div className="mt-3 overflow-y-auto overflow-x-hidden rounded-xl border border-[var(--border)] bg-[var(--surface)]">
+              <table className="w-full border-collapse text-left text-xs">
                 <thead>
                   <tr className="border-b border-[var(--border)] font-mono text-[9px] uppercase tracking-[0.12em] text-[var(--muted)]">
                     <th scope="col" className="px-3 py-2 font-medium">

@@ -9,6 +9,7 @@ import (
 
 	autoscalingv2 "k8s.io/api/autoscaling/v2"
 	corev1 "k8s.io/api/core/v1"
+	policyv1 "k8s.io/api/policy/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
 )
@@ -78,6 +79,27 @@ func listSimpleHorizontalPodAutoscalers(
 	return &SimpleResourceListResult{Kind: "horizontalpodautoscalers", Items: items, TotalCount: len(items)}, nil
 }
 
+// podDisruptionBudgetStatus summarizes a PDB for the list view. The ratio is
+// current healthy pods over expected pods (not desiredHealthy, which is only
+// the minimum required). A PDB that allows zero disruptions is reported as
+// Blocked even when every pod is healthy, because it still blocks node drains.
+func podDisruptionBudgetStatus(pdb *policyv1.PodDisruptionBudget) (label string, tone string) {
+	currentHealthy := pdb.Status.CurrentHealthy
+	expectedPods := pdb.Status.ExpectedPods
+	desiredHealthy := pdb.Status.DesiredHealthy
+
+	if expectedPods == 0 {
+		return "No pods", "muted"
+	}
+	if pdb.Status.DisruptionsAllowed == 0 {
+		return "Blocked", "warning"
+	}
+	if currentHealthy < desiredHealthy {
+		return fmt.Sprintf("%d/%d healthy", currentHealthy, expectedPods), "warning"
+	}
+	return fmt.Sprintf("%d/%d healthy", currentHealthy, expectedPods), "healthy"
+}
+
 func listSimplePodDisruptionBudgets(
 	ctx context.Context,
 	client kubernetes.Interface,
@@ -98,14 +120,11 @@ func listSimplePodDisruptionBudgets(
 		if pdb.Spec.MaxUnavailable != nil {
 			maxUnavailable = pdb.Spec.MaxUnavailable.String()
 		}
-		tone := "healthy"
-		if pdb.Status.DisruptionsAllowed == 0 && pdb.Status.ExpectedPods > 0 {
-			tone = "warning"
-		}
+		statusLabel, statusTone := podDisruptionBudgetStatus(pdb)
 		items = append(items, simpleItemFromObject(
 			pdb.Name, pdb.Namespace,
-			fmt.Sprintf("%d/%d healthy", pdb.Status.CurrentHealthy, pdb.Status.DesiredHealthy),
-			tone, pdb.CreationTimestamp.Time,
+			statusLabel,
+			statusTone, pdb.CreationTimestamp.Time,
 			map[string]string{
 				"minAvailable":       minAvailable,
 				"maxUnavailable":     maxUnavailable,

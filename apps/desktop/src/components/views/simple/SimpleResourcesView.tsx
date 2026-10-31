@@ -22,6 +22,7 @@ import { invokeRpc } from "@/lib/ipc";
 import { useClusterStore } from "@/stores/clusterStore";
 import { cn } from "@/lib/utils";
 import { EmptyState, ErrorBanner } from "@/components/ui";
+import { useSlideSheetMount } from "@/components/ui/useSlideSheetMount";
 import { toast } from "sonner";
 import {
   SIMPLE_RESOURCE_REFS,
@@ -34,13 +35,6 @@ import {
 } from "./simpleResourceConfigs";
 
 type SortKey = "name" | "status" | "age";
-
-const TONE_DOT: Record<SimpleResourceStatusTone, string> = {
-  healthy: "bg-emerald-500",
-  warning: "bg-amber-500",
-  critical: "bg-rose-500",
-  muted: "bg-slate-400",
-};
 
 const TONE_TEXT: Record<SimpleResourceStatusTone, string> = {
   healthy: "text-emerald-700 dark:text-emerald-400",
@@ -77,6 +71,16 @@ function ResourceDetailDrawer({
   const [confirmDelete, setConfirmDelete] = React.useState(false);
   const [deleting, setDeleting] = React.useState(false);
   const [actionError, setActionError] = React.useState<string | null>(null);
+  const { isMounted, requestClose } = useSlideSheetMount(onClose);
+
+  // CRD-backed kinds can be served at a different version than the reference
+  // (VPA falls back to v1beta2 on older clusters), so prefer the API version
+  // reported by the list row.
+  const resolvedRef = React.useMemo(() => {
+    if (!resourceRef) return undefined;
+    const apiVersion = item.details.apiVersion;
+    return apiVersion ? { ...resourceRef, apiVersion } : resourceRef;
+  }, [item.details.apiVersion, resourceRef]);
 
   React.useEffect(() => {
     setYamlCopied(false);
@@ -85,15 +89,15 @@ function ResourceDetailDrawer({
   }, [item]);
 
   const copyYaml = async () => {
-    if (!resourceRef || !currentContext) return;
+    if (!resolvedRef || !currentContext) return;
     setYamlLoading(true);
     setActionError(null);
     try {
       const result = await invokeRpc<{ yaml: string }>("resources.get", {
         contextName: currentContext,
-        apiVersion: resourceRef.apiVersion,
-        kind: resourceRef.kind,
-        resource: resourceRef.resource,
+        apiVersion: resolvedRef.apiVersion,
+        kind: resolvedRef.kind,
+        resource: resolvedRef.resource,
         name: item.name,
         namespace: item.namespace ?? "",
       });
@@ -111,15 +115,15 @@ function ResourceDetailDrawer({
   };
 
   const deleteResource = async () => {
-    if (!resourceRef || !currentContext) return;
+    if (!resolvedRef || !currentContext) return;
     setDeleting(true);
     setActionError(null);
     try {
       await invokeRpc("resources.delete", {
         contextName: currentContext,
-        apiVersion: resourceRef.apiVersion,
-        kind: resourceRef.kind,
-        resource: resourceRef.resource,
+        apiVersion: resolvedRef.apiVersion,
+        kind: resolvedRef.kind,
+        resource: resolvedRef.resource,
         name: item.name,
         namespace: item.namespace ?? "",
       });
@@ -136,11 +140,11 @@ function ResourceDetailDrawer({
 
   React.useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
-      if (event.key === "Escape") onClose();
+      if (event.key === "Escape") requestClose();
     };
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [onClose]);
+  }, [requestClose]);
 
   return (
     <div
@@ -151,11 +155,21 @@ function ResourceDetailDrawer({
       className="fixed inset-0 z-[120] flex justify-end"
     >
       <div
-        className="absolute inset-0 bg-black/45 backdrop-blur-[1px]"
-        onClick={onClose}
+        className={cn(
+          "absolute inset-0 bg-black/45 backdrop-blur-[1px] transition-opacity duration-200 motion-reduce:transition-none",
+          isMounted ? "opacity-100" : "opacity-0",
+        )}
+        onClick={requestClose}
         aria-hidden="true"
       />
-      <aside className="relative flex h-full w-full max-w-md flex-col overflow-hidden border-l border-[var(--border)] bg-[var(--surface)] shadow-2xl">
+      <aside
+        className={cn(
+          "slide-sheet relative flex h-full w-full max-w-md flex-col overflow-hidden border-l border-[var(--border)] bg-[var(--surface)] shadow-2xl origin-right",
+          isMounted
+            ? "translate-x-0 scale-100 opacity-100"
+            : "translate-x-full scale-[0.985] opacity-0",
+        )}
+      >
         <header className="flex items-start justify-between gap-3 border-b border-[var(--border)] p-4">
           <div className="min-w-0">
             <p className="font-mono text-[9px] uppercase tracking-[0.14em] text-[var(--muted)]">
@@ -166,23 +180,17 @@ function ResourceDetailDrawer({
             </h2>
             <div
               className={cn(
-                "mt-1 flex items-center gap-1.5 font-mono text-[10px]",
+                "mt-1 flex items-center gap-1.5 font-mono text-[10px] font-medium",
                 TONE_TEXT[item.statusTone],
               )}
             >
-              <span
-                className={cn(
-                  "h-1.5 w-1.5 rounded-full",
-                  TONE_DOT[item.statusTone],
-                )}
-              />
               {item.status}
             </div>
           </div>
           <button
             type="button"
             data-testid="simple-resource-drawer-close"
-            onClick={onClose}
+            onClick={requestClose}
             aria-label="Close resource details"
             className="rounded-md p-1.5 text-[var(--muted)] transition-colors hover:bg-[var(--surface-hover)] hover:text-[var(--foreground)] cursor-pointer focus-visible:ring-2 focus-visible:ring-[var(--accent)] focus-visible:outline-hidden"
           >
@@ -260,10 +268,10 @@ function ResourceDetailDrawer({
             </section>
           )}
 
-          {(resourceRef || canDelete) && (
+          {(resolvedRef || canDelete) && (
             <section className="space-y-2 border-t border-[var(--border)] pt-3">
               <div className="flex flex-wrap items-center gap-2">
-                {resourceRef && (
+                {resolvedRef && (
                   <button
                     type="button"
                     data-testid="simple-resource-copy-yaml"
@@ -325,7 +333,7 @@ function ResourceDetailDrawer({
           )}
 
           <p className="pt-1 text-[10px] text-[var(--muted)]">
-            {resourceRef
+            {resolvedRef
               ? "Read-only details with YAML copy and safe actions."
               : "Read-only view."}
           </p>
@@ -348,12 +356,12 @@ export function SimpleResourcesView({ kind }: { kind: SimpleResourceKind }) {
   const [truncated, setTruncated] = React.useState(false);
   const [isLoading, setIsLoading] = React.useState(true);
   const [error, setError] = React.useState<string | null>(null);
+  const [available, setAvailable] = React.useState(true);
   const [search, setSearch] = React.useState("");
   const [filter, setFilter] = React.useState("All");
-  const [sort, setSort] = React.useState<{ key: SortKey; dir: 1 | -1 }>({
-    key: "name",
-    dir: 1,
-  });
+  const [sort, setSort] = React.useState<{ key: SortKey; dir: 1 | -1 }>(
+    config.defaultSort ?? { key: "name", dir: 1 },
+  );
   const [selected, setSelected] = React.useState<SimpleResourceItem | null>(
     null,
   );
@@ -381,6 +389,7 @@ export function SimpleResourcesView({ kind }: { kind: SimpleResourceKind }) {
       setItems(result.items ?? []);
       setTotalCount(result.totalCount ?? result.items?.length ?? 0);
       setTruncated(Boolean(result.truncated));
+      setAvailable(result.available !== false);
     } catch (loadError) {
       if (requestId.current !== id) return;
       setItems([]);
@@ -421,7 +430,9 @@ export function SimpleResourcesView({ kind }: { kind: SimpleResourceKind }) {
           ? config.primary(item)
           : sort.key === "status"
             ? item.status
-            : item.age;
+            : // Ages are formatted strings ("3m", "2h"); use the timestamp
+              // so newest/oldest ordering stays chronological.
+              item.createdAt || item.age;
       return (
         sort.dir *
         value(a).localeCompare(value(b), undefined, { numeric: true })
@@ -451,9 +462,10 @@ export function SimpleResourcesView({ kind }: { kind: SimpleResourceKind }) {
       <div className="flex shrink-0 flex-col gap-3 border-b border-[var(--border)] px-4 pb-3 pt-4 md:px-5 lg:px-6">
         <div className="flex flex-col justify-between gap-3 sm:flex-row sm:items-center">
           <div className="flex min-w-0 items-start gap-3">
-            <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-[var(--border)] bg-[var(--surface-active)] text-[var(--accent)]">
-              <config.icon className="h-4 w-4" aria-hidden="true" />
-            </span>
+            <config.icon
+              className="h-4 w-4 shrink-0 text-[var(--accent)]"
+              aria-hidden="true"
+            />
             <div className="min-w-0">
               <div className="flex flex-wrap items-center gap-2">
                 <h1 className="text-sm font-semibold tracking-tight text-[var(--foreground)]">
@@ -575,12 +587,18 @@ export function SimpleResourcesView({ kind }: { kind: SimpleResourceKind }) {
             title={
               search || filter !== "All"
                 ? `No ${config.title.toLowerCase()} match this filter`
-                : config.emptyTitle
+                : !available
+                  ? (config.unavailableTitle ??
+                    "This resource API is not available")
+                  : config.emptyTitle
             }
             description={
               search || filter !== "All"
                 ? "Try a different search or clear the filter."
-                : config.emptyDescription
+                : !available
+                  ? (config.unavailableDescription ??
+                    "The cluster does not serve this resource API.")
+                  : config.emptyDescription
             }
             action={
               search || filter !== "All"
@@ -596,11 +614,11 @@ export function SimpleResourcesView({ kind }: { kind: SimpleResourceKind }) {
           />
         </div>
       ) : (
-        <div className="mx-4 mb-4 mt-3 min-h-0 flex-1 overflow-auto rounded-xl border border-[var(--border)] bg-[var(--surface)] md:mx-5 lg:mx-6">
-          <table className="w-full min-w-[760px] border-collapse text-left text-xs">
+        <div className="mx-4 mb-4 mt-3 min-h-0 flex-1 overflow-y-auto overflow-x-hidden rounded-xl border border-[var(--border)] bg-[var(--surface)] md:mx-5 lg:mx-6">
+          <table className="w-full table-fixed border-collapse text-left text-xs">
             <thead>
               <tr className="border-b border-[var(--border)] font-mono text-[9px] uppercase tracking-[0.12em] text-[var(--muted)]">
-                <th scope="col" className="px-3 py-2 font-medium">
+                <th scope="col" className="w-[26%] px-3 py-2 font-medium">
                   <SortButton
                     label={config.nameLabel ?? "Name"}
                     active={sort.key === "name"}
@@ -617,7 +635,7 @@ export function SimpleResourcesView({ kind }: { kind: SimpleResourceKind }) {
                     {column.label}
                   </th>
                 ))}
-                <th scope="col" className="px-3 py-2 font-medium">
+                <th scope="col" className="w-[10%] px-3 py-2 font-medium">
                   <SortButton
                     label="Status"
                     active={sort.key === "status"}
@@ -625,9 +643,15 @@ export function SimpleResourcesView({ kind }: { kind: SimpleResourceKind }) {
                     onClick={() => toggleSort("status")}
                   />
                 </th>
-                <th scope="col" className="px-3 py-2 font-medium">
+                <th
+                  scope="col"
+                  className={cn(
+                    "px-3 py-2 font-medium",
+                    config.ageLabel ? "w-[10%]" : "w-[6%]",
+                  )}
+                >
                   <SortButton
-                    label="Age"
+                    label={config.ageLabel ?? "Age"}
                     active={sort.key === "age"}
                     dir={sort.dir}
                     onClick={() => toggleSort("age")}
@@ -651,14 +675,18 @@ export function SimpleResourcesView({ kind }: { kind: SimpleResourceKind }) {
                   tabIndex={0}
                   className="cursor-pointer border-b border-[var(--border)]/70 transition-colors last:border-b-0 hover:bg-[var(--surface-hover)] focus-visible:bg-[var(--surface-hover)] focus-visible:outline-hidden"
                 >
-                  <td className="max-w-[320px] px-3 py-2.5">
+                  <td className="px-3 py-2.5">
                     <div className="flex min-w-0 items-center gap-2.5">
-                      <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-md border border-[var(--border)] bg-[var(--surface-active)] text-[var(--muted)]">
-                        <config.icon className="h-3 w-3" aria-hidden="true" />
-                      </span>
+                      <config.icon
+                        className="h-3.5 w-3.5 shrink-0 text-[var(--muted)]"
+                        aria-hidden="true"
+                      />
                       <div className="min-w-0">
                         <div
-                          className="truncate font-medium text-[var(--foreground)]"
+                          className={cn(
+                            "truncate font-medium text-[var(--foreground)]",
+                            config.primaryMono && "font-mono text-[11px]",
+                          )}
                           title={config.primary(item)}
                         >
                           {config.primary(item)}
@@ -676,6 +704,7 @@ export function SimpleResourcesView({ kind }: { kind: SimpleResourceKind }) {
                       key={column.key}
                       className={cn(
                         "px-3 py-2.5 text-[var(--muted)]",
+                        column.multiline ? "align-top" : "truncate",
                         column.className,
                       )}
                     >
@@ -685,17 +714,10 @@ export function SimpleResourcesView({ kind }: { kind: SimpleResourceKind }) {
                   <td className="px-3 py-2.5">
                     <span
                       className={cn(
-                        "inline-flex items-center gap-1.5 font-mono text-[10px]",
+                        "inline-flex items-center truncate font-mono text-[10px] font-medium",
                         TONE_TEXT[item.statusTone],
                       )}
                     >
-                      <span
-                        className={cn(
-                          "h-1.5 w-1.5 rounded-full",
-                          TONE_DOT[item.statusTone],
-                        )}
-                        aria-hidden="true"
-                      />
                       {item.status}
                     </span>
                   </td>

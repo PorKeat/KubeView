@@ -29,9 +29,10 @@ export function LearningHeader() {
       <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
         <div className="min-w-0 flex-1">
           <div className="flex items-start gap-2.5">
-            <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-[var(--accent)]/20 bg-[var(--accent)]/10 text-[var(--accent)]">
-              <GraduationCap className="h-4 w-4" aria-hidden="true" />
-            </span>
+            <GraduationCap
+              className="h-4 w-4 shrink-0 text-[var(--accent)]"
+              aria-hidden="true"
+            />
             <div className="min-w-0">
               <h1 className="text-base font-semibold tracking-tight text-[var(--foreground)]">
                 Learning Center

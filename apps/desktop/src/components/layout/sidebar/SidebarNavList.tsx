@@ -45,19 +45,32 @@ export function SidebarNavList({
                 data-testid={`nav-group-${groupTestId(group.category)}`}
                 aria-expanded={!isGroupCollapsed}
                 onClick={() => onToggleGroup(group.category)}
-                className="w-full flex items-center justify-between px-2 py-1 text-xs font-medium text-[var(--muted)] hover:text-[var(--foreground)] rounded transition-colors cursor-pointer"
+                className={cn(
+                  "relative w-full flex items-center justify-between px-2 py-1 text-xs font-medium rounded-md transition-colors cursor-pointer",
+                  isGroupCollapsed && hasActiveItem
+                    ? "text-[var(--foreground)]"
+                    : "text-[var(--muted)] hover:text-[var(--foreground)]",
+                )}
               >
+                {isGroupCollapsed && hasActiveItem && (
+                  <>
+                    <span
+                      aria-hidden="true"
+                      className="absolute left-0 top-1/2 h-3.5 w-0.5 -translate-y-1/2 rounded-r-full bg-[var(--accent)]"
+                    />
+                    <span className="sr-only">Current section</span>
+                  </>
+                )}
                 <span className="flex items-center gap-1.5">
                   {group.category}
-                  {isGroupCollapsed && hasActiveItem && (
-                    <span
-                      className="h-1.5 w-1.5 rounded-full bg-[var(--accent)]"
-                      aria-label="Current section"
-                    />
-                  )}
                 </span>
                 {isGroupCollapsed ? (
-                  <ChevronRight className="w-3.5 h-3.5" />
+                  <ChevronRight
+                    className={cn(
+                      "w-3.5 h-3.5 transition-colors",
+                      hasActiveItem ? "text-[var(--accent)]" : undefined,
+                    )}
+                  />
                 ) : (
                   <ChevronDown className="w-3.5 h-3.5" />
                 )}

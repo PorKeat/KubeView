@@ -26,9 +26,9 @@ export function PermissionRuleTable({
   return (
     <div
       data-testid="permission-rule-table"
-      className="overflow-x-auto rounded-lg border border-[var(--border)]"
+      className="overflow-y-auto overflow-x-hidden rounded-lg border border-[var(--border)]"
     >
-      <table className="w-full min-w-[680px] text-left text-[10px]">
+      <table className="w-full text-left text-[10px]">
         <thead className="border-b border-[var(--border)] bg-[var(--surface-hover)]/40 text-[9px] uppercase tracking-wider text-[var(--muted)]">
           <tr>
             <th className="px-2.5 py-2 font-medium">Scope</th>

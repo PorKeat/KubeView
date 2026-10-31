@@ -4,6 +4,7 @@ import type {
   ListContextsResult,
   PodChangeEvent,
   PodEventItem,
+  PodSummary,
 } from "@kubeview/contracts";
 import { listenNotification, resetStreamCredentials } from "@/lib/ipc";
 import type { ClusterState } from "../types/cluster";
@@ -91,6 +92,7 @@ export const createEventListenersSlice: StateCreator<
         get().pods.map((pod) => [`${pod.namespace}/${pod.name}`, pod]),
       );
       let delta = 0;
+      let changed = false;
       for (const event of events) {
         if (event.context && event.context !== activeContext) continue;
         if (
@@ -102,12 +104,24 @@ export const createEventListenersSlice: StateCreator<
         }
         const key = `${event.pod.namespace}/${event.pod.name}`;
         if (event.type === "DELETED") {
-          if (podMap.delete(key)) delta -= 1;
+          if (podMap.delete(key)) {
+            delta -= 1;
+            changed = true;
+          }
         } else {
-          if (!podMap.has(key)) delta += 1;
+          const existing = podMap.get(key);
+          if (!existing) {
+            delta += 1;
+            changed = true;
+          } else if (!podSummariesEqual(existing, event.pod)) {
+            changed = true;
+          }
           podMap.set(key, event.pod);
         }
       }
+      // Skip no-op updates so subscribers are not re-rendered for events
+      // whose derived summary did not change.
+      if (!changed) return;
       set({
         pods: Array.from(podMap.values()),
         totalPodsCount: Math.max(0, get().totalPodsCount + delta),
@@ -201,3 +215,27 @@ export const createEventListenersSlice: StateCreator<
     };
   },
 });
+
+/**
+ * Cheap change detection for pod watch batches. Compares the volatile fields
+ * first and only falls back to a deep comparison when they match.
+ */
+function podSummariesEqual(a: PodSummary, b: PodSummary): boolean {
+  if (
+    a.name !== b.name ||
+    a.namespace !== b.namespace ||
+    a.status !== b.status ||
+    a.ready !== b.ready ||
+    a.restarts !== b.restarts ||
+    a.age !== b.age ||
+    a.cpu !== b.cpu ||
+    a.cpuPercent !== b.cpuPercent ||
+    a.memory !== b.memory ||
+    a.memoryPercent !== b.memoryPercent ||
+    a.nodeName !== b.nodeName ||
+    a.ip !== b.ip
+  ) {
+    return false;
+  }
+  return JSON.stringify(a) === JSON.stringify(b);
+}

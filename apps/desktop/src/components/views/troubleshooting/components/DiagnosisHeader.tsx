@@ -20,9 +20,10 @@ export function DiagnosisHeader({
   return (
     <div className="flex flex-col justify-between gap-3 border-b border-[var(--border)] pb-3 sm:flex-row sm:items-center">
       <div className="flex min-w-0 items-start gap-2.5">
-        <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-[var(--accent)]/25 bg-[var(--accent)]/10 text-[var(--accent)]">
-          <Sparkles className="h-4 w-4" aria-hidden="true" />
-        </div>
+        <Sparkles
+          className="h-4 w-4 shrink-0 text-[var(--accent)]"
+          aria-hidden="true"
+        />
         <div className="min-w-0">
           <div className="flex flex-wrap items-center gap-2">
             <h2 className="text-sm font-semibold tracking-tight text-[var(--foreground)]">

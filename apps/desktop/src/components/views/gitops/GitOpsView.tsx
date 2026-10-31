@@ -43,9 +43,10 @@ export function GitOpsView() {
     >
       <header className="flex shrink-0 flex-wrap items-center justify-between gap-2 border-b border-[var(--border)] px-4 py-3">
         <div className="flex min-w-0 items-center gap-2.5">
-          <div className="flex h-8 w-8 items-center justify-center rounded-lg border border-[var(--accent)]/20 bg-[var(--accent)]/10">
-            <GitBranch className="h-4 w-4 text-[var(--accent)]" />
-          </div>
+          <GitBranch
+            className="h-4 w-4 shrink-0 text-[var(--accent)]"
+            aria-hidden="true"
+          />
           <div className="min-w-0">
             <h1 className="text-sm font-semibold text-[var(--foreground)]">
               GitOps Drift

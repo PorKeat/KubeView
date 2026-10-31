@@ -46,7 +46,7 @@ export function JobTableHeader({
   return (
     <thead className="sticky top-0 bg-[var(--surface)] z-10 border-b border-[var(--border)] select-none">
       <tr className="text-[11px] font-semibold text-[var(--muted)] uppercase tracking-wider h-8">
-        <th className="w-8 px-2 text-center">
+        <th className="w-[3%] px-2 text-center">
           <Tooltip
             content={
               isPageAllSelected ? "Deselect all on page" : "Select all on page"
@@ -79,7 +79,7 @@ export function JobTableHeader({
             ascending: sortAsc,
             onSort,
           })}
-          className="w-52 sm:w-60 py-1 px-3 cursor-pointer hover:text-[var(--foreground)] transition-colors"
+          className="w-[30%] py-1 px-3 cursor-pointer hover:text-[var(--foreground)] transition-colors min-w-0"
         >
           <div className="flex items-center gap-1">
             <span>Name</span>
@@ -93,7 +93,7 @@ export function JobTableHeader({
             ascending: sortAsc,
             onSort,
           })}
-          className="w-24 sm:w-28 py-1 px-3 cursor-pointer hover:text-[var(--foreground)] transition-colors"
+          className="w-[11%] py-1 px-3 cursor-pointer hover:text-[var(--foreground)] transition-colors"
         >
           <div className="flex items-center gap-1">
             <span>Namespace</span>
@@ -107,16 +107,16 @@ export function JobTableHeader({
             ascending: sortAsc,
             onSort,
           })}
-          className="w-24 sm:w-28 py-1 px-3 cursor-pointer hover:text-[var(--foreground)] transition-colors"
+          className="w-[11%] py-1 px-3 cursor-pointer hover:text-[var(--foreground)] transition-colors"
         >
           <div className="flex items-center gap-1">
             <span>Status</span>
             {renderSortIndicator("status")}
           </div>
         </th>
-        <th className="w-24 py-1 px-3">Completions</th>
-        <th className="w-20 py-1 px-3">Duration</th>
-        <th className="w-32 py-1 px-3">Owner</th>
+        <th className="w-[9%] py-1 px-3">Completions</th>
+        <th className="w-[8%] py-1 px-3">Duration</th>
+        <th className="w-[16%] py-1 px-3">Owner</th>
         <th
           {...sortableHeaderProps({
             field: "age",
@@ -124,14 +124,14 @@ export function JobTableHeader({
             ascending: sortAsc,
             onSort,
           })}
-          className="w-14 sm:w-16 py-1 px-3 cursor-pointer hover:text-[var(--foreground)] transition-colors"
+          className="w-[7%] py-1 px-3 cursor-pointer hover:text-[var(--foreground)] transition-colors"
         >
           <div className="flex items-center gap-1">
             <span>Age</span>
             {renderSortIndicator("age")}
           </div>
         </th>
-        <th className="w-9 py-1 px-2 text-right" aria-label="Actions"></th>
+        <th className="w-[5%] py-1 px-2 text-right" aria-label="Actions"></th>
       </tr>
     </thead>
   );

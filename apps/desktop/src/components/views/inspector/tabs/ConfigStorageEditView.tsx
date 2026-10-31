@@ -162,9 +162,10 @@ export function ConfigStorageEditView({
       <div className="flex h-full min-h-0 flex-col overflow-hidden">
         <div className="flex shrink-0 flex-wrap items-center justify-between gap-2 border-b border-[var(--border)] px-4 py-2.5">
           <div className="flex items-center gap-2.5">
-            <span className="flex h-8 w-8 items-center justify-center rounded-lg border border-[var(--accent)]/25 bg-[var(--accent)]/10 text-[var(--accent)]">
-              <FolderLock className="h-3.5 w-3.5" aria-hidden="true" />
-            </span>
+            <FolderLock
+              className="h-4 w-4 shrink-0 text-[var(--accent)]"
+              aria-hidden="true"
+            />
             <div>
               <h3 className="text-xs font-semibold text-[var(--foreground)]">
                 Secret YAML

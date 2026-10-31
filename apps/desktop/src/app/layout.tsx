@@ -29,6 +29,7 @@ export default function RootLayout({
     <html
       lang="en"
       suppressHydrationWarning
+      data-font-size="md"
       className={`${inter.variable} ${GeistMono.variable}`}
     >
       <head>
@@ -37,10 +38,19 @@ export default function RootLayout({
             __html: `
               (function () {
                 try {
-                  if (
-                    localStorage.getItem("kubeview_skip_boot_splash") === "true"
-                  ) {
+                  var skipSplash =
+                    localStorage.getItem("kubeview_skip_boot_splash") === "true";
+                  var seenThisSession = false;
+                  try {
+                    seenThisSession =
+                      sessionStorage.getItem("kubeview_splash_seen") === "true";
+                  } catch (error) {}
+                  if (skipSplash || seenThisSession) {
                     document.documentElement.dataset.splashSeen = "true";
+                  } else {
+                    try {
+                      sessionStorage.setItem("kubeview_splash_seen", "true");
+                    } catch (error) {}
                   }
                   var raw = localStorage.getItem("kubeview-preferences");
                   if (!raw) return;

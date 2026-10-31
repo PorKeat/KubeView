@@ -14,6 +14,7 @@ func RegisterContextsModule(
 	server *ipc.Server,
 	manager *legacycluster.Manager,
 	getWatcher func() *legacycluster.ResourceWatcher,
+	onContextSwitch ...func(),
 ) error {
 	if manager == nil {
 		return nil
@@ -23,6 +24,11 @@ func RegisterContextsModule(
 	observer := appcontexts.ObserverFunc(func(ctx context.Context, contextName string) {
 		if watcher := getWatcher(); watcher != nil {
 			watcher.SwitchContext(ctx, contextName)
+		}
+		for _, hook := range onContextSwitch {
+			if hook != nil {
+				hook()
+			}
 		}
 	})
 	service := appcontexts.New(adapter, observer)

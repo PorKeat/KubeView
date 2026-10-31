@@ -266,8 +266,8 @@ export function DaemonSetListView() {
           onReload={() => loadDaemonSets(currentNamespace)}
         />
       ) : (
-        <div className="flex-1 overflow-auto min-h-0">
-          <table className="w-full min-w-[1080px] xl:min-w-0 text-left text-xs border-collapse table-fixed">
+        <div className="flex-1 overflow-y-auto overflow-x-hidden min-h-0">
+          <table className="w-full text-left text-xs border-collapse table-fixed">
             <DaemonSetTableHeader
               sortField={sortField}
               sortAsc={sortAsc}

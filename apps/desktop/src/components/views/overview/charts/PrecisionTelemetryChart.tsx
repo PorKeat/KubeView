@@ -118,6 +118,8 @@ export interface PrecisionTelemetryChartProps {
   cpuDisplay: string;
   memoryPercent: number;
   memoryDisplay: string;
+  /** Smaller canvas for compact cards; keeps the axes and legend. */
+  compact?: boolean;
 }
 
 export function PrecisionTelemetryChart({
@@ -126,6 +128,7 @@ export function PrecisionTelemetryChart({
   cpuDisplay,
   memoryPercent,
   memoryDisplay,
+  compact = false,
 }: PrecisionTelemetryChartProps) {
   const containerRef = React.useRef<HTMLDivElement>(null);
   const [containerWidth, setContainerWidth] = React.useState<number>(0);
@@ -152,11 +155,11 @@ export function PrecisionTelemetryChart({
   }, []);
 
   const width = containerWidth > 0 ? containerWidth : 600;
-  const height = 84;
+  const height = compact ? 72 : 84;
   const plotLeft = 24;
   const plotRight = Math.max(plotLeft + 50, width - 10);
-  const plotTop = 6;
-  const plotBottom = 72;
+  const plotTop = compact ? 4 : 6;
+  const plotBottom = compact ? height - 10 : 72;
   const plotHeight = plotBottom - plotTop;
 
   const [hoveredIdx, setHoveredIdx] = React.useState<number | null>(null);
@@ -211,7 +214,6 @@ export function PrecisionTelemetryChart({
   const cpuGradId = `chart-cpu-${safeId}`;
 
   const hoveredPoint = hoveredIdx !== null ? points[hoveredIdx] : null;
-  const lastPoint = points[points.length - 1];
 
   const handleMouseMove = (e: React.MouseEvent<SVGSVGElement>) => {
     const rect = e.currentTarget.getBoundingClientRect();
@@ -226,9 +228,9 @@ export function PrecisionTelemetryChart({
   };
 
   return (
-    <div ref={containerRef} className="w-full space-y-2 pt-1 select-none">
+    <div ref={containerRef} className="w-full space-y-2 select-none">
       {/* Chart Canvas with Image 1-style Interactive Crosshair & Tooltip */}
-      <div className="relative w-full h-[84px]">
+      <div className="relative w-full" style={{ height: `${height}px` }}>
         <svg
           viewBox={`0 0 ${width} ${height}`}
           className="w-full h-full overflow-visible cursor-crosshair"
@@ -400,25 +402,21 @@ export function PrecisionTelemetryChart({
       </div>
 
       {/* 8. Bottom Legend */}
-      <div className="flex items-center justify-between pt-0.5 text-[11px] font-mono text-[var(--muted)] select-none">
-        <div className="flex items-center gap-3">
-          <div className="flex items-center gap-1.5">
-            <span className="w-3 h-0.5 bg-emerald-400 rounded-full shrink-0" />
-            <span className="hover:text-[var(--foreground)] transition-colors">
-              CPU
-            </span>
-          </div>
-          <div className="flex items-center gap-1.5">
-            <span className="w-3 h-0.5 bg-sky-400 rounded-full shrink-0" />
-            <span className="hover:text-[var(--foreground)] transition-colors">
-              RAM
-            </span>
-          </div>
+      <div className="flex items-center justify-between border-t border-[var(--border)]/40 pt-2 text-[10px] font-mono text-[var(--muted)] select-none">
+        <div className="flex items-center gap-3.5">
+          <span className="inline-flex items-center gap-1.5">
+            <span className="h-[2px] w-3 shrink-0 rounded-full bg-emerald-400" />
+            <span>CPU</span>
+          </span>
+          <span className="inline-flex items-center gap-1.5">
+            <span className="h-[2px] w-3 shrink-0 rounded-full bg-sky-400" />
+            <span>RAM</span>
+          </span>
         </div>
 
         <div className="flex items-center gap-2">
-          <span>15m window</span>
-          <span className="text-emerald-500 dark:text-emerald-400 font-medium">
+          <span className="opacity-70">15m</span>
+          <span className="font-medium text-emerald-500 dark:text-emerald-400">
             Live
           </span>
         </div>

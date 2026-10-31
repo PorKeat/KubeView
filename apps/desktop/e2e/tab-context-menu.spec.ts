@@ -143,6 +143,27 @@ test.describe("KubeView UI - Tab context menu", () => {
     await expect(page.getByRole("tab", { name: "Pods tab" })).toHaveCount(0);
   });
 
+  test("restores open tabs and the active tab after a hard refresh", async ({
+    page,
+  }) => {
+    await openResourceTab(page, "services");
+    await openResourceTab(page, "endpoints");
+
+    await expect(
+      page.getByRole("tab", { name: "Endpoints tab" }),
+    ).toHaveAttribute("aria-selected", "true");
+
+    await page.reload();
+    await expect(
+      page.locator('[data-testid="context-switcher-trigger"]'),
+    ).toBeVisible({ timeout: 15000 });
+
+    await expect(page.getByRole("tab", { name: "Services tab" })).toBeVisible();
+    const endpointsTab = page.getByRole("tab", { name: "Endpoints tab" });
+    await expect(endpointsTab).toBeVisible();
+    await expect(endpointsTab).toHaveAttribute("aria-selected", "true");
+  });
+
   test("closes the menu with Escape", async ({ page }) => {
     await openResourceTab(page, "services");
     await page

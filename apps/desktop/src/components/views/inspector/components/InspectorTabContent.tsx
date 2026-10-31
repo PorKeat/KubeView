@@ -96,6 +96,7 @@ export interface InspectorTabContentProps {
   liveEvents: PodEventItem[];
   liveYaml: string;
   isLoadingYaml: boolean;
+  isLiveYaml?: boolean;
   isLoadingEvents: boolean;
   copiedYaml: boolean;
   isEditorMaximized: boolean;
@@ -169,6 +170,7 @@ export function InspectorTabContent({
   liveEvents,
   liveYaml,
   isLoadingYaml,
+  isLiveYaml,
   isLoadingEvents,
   copiedYaml,
   isEditorMaximized,
@@ -237,6 +239,7 @@ export function InspectorTabContent({
     <InspectorYamlTab
       yaml={liveYaml}
       isLoading={isLoadingYaml}
+      isLive={isLiveYaml}
       onCopy={onCopyYaml}
       onDownload={onDownloadYaml}
       onRetry={onReloadYaml}

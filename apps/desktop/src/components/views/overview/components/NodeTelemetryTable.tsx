@@ -26,24 +26,34 @@ export function NodeTelemetryTable({
 }: NodeTelemetryTableProps) {
   return (
     <div className="border border-[var(--border)] rounded-xl overflow-hidden bg-[var(--surface)]">
-      <div className="overflow-x-auto">
-        <table className="w-full text-left font-mono text-xs">
+      <div className="overflow-y-auto overflow-x-hidden">
+        <table className="w-full text-left font-mono text-xs table-fixed">
           <thead>
             <tr className="border-b border-[var(--border)] bg-[var(--surface-hover)]/40 text-[11px] text-[var(--muted)]">
-              <th className="py-2.5 px-3.5 font-medium">Node</th>
-              <th className="py-2.5 px-3 font-medium">Status</th>
-              <th className="py-2.5 px-3 font-medium">Roles</th>
-              <th className="py-2.5 px-3 font-medium">Internal IP</th>
-              <th className="py-2.5 px-3 font-medium">Pod CIDR</th>
-              <th className="py-2.5 px-3 font-medium text-right">CPU Live</th>
-              <th className="py-2.5 px-3 font-medium text-right">CPU Req</th>
-              <th className="py-2.5 px-3 font-medium text-right">RAM Live</th>
-              <th className="py-2.5 px-3 font-medium text-right">RAM Req</th>
-              <th className="py-2.5 px-3 font-medium text-right">
+              <th className="w-[13%] py-2.5 px-3.5 font-medium">Node</th>
+              <th className="w-[8%] py-2.5 px-3 font-medium">Status</th>
+              <th className="w-[9%] py-2.5 px-3 font-medium">Roles</th>
+              <th className="w-[9%] py-2.5 px-3 font-medium">Internal IP</th>
+              <th className="w-[11%] py-2.5 px-3 font-medium">Pod CIDR</th>
+              <th className="w-[8%] py-2.5 px-3 font-medium text-right">
+                CPU Live
+              </th>
+              <th className="w-[8%] py-2.5 px-3 font-medium text-right">
+                CPU Req
+              </th>
+              <th className="w-[8%] py-2.5 px-3 font-medium text-right">
+                RAM Live
+              </th>
+              <th className="w-[8%] py-2.5 px-3 font-medium text-right">
+                RAM Req
+              </th>
+              <th className="w-[7%] py-2.5 px-3 font-medium text-right">
                 {isNamespaceScoped ? `Pods (${currentNamespace})` : "Pods"}
               </th>
-              <th className="py-2.5 px-3 font-medium">Version</th>
-              <th className="py-2.5 px-3.5 font-medium text-right">Action</th>
+              <th className="w-[5%] py-2.5 px-3 font-medium">Version</th>
+              <th className="w-[6%] py-2.5 px-3.5 font-medium text-right">
+                Action
+              </th>
             </tr>
           </thead>
           <tbody className="divide-y divide-[var(--border)]/60">
@@ -71,7 +81,7 @@ export function NodeTelemetryTable({
                   )}
                 >
                   <td className="py-3 px-3.5">
-                    <span className="font-bold text-[var(--foreground)]">
+                    <span className="block truncate font-bold text-[var(--foreground)]">
                       {n.name}
                     </span>
                   </td>
@@ -87,40 +97,40 @@ export function NodeTelemetryTable({
                       {n.status}
                     </span>
                   </td>
-                  <td className="py-3 px-3 text-[var(--muted)]">
+                  <td className="py-3 px-3 text-[var(--muted)] truncate">
                     {n.roles.join(", ") || "worker"}
                   </td>
-                  <td className="py-3 px-3 text-[var(--foreground)]">
+                  <td className="py-3 px-3 text-[var(--foreground)] truncate">
                     {n.internalIP}
                   </td>
-                  <td className="py-3 px-3 text-[var(--muted)]">
+                  <td className="py-3 px-3 text-[var(--muted)] truncate">
                     {n.podCIDR || "-"}
                   </td>
-                  <td className="py-3 px-3 text-right">
+                  <td className="py-3 px-3 text-right truncate">
                     <span className="tabular-nums font-semibold text-emerald-600 dark:text-emerald-400">
                       {n.cpuUsage
                         ? `${n.cpuUsage} (${n.cpuUsagePercent ?? 0}%)`
                         : "-"}
                     </span>
                   </td>
-                  <td className="py-3 px-3 text-right">
+                  <td className="py-3 px-3 text-right truncate">
                     <span className="tabular-nums text-[var(--foreground)] font-medium">
                       {cleanAlloc(n.cpuAllocated)} ({n.cpuPercent}%)
                     </span>
                   </td>
-                  <td className="py-3 px-3 text-right">
+                  <td className="py-3 px-3 text-right truncate">
                     <span className="tabular-nums font-semibold text-emerald-600 dark:text-emerald-400">
                       {n.memoryUsage
                         ? `${n.memoryUsage} (${n.memoryUsagePercent ?? 0}%)`
                         : "-"}
                     </span>
                   </td>
-                  <td className="py-3 px-3 text-right">
+                  <td className="py-3 px-3 text-right truncate">
                     <span className="tabular-nums text-[var(--foreground)] font-medium">
                       {cleanAlloc(n.memoryAllocated)} ({n.memoryPercent}%)
                     </span>
                   </td>
-                  <td className="py-3 px-3 text-right">
+                  <td className="py-3 px-3 text-right truncate">
                     <button
                       type="button"
                       onClick={(e) => {
@@ -151,7 +161,9 @@ export function NodeTelemetryTable({
                       )}
                     </button>
                   </td>
-                  <td className="py-3 px-3 text-[var(--muted)]">{n.version}</td>
+                  <td className="py-3 px-3 text-[var(--muted)] truncate">
+                    {n.version}
+                  </td>
                   <td className="py-3 px-3.5 text-right">
                     <span className="text-[var(--accent)] hover:underline text-xs font-sans font-medium">
                       Inspect &rarr;

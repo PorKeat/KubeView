@@ -30,6 +30,9 @@ type SimpleResourceListResult struct {
 	Items      []SimpleResourceItem `json:"items"`
 	TotalCount int                  `json:"totalCount"`
 	Truncated  bool                 `json:"truncated,omitempty"`
+	// Available is set only for kinds backed by optional APIs (CRDs). A nil
+	// value means the kind is a built-in API and is assumed to be available.
+	Available *bool `json:"available,omitempty"`
 }
 
 func normalizeResourceNamespace(namespace string) string {
@@ -282,6 +285,8 @@ func (m *Manager) ListSimpleResources(
 
 	case "horizontalpodautoscalers":
 		return listSimpleHorizontalPodAutoscalers(ctx, client, namespace)
+	case "verticalpodautoscalers":
+		return m.listSimpleVerticalPodAutoscalers(ctx, contextName, namespace)
 	case "poddisruptionbudgets":
 		return listSimplePodDisruptionBudgets(ctx, client, namespace)
 	case "resourcequotas":
@@ -366,6 +371,7 @@ type SimpleResourceCountsResult struct {
 	IngressClasses                    int `json:"ingressClasses"`
 	PersistentVolumeClaims            int `json:"persistentVolumeClaims"`
 	HorizontalPodAutoscalers          int `json:"horizontalPodAutoscalers"`
+	VerticalPodAutoscalers            int `json:"verticalPodAutoscalers"`
 	PodDisruptionBudgets              int `json:"podDisruptionBudgets"`
 	ResourceQuotas                    int `json:"resourceQuotas"`
 	LimitRanges                       int `json:"limitRanges"`
@@ -398,6 +404,7 @@ func (m *Manager) CountSimpleResources(ctx context.Context, contextName string) 
 	result.IngressClasses = count("ingressclasses")
 	result.PersistentVolumeClaims = count("persistentvolumeclaims")
 	result.HorizontalPodAutoscalers = count("horizontalpodautoscalers")
+	result.VerticalPodAutoscalers = count("verticalpodautoscalers")
 	result.PodDisruptionBudgets = count("poddisruptionbudgets")
 	result.ResourceQuotas = count("resourcequotas")
 	result.LimitRanges = count("limitranges")

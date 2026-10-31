@@ -33,9 +33,8 @@ export function FleetOverviewHeader({
             {hasSnapshot && (
               <span
                 data-testid="fleet-live-indicator"
-                className="inline-flex items-center gap-1.5 rounded-full border border-emerald-500/20 bg-emerald-500/10 px-2 py-0.5 font-mono text-[9px] font-medium uppercase tracking-[0.12em] text-emerald-700 dark:text-emerald-400"
+                className="inline-flex items-center rounded-full border border-emerald-500/20 bg-emerald-500/10 px-2 py-0.5 font-mono text-[9px] font-medium uppercase tracking-[0.12em] text-emerald-700 dark:text-emerald-400"
               >
-                <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-emerald-500" />
                 Live fleet
               </span>
             )}

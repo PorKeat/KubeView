@@ -23,9 +23,12 @@ import type { ConfigStorageData } from "../tabs/InspectorConfigStorageOverview";
 import type { AccessResourceData } from "../tabs/InspectorAccessOverview";
 import type { WorkloadConditionLike } from "../tabs/InspectorWorkloadConditionsTab";
 
+const EMPTY_PODS: PodSummary[] = [];
+
 export function useInspectorResourceState(isInspectorOpen: boolean) {
-  const { selectedResource, pods, clusterOverview, loadPods } =
-    useClusterStore();
+  const selectedResource = useClusterStore((state) => state.selectedResource);
+  const clusterOverview = useClusterStore((state) => state.clusterOverview);
+  const loadPods = useClusterStore((state) => state.loadPods);
   const [cachedResource, setCachedResource] =
     React.useState<SelectedResource | null>(selectedResource);
 
@@ -39,6 +42,12 @@ export function useInspectorResourceState(isInspectorOpen: boolean) {
 
   // Distinguish between Pod, Deployment, ReplicaSet, and Node resources
   const isNode = currentResource?.kind === "Node";
+
+  // Only subscribe to the live pod list when a node inspector actually needs
+  // it; every other inspector must not re-render on pod watch traffic.
+  const pods = useClusterStore((state) =>
+    isNode || cachedResource?.kind === "Node" ? state.pods : EMPTY_PODS,
+  );
   const isDeployment = currentResource?.kind === "Deployment";
   const isReplicaSet = currentResource?.kind === "ReplicaSet";
   const isStatefulSet = currentResource?.kind === "StatefulSet";

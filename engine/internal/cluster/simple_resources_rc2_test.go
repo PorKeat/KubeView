@@ -17,6 +17,75 @@ import (
 	"k8s.io/client-go/kubernetes/fake"
 )
 
+func TestPodDisruptionBudgetStatus(t *testing.T) {
+	tests := []struct {
+		name       string
+		current    int32
+		desired    int32
+		expected   int32
+		allowed    int32
+		wantStatus string
+		wantTone   string
+	}{
+		{
+			name:       "healthy uses expected pods as denominator",
+			current:    3,
+			desired:    1,
+			expected:   3,
+			allowed:    2,
+			wantStatus: "3/3 healthy",
+			wantTone:   "healthy",
+		},
+		{
+			name:       "zero allowed disruptions is blocked",
+			current:    3,
+			desired:    1,
+			expected:   3,
+			allowed:    0,
+			wantStatus: "Blocked",
+			wantTone:   "warning",
+		},
+		{
+			name:       "no pods selected",
+			current:    0,
+			desired:    0,
+			expected:   0,
+			allowed:    0,
+			wantStatus: "No pods",
+			wantTone:   "muted",
+		},
+		{
+			name:       "below desired healthy",
+			current:    0,
+			desired:    1,
+			expected:   3,
+			allowed:    1,
+			wantStatus: "0/3 healthy",
+			wantTone:   "warning",
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			pdb := &policyv1.PodDisruptionBudget{
+				Status: policyv1.PodDisruptionBudgetStatus{
+					CurrentHealthy:     test.current,
+					DesiredHealthy:     test.desired,
+					ExpectedPods:       test.expected,
+					DisruptionsAllowed: test.allowed,
+				},
+			}
+			status, tone := podDisruptionBudgetStatus(pdb)
+			if status != test.wantStatus {
+				t.Fatalf("status = %q, want %q", status, test.wantStatus)
+			}
+			if tone != test.wantTone {
+				t.Fatalf("tone = %q, want %q", tone, test.wantTone)
+			}
+		})
+	}
+}
+
 func TestListSimpleResourcesRC2(t *testing.T) {
 	now := time.Now().Add(-5 * time.Minute)
 	minReplicas := int32(1)
@@ -47,9 +116,10 @@ func TestListSimpleResourcesRC2(t *testing.T) {
 				MinAvailable: &minAvailable,
 			},
 			Status: policyv1.PodDisruptionBudgetStatus{
-				CurrentHealthy: 1,
-				DesiredHealthy: 1,
-				ExpectedPods:   1,
+				CurrentHealthy:     1,
+				DesiredHealthy:     1,
+				ExpectedPods:       1,
+				DisruptionsAllowed: 1,
 			},
 		},
 		&corev1.ResourceQuota{

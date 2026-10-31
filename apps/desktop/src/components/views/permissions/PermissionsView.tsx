@@ -39,9 +39,10 @@ export function PermissionsView() {
     >
       <header className="flex shrink-0 flex-wrap items-center justify-between gap-2 border-b border-[var(--border)] px-4 py-3">
         <div className="flex min-w-0 items-center gap-2.5">
-          <div className="flex h-8 w-8 items-center justify-center rounded-lg border border-[var(--accent)]/20 bg-[var(--accent)]/10">
-            <ShieldCheck className="h-4 w-4 text-[var(--accent)]" />
-          </div>
+          <ShieldCheck
+            className="h-4 w-4 shrink-0 text-[var(--accent)]"
+            aria-hidden="true"
+          />
           <div className="min-w-0">
             <h1 className="text-sm font-semibold text-[var(--foreground)]">
               Permissions Checker
@@ -132,7 +133,6 @@ export function PermissionsView() {
         {isChecking && (
           <div className="rounded-xl border border-[var(--border)] bg-[var(--surface)] p-3.5">
             <div className="flex items-center gap-2 text-[10px] text-[var(--muted)]">
-              <span className="h-2 w-2 animate-pulse rounded-full bg-[var(--accent)]" />
               Evaluating RBAC rules and cluster access...
             </div>
           </div>

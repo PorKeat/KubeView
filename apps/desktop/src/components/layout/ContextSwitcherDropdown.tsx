@@ -168,19 +168,6 @@ export function ContextSwitcherDropdown({
               className="h-4 w-4 text-[var(--muted)] transition-colors group-hover:text-[var(--foreground)]"
               aria-hidden="true"
             />
-            <span
-              className={cn(
-                "absolute right-1.5 top-1.5 h-1.5 w-1.5 rounded-full border border-[var(--surface)]",
-                connectionStatus === "connected"
-                  ? "bg-emerald-500"
-                  : connectionStatus === "degraded" ||
-                      connectionStatus === "checking"
-                    ? "bg-amber-500"
-                    : "bg-rose-500",
-                connectionStatus === "checking" && "animate-pulse",
-              )}
-              aria-hidden="true"
-            />
             <span className="sr-only">{currentLabel}</span>
           </>
         ) : (

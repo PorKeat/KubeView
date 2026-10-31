@@ -147,13 +147,17 @@ export function KubeconfigEditModal({
       >
         <div className="flex items-start justify-between gap-3 border-b border-[var(--border)] px-4 py-4 sm:px-5">
           <div className="flex min-w-0 items-center gap-3">
-            <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-[var(--accent)]/25 bg-[var(--accent)]/10 text-[var(--accent)]">
-              {mode === "yaml" ? (
-                <FileCode className="h-4 w-4" aria-hidden="true" />
-              ) : (
-                <Pencil className="h-4 w-4" aria-hidden="true" />
-              )}
-            </span>
+            {mode === "yaml" ? (
+              <FileCode
+                className="h-4 w-4 shrink-0 text-[var(--accent)]"
+                aria-hidden="true"
+              />
+            ) : (
+              <Pencil
+                className="h-4 w-4 shrink-0 text-[var(--accent)]"
+                aria-hidden="true"
+              />
+            )}
             <div className="min-w-0">
               <h2
                 id="kubeconfig-edit-title"

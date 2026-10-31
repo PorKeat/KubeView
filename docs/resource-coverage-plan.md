@@ -21,6 +21,8 @@ Reference inventory: **36 resource entries** across seven groups.
 
 KubeView also has pages not in this reference: Gateway API, CNI Observability, RBAC, Service Accounts, Permissions Checker, Custom Resources, GitOps Drift, the cluster catalog, and the Learning Center.
 
+Vertical Pod Autoscalers are exposed under Scaling as well. VPA is an addon CRD rather than a built-in API, so the page is discovery-driven across `autoscaling.k8s.io/v1`, `v1beta2`, and `v1beta1`, and reports that the CRD is not installed instead of failing the page.
+
 ## Principles
 
 1. One shared simple-resource layer instead of 18 bespoke vertical slices.
@@ -38,6 +40,7 @@ KubeView also has pages not in this reference: Gateway API, CNI Observability, R
   - `simpleResources.list` — `{ kind, namespace? }`
   - `simpleResources.counts` — counts for sidebar badges.
 - Rows carry name, namespace, status/tone, kind-specific details, age, labels, annotations.
+- CRD-backed kinds resolve the served API version through discovery and list with the dynamic client. The VPA page reports `available: false` when no `autoscaling.k8s.io` version serves it.
 - Events are capped at the latest 500 with a `truncated` flag.
 - Later phases can add kind mappers without adding a new RPC or table shell.
 
@@ -60,7 +63,7 @@ KubeView also has pages not in this reference: Gateway API, CNI Observability, R
 - **Network:** add Endpoint Slices, Ingress Classes.
 - **Storage:** add Persistent Volume Claims.
 - **Config:** ConfigMaps, Secrets, Resource Quotas, Limit Ranges.
-- **Scaling:** Horizontal Pod Autoscalers, Pod Disruption Budgets.
+- **Scaling:** Horizontal Pod Autoscalers, Vertical Pod Autoscalers (optional addon CRD), Pod Disruption Budgets.
 - **Scheduling & Admission** (default collapsed): Priority Classes, Runtime Classes, Leases, Mutating/Validating Webhook Configs, Validating Admission Policies and Bindings.
 - **Helm:** Releases, Charts.
 - Every page gets a command-palette entry, tab icon, count badge, and a short learning guide.
@@ -84,11 +87,11 @@ Also: simple-resource engine layer, contracts, store, table shell, drawer, count
 
 ## RC2 — Scaling, quota, and scheduling ✅ Completed _(medium)_
 
-| Group      | Deliverable                                                                                                                  |
-| ---------- | ---------------------------------------------------------------------------------------------------------------------------- |
-| Config     | Resource Quotas (used/hard), Limit Ranges                                                                                    |
-| Scaling    | Horizontal Pod Autoscalers (current/desired/min/max, target, metrics), Pod Disruption Budgets (allowed disruptions, min/max) |
-| Scheduling | Priority Classes (value, default, preemption), Runtime Classes (handler, overhead), Leases (holder, expiry, renew)           |
+| Group      | Deliverable                                                                                                                                                                                                 |
+| ---------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Config     | Resource Quotas (used/hard), Limit Ranges                                                                                                                                                                   |
+| Scaling    | Horizontal Pod Autoscalers (current/desired/min/max, target, metrics), Vertical Pod Autoscalers (target, update mode, recommendations; optional CRD), Pod Disruption Budgets (allowed disruptions, min/max) |
+| Scheduling | Priority Classes (value, default, preemption), Runtime Classes (handler, overhead), Leases (holder, expiry, renew)                                                                                          |
 
 **Acceptance:** correct empty states on clusters without these objects; HPA/PDB rows expose the fields operators need without opening the drawer.
 

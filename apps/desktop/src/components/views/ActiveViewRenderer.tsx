@@ -79,6 +79,10 @@ export function ActiveViewRenderer() {
           return <SimpleResourcesView kind="horizontalpodautoscalers" />;
         }
 
+        if (activeTabId === "verticalpodautoscalers") {
+          return <SimpleResourcesView kind="verticalpodautoscalers" />;
+        }
+
         if (activeTabId === "poddisruptionbudgets") {
           return <SimpleResourcesView kind="poddisruptionbudgets" />;
         }

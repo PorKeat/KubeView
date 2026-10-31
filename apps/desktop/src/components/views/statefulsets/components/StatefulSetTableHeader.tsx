@@ -47,7 +47,7 @@ export function StatefulSetTableHeader({
   return (
     <thead className="sticky top-0 bg-[var(--surface)] z-10 border-b border-[var(--border)] select-none">
       <tr className="text-[11px] font-semibold text-[var(--muted)] uppercase tracking-wider h-8">
-        <th className="w-8 px-2 text-center">
+        <th className="w-[3%] px-2 text-center">
           <Tooltip
             content={
               isPageAllSelected ? "Deselect all on page" : "Select all on page"
@@ -80,7 +80,7 @@ export function StatefulSetTableHeader({
             ascending: sortAsc,
             onSort,
           })}
-          className="w-48 sm:w-56 md:w-60 py-1 px-3 cursor-pointer hover:text-[var(--foreground)] transition-colors min-w-0"
+          className="w-[26%] py-1 px-3 cursor-pointer hover:text-[var(--foreground)] transition-colors min-w-0"
         >
           <div className="flex items-center gap-1">
             <span>Name</span>
@@ -94,7 +94,7 @@ export function StatefulSetTableHeader({
             ascending: sortAsc,
             onSort,
           })}
-          className="w-24 sm:w-28 py-1 px-3 cursor-pointer hover:text-[var(--foreground)] transition-colors"
+          className="w-[10%] py-1 px-3 cursor-pointer hover:text-[var(--foreground)] transition-colors"
         >
           <div className="flex items-center gap-1">
             <span>Namespace</span>
@@ -108,15 +108,15 @@ export function StatefulSetTableHeader({
             ascending: sortAsc,
             onSort,
           })}
-          className="w-24 sm:w-28 py-1 px-3 cursor-pointer hover:text-[var(--foreground)] transition-colors"
+          className="w-[10%] py-1 px-3 cursor-pointer hover:text-[var(--foreground)] transition-colors"
         >
           <div className="flex items-center gap-1">
             <span>Status</span>
             {renderSortIndicator("status")}
           </div>
         </th>
-        <th className="w-16 py-1 px-3">Desired</th>
-        <th className="w-16 py-1 px-3">Current</th>
+        <th className="w-[6%] py-1 px-3">Desired</th>
+        <th className="w-[6%] py-1 px-3">Current</th>
         <th
           {...sortableHeaderProps({
             field: "ready",
@@ -124,15 +124,15 @@ export function StatefulSetTableHeader({
             ascending: sortAsc,
             onSort,
           })}
-          className="w-16 py-1 px-3 cursor-pointer hover:text-[var(--foreground)] transition-colors"
+          className="w-[6%] py-1 px-3 cursor-pointer hover:text-[var(--foreground)] transition-colors"
         >
           <div className="flex items-center gap-1">
             <span>Ready</span>
             {renderSortIndicator("ready")}
           </div>
         </th>
-        <th className="w-16 py-1 px-3">Updated</th>
-        <th className="w-32 py-1 px-3">Service</th>
+        <th className="w-[6%] py-1 px-3">Updated</th>
+        <th className="w-[17%] py-1 px-3">Service</th>
         <th
           {...sortableHeaderProps({
             field: "age",
@@ -140,14 +140,14 @@ export function StatefulSetTableHeader({
             ascending: sortAsc,
             onSort,
           })}
-          className="w-14 sm:w-16 py-1 px-3 cursor-pointer hover:text-[var(--foreground)] transition-colors"
+          className="w-[5%] py-1 px-3 cursor-pointer hover:text-[var(--foreground)] transition-colors"
         >
           <div className="flex items-center gap-1">
             <span>Age</span>
             {renderSortIndicator("age")}
           </div>
         </th>
-        <th className="w-9 py-1 px-2 text-right" aria-label="Actions"></th>
+        <th className="w-[5%] py-1 px-2 text-right" aria-label="Actions"></th>
       </tr>
     </thead>
   );

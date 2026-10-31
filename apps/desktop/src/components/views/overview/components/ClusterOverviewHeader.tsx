@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { RotateCw, ShieldCheck, ChevronRight } from "lucide-react";
+import { RotateCw, ChevronRight } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { OverviewViewSwitch } from "./OverviewViewSwitch";
 
@@ -58,16 +58,6 @@ export function ClusterOverviewHeader({
                 : "bg-rose-500/10 text-rose-600 dark:text-rose-400 border-rose-500/25 hover:bg-rose-500/20",
           )}
         >
-          <span
-            className={cn(
-              "w-1.5 h-1.5 rounded-full shrink-0",
-              connectionStatus === "connected"
-                ? "bg-emerald-500"
-                : connectionStatus === "checking"
-                  ? "bg-amber-500 animate-pulse"
-                  : "bg-rose-500",
-            )}
-          />
           <span>
             {connectionStatus === "connected"
               ? "Active"
@@ -105,20 +95,6 @@ export function ClusterOverviewHeader({
       {/* Right: Operational Controls Toolbar */}
       <div className="flex items-center gap-2 shrink-0 flex-wrap">
         <OverviewViewSwitch active="single" />
-
-        {/* Diagnostics Button */}
-        <button
-          type="button"
-          onClick={onOpenDiagnostics}
-          aria-label="Open Connection & Security Diagnostics"
-          className="flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-[var(--surface)] hover:bg-[var(--surface-hover)] border border-[var(--border)] hover:border-black/20 dark:hover:border-white/20 text-xs font-medium text-[var(--foreground)] transition-colors cursor-pointer focus-visible:ring-1 focus-visible:ring-[var(--accent)] outline-hidden"
-        >
-          <ShieldCheck
-            className="w-3.5 h-3.5 text-[var(--accent)]"
-            aria-hidden="true"
-          />
-          <span className="hidden sm:inline">Diagnostics</span>
-        </button>
 
         {/* Refresh Button */}
         <button

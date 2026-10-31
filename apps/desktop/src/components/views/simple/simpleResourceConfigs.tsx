@@ -3,6 +3,7 @@ import type {
   SimpleResourceItem,
   SimpleResourceKind,
 } from "@kubeview/contracts";
+import { cn } from "@/lib/utils";
 import {
   Activity,
   ArrowUp,
@@ -22,6 +23,7 @@ import {
   Waypoints,
   FileCheck2,
   Link2,
+  MoveVertical,
   type LucideIcon,
 } from "lucide-react";
 
@@ -29,6 +31,7 @@ export interface SimpleResourceColumn {
   key: string;
   label: string;
   className?: string;
+  multiline?: boolean;
   render: (item: SimpleResourceItem) => React.ReactNode;
 }
 
@@ -46,7 +49,12 @@ export interface SimpleResourceConfig {
   searchPlaceholder: string;
   emptyTitle: string;
   emptyDescription: string;
+  unavailableTitle?: string;
+  unavailableDescription?: string;
   nameLabel?: string;
+  ageLabel?: string;
+  defaultSort?: { key: "name" | "status" | "age"; dir: 1 | -1 };
+  primaryMono?: boolean;
   primary: (item: SimpleResourceItem) => string;
   secondary?: (item: SimpleResourceItem) => string;
   columns: SimpleResourceColumn[];
@@ -61,18 +69,20 @@ function DetailValue({
   item,
   detailKey,
   mono = false,
+  multiline = false,
   className,
 }: {
   item: SimpleResourceItem;
   detailKey: string;
   mono?: boolean;
+  multiline?: boolean;
   className?: string;
 }) {
   const value = detail(item, detailKey);
   return (
     <span
       title={value}
-      className={`block truncate ${mono ? "font-mono text-[10px]" : ""} ${className ?? ""}`}
+      className={`${multiline ? "line-clamp-2" : "block truncate"} ${mono ? "font-mono text-[10px]" : ""} ${className ?? ""}`}
     >
       {value}
     </span>
@@ -101,16 +111,19 @@ export const SIMPLE_RESOURCE_CONFIGS: Record<
     kind: "events",
     title: "Events",
     description:
-      "Recent cluster activity, newest first. Warning events explain failed scheduling, pulls, probes, and restarts.",
+      "Recent cluster activity, newest first. Each row shows the affected object, why it fired, and the full message.",
     icon: History,
     namespaceScoped: true,
-    searchPlaceholder: "Filter events by reason, object, message...",
+    searchPlaceholder: "Filter events by object, reason, message...",
     emptyTitle: "No events",
     emptyDescription:
       "No recent events match this context and namespace. Events expire automatically.",
-    nameLabel: "Reason",
-    primary: (item) => item.details.reason || item.name,
-    secondary: (item) => item.details.object || item.namespace || "",
+    nameLabel: "Object",
+    ageLabel: "Last seen",
+    defaultSort: { key: "age", dir: -1 },
+    primaryMono: true,
+    primary: (item) => item.details.object || item.name,
+    secondary: (item) => item.namespace || "",
     filter: {
       options: ["All", "Warning", "Normal"],
       predicate: (item, value) =>
@@ -118,20 +131,54 @@ export const SIMPLE_RESOURCE_CONFIGS: Record<
     },
     columns: [
       {
+        key: "reason",
+        label: "Reason",
+        className: "w-[12%]",
+        render: (item) => {
+          const warning = (item.details.type || "Normal") === "Warning";
+          const reason = detail(item, "reason");
+          return (
+            <span
+              title={reason}
+              className={cn(
+                "inline-flex items-center gap-1.5 font-mono text-[10px] font-medium",
+                warning
+                  ? "text-rose-600 dark:text-rose-400"
+                  : "text-[var(--foreground)]",
+              )}
+            >
+              <span
+                aria-hidden="true"
+                className={cn(
+                  "h-1.5 w-1.5 shrink-0 rounded-full",
+                  warning
+                    ? "bg-rose-500 dark:bg-rose-400"
+                    : "bg-[var(--muted)]/40",
+                )}
+              />
+              <span className="truncate">{reason}</span>
+            </span>
+          );
+        },
+      },
+      {
         key: "message",
         label: "Message",
-        className: "w-[38%]",
+        className: "w-[36%]",
+        multiline: true,
         render: (item) => (
           <DetailValue
             item={item}
             detailKey="message"
-            className="text-[10px]"
+            multiline
+            className="text-[11px] leading-snug text-[var(--foreground)]"
           />
         ),
       },
       {
         key: "count",
         label: "Count",
+        className: "w-[6%]",
         render: (item) => (
           <span className="font-mono text-[10px] tabular-nums text-[var(--muted)]">
             {detail(item, "count")}
@@ -314,6 +361,43 @@ export const SIMPLE_RESOURCE_CONFIGS: Record<
           <span className="font-mono text-[10px] tabular-nums">
             {detail(item, "metrics")}
           </span>
+        ),
+      },
+    ],
+  },
+  verticalpodautoscalers: {
+    kind: "verticalpodautoscalers",
+    title: "Vertical Pod Autoscalers",
+    description:
+      "Vertical scaling recommendations and update policy. VPA is an addon CRD, so clusters without autoscaling.k8s.io show this page as unavailable.",
+    icon: MoveVertical,
+    namespaceScoped: true,
+    searchPlaceholder: "Filter autoscalers by target, namespace...",
+    emptyTitle: "No vertical pod autoscalers",
+    emptyDescription: "No VPA is configured in this namespace.",
+    unavailableTitle: "Vertical Pod Autoscaler is not installed",
+    unavailableDescription:
+      "Install the VPA CRD (autoscaling.k8s.io) to see vertical scaling recommendations for workloads.",
+    primary: (item) => item.name,
+    secondary: (item) => item.namespace || "",
+    columns: [
+      {
+        key: "target",
+        label: "Target",
+        render: (item) => <DetailValue item={item} detailKey="target" mono />,
+      },
+      {
+        key: "updateMode",
+        label: "Update mode",
+        render: (item) => (
+          <DetailValue item={item} detailKey="updateMode" mono />
+        ),
+      },
+      {
+        key: "recommendation",
+        label: "Recommendation",
+        render: (item) => (
+          <DetailValue item={item} detailKey="recommendation" mono />
         ),
       },
     ],

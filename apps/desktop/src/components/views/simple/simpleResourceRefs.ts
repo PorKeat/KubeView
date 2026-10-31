@@ -52,6 +52,12 @@ export const SIMPLE_RESOURCE_REFS: Partial<
     resource: "horizontalpodautoscalers",
     namespaced: true,
   },
+  verticalpodautoscalers: {
+    apiVersion: "autoscaling.k8s.io/v1",
+    kind: "VerticalPodAutoscaler",
+    resource: "verticalpodautoscalers",
+    namespaced: true,
+  },
   poddisruptionbudgets: {
     apiVersion: "policy/v1",
     kind: "PodDisruptionBudget",

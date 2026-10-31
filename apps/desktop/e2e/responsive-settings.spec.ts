@@ -219,6 +219,11 @@ test.describe("KubeView Responsive Shell", () => {
     );
     await expectNoHorizontalOverflow(page, "header");
 
+    // The workspace restores the active Settings tab across a hard refresh,
+    // so leave settings mode before exercising the cluster navigation.
+    await expect(page.getByTestId("settings-view")).toBeVisible();
+    await page.getByRole("button", { name: "Open navigation" }).click();
+    await page.getByTestId("nav-back").click();
     await expandSidebarGroups(page);
     await page.getByRole("button", { name: "Open navigation" }).click();
     await page.getByTestId("nav-item-deployments").click();

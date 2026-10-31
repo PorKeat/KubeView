@@ -382,8 +382,6 @@ export function ClusterOverviewView() {
         <NodeTopologySection
           nodes={nodes}
           readyNodesCount={clusterOverview?.readyNodes ?? 0}
-          totalCpuCores={clusterOverview?.totalCpuCores ?? 0}
-          totalMemoryGiB={clusterOverview?.totalMemoryGiB ?? 0}
           selectedNode={selectedNode}
           nodeViewMode={nodeViewMode}
           effectiveMode={effectiveMode}

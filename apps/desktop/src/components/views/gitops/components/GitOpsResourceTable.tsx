@@ -33,9 +33,9 @@ export function GitOpsResourceTable({
   return (
     <div
       data-testid="gitops-resource-table"
-      className="overflow-auto rounded-xl border border-[var(--border)] bg-[var(--surface)]"
+      className="overflow-y-auto overflow-x-hidden rounded-xl border border-[var(--border)] bg-[var(--surface)]"
     >
-      <table className="w-full min-w-[680px] text-left text-[10px]">
+      <table className="w-full text-left text-[10px]">
         <thead className="border-b border-[var(--border)] bg-[var(--surface-hover)]/40 text-[9px] uppercase tracking-wider text-[var(--muted)]">
           <tr>
             <th className="px-3 py-2 font-medium">Status</th>

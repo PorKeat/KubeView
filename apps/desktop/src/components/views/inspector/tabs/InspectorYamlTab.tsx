@@ -14,11 +14,12 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Tooltip } from "@/components/ui/Tooltip";
-import { tokenizeYamlLine } from "./yamlTokenizer";
+import { tokenizeYamlLine, type Token } from "./yamlTokenizer";
 
 export interface InspectorYamlTabProps {
   yaml: string;
   isLoading: boolean;
+  isLive?: boolean;
   onCopy: () => void;
   onDownload: () => void;
   onRetry?: () => void;
@@ -27,9 +28,81 @@ export interface InspectorYamlTabProps {
   onEdit?: () => void;
 }
 
-export function InspectorYamlTab({
+interface YamlLineProps {
+  lineNumber: number;
+  tokens: Token[];
+  isMatch: boolean;
+  isWrap: boolean;
+  highlightRegex: RegExp | null;
+}
+
+const YamlLine = React.memo(function YamlLine({
+  lineNumber,
+  tokens,
+  isMatch,
+  isWrap,
+  highlightRegex,
+}: YamlLineProps) {
+  return (
+    <div
+      className={cn(
+        "flex group transition-colors leading-5",
+        isMatch ? "bg-[#623314]/40" : "hover:bg-white/[0.03]",
+      )}
+    >
+      {/* Line Number Gutter (unselectable, VS Code grey) */}
+      <span className="w-12 pr-3.5 text-right select-none text-[#6e7681] group-hover:text-slate-400 shrink-0 border-r border-[#2d2d2d] font-mono text-[11px] tabular-nums">
+        {lineNumber}
+      </span>
+
+      {/* Tokenized Syntax Highlighting Line */}
+      <span
+        className={cn(
+          "pl-3.5 flex-1 font-mono text-[11px]",
+          isWrap ? "whitespace-pre-wrap break-all" : "whitespace-pre",
+        )}
+      >
+        {tokens.map((tok, tIdx) => {
+          if (!tok.text) return null;
+
+          // Highlight matches within an already-matching line.
+          if (isMatch && highlightRegex) {
+            const segments = tok.text.split(highlightRegex);
+            if (segments.length > 1) {
+              return (
+                <span key={tIdx} className={tok.className}>
+                  {segments.map((seg, sIdx) =>
+                    sIdx % 2 === 1 ? (
+                      <mark
+                        key={sIdx}
+                        className="bg-[#623314] text-[#ffd700] ring-1 ring-[#e98038] rounded-xs px-0.5"
+                      >
+                        {seg}
+                      </mark>
+                    ) : (
+                      seg
+                    ),
+                  )}
+                </span>
+              );
+            }
+          }
+
+          return (
+            <span key={tIdx} className={tok.className}>
+              {tok.text}
+            </span>
+          );
+        })}
+      </span>
+    </div>
+  );
+});
+
+export function InspectorYamlTabComponent({
   yaml,
   isLoading,
+  isLive = false,
   onCopy,
   onDownload,
   onRetry,
@@ -53,16 +126,29 @@ export function InspectorYamlTab({
     return lines.map((line) => tokenizeYamlLine(line));
   }, [lines]);
 
-  // Search match statistics
-  const searchMatchCount = React.useMemo(() => {
-    if (!searchQuery.trim()) return 0;
-    const lower = searchQuery.toLowerCase();
-    let count = 0;
-    for (const line of lines) {
-      if (line.toLowerCase().includes(lower)) count++;
-    }
-    return count;
-  }, [lines, searchQuery]);
+  // Search match statistics + highlight regex computed once per query change.
+  const { matchingLines, searchMatchCount, highlightRegex } =
+    React.useMemo(() => {
+      const query = searchQuery.trim();
+      if (!query) {
+        return {
+          matchingLines: null as Set<number> | null,
+          searchMatchCount: 0,
+          highlightRegex: null as RegExp | null,
+        };
+      }
+      const lower = query.toLowerCase();
+      const matches = new Set<number>();
+      for (let index = 0; index < lines.length; index += 1) {
+        if (lines[index].toLowerCase().includes(lower)) matches.add(index);
+      }
+      const escaped = query.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+      return {
+        matchingLines: matches,
+        searchMatchCount: matches.size,
+        highlightRegex: new RegExp(`(${escaped})`, "gi"),
+      };
+    }, [lines, searchQuery]);
 
   const handleOpenSearch = () => {
     setIsSearchOpen(true);
@@ -251,79 +337,16 @@ export function InspectorYamlTab({
         ) : (
           <div className="max-h-[68vh] overflow-y-auto overflow-x-auto bg-[#1e1e1e] select-text">
             <div className="min-w-full inline-block py-2">
-              {tokenizedLines.map((tokens, lineIdx) => {
-                const lineNum = lineIdx + 1;
-                const rawLine = lines[lineIdx] || "";
-                const isMatch =
-                  searchQuery.trim().length > 0 &&
-                  rawLine.toLowerCase().includes(searchQuery.toLowerCase());
-
-                return (
-                  <div
-                    key={lineIdx}
-                    className={cn(
-                      "flex group transition-colors leading-5",
-                      isMatch ? "bg-[#623314]/40" : "hover:bg-white/[0.03]",
-                    )}
-                  >
-                    {/* Line Number Gutter (unselectable, VS Code grey) */}
-                    <span className="w-12 pr-3.5 text-right select-none text-[#6e7681] group-hover:text-slate-400 shrink-0 border-r border-[#2d2d2d] font-mono text-[11px] tabular-nums">
-                      {lineNum}
-                    </span>
-
-                    {/* Tokenized Syntax Highlighting Line */}
-                    <span
-                      className={cn(
-                        "pl-3.5 flex-1 font-mono text-[11px]",
-                        isWrap
-                          ? "whitespace-pre-wrap break-all"
-                          : "whitespace-pre",
-                      )}
-                    >
-                      {tokens.map((tok, tIdx) => {
-                        if (!tok.text) return null;
-
-                        // If search query is active and token contains match, highlight substring
-                        if (
-                          searchQuery.trim().length > 0 &&
-                          tok.text
-                            .toLowerCase()
-                            .includes(searchQuery.toLowerCase())
-                        ) {
-                          const regex = new RegExp(
-                            `(${searchQuery.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")})`,
-                            "gi",
-                          );
-                          const segments = tok.text.split(regex);
-                          return (
-                            <span key={tIdx} className={tok.className}>
-                              {segments.map((seg, sIdx) =>
-                                seg.toLowerCase() ===
-                                searchQuery.toLowerCase() ? (
-                                  <mark
-                                    key={sIdx}
-                                    className="bg-[#623314] text-[#ffd700] ring-1 ring-[#e98038] rounded-xs px-0.5"
-                                  >
-                                    {seg}
-                                  </mark>
-                                ) : (
-                                  seg
-                                ),
-                              )}
-                            </span>
-                          );
-                        }
-
-                        return (
-                          <span key={tIdx} className={tok.className}>
-                            {tok.text}
-                          </span>
-                        );
-                      })}
-                    </span>
-                  </div>
-                );
-              })}
+              {tokenizedLines.map((tokens, lineIdx) => (
+                <YamlLine
+                  key={lineIdx}
+                  lineNumber={lineIdx + 1}
+                  tokens={tokens}
+                  isMatch={matchingLines?.has(lineIdx) ?? false}
+                  isWrap={isWrap}
+                  highlightRegex={highlightRegex}
+                />
+              ))}
             </div>
           </div>
         )}
@@ -332,6 +355,10 @@ export function InspectorYamlTab({
         <div className="h-6 px-3 bg-[#181818] border-t border-[#2d2d2d] text-[#858585] flex items-center justify-between text-[10px] select-none font-mono">
           <div className="flex items-center gap-3">
             <span className="text-slate-400">Kubernetes YAML</span>
+            <span>•</span>
+            <span className={isLive ? "text-emerald-400" : "text-slate-400"}>
+              {isLive ? "Live" : "Snapshot"}
+            </span>
             <span>•</span>
             <span>UTF-8</span>
             <span>•</span>
@@ -348,3 +375,5 @@ export function InspectorYamlTab({
     </div>
   );
 }
+
+export const InspectorYamlTab = React.memo(InspectorYamlTabComponent);

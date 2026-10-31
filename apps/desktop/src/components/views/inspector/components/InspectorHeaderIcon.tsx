@@ -57,43 +57,40 @@ export function InspectorHeaderIcon({
             ? Shield
             : Waypoints;
 
+  const Icon = isAccessResource
+    ? currentResource.kind === "ServiceAccount"
+      ? Users
+      : currentResource.kind === "CustomResourceDefinition"
+        ? Boxes
+        : Shield
+    : isConfigStorageResource
+      ? currentResource.kind === "ConfigMap"
+        ? FileCode
+        : currentResource.kind === "Secret"
+          ? FolderLock
+          : currentResource.kind === "PersistentVolume"
+            ? HardDrive
+            : Database
+      : isNetworkingResource
+        ? NetworkingIcon
+        : isNode
+          ? Server
+          : isDeployment
+            ? Layers
+            : isReplicaSet
+              ? Repeat
+              : isStatefulSet
+                ? Database
+                : isDaemonSet
+                  ? Cpu
+                  : isJob || isCronJob
+                    ? Clock
+                    : Box;
+
   return (
-    <div className="p-2 sm:p-2.5 rounded-xl bg-[var(--surface-hover)] text-[var(--foreground)] border border-[var(--border)] shrink-0">
-      {isAccessResource ? (
-        currentResource.kind === "ServiceAccount" ? (
-          <Users className="w-5 h-5 text-[var(--accent)]" />
-        ) : currentResource.kind === "CustomResourceDefinition" ? (
-          <Boxes className="w-5 h-5 text-[var(--accent)]" />
-        ) : (
-          <Shield className="w-5 h-5 text-[var(--accent)]" />
-        )
-      ) : isConfigStorageResource ? (
-        currentResource.kind === "ConfigMap" ? (
-          <FileCode className="w-5 h-5 text-[var(--accent)]" />
-        ) : currentResource.kind === "Secret" ? (
-          <FolderLock className="w-5 h-5 text-[var(--accent)]" />
-        ) : currentResource.kind === "PersistentVolume" ? (
-          <HardDrive className="w-5 h-5 text-[var(--accent)]" />
-        ) : (
-          <Database className="w-5 h-5 text-[var(--accent)]" />
-        )
-      ) : isNetworkingResource ? (
-        <NetworkingIcon className="w-5 h-5 text-[var(--accent)]" />
-      ) : isNode ? (
-        <Server className="w-5 h-5 text-[var(--accent)]" />
-      ) : isDeployment ? (
-        <Layers className="w-5 h-5 text-[var(--accent)]" />
-      ) : isReplicaSet ? (
-        <Repeat className="w-5 h-5 text-[var(--accent)]" />
-      ) : isStatefulSet ? (
-        <Database className="w-5 h-5 text-[var(--accent)]" />
-      ) : isDaemonSet ? (
-        <Cpu className="w-5 h-5 text-[var(--accent)]" />
-      ) : isJob || isCronJob ? (
-        <Clock className="w-5 h-5 text-[var(--accent)]" />
-      ) : (
-        <Box className="w-5 h-5 text-[var(--accent)]" />
-      )}
-    </div>
+    <Icon
+      className="h-5 w-5 shrink-0 text-[var(--accent)]"
+      aria-hidden="true"
+    />
   );
 }

@@ -92,7 +92,7 @@ export function HubbleFlowPanel({
         </div>
       ) : (
         <div
-          className="flex-1 overflow-auto min-h-0"
+          className="flex-1 overflow-y-auto overflow-x-hidden min-h-0"
           data-testid="cilium-table-scroll"
         >
           <table className="w-full text-left text-xs border-collapse table-fixed">

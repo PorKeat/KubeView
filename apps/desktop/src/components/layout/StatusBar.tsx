@@ -79,30 +79,22 @@ export function StatusBar() {
         return {
           label: "Connected",
           color: "text-emerald-600 dark:text-emerald-400",
-          beacon: "bg-emerald-500",
-          ping: true,
         };
       case "degraded":
         return {
           label: "Degraded",
           color: "text-amber-600 dark:text-amber-400",
-          beacon: "bg-amber-500",
-          ping: false,
         };
       case "checking":
         return {
           label: "Connecting...",
           color: "text-amber-600 dark:text-amber-400",
-          beacon: "bg-amber-500",
-          ping: true,
         };
       case "offline":
       default:
         return {
           label: "Offline",
           color: "text-rose-600 dark:text-rose-400",
-          beacon: "bg-rose-500",
-          ping: false,
         };
     }
   };
@@ -136,22 +128,6 @@ export function StatusBar() {
           className="flex items-center gap-1.5 px-1.5 py-0.5 rounded hover:bg-black/[0.04] dark:hover:bg-white/[0.06] hover:text-[var(--foreground)] transition-colors cursor-pointer group focus-visible:outline-hidden"
           title={`Status: ${status.label} • Latency: ${latencyDisplay} • Click to test ping`}
         >
-          <span className="relative flex h-2 w-2 shrink-0">
-            {status.ping && (
-              <span
-                className={cn(
-                  "animate-ping absolute inline-flex h-full w-full rounded-full opacity-75",
-                  status.beacon,
-                )}
-              />
-            )}
-            <span
-              className={cn(
-                "relative inline-flex rounded-full h-2 w-2",
-                status.beacon,
-              )}
-            />
-          </span>
           <span className={cn("font-medium", status.color)}>
             {status.label}
           </span>

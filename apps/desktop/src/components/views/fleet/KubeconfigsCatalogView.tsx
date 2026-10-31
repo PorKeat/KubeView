@@ -350,8 +350,8 @@ export function KubeconfigsCatalogView() {
           </button>
         </div>
       ) : (
-        <div className="mt-3 overflow-x-auto rounded-xl border border-[var(--border)] bg-[var(--surface)]">
-          <table className="w-full min-w-[820px] border-collapse text-left text-xs">
+        <div className="mt-3 overflow-y-auto overflow-x-hidden rounded-xl border border-[var(--border)] bg-[var(--surface)]">
+          <table className="w-full border-collapse text-left text-xs">
             <thead>
               <tr className="border-b border-[var(--border)] font-mono text-[9px] uppercase tracking-[0.12em] text-[var(--muted)]">
                 <th scope="col" className="px-3 py-2 font-medium">
@@ -460,14 +460,10 @@ export function KubeconfigsCatalogView() {
                     <td className="px-3 py-2.5">
                       <span
                         className={cn(
-                          "inline-flex items-center gap-1.5 font-mono text-[10px]",
+                          "inline-flex items-center font-mono text-[10px]",
                           meta.text,
                         )}
                       >
-                        <span
-                          className={cn("h-1.5 w-1.5 rounded-full", meta.dot)}
-                          aria-hidden="true"
-                        />
                         {meta.label}
                       </span>
                     </td>

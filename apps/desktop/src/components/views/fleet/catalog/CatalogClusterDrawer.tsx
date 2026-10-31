@@ -19,6 +19,7 @@ import type { ClusterContextInfo } from "@/stores/clusterStore";
 import { ENV_TAG_OPTIONS, type EnvTag } from "@/stores/catalogStore";
 import { cn } from "@/lib/utils";
 import { CustomSelect } from "@/components/ui/CustomSelect";
+import { useSlideSheetMount } from "@/components/ui/useSlideSheetMount";
 import { readClusterImage } from "@/lib/clusterImage";
 import { ENV_META, catalogStatusMeta } from "./catalogMeta";
 import type { CatalogStatus } from "./catalogMeta";
@@ -76,14 +77,15 @@ export function CatalogClusterDrawer({
   const imageInputRef = React.useRef<HTMLInputElement>(null);
   const meta = catalogStatusMeta(status);
   const envMeta = ENV_META[env];
+  const { isMounted, requestClose } = useSlideSheetMount(onClose);
 
   React.useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
-      if (event.key === "Escape") onClose();
+      if (event.key === "Escape") requestClose();
     };
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [onClose]);
+  }, [requestClose]);
 
   const details: { label: string; value: string }[] = [
     { label: "Cluster", value: context.cluster },
@@ -129,16 +131,27 @@ export function CatalogClusterDrawer({
       aria-label={`${context.name} details`}
     >
       <div
-        className="absolute inset-0 bg-black/45 backdrop-blur-[1px]"
-        onClick={onClose}
+        className={cn(
+          "absolute inset-0 bg-black/45 backdrop-blur-[1px] transition-opacity duration-200 motion-reduce:transition-none",
+          isMounted ? "opacity-100" : "opacity-0",
+        )}
+        onClick={requestClose}
         aria-hidden="true"
       />
-      <aside className="relative flex h-full w-full max-w-md flex-col overflow-hidden border-l border-[var(--border)] bg-[var(--surface)] shadow-2xl">
+      <aside
+        className={cn(
+          "slide-sheet relative flex h-full w-full max-w-md flex-col overflow-hidden border-l border-[var(--border)] bg-[var(--surface)] shadow-2xl origin-right",
+          isMounted
+            ? "translate-x-0 scale-100 opacity-100"
+            : "translate-x-full scale-[0.985] opacity-0",
+        )}
+      >
         <header className="flex items-start justify-between gap-3 border-b border-[var(--border)] p-4">
           <div className="flex min-w-0 items-start gap-3">
-            <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-[var(--border)] bg-[var(--surface-active)] text-[var(--accent)]">
-              <Server className="h-4 w-4" aria-hidden="true" />
-            </span>
+            <Server
+              className="h-4 w-4 shrink-0 text-[var(--accent)]"
+              aria-hidden="true"
+            />
             <div className="min-w-0">
               <div className="flex flex-wrap items-center gap-1.5">
                 <h2
@@ -167,10 +180,6 @@ export function CatalogClusterDrawer({
                   meta.text,
                 )}
               >
-                <span
-                  className={cn("h-1.5 w-1.5 rounded-full", meta.dot)}
-                  aria-hidden="true"
-                />
                 {meta.label}
               </div>
             </div>
@@ -178,7 +187,7 @@ export function CatalogClusterDrawer({
           <button
             type="button"
             data-testid="catalog-drawer-close"
-            onClick={onClose}
+            onClick={requestClose}
             aria-label="Close cluster details"
             className="rounded-md p-1.5 text-[var(--muted)] transition-colors hover:bg-[var(--surface-hover)] hover:text-[var(--foreground)] cursor-pointer focus-visible:ring-2 focus-visible:ring-[var(--accent)] focus-visible:outline-hidden"
           >

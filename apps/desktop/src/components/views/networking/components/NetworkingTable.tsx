@@ -75,7 +75,7 @@ export function NetworkingTable<T>({
 
   return (
     <div
-      className="flex-1 overflow-auto min-h-0"
+      className="flex-1 overflow-y-auto overflow-x-hidden min-h-0"
       data-testid="networking-table-scroll"
       data-tour={`${testIdPrefix}-table`}
     >
@@ -170,9 +170,7 @@ export function NetworkingTable<T>({
             <th
               className={cn(
                 "sticky right-0 z-30 border-l border-[var(--border)] bg-[var(--surface)] py-1 px-2 text-right",
-                onEdit || onDelete || onDiagnose
-                  ? "w-28"
-                  : "w-[4%] min-w-[36px]",
+                onEdit || onDelete || onDiagnose ? "w-28" : "w-[4%]",
               )}
               aria-label="Actions"
             />

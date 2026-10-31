@@ -27,6 +27,7 @@ import {
   Waypoints,
   Route,
   Activity,
+  MoveVertical,
   ArrowUp,
   SlidersHorizontal,
   Webhook,
@@ -188,6 +189,7 @@ export interface SidebarCounts {
   ingressClasses: number;
   persistentVolumeClaims: number;
   horizontalPodAutoscalers: number;
+  verticalPodAutoscalers: number;
   podDisruptionBudgets: number;
   resourceQuotas: number;
   limitRanges: number;
@@ -229,6 +231,7 @@ export function buildNavigationGroups(counts: SidebarCounts): NavGroup[] {
     ingressClasses,
     persistentVolumeClaims,
     horizontalPodAutoscalers,
+    verticalPodAutoscalers,
     podDisruptionBudgets,
     resourceQuotas,
     limitRanges,
@@ -349,6 +352,15 @@ export function buildNavigationGroups(counts: SidebarCounts): NavGroup[] {
           icon: Activity,
           badge:
             horizontalPodAutoscalers > 0 ? horizontalPodAutoscalers : undefined,
+          badgeVariant: "accent",
+        },
+        {
+          id: "verticalpodautoscalers",
+          title: "Vertical Pod Autoscalers",
+          shortTitle: "VPAs",
+          icon: MoveVertical,
+          badge:
+            verticalPodAutoscalers > 0 ? verticalPodAutoscalers : undefined,
           badgeVariant: "accent",
         },
         {
