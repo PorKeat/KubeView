@@ -9,6 +9,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.3.2] - 2026-11-01
+
 ### Added
 
 - Create flows for Pods, ReplicaSets, StatefulSets, DaemonSets, ConfigMaps, Secrets, PVCs, HPAs, VPAs, PDBs, quotas, limit ranges, priority/runtime classes, leases, webhooks, admission policies, RBAC resources, Gateway API resources, and custom resource instances.
