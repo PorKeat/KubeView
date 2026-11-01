@@ -685,7 +685,11 @@ main() {
 
   info "Releasing KubeView v$VERSION (current v$CURRENT_VERSION)"
   run_checks
-  commit_and_tag
+  if (( RESUME )); then
+    info "Resuming distribution for the existing v$VERSION tag"
+  else
+    commit_and_tag
+  fi
   wait_for_release
   download_assets
 
