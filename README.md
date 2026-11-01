@@ -96,7 +96,7 @@ flowchart LR
 - **Drift Classification:** Compare desired manifests against live resources and classify each as in sync, changed, missing, or error.
 - **Focused Diff Review:** Inspect desired and live YAML side by side using the shared diff renderer.
 - **Reviewed Apply:** Validate the desired manifest with a dry-run, check RBAC capabilities, then apply only after explicit confirmation.
-- **Local-First Safety:** Manifest contents are read by the Go sidecar and never uploaded. Helm release/chart browsing is read-only; remote Git, Kustomize, Helm lifecycle actions, Argo CD, Flux, and CI integrations remain planned.
+- **Local-First Safety:** Manifest contents are read by the Go sidecar and never uploaded. Remote Git, Kustomize, Argo CD, Flux, and CI integrations remain planned.
 
 ### 7. 🧭 Cluster Rail & Catalog
 
@@ -109,14 +109,17 @@ flowchart LR
 - All **36 reference resource pages** now exist, including namespaces, events, replication controllers, endpoint slices, ingress classes, PVCs, HPAs, PDBs, quotas, limits, scheduling classes, leases, and admission resources.
 - Shared search, sorting, filtering, detail drawer, YAML copy, and guarded deletes across the simple-resource pages.
 
-### 9. ⛵ Helm Browser
+### 9. ⛵ Helm Management
 
-- **Helm releases** decoded from cluster release secrets, with chart, app version, revision, and status.
-- **Chart repositories** can be added locally and browsed read-only. Helm install/upgrade/rollback remain future work.
+- **Helm releases** decoded from cluster release secrets, with chart, app version, revision, status, and history.
+- **Chart repositories** can be added locally and browsed, with install actions and digest verification.
+- **Lifecycle actions:** install, upgrade with values, rollback to a revision, and uninstall with typed confirmation.
+- **Repository memory** keeps the last-used chart repository per release for faster upgrades.
 
 ### 10. ⚙️ Settings V2
 
 - Startup page, cluster rail visibility, sidebar launch behavior, guardrails, read-only context protection, density, accent/status/accessibility palettes, polling behavior, notifications, terminal/log defaults, Helm integrations, and settings export/import.
+- **Signed in-app updates:** automatic checks on launch and every six hours, a global update banner, manual checks, and one-click install with restart.
 
 ---
 
@@ -209,7 +212,7 @@ cd apps/desktop && npx playwright test
 ./scripts/release.sh
 ```
 
-The script updates Homebrew, Scoop, and the landing site after the GitHub release, then verifies the download URLs. See [docs/release-automation.md](docs/release-automation.md) for options and prerequisites.
+The script updates Homebrew, Scoop, and the landing site after the GitHub release, publishes the signed updater manifest, and verifies every download URL. Landing downloads resolve to GitHub release assets. See [docs/release-automation.md](docs/release-automation.md) for options and prerequisites.
 
 ---
 

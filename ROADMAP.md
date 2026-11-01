@@ -347,5 +347,5 @@ _Enterprise-grade reliability, performance profiling, and reproducible builds._
 - [ ] Git pre-commit verification using `Lefthook`.
 - [ ] Large-cluster performance testing (10,000+ pods).
 - [ ] Code signing and notarization for macOS (Apple Developer ID), Windows, and Linux.
-- [ ] Built-in automatic updates via Tauri updater.
+- [x] Built-in automatic updates via Tauri updater.
 - [ ] CI/CD release automation via GitHub Actions.

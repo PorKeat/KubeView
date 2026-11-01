@@ -201,6 +201,7 @@ jobs:
     timeout-minutes: 20
     env:
       GH_TOKEN: ${{ github.token }}
+      GH_REPO: ${{ github.repository }}
       DISTRIBUTION_TOKEN: ${{ secrets.DISTRIBUTION_TOKEN }}
       WINGET_TOKEN: ${{ secrets.WINGET_TOKEN || secrets.DISTRIBUTION_TOKEN }}
       VERCEL_DEPLOY_HOOK: ${{ secrets.VERCEL_DEPLOY_HOOK }}
