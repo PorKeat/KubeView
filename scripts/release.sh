@@ -194,6 +194,10 @@ preflight() {
   gh repo view "$RELEASE_REPO" >/dev/null 2>&1 ||
     die "Cannot access release repo: $RELEASE_REPO"
 
+  gh secret list --repo "$RELEASE_REPO" --json name --jq '.[].name' 2>/dev/null |
+    grep -qx "TAURI_SIGNING_PRIVATE_KEY" ||
+    die "Missing TAURI_SIGNING_PRIVATE_KEY secret. Signed updater builds cannot be produced."
+
   if (( ! SKIP_DISTRIBUTION )); then
     gh repo view "$HOMEBREW_REPO" >/dev/null 2>&1 ||
       die "Cannot access Homebrew repo: $HOMEBREW_REPO"
@@ -361,9 +365,11 @@ commit_and_tag() {
 }
 
 release_is_complete() {
-  gh release view "v$VERSION" --repo "$RELEASE_REPO" --json assets \
-    --jq '.assets[].name' 2>/dev/null |
-    grep -q "KubeView_${VERSION}_universal.dmg"
+  local assets
+  assets="$(gh release view "v$VERSION" --repo "$RELEASE_REPO" --json assets \
+    --jq '.assets[].name' 2>/dev/null)" || return 1
+  grep -q "KubeView_${VERSION}_universal.dmg" <<<"$assets" &&
+    grep -q "latest.json" <<<"$assets"
 }
 
 wait_for_release() {
@@ -410,7 +416,12 @@ download_assets() {
     "KubeView_${VERSION}_universal.dmg" \
     "KubeView_${VERSION}_x64-setup.exe" \
     "KubeView_${VERSION}_amd64.AppImage" \
-    "KubeView_${VERSION}_amd64.deb"; do
+    "KubeView_${VERSION}_amd64.deb" \
+    "KubeView.app.tar.gz" \
+    "KubeView.app.tar.gz.sig" \
+    "KubeView_${VERSION}_x64-setup.exe.sig" \
+    "KubeView_${VERSION}_amd64.AppImage.sig" \
+    "latest.json"; do
     [[ -f "$ASSET_DIR/$expected" ]] ||
       die "Release is missing asset: $expected"
   done
@@ -574,6 +585,18 @@ verify_downloads() {
     [[ "$ready" -eq 1 ]] || die "Download did not go live: $url"
     ok "Live: $url"
   done
+
+  local updater_url="${LANDING_URL}/updates/latest.json"
+  local attempt=0
+  while [[ "$attempt" -lt 60 ]]; do
+    if curl -fsS --max-time 20 "$updater_url" | grep -q "\"version\": \"${VERSION}\""; then
+      ok "Live update manifest: $updater_url"
+      return
+    fi
+    attempt=$((attempt + 1))
+    sleep 5
+  done
+  die "Updater manifest did not go live: $updater_url"
 }
 
 update_landing() {
@@ -592,11 +615,16 @@ text = text.replace(pattern, `version: "${version}"`);
 fs.writeFileSync(file, text);
 NODE
 
-  mkdir -p "$dir/public/downloads"
+  mkdir -p "$dir/public/downloads" "$dir/public/updates"
   cp "$ASSET_DIR/KubeView_${VERSION}_universal.dmg" "$dir/public/downloads/"
   cp "$ASSET_DIR/KubeView_${VERSION}_x64-setup.exe" "$dir/public/downloads/"
   cp "$ASSET_DIR/KubeView_${VERSION}_amd64.AppImage" "$dir/public/downloads/"
   cp "$ASSET_DIR/KubeView_${VERSION}_amd64.deb" "$dir/public/downloads/"
+  if [[ -f "$ASSET_DIR/latest.json" ]]; then
+    cp "$ASSET_DIR/latest.json" "$dir/public/updates/latest.json"
+  else
+    warn "Release is missing latest.json; the in-app updater will not see this version."
+  fi
 
   commit_and_push "$dir" "release: KubeView $VERSION" "Landing site"
   deploy_landing "$dir"

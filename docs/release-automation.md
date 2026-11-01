@@ -52,6 +52,52 @@ If the workflow fails after the tag has been pushed:
 
 If distribution fails after a successful release, `--resume` is also safe: it detects the existing release assets and retries Homebrew, Scoop, and the landing deploy.
 
+## In-app updates
+
+KubeView desktop builds check a signed update manifest and can install a new
+version without a manual download.
+
+- The app checks `https://kubeview.sengporkeat.com/updates/latest.json` shortly
+  after launch and every six hours when **Settings → About & Updates → Check for
+  updates automatically** is enabled.
+- The `latest.json` manifest is generated from the signed updater bundles in the
+  release workflow by `scripts/generate-updater-manifest.mjs`, uploaded to the
+  GitHub release, and copied to the landing site at `/updates/latest.json`.
+- Updater archives are signed by Tauri. The public key lives in
+  `src-tauri/tauri.conf.json`; the private key must be stored as the
+  `TAURI_SIGNING_PRIVATE_KEY` GitHub Actions secret. If the key is
+  password-protected, also set `TAURI_SIGNING_PRIVATE_KEY_PASSWORD`.
+- Updater payloads are `*.app.tar.gz` (macOS), the standard NSIS `.exe`
+  (Windows), and the standard `.AppImage` (Linux), each with a `.sig` file.
+- Debian packages are not self-updated by Tauri; `.deb` users update through
+  their package manager or a fresh download.
+
+**Bootstrap:** installs older than the first updater-enabled release do not
+contain the updater and must install that release manually once. Later releases
+can then alert and install in place.
+
+**macOS:** reliable in-place updates require the app to be signed with a stable
+Developer ID identity and notarized. An unsigned macOS app may still download
+the update but can be blocked by Gatekeeper.
+
+### Required signing key
+
+Generate the key once:
+
+```bash
+pnpm exec tauri signer generate -w ~/.tauri/kubeview-updater.key
+```
+
+Put the public key in the `plugins.updater.pubkey` field of
+`src-tauri/tauri.conf.json` and store the private key in GitHub:
+
+```bash
+gh secret set TAURI_SIGNING_PRIVATE_KEY --repo PorKeat/KubeView \
+  < ~/.tauri/kubeview-updater.key
+```
+
+Without that secret, the release build cannot produce updater artifacts.
+
 ## GitHub Actions pipeline
 
 1. **Verify** — frozen install, contracts, desktop typecheck, Go tests, and tag/version match.

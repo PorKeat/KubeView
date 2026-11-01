@@ -9,6 +9,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- In-app updates: KubeView checks a signed update manifest on launch and every six hours, alerts from a global banner, and installs and restarts with one click from the banner or Settings → About & Updates.
+- An automatic-update toggle and manual “Check now” action in Settings.
+- Release pipeline support for signed Tauri updater bundles and a `latest.json` manifest published to GitHub Releases and the landing site.
+
+### Security
+
+- Update downloads are signature-verified with a pinned Tauri public key.
+
 ## [0.3.2] - 2026-11-01
 
 ### Added

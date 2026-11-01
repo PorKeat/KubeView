@@ -16,12 +16,12 @@ async function boot(page: Page) {
 
 test.describe("KubeView settings about", () => {
   test("shows the installed version and upgrade commands", async ({ page }) => {
+    await boot(page);
     await page
       .context()
       .grantPermissions(["clipboard-read", "clipboard-write"], {
-        origin: "http://127.0.0.1:3005",
+        origin: new URL(page.url()).origin,
       });
-    await boot(page);
     await page.getByTestId("nav-item-settings").click();
     await page.getByTestId("settings-nav-about").click();
 
@@ -34,6 +34,13 @@ test.describe("KubeView settings about", () => {
     await expect(panel).toContainText("scoop update kubeview");
     await expect(page.getByTestId("settings-about-releases")).toBeVisible();
     await expect(page.getByTestId("settings-about-downloads")).toBeVisible();
+    await expect(page.getByTestId("settings-about-check")).toBeVisible();
+    const autoCheck = page.getByTestId("settings-about-auto-check");
+    await expect(autoCheck).toHaveAttribute("aria-checked", "true");
+    await autoCheck.click();
+    await expect(autoCheck).toHaveAttribute("aria-checked", "false");
+    await autoCheck.click();
+    await expect(autoCheck).toHaveAttribute("aria-checked", "true");
 
     await page.getByTestId("settings-about-copy-homebrew").click();
     await expect(page.getByText("Update command copied")).toBeVisible();

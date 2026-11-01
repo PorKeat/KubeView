@@ -26,6 +26,8 @@ import { ServiceDiagnosticsModal } from "@/components/modals/ServiceDiagnosticsM
 import { RbacForbiddenBridge } from "@/components/permissions/RbacForbiddenBridge";
 import { LearningContextStrip } from "@/components/learning/LearningContextStrip";
 import { GuidedTour } from "@/components/learning/GuidedTour";
+import { UpdateBanner } from "@/components/updates/UpdateBanner";
+import { UpdateChecker } from "@/components/updates/UpdateChecker";
 
 import { useClusterStore } from "@/stores/clusterStore";
 import { useSettingsStore } from "@/stores/settingsStore";
@@ -33,6 +35,7 @@ import { useTabStore } from "@/stores/tabStore";
 import { useCatalogStore } from "@/stores/catalogStore";
 import { useHelmStore } from "@/stores/helmStore";
 import { useLayoutStore } from "@/stores/layoutStore";
+import { useUpdateStore } from "@/stores/updateStore";
 
 const useIsomorphicLayoutEffect =
   typeof window !== "undefined" ? React.useLayoutEffect : React.useEffect;
@@ -137,6 +140,7 @@ export function AppShell() {
     void useTabStore.persist.rehydrate();
     void useCatalogStore.persist.rehydrate();
     void useHelmStore.persist.rehydrate();
+    void useUpdateStore.persist.rehydrate();
   }, []);
 
   React.useEffect(() => {
@@ -178,6 +182,8 @@ export function AppShell() {
     <div className="h-screen w-screen flex flex-col bg-[var(--background)] text-[var(--foreground)] overflow-hidden">
       {/* 1. Frameless Window Titlebar */}
       <AppHeader />
+      <UpdateBanner />
+      <UpdateChecker />
 
       {/* 2. Main Middle Workspace (Sidebar + Tabbed Content) */}
       <div className="flex-1 flex overflow-hidden">

@@ -66,6 +66,13 @@
           "y": 235
         }
       }
+    },
+    "createUpdaterArtifacts": true
+  },
+  "plugins": {
+    "updater": {
+      "pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IEI1OUEzNzUzRUI1RjdEMEIKUldRTGZWL3JVemVhdFlCRysyMEprOFQ0N3JiRWJHaXZMVUwxenNuaGVaTGhZMEpnb2MwbW9wanEK",
+      "endpoints": ["https://kubeview.sengporkeat.com/updates/latest.json"]
     }
   }
 }

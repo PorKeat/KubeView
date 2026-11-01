@@ -63,6 +63,7 @@ export interface SettingsPreferences {
   externalEditorCommand: string;
   requestTimeoutSeconds: number;
   experimentalFeatures: boolean;
+  autoCheckUpdates: boolean;
 }
 
 export const DEFAULT_PREFERENCES: SettingsPreferences = {
@@ -104,6 +105,7 @@ export const DEFAULT_PREFERENCES: SettingsPreferences = {
   externalEditorCommand: "",
   requestTimeoutSeconds: 30,
   experimentalFeatures: false,
+  autoCheckUpdates: true,
 };
 
 interface SettingsState extends SettingsPreferences {

@@ -2,15 +2,18 @@
 
 import * as React from "react";
 import {
+  ArrowUpCircle,
   ArrowUpRight,
   Bell,
   Check,
   Copy,
+  Download,
   ExternalLink,
   Home,
   Info,
   Plug,
   Plus,
+  RefreshCw,
   ShieldCheck,
   SlidersHorizontal,
   Terminal,
@@ -21,6 +24,7 @@ import { toast } from "sonner";
 import { openExternalUrl } from "@/lib/openExternal";
 import { useClusterStore } from "@/stores/clusterStore";
 import { useHelmStore } from "@/stores/helmStore";
+import { useUpdateStore } from "@/stores/updateStore";
 import {
   useSettingsStore,
   DEFAULT_PREFERENCES,
@@ -750,6 +754,21 @@ function UpdateCommandRow({
 export function AboutSettingsPanel() {
   const version = process.env.NEXT_PUBLIC_KUBEVIEW_VERSION ?? "dev";
   const [copiedKey, setCopiedKey] = React.useState<string | null>(null);
+  const autoCheckUpdates = useSettingsStore((state) => state.autoCheckUpdates);
+  const updatePreferences = useSettingsStore(
+    (state) => state.updatePreferences,
+  );
+  const {
+    phase,
+    info,
+    downloadedBytes,
+    totalBytes,
+    error,
+    lastCheckedAt,
+    checkForUpdates,
+    installUpdate,
+    restartApp,
+  } = useUpdateStore();
 
   const copyCommand = async (key: string, command: string) => {
     try {
@@ -764,12 +783,22 @@ export function AboutSettingsPanel() {
     }
   };
 
+  const busy =
+    phase === "checking" || phase === "downloading" || phase === "installing";
+  const percent =
+    totalBytes && totalBytes > 0
+      ? Math.min(100, Math.round((downloadedBytes / totalBytes) * 100))
+      : null;
+  const lastChecked = lastCheckedAt
+    ? `${lastCheckedAt.replace("T", " ").slice(0, 16)} UTC`
+    : "Not checked yet";
+
   return (
     <SettingsSectionCard
       id="settings-about"
       icon={Info}
       title="About & Updates"
-      description="Installed version, release channel, and one-line upgrade commands."
+      description="Installed version, signed update channel, and one-click updates."
     >
       <div className="flex flex-col gap-3 border-b border-[var(--border)] pb-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
@@ -783,10 +812,23 @@ export function AboutSettingsPanel() {
             v{version}
           </p>
           <p className="mt-1 text-[10px] text-[var(--muted)]">
-            Beta channel · unsigned desktop build
+            Stable channel · updates are signature-verified
           </p>
         </div>
         <div className="flex flex-wrap items-center gap-2">
+          <button
+            type="button"
+            data-testid="settings-about-check"
+            onClick={() => void checkForUpdates(true)}
+            disabled={busy}
+            className="inline-flex cursor-pointer items-center gap-1.5 rounded-lg border border-[var(--border)] bg-[var(--surface)] px-2.5 py-1.5 text-[10px] font-medium text-[var(--foreground)] transition-colors hover:bg-[var(--surface-hover)] disabled:cursor-wait disabled:opacity-50"
+          >
+            <RefreshCw
+              className={cn("h-3 w-3", busy && "animate-spin")}
+              aria-hidden="true"
+            />
+            {phase === "checking" ? "Checking..." : "Check now"}
+          </button>
           <button
             type="button"
             data-testid="settings-about-releases"
@@ -808,9 +850,132 @@ export function AboutSettingsPanel() {
         </div>
       </div>
 
+      <div
+        data-testid="settings-about-update-status"
+        className={cn(
+          "rounded-xl border p-3",
+          phase === "available"
+            ? "border-[var(--accent)]/35 bg-[var(--accent)]/5"
+            : "border-[var(--border)] bg-[var(--surface)]",
+        )}
+      >
+        {phase === "available" && info ? (
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+            <div className="flex min-w-0 items-start gap-2.5">
+              <ArrowUpCircle
+                className="mt-0.5 h-4 w-4 shrink-0 text-[var(--accent)]"
+                aria-hidden="true"
+              />
+              <div className="min-w-0">
+                <p className="text-[11px] font-semibold text-[var(--foreground)]">
+                  KubeView {info.version} is available
+                </p>
+                <p className="mt-0.5 font-mono text-[10px] text-[var(--muted)]">
+                  v{info.currentVersion} → v{info.version}
+                  {info.date ? ` · ${info.date.slice(0, 10)}` : ""}
+                </p>
+                {info.notes && (
+                  <p className="mt-1 line-clamp-3 whitespace-pre-line text-[10px] leading-relaxed text-[var(--muted)]">
+                    {info.notes}
+                  </p>
+                )}
+              </div>
+            </div>
+            <button
+              type="button"
+              data-testid="settings-about-install"
+              onClick={() => void installUpdate()}
+              className="inline-flex shrink-0 items-center gap-1.5 rounded-lg bg-[var(--accent)] px-3 py-1.5 text-[10px] font-semibold text-zinc-950 transition-opacity hover:opacity-90"
+            >
+              <Download className="h-3 w-3" />
+              Install update
+            </button>
+          </div>
+        ) : phase === "downloading" || phase === "installing" ? (
+          <div className="space-y-2">
+            <div className="flex items-center justify-between gap-2">
+              <p className="flex items-center gap-2 text-[11px] font-semibold text-[var(--foreground)]">
+                <Download className="h-3.5 w-3.5 text-[var(--accent)]" />
+                {phase === "installing"
+                  ? "Installing update..."
+                  : "Downloading update..."}
+              </p>
+              <span className="font-mono text-[10px] text-[var(--muted)]">
+                {percent !== null ? `${percent}%` : ""}
+              </span>
+            </div>
+            <div className="h-1.5 overflow-hidden rounded-full bg-[var(--border)]">
+              <div
+                className={cn(
+                  "h-full rounded-full bg-[var(--accent)] transition-[width] duration-200",
+                  percent === null && "w-1/3 animate-pulse",
+                )}
+                style={percent !== null ? { width: `${percent}%` } : undefined}
+              />
+            </div>
+            <p className="text-[10px] text-[var(--muted)]">
+              KubeView restarts automatically when the update is installed.
+            </p>
+          </div>
+        ) : phase === "ready" ? (
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <p className="text-[11px] font-semibold text-[var(--foreground)]">
+              Update installed. Restart to finish.
+            </p>
+            <button
+              type="button"
+              data-testid="settings-about-restart"
+              onClick={() => void restartApp()}
+              className="inline-flex items-center gap-1.5 rounded-lg bg-[var(--accent)] px-3 py-1.5 text-[10px] font-semibold text-zinc-950 transition-opacity hover:opacity-90"
+            >
+              <RefreshCw className="h-3 w-3" />
+              Restart now
+            </button>
+          </div>
+        ) : phase === "error" ? (
+          <div className="flex flex-col gap-1">
+            <p className="text-[11px] font-semibold text-rose-600 dark:text-rose-400">
+              Update check failed
+            </p>
+            <p className="text-[10px] leading-relaxed text-[var(--muted)]">
+              {error}
+            </p>
+          </div>
+        ) : phase === "unsupported" ? (
+          <p className="text-[10px] leading-relaxed text-[var(--muted)]">
+            Automatic updates run in the installed desktop app. Use one of the
+            fallback commands below for package-managed installs.
+          </p>
+        ) : phase === "checking" ? (
+          <p className="text-[11px] text-[var(--muted)]">
+            Checking the signed update channel...
+          </p>
+        ) : phase === "idle" ? (
+          <p className="text-[11px] text-[var(--muted)]">
+            {lastCheckedAt
+              ? "KubeView is up to date."
+              : "No update check has run yet."}
+          </p>
+        ) : null}
+        <p className="mt-2 font-mono text-[9px] text-[var(--muted)]">
+          Last checked: {lastChecked}
+        </p>
+      </div>
+
+      <SettingsToggleRow
+        icon={RefreshCw}
+        title="Check for updates automatically"
+        description="Check the signed update channel when KubeView starts and every 6 hours."
+        checked={autoCheckUpdates}
+        onToggle={() =>
+          updatePreferences({ autoCheckUpdates: !autoCheckUpdates })
+        }
+        testId="settings-about-auto-check"
+      />
+
       <SettingsHeading
-        label="Update KubeView"
-        description="KubeView does not self-update. Run the command for the way you installed it."
+        label="Fallback update commands"
+        description="Use these if you installed through a package manager or prefer a manual update."
       />
       <div className="space-y-2">
         {UPDATE_COMMANDS.map((item) => (
@@ -826,9 +991,10 @@ export function AboutSettingsPanel() {
       </div>
       <Note>
         Homebrew upgrades an existing cask install in place. Scoop refreshes the
-        manifest from the official bucket. Direct installs should download the
-        latest DMG, EXE, AppImage, or DEB from the release page; existing app
-        data is kept. winget is not published yet.
+        manifest from the official bucket. Direct DMG, EXE, and AppImage
+        installs can update in place from this page; Debian packages still
+        update through your package manager or a fresh download. Existing app
+        data is kept.
       </Note>
     </SettingsSectionCard>
   );
