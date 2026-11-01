@@ -127,7 +127,7 @@ Without `DISTRIBUTION_TOKEN`, the release still builds and publishes; the distri
 ## Asset flow
 
 - macOS, Windows, AppImage, and Debian artifacts are built in the matrix and checksummed before publishing.
-- The landing job copies all four installers into `public/downloads` and updates `SITE.version`.
+- The landing job updates `SITE.version` and publishes `public/updates/latest.json`. Installers are linked directly from the GitHub release instead of being copied into the landing deployment, which keeps Vercel deployments under the static upload limit.
 - Homebrew uses the DMG SHA-256; Scoop uses the NSIS SHA-256.
 - Helm/GitOps settings and other local data are not part of the release.
 

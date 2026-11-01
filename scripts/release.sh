@@ -571,11 +571,11 @@ verify_downloads() {
     "x64-setup.exe" \
     "amd64.AppImage" \
     "amd64.deb"; do
-    local url="${LANDING_URL}/downloads/KubeView_${VERSION}_${suffix}"
+    local url="https://github.com/${RELEASE_REPO}/releases/download/v${VERSION}/KubeView_${VERSION}_${suffix}"
     local attempt=0
     local ready=0
     while [[ "$attempt" -lt 60 ]]; do
-      if curl -fsI --max-time 20 "$url" >/dev/null 2>&1; then
+      if curl -fsIL --max-time 30 "$url" >/dev/null 2>&1; then
         ready=1
         break
       fi
@@ -616,13 +616,10 @@ fs.writeFileSync(file, text);
 NODE
 
   mkdir -p "$dir/public/downloads" "$dir/public/updates"
-  # The landing site only serves the current version; keeping every historical
-  # installer makes the Vercel deployment exceed practical upload sizes.
+  # Installers are served from the GitHub release. The landing deployment only
+  # carries the site and the tiny updater manifest, keeping it under Vercel's
+  # static upload limit.
   find "$dir/public/downloads" -maxdepth 1 -type f -name 'KubeView_*' -delete
-  cp "$ASSET_DIR/KubeView_${VERSION}_universal.dmg" "$dir/public/downloads/"
-  cp "$ASSET_DIR/KubeView_${VERSION}_x64-setup.exe" "$dir/public/downloads/"
-  cp "$ASSET_DIR/KubeView_${VERSION}_amd64.AppImage" "$dir/public/downloads/"
-  cp "$ASSET_DIR/KubeView_${VERSION}_amd64.deb" "$dir/public/downloads/"
   if [[ -f "$ASSET_DIR/latest.json" ]]; then
     cp "$ASSET_DIR/latest.json" "$dir/public/updates/latest.json"
   else
