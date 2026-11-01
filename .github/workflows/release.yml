@@ -230,8 +230,8 @@ jobs:
           cp dist/latest.json landing/public/updates/latest.json
           sed -i -E "s/version: \"[0-9.]+\"/version: \"${VERSION}\"/" landing/src/lib/site.ts
           cd landing
-          git config user.name "KubeView Release"
-          git config user.email "release@kubeview.local"
+          git config user.name "PorKeat"
+          git config user.email "alexkgm2412@gmail.com"
           git add public/downloads public/updates src/lib/site.ts
           git diff --cached --quiet || git commit -m "release: KubeView ${VERSION}"
           git push origin HEAD
@@ -249,8 +249,8 @@ jobs:
           cd homebrew
           sed -i -E "s/version \"[0-9.]+\"/version \"${VERSION}\"/" Casks/kubeview.rb
           sed -i -E "s/sha256 \"[a-f0-9]+\"/sha256 \"${SHA}\"/" Casks/kubeview.rb
-          git config user.name "KubeView Release"
-          git config user.email "release@kubeview.local"
+          git config user.name "PorKeat"
+          git config user.email "alexkgm2412@gmail.com"
           git add Casks/kubeview.rb
           git diff --cached --quiet || git commit -m "release: KubeView ${VERSION}"
           git push origin HEAD
@@ -268,8 +268,8 @@ jobs:
             '.version = $version | .url = $url | .hash = $hash' \
             bucket/kubeview.json > bucket/kubeview.json.tmp
           mv bucket/kubeview.json.tmp bucket/kubeview.json
-          git config user.name "KubeView Release"
-          git config user.email "release@kubeview.local"
+          git config user.name "PorKeat"
+          git config user.email "alexkgm2412@gmail.com"
           git add bucket/kubeview.json
           git diff --cached --quiet || git commit -m "release: KubeView ${VERSION}"
           git push origin HEAD

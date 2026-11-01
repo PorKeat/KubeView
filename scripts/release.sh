@@ -474,8 +474,10 @@ commit_and_push() {
   local message="$2"
   local label="$3"
 
-  git -C "$dir" config user.name "KubeView Release"
-  git -C "$dir" config user.email "release@kubeview.local"
+  # Vercel blocks deployments whose commit author is not a team member, so
+  # distribution commits use the repository owner's identity.
+  git -C "$dir" config user.name "PorKeat"
+  git -C "$dir" config user.email "alexkgm2412@gmail.com"
 
   if [[ -z "$(git -C "$dir" status --porcelain)" ]]; then
     warn "No changes to commit in $label."
