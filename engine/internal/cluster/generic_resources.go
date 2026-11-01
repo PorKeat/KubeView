@@ -162,10 +162,16 @@ func (m *Manager) ApplyGenericResource(
 	object *unstructured.Unstructured,
 	target GenericResourceTarget,
 	dryRun bool,
+	modes ...string,
 ) (*unstructured.Unstructured, bool, error) {
 	client, err := m.getDynamicClient(contextName)
 	if err != nil {
 		return nil, false, err
+	}
+
+	mode := "upsert"
+	if len(modes) > 0 && strings.TrimSpace(modes[0]) != "" {
+		mode = strings.ToLower(strings.TrimSpace(modes[0]))
 	}
 
 	resource := genericResourceInterface(
@@ -179,6 +185,16 @@ func (m *Manager) ApplyGenericResource(
 		createOptions.DryRun = []string{metav1.DryRunAll}
 	}
 
+	if mode == "create" {
+		applied, createErr := resource.Create(ctx, object, createOptions)
+		if apierrors.IsAlreadyExists(createErr) {
+			return nil, false, apierrors.NewAlreadyExists(
+				target.GVR.GroupResource(), object.GetName(),
+			)
+		}
+		return applied, createErr == nil, createErr
+	}
+
 	existing, getErr := resource.Get(ctx, object.GetName(), metav1.GetOptions{})
 	switch {
 	case getErr == nil:
@@ -189,6 +205,12 @@ func (m *Manager) ApplyGenericResource(
 		return applied, false, updateErr
 	case !apierrors.IsNotFound(getErr):
 		return nil, false, getErr
+	}
+
+	if mode == "update" {
+		return nil, false, apierrors.NewNotFound(
+			target.GVR.GroupResource(), object.GetName(),
+		)
 	}
 
 	applied, createErr := resource.Create(ctx, object, createOptions)

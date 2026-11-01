@@ -41,6 +41,8 @@ export interface SimpleResourceListResult {
   truncated?: boolean;
   /** Present only for kinds backed by optional APIs such as CRDs. */
   available?: boolean;
+  /** Served API version for CRD-backed kinds. */
+  apiVersion?: string;
 }
 
 export interface SimpleResourceCountsResult {

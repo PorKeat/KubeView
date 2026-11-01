@@ -39,6 +39,8 @@ import {
   permissionDecision,
   permissionSubject,
   gitOpsReport,
+  jobSummary,
+  cronJobSummary,
 } from "./fixtures";
 
 type JsonRecord = Record<string, unknown>;
@@ -451,21 +453,32 @@ users:
         yaml: `apiVersion: ${apiVersion}\nkind: ${kind}\nmetadata:\n  name: ${name}${namespace ? `\n  namespace: ${namespace}` : ""}\n`,
       };
     }
+    case "jobs.list":
+      return { items: [jobSummary], totalCount: 1 };
+    case "cronjobs.list":
+      return { items: [cronJobSummary], totalCount: 1 };
     case "resources.apply": {
       const yaml = String(params?.yaml ?? "");
       const apiVersion =
         /^apiVersion:\s*(\S+)/m.exec(yaml)?.[1]?.trim() ?? "v1";
       const kind = /^kind:\s*(\S+)/m.exec(yaml)?.[1]?.trim() ?? "ConfigMap";
-      const name = /^\s{2}name:\s*(\S+)/m.exec(yaml)?.[1]?.trim() ?? "example";
+      const name =
+        /^\s{2}name:\s*(.+)$/m
+          .exec(yaml)?.[1]
+          ?.trim()
+          .replace(/^["']|["']$/g, "") ?? "example";
       const namespace =
-        /^\s{2}namespace:\s*(\S+)/m.exec(yaml)?.[1]?.trim() ?? "";
+        /^\s{2}namespace:\s*(.+)$/m
+          .exec(yaml)?.[1]
+          ?.trim()
+          .replace(/^["']|["']$/g, "") ?? "";
       return {
         apiVersion,
         kind,
         resource: String(params?.resource ?? "configmaps"),
         name,
         namespace: namespace || undefined,
-        created: false,
+        created: params?.mode === "create",
         dryRun: Boolean(params?.dryRun),
         yaml,
       };

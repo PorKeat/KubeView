@@ -4,6 +4,7 @@ import * as React from "react";
 import { cleanAlloc } from "../types";
 import { cn } from "@/lib/utils";
 import type { NodeSummary } from "@kubeview/contracts";
+import { NodeOperationsButton } from "@/components/modals/NodeOperationsModal";
 
 export interface NodeTelemetryTableProps {
   nodes: NodeSummary[];
@@ -51,7 +52,7 @@ export function NodeTelemetryTable({
                 {isNamespaceScoped ? `Pods (${currentNamespace})` : "Pods"}
               </th>
               <th className="w-[5%] py-2.5 px-3 font-medium">Version</th>
-              <th className="w-[6%] py-2.5 px-3.5 font-medium text-right">
+              <th className="w-[9%] py-2.5 px-3.5 font-medium text-right">
                 Action
               </th>
             </tr>
@@ -165,9 +166,12 @@ export function NodeTelemetryTable({
                     {n.version}
                   </td>
                   <td className="py-3 px-3.5 text-right">
-                    <span className="text-[var(--accent)] hover:underline text-xs font-sans font-medium">
-                      Inspect &rarr;
-                    </span>
+                    <div className="flex items-center justify-end gap-1.5">
+                      <NodeOperationsButton nodeName={n.name} />
+                      <span className="text-[var(--accent)] hover:underline text-xs font-sans font-medium">
+                        Inspect &rarr;
+                      </span>
+                    </div>
                   </td>
                 </tr>
               );

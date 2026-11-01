@@ -91,6 +91,19 @@ test.describe("KubeView Access & Custom", () => {
     await expect(page.locator('[data-testid="crd-instances"]')).toContainText(
       "example-widget",
     );
+    await page.locator('[data-testid="crd-instance-edit"]').first().click();
+    await expect(
+      page.locator('[data-testid="resource-editor-modal"]'),
+    ).toContainText("Edit Widget");
+    await page.getByRole("button", { name: "Close YAML editor" }).click();
+    await page.locator('[data-testid="crd-instance-delete"]').first().click();
+    await expect(
+      page.locator('[data-testid="delete-resource-modal"]'),
+    ).toContainText("Delete Widget");
+    await page
+      .locator('[data-testid="delete-resource-modal"]')
+      .getByRole("button", { name: "Cancel" })
+      .click();
     await page.locator('[data-testid="inspector-tab-yaml"]').click();
     await expect(
       page.locator('[data-testid="resource-inspector-drawer"]'),

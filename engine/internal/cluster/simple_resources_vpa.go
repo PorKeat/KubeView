@@ -184,5 +184,6 @@ func (m *Manager) listSimpleVerticalPodAutoscalers(
 		Items:      items,
 		TotalCount: len(items),
 		Available:  &isAvailable,
+		APIVersion: gvr.Group + "/" + gvr.Version,
 	}, nil
 }

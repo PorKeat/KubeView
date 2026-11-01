@@ -28,6 +28,7 @@ type applyParams struct {
 	DryRun      bool   `json:"dryRun,omitempty"`
 	Name        string `json:"name,omitempty"`
 	Namespace   string `json:"namespace,omitempty"`
+	Mode        string `json:"mode,omitempty"`
 }
 
 type deleteParams struct {
@@ -126,6 +127,7 @@ func RegisterHandlers(server *ipc.Server, service *appresources.Service) {
 			Name:      p.Name,
 			Namespace: p.Namespace,
 			DryRun:    p.DryRun,
+			Mode:      p.Mode,
 		})
 		if err != nil {
 			return nil, rpc.MapError(

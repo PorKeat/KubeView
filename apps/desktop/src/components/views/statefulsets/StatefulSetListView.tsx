@@ -20,6 +20,7 @@ import {
 } from "./components/StatefulSetTableHeader";
 import { BulkWorkloadToolbar } from "@/components/views/shared/BulkWorkloadToolbar";
 import { useWorkloadSelection } from "@/components/views/shared/useWorkloadSelection";
+import { useResourceActions } from "@/components/views/shared/useResourceActions";
 import {
   statefulSetMatchesSearch,
   statefulSetMatchesStatus,
@@ -49,6 +50,7 @@ export function StatefulSetListView() {
     openBulkWorkloadAction,
   } = useClusterStore();
   const { openTab } = useTabStore();
+  const { createResource } = useResourceActions();
 
   const [search, setSearch] = React.useState("");
   const deferredSearch = React.useDeferredValue(search);
@@ -230,6 +232,7 @@ export function StatefulSetListView() {
         setStatusFilter={setStatusFilter}
         sortedItemsCount={sortedItems.length}
         handleRefresh={handleRefresh}
+        onCreate={() => createResource("StatefulSet", currentNamespace)}
         isLoading={isStatefulSetsLoading}
       />
 

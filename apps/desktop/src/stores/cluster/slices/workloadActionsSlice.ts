@@ -2,6 +2,7 @@ import type { StateCreator } from "zustand";
 import type {
   DaemonSetActionParams,
   DeploymentActionParams,
+  DeploymentRollbackParams,
   ReplicaSetActionParams,
   StatefulSetActionParams,
 } from "@kubeview/contracts";
@@ -113,6 +114,43 @@ export const createWorkloadActionsSlice: StateCreator<
     await get().loadDeployments();
     await get().loadReplicaSets();
     await get().loadClusterOverview();
+  },
+
+  rollbackDeployment: async (params: DeploymentRollbackParams) => {
+    const targetCtx = params.contextName || get().currentContext;
+    await invokeRpc("deployments.rollback", {
+      ...params,
+      contextName: targetCtx,
+    });
+    await get().loadDeployments();
+    await get().loadReplicaSets();
+    await get().loadPods();
+    await get().loadClusterOverview();
+  },
+
+  pauseDeployment: async (params: DeploymentActionParams) => {
+    const targetCtx = params.contextName || get().currentContext;
+    await invokeRpc("deployments.pause", { ...params, contextName: targetCtx });
+    await get().loadDeployments();
+  },
+
+  resumeDeployment: async (params: DeploymentActionParams) => {
+    const targetCtx = params.contextName || get().currentContext;
+    await invokeRpc("deployments.resume", {
+      ...params,
+      contextName: targetCtx,
+    });
+    await get().loadDeployments();
+  },
+
+  setStatefulSetPartition: async (params) => {
+    const targetCtx = params.contextName || get().currentContext;
+    await invokeRpc("statefulsets.partition", {
+      ...params,
+      contextName: targetCtx,
+    });
+    await get().loadStatefulSets();
+    await get().loadPods();
   },
 
   scaleReplicaSet: async (params: ReplicaSetActionParams) => {

@@ -111,6 +111,7 @@ impl EngineSupervisor {
     }
 
     pub async fn send_request(&self, method: &str, params: Option<Value>) -> Result<Value, String> {
+        let request_timeout = timeout_for_method(method);
         let sender = {
             let guard = self.stdin_tx.lock().await;
             guard.clone()
@@ -141,16 +142,45 @@ impl EngineSupervisor {
             return Err(format!("Failed to send request to engine: {}", e));
         }
 
-        match timeout(Duration::from_secs(20), rx).await {
+        match timeout(request_timeout, rx).await {
             Ok(Ok(Ok(val))) => Ok(val),
             Ok(Ok(Err(err_val))) => Err(err_val.to_string()),
             Ok(Err(_cancelled)) => Err("Engine request was cancelled".to_string()),
             Err(_elapsed) => {
                 let mut map = self.pending.lock().await;
                 map.remove(&id_str);
-                Err(format!("Request '{}' timed out after 20s", method))
+                Err(format!(
+                    "Request '{}' timed out after {}s",
+                    method,
+                    request_timeout.as_secs()
+                ))
             }
         }
+    }
+}
+
+/// Background operations such as Helm releases, node drains, and pod moves can
+/// legitimately outlive a short RPC. Give each operation family a bound that is
+/// slightly larger than the engine's own timeout so the engine remains the
+/// authority that returns a structured error.
+fn timeout_for_method(method: &str) -> Duration {
+    match method {
+        "helm.install" | "helm.upgrade" | "helm.rollback" | "helm.uninstall" => {
+            Duration::from_secs(35 * 60)
+        }
+        "nodes.drain" => Duration::from_secs(20 * 60),
+        "pods.move" => Duration::from_secs(2 * 60),
+        "helm.charts" | "helm.history" | "helm.values" => Duration::from_secs(60),
+        "deployments.rollback"
+        | "deployments.rolloutHistory"
+        | "statefulsets.partition"
+        | "jobs.retry"
+        | "jobs.clone"
+        | "persistentvolumeclaims.expand" => Duration::from_secs(60),
+        "resources.apply" | "resources.delete" | "resources.get" | "resources.capabilities" => {
+            Duration::from_secs(60)
+        }
+        _ => Duration::from_secs(20),
     }
 }
 

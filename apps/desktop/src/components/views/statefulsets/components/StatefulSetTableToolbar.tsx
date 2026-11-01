@@ -8,6 +8,7 @@ import {
   AlertTriangle,
   Clock,
   MinusCircle,
+  Plus,
 } from "lucide-react";
 import { motion } from "motion/react";
 import { cn } from "@/lib/utils";
@@ -30,6 +31,7 @@ export interface StatefulSetTableToolbarProps {
   setStatusFilter: (status: StatefulSetStatusFilter) => void;
   sortedItemsCount: number;
   handleRefresh: () => void;
+  onCreate?: () => void;
   isLoading: boolean;
 }
 
@@ -42,6 +44,7 @@ export function StatefulSetTableToolbar({
   setStatusFilter,
   sortedItemsCount,
   handleRefresh,
+  onCreate,
   isLoading,
 }: StatefulSetTableToolbarProps) {
   const baseStatefulSets = React.useMemo(() => {
@@ -163,6 +166,18 @@ export function StatefulSetTableToolbar({
       <div className="flex max-w-full flex-wrap items-center gap-2 text-xs text-[var(--muted)] shrink-0 order-3 sm:order-none">
         <span className="font-mono text-[11px]">{sortedItemsCount} items</span>
         <div className="h-3 w-[1px] bg-[var(--border)]" />
+        {onCreate && (
+          <Tooltip content="Create StatefulSet">
+            <button
+              onClick={onCreate}
+              className="p-1.5 rounded-lg hover:bg-[var(--surface-hover)] text-[var(--muted)] hover:text-[var(--foreground)] transition-colors cursor-pointer"
+              aria-label="Create StatefulSet"
+              data-testid="statefulsets-create"
+            >
+              <Plus className="w-3.5 h-3.5" />
+            </button>
+          </Tooltip>
+        )}
         <Tooltip content="Refresh statefulsets">
           <button
             onClick={handleRefresh}

@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { Search, X, RefreshCw, AlertTriangle, Clock } from "lucide-react";
+import { Search, X, RefreshCw, AlertTriangle, Clock, Plus } from "lucide-react";
 import { motion } from "motion/react";
 import { cn } from "@/lib/utils";
 import { Tooltip } from "@/components/ui/Tooltip";
@@ -22,6 +22,7 @@ export interface DaemonSetTableToolbarProps {
   setStatusFilter: (status: DaemonSetStatusFilter) => void;
   sortedItemsCount: number;
   handleRefresh: () => void;
+  onCreate?: () => void;
   isLoading: boolean;
 }
 
@@ -34,6 +35,7 @@ export function DaemonSetTableToolbar({
   setStatusFilter,
   sortedItemsCount,
   handleRefresh,
+  onCreate,
   isLoading,
 }: DaemonSetTableToolbarProps) {
   const base = React.useMemo(() => {
@@ -142,6 +144,18 @@ export function DaemonSetTableToolbar({
       <div className="flex max-w-full flex-wrap items-center gap-2 text-xs text-[var(--muted)] shrink-0 order-3 sm:order-none">
         <span className="font-mono text-[11px]">{sortedItemsCount} items</span>
         <div className="h-3 w-[1px] bg-[var(--border)]" />
+        {onCreate && (
+          <Tooltip content="Create DaemonSet">
+            <button
+              onClick={onCreate}
+              className="p-1.5 rounded-lg hover:bg-[var(--surface-hover)] text-[var(--muted)] hover:text-[var(--foreground)] transition-colors cursor-pointer"
+              aria-label="Create DaemonSet"
+              data-testid="daemonsets-create"
+            >
+              <Plus className="w-3.5 h-3.5" />
+            </button>
+          </Tooltip>
+        )}
         <Tooltip content="Refresh daemonsets">
           <button
             onClick={handleRefresh}

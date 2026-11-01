@@ -3,6 +3,8 @@ import type {
   CronJobSummary,
   JobActionParams,
   CronJobActionParams,
+  JobCloneParams,
+  JobCloneResult,
 } from "@kubeview/contracts";
 
 export interface JobsSlice {
@@ -26,6 +28,8 @@ export interface JobsSlice {
   loadCronJobs: (namespace?: string, contextName?: string) => Promise<void>;
 
   deleteJob: (params: JobActionParams) => Promise<void>;
+  retryJob: (params: JobCloneParams) => Promise<JobCloneResult>;
+  cloneJob: (params: JobCloneParams) => Promise<JobCloneResult>;
   deleteCronJob: (params: CronJobActionParams) => Promise<void>;
   suspendCronJob: (params: CronJobActionParams) => Promise<void>;
   resumeCronJob: (params: CronJobActionParams) => Promise<void>;

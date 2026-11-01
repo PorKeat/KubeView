@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { Waypoints } from "lucide-react";
+import { Waypoints, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { resourceTarget } from "@/lib/resourceKinds";
 import { useResourceActions } from "@/components/views/shared/useResourceActions";
@@ -28,6 +28,7 @@ export function GatewayTable({
   setFilter: (filter: string) => void;
 }) {
   const { createResource } = useResourceActions();
+  const [showCreatePicker, setShowCreatePicker] = React.useState(false);
   const {
     gatewayResources,
     totalGatewayResourcesCount,
@@ -175,69 +176,143 @@ export function GatewayTable({
   );
 
   return (
-    <NetworkingResourcePage
-      key="gateways"
-      icon={Waypoints}
-      nounSingular="Gateway resource"
-      nounPlural="Gateway API resources"
-      items={gatewayResources}
-      totalCount={totalGatewayResourcesCount}
-      isLoading={isGatewayResourcesLoading}
-      hasLoadedOnce={hasLoadedGatewayResourcesOnce}
-      onRefresh={refresh}
-      searchPlaceholder="Filter Gateway API resources by kind, name, class, host..."
-      matchesSearch={gatewayMatchesSearch}
-      filterOptions={filterOptions}
-      activeFilter={filter}
-      setActiveFilter={setFilter}
-      matchesFilter={gatewayMatchesFilter}
-      columns={columns}
-      getKey={(resource) =>
-        `${resource.kind}/${resource.namespace ?? "cluster"}/${resource.name}`
-      }
-      getName={(resource) => resource.name}
-      getNamespace={(resource) => resource.namespace ?? "Cluster Scope"}
-      getStatus={gatewayStatus}
-      getAge={(resource) => resource.age}
-      getCreationTimestamp={(resource) => resource.creationTimestamp}
-      onRowClick={(resource) =>
-        openInspector({
-          kind: resource.kind,
-          name: resource.name,
-          namespace: resource.namespace || "Cluster Scope",
-          status: resource.status,
-          data: resource as unknown as Record<string, unknown>,
-        })
-      }
-      describeCommand={(resource) =>
-        `kubectl describe ${resource.kind.toLowerCase()} ${resource.name}${resource.namespace ? ` -n ${resource.namespace}` : ""}`
-      }
-      onEdit={(resource) =>
-        openInspector({
-          kind: resource.kind,
-          name: resource.name,
-          namespace: resource.namespace || "Cluster Scope",
-          status: resource.status,
-          data: resource as unknown as Record<string, unknown>,
-          initialTab: "edit",
-        })
-      }
-      onDelete={(resource) => {
-        const target = resourceTarget(
-          resource.kind,
-          resource.name,
-          resource.namespace,
-        );
-        if (target) openDeleteResource(target);
-      }}
-      onCreate={() => createResource("Gateway", currentNamespace)}
-      testIdPrefix="gateways"
-      codeCommand={(namespace) => `kubectl get gateways -n ${namespace}`}
-      emptyDescription={
-        gatewayApiAvailable
-          ? "GatewayClass, Gateway, HTTPRoute and GRPCRoute resources are not present in this scope."
-          : "Gateway API CRDs (GatewayClass, Gateway, HTTPRoute, GRPCRoute) were not detected on the connected cluster."
-      }
-    />
+    <>
+      <NetworkingResourcePage
+        key="gateways"
+        icon={Waypoints}
+        nounSingular="Gateway resource"
+        nounPlural="Gateway API resources"
+        items={gatewayResources}
+        totalCount={totalGatewayResourcesCount}
+        isLoading={isGatewayResourcesLoading}
+        hasLoadedOnce={hasLoadedGatewayResourcesOnce}
+        onRefresh={refresh}
+        searchPlaceholder="Filter Gateway API resources by kind, name, class, host..."
+        matchesSearch={gatewayMatchesSearch}
+        filterOptions={filterOptions}
+        activeFilter={filter}
+        setActiveFilter={setFilter}
+        matchesFilter={gatewayMatchesFilter}
+        columns={columns}
+        getKey={(resource) =>
+          `${resource.kind}/${resource.namespace ?? "cluster"}/${resource.name}`
+        }
+        getName={(resource) => resource.name}
+        getNamespace={(resource) => resource.namespace ?? "Cluster Scope"}
+        getStatus={gatewayStatus}
+        getAge={(resource) => resource.age}
+        getCreationTimestamp={(resource) => resource.creationTimestamp}
+        onRowClick={(resource) =>
+          openInspector({
+            kind: resource.kind,
+            name: resource.name,
+            namespace: resource.namespace || "Cluster Scope",
+            status: resource.status,
+            data: resource as unknown as Record<string, unknown>,
+          })
+        }
+        describeCommand={(resource) =>
+          `kubectl describe ${resource.kind.toLowerCase()} ${resource.name}${resource.namespace ? ` -n ${resource.namespace}` : ""}`
+        }
+        onEdit={(resource) =>
+          openInspector({
+            kind: resource.kind,
+            name: resource.name,
+            namespace: resource.namespace || "Cluster Scope",
+            status: resource.status,
+            data: resource as unknown as Record<string, unknown>,
+            initialTab: "edit",
+          })
+        }
+        onDelete={(resource) => {
+          const target = resourceTarget(
+            resource.kind,
+            resource.name,
+            resource.namespace,
+          );
+          if (target) openDeleteResource(target);
+        }}
+        onCreate={() => setShowCreatePicker(true)}
+        testIdPrefix="gateways"
+        codeCommand={(namespace) => `kubectl get gateways -n ${namespace}`}
+        emptyDescription={
+          gatewayApiAvailable
+            ? "GatewayClass, Gateway, HTTPRoute and GRPCRoute resources are not present in this scope."
+            : "Gateway API CRDs (GatewayClass, Gateway, HTTPRoute, GRPCRoute) were not detected on the connected cluster."
+        }
+      />
+
+      {showCreatePicker && (
+        <div
+          data-testid="gateway-create-picker"
+          role="dialog"
+          aria-modal="true"
+          aria-label="Create Gateway API resource"
+          className="fixed inset-0 z-[70] flex items-end justify-center bg-black/60 p-0 backdrop-blur-md animate-in fade-in duration-150 sm:items-center sm:p-4"
+        >
+          <div
+            className="absolute inset-0 cursor-pointer"
+            onClick={() => setShowCreatePicker(false)}
+            aria-hidden="true"
+          />
+          <div className="relative w-full max-w-md overflow-hidden rounded-t-2xl border border-[var(--border)] bg-[var(--surface)] shadow-2xl sm:rounded-2xl">
+            <header className="flex items-center justify-between border-b border-[var(--border)] px-4 py-3">
+              <h2 className="text-sm font-semibold text-[var(--foreground)]">
+                Create Gateway API resource
+              </h2>
+              <button
+                type="button"
+                onClick={() => setShowCreatePicker(false)}
+                aria-label="Close create picker"
+                className="cursor-pointer rounded-md p-1.5 text-[var(--muted)] hover:bg-[var(--surface-hover)] hover:text-[var(--foreground)]"
+              >
+                <X className="h-4 w-4" />
+              </button>
+            </header>
+            <div className="space-y-1.5 p-3">
+              {[
+                {
+                  kind: "GatewayClass",
+                  description: "Cluster-scoped controller class for Gateways.",
+                },
+                {
+                  kind: "Gateway",
+                  description: "A load balancer listener in this namespace.",
+                },
+                {
+                  kind: "HTTPRoute",
+                  description: "HTTP host/path routing to Services.",
+                },
+                {
+                  kind: "GRPCRoute",
+                  description: "gRPC method routing to Services.",
+                },
+              ].map((option) => (
+                <button
+                  key={option.kind}
+                  type="button"
+                  data-testid={`gateway-create-${option.kind}`}
+                  onClick={() => {
+                    setShowCreatePicker(false);
+                    createResource(
+                      option.kind,
+                      option.kind === "GatewayClass" ? "" : currentNamespace,
+                    );
+                  }}
+                  className="w-full rounded-lg border border-[var(--border)] bg-[var(--background)] p-2.5 text-left transition-colors hover:border-[var(--accent)]/50 hover:bg-[var(--surface-hover)] cursor-pointer"
+                >
+                  <span className="block text-xs font-semibold text-[var(--foreground)]">
+                    {option.kind}
+                  </span>
+                  <span className="mt-0.5 block text-[10px] leading-relaxed text-[var(--muted)]">
+                    {option.description}
+                  </span>
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
+    </>
   );
 }

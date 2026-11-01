@@ -1,4 +1,9 @@
 import type { ResourceEditorTarget } from "@/stores/cluster/types/networking";
+import { starterManifest } from "./resourceTemplates";
+import {
+  buildCreateFormManifest,
+  initialCreateFormValues,
+} from "./resourceCreateForms";
 
 export interface ResourceKindInfo {
   apiVersion: string;
@@ -8,7 +13,19 @@ export interface ResourceKindInfo {
 }
 
 const RESOURCE_KINDS: Record<string, ResourceKindInfo> = {
+  Namespace: {
+    apiVersion: "v1",
+    kind: "Namespace",
+    resource: "namespaces",
+    namespaced: false,
+  },
   Pod: { apiVersion: "v1", kind: "Pod", resource: "pods", namespaced: true },
+  ReplicationController: {
+    apiVersion: "v1",
+    kind: "ReplicationController",
+    resource: "replicationcontrollers",
+    namespaced: true,
+  },
   Deployment: {
     apiVersion: "apps/v1",
     kind: "Deployment",
@@ -69,6 +86,18 @@ const RESOURCE_KINDS: Record<string, ResourceKindInfo> = {
     resource: "networkpolicies",
     namespaced: true,
   },
+  EndpointSlice: {
+    apiVersion: "discovery.k8s.io/v1",
+    kind: "EndpointSlice",
+    resource: "endpointslices",
+    namespaced: true,
+  },
+  IngressClass: {
+    apiVersion: "networking.k8s.io/v1",
+    kind: "IngressClass",
+    resource: "ingressclasses",
+    namespaced: false,
+  },
   ConfigMap: {
     apiVersion: "v1",
     kind: "ConfigMap",
@@ -87,6 +116,12 @@ const RESOURCE_KINDS: Record<string, ResourceKindInfo> = {
     resource: "persistentvolumes",
     namespaced: false,
   },
+  PersistentVolumeClaim: {
+    apiVersion: "v1",
+    kind: "PersistentVolumeClaim",
+    resource: "persistentvolumeclaims",
+    namespaced: true,
+  },
   StorageClass: {
     apiVersion: "storage.k8s.io/v1",
     kind: "StorageClass",
@@ -98,6 +133,78 @@ const RESOURCE_KINDS: Record<string, ResourceKindInfo> = {
     kind: "ServiceAccount",
     resource: "serviceaccounts",
     namespaced: true,
+  },
+  HorizontalPodAutoscaler: {
+    apiVersion: "autoscaling/v2",
+    kind: "HorizontalPodAutoscaler",
+    resource: "horizontalpodautoscalers",
+    namespaced: true,
+  },
+  VerticalPodAutoscaler: {
+    apiVersion: "autoscaling.k8s.io/v1",
+    kind: "VerticalPodAutoscaler",
+    resource: "verticalpodautoscalers",
+    namespaced: true,
+  },
+  PodDisruptionBudget: {
+    apiVersion: "policy/v1",
+    kind: "PodDisruptionBudget",
+    resource: "poddisruptionbudgets",
+    namespaced: true,
+  },
+  ResourceQuota: {
+    apiVersion: "v1",
+    kind: "ResourceQuota",
+    resource: "resourcequotas",
+    namespaced: true,
+  },
+  LimitRange: {
+    apiVersion: "v1",
+    kind: "LimitRange",
+    resource: "limitranges",
+    namespaced: true,
+  },
+  PriorityClass: {
+    apiVersion: "scheduling.k8s.io/v1",
+    kind: "PriorityClass",
+    resource: "priorityclasses",
+    namespaced: false,
+  },
+  RuntimeClass: {
+    apiVersion: "node.k8s.io/v1",
+    kind: "RuntimeClass",
+    resource: "runtimeclasses",
+    namespaced: false,
+  },
+  Lease: {
+    apiVersion: "coordination.k8s.io/v1",
+    kind: "Lease",
+    resource: "leases",
+    namespaced: true,
+  },
+  MutatingWebhookConfiguration: {
+    apiVersion: "admissionregistration.k8s.io/v1",
+    kind: "MutatingWebhookConfiguration",
+    resource: "mutatingwebhookconfigurations",
+    namespaced: false,
+  },
+  ValidatingWebhookConfiguration: {
+    apiVersion: "admissionregistration.k8s.io/v1",
+    kind: "ValidatingWebhookConfiguration",
+    resource: "validatingwebhookconfigurations",
+    namespaced: false,
+  },
+  ValidatingAdmissionPolicy: {
+    apiVersion: "admissionregistration.k8s.io/v1",
+    kind: "ValidatingAdmissionPolicy",
+    resource: "validatingadmissionpolicies",
+    namespaced: false,
+  },
+  ValidatingAdmissionPolicyBinding: {
+    apiVersion: "admissionregistration.k8s.io/v1",
+    kind: "ValidatingAdmissionPolicyBinding",
+    resource: "validatingadmissionpolicybindings",
+    namespaced: false,
   },
   Role: {
     apiVersion: "rbac.authorization.k8s.io/v1",
@@ -203,14 +310,8 @@ export function createResourceTarget(
 }
 
 export function initialResourceManifest(target: ResourceEditorTarget): string {
-  const lines = [
-    `apiVersion: ${target.apiVersion}`,
-    `kind: ${target.kind}`,
-    "metadata:",
-    `  name: ${target.name || `new-${target.kind.toLowerCase()}`}`,
-  ];
-  if (target.namespace) {
-    lines.push(`  namespace: ${target.namespace}`);
+  if (target.mode === "create") {
+    return buildCreateFormManifest(target, initialCreateFormValues(target));
   }
-  return `${lines.join("\n")}\n`;
+  return starterManifest(target);
 }

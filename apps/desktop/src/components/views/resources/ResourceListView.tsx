@@ -14,6 +14,7 @@ import { ResourceTableHeader } from "./components/ResourceTableHeader";
 import { ResourceListEmptyState } from "./components/ResourceListEmptyState";
 import { ResourceListFooter } from "./components/ResourceListFooter";
 import { usePodListModel } from "./hooks/usePodListModel";
+import { useResourceActions } from "@/components/views/shared/useResourceActions";
 
 export interface ResourceListViewProps {
   resourceType: string;
@@ -45,6 +46,7 @@ export function ResourceListView({ resourceType }: ResourceListViewProps) {
     podLabelFilterSource,
     setPodLabelFilter,
   } = useClusterStore();
+  const { createResource } = useResourceActions();
 
   const {
     search,
@@ -139,6 +141,7 @@ export function ResourceListView({ resourceType }: ResourceListViewProps) {
         currentNamespace={currentNamespace}
         sortedItemsCount={sortedItems.length}
         handleRefresh={handleRefresh}
+        onCreate={() => createResource("Pod", currentNamespace)}
         isPodsLoading={isPodsLoading}
         density={density}
         onToggleDensity={() =>

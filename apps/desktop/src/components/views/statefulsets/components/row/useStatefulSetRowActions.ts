@@ -15,6 +15,7 @@ export function useStatefulSetRowActions(
   const [copiedName, setCopiedName] = React.useState(false);
   const [copiedCommand, setCopiedCommand] = React.useState<string | null>(null);
   const [showActionMenu, setShowActionMenu] = React.useState(false);
+  const [showPartitionModal, setShowPartitionModal] = React.useState(false);
   const [showKubectlSubmenu, setShowKubectlSubmenu] = React.useState(false);
   const [openUpwards, setOpenUpwards] = React.useState(false);
   const actionMenuRef = React.useRef<HTMLDivElement>(null);
@@ -103,6 +104,11 @@ export function useStatefulSetRowActions(
     });
   };
 
+  const handleOpenPartition = () => {
+    closeRowActionMenu();
+    setShowPartitionModal(true);
+  };
+
   const kubectlCommands = [
     {
       label: "Describe StatefulSet",
@@ -138,6 +144,9 @@ export function useStatefulSetRowActions(
     copiedCommand,
     showActionMenu,
     setShowActionMenu,
+    showPartitionModal,
+    setShowPartitionModal,
+    handleOpenPartition,
     showKubectlSubmenu,
     setShowKubectlSubmenu,
     openUpwards,

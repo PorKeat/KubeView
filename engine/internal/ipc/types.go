@@ -23,6 +23,7 @@ const (
 	ErrK8sUnauthorized   = "K8S_UNAUTHORIZED"
 	ErrK8sForbidden      = "K8S_FORBIDDEN"
 	ErrK8sNotFound       = "K8S_NOT_FOUND"
+	ErrK8sConflict       = "K8S_CONFLICT"
 	ErrK8sConnFailed     = "K8S_CONNECTION_FAILED"
 	ErrExecPluginFailed  = "EXEC_PLUGIN_FAILED"
 )

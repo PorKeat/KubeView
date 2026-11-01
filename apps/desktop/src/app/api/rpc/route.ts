@@ -45,6 +45,8 @@ function statusForCode(code: unknown): number {
     case "K8S_NOT_FOUND":
     case -32601:
       return 404;
+    case "K8S_CONFLICT":
+      return 409;
     case "INVALID_PARAMS":
     case -32602:
       return 400;

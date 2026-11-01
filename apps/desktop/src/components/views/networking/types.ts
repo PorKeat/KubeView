@@ -50,6 +50,8 @@ export interface NetworkingResourcePageProps<T> {
   onDelete?: (item: T) => void;
   onDiagnose?: (item: T) => void;
   onCreate?: () => void;
+  /** Enables multi-select and a bulk delete bar for the named resource kind. */
+  bulkDeleteKind?: string;
   testIdPrefix: string;
   clusterScoped?: boolean;
   includeClusterScoped?: boolean;

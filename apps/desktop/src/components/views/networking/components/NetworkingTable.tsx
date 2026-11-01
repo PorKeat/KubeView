@@ -37,6 +37,12 @@ export interface NetworkingTableProps<T> {
   onEdit?: (item: T) => void;
   onDelete?: (item: T) => void;
   onDiagnose?: (item: T) => void;
+  selectable?: boolean;
+  selectedKeys?: Set<string>;
+  onToggleSelect?: (key: string) => void;
+  onToggleSelectAll?: () => void;
+  allSelected?: boolean;
+  someSelected?: boolean;
   testIdPrefix: string;
 }
 
@@ -60,6 +66,12 @@ export function NetworkingTable<T>({
   onEdit,
   onDelete,
   onDiagnose,
+  selectable = false,
+  selectedKeys,
+  onToggleSelect,
+  onToggleSelectAll,
+  allSelected = false,
+  someSelected = false,
   testIdPrefix,
 }: NetworkingTableProps<T>) {
   const renderSortIndicator = (field: string) =>
@@ -82,6 +94,21 @@ export function NetworkingTable<T>({
       <table className="w-full text-left text-xs border-collapse table-fixed">
         <thead className="sticky top-0 bg-[var(--surface)] z-10 border-b border-[var(--border)] select-none">
           <tr className="text-[10px] font-semibold text-[var(--muted)] uppercase tracking-wider h-8 whitespace-nowrap">
+            {selectable && (
+              <th className="w-[30px] px-2 py-1" aria-label="Select rows">
+                <input
+                  type="checkbox"
+                  aria-label="Select all visible rows"
+                  data-testid={`${testIdPrefix}-select-all`}
+                  checked={allSelected}
+                  onChange={onToggleSelectAll}
+                  ref={(node) => {
+                    if (node) node.indeterminate = someSelected && !allSelected;
+                  }}
+                  className="h-3.5 w-3.5 cursor-pointer accent-[var(--accent)]"
+                />
+              </th>
+            )}
             <th
               {...sortableHeaderProps({
                 field: "name",
@@ -186,9 +213,27 @@ export function NetworkingTable<T>({
               <tr
                 key={key}
                 onClick={() => onRowClick(item)}
-                className="hover:bg-[var(--surface-hover)] cursor-pointer transition-colors group h-9 text-xs"
+                className={cn(
+                  "hover:bg-[var(--surface-hover)] cursor-pointer transition-colors group h-9 text-xs",
+                  selectedKeys?.has(key) && "bg-[var(--accent)]/5",
+                )}
                 data-testid={`${testIdPrefix}-row`}
               >
+                {selectable && (
+                  <td
+                    className="px-2 py-1"
+                    onClick={(event) => event.stopPropagation()}
+                  >
+                    <input
+                      type="checkbox"
+                      aria-label={`Select ${name}`}
+                      checked={selectedKeys?.has(key) ?? false}
+                      onChange={() => onToggleSelect?.(key)}
+                      onClick={(event) => event.stopPropagation()}
+                      className="h-3.5 w-3.5 cursor-pointer accent-[var(--accent)]"
+                    />
+                  </td>
+                )}
                 <td className="py-1 px-2 font-medium font-mono text-[var(--foreground)] truncate">
                   <div className="relative flex items-center gap-1.5 min-w-0">
                     <Icon className="w-3.5 h-3.5 shrink-0 text-[var(--muted)]" />

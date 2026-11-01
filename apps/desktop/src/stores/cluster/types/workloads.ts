@@ -7,6 +7,7 @@ import type {
   ReplicaSetActionParams,
   StatefulSetActionParams,
   DaemonSetActionParams,
+  DeploymentRollbackParams,
 } from "@kubeview/contracts";
 
 /**
@@ -157,6 +158,15 @@ export interface WorkloadActionsSlice {
   restartDeployment: (params: DeploymentActionParams) => Promise<void>;
   scaleDeployment: (params: DeploymentActionParams) => Promise<void>;
   deleteDeployment: (params: DeploymentActionParams) => Promise<void>;
+  rollbackDeployment: (params: DeploymentRollbackParams) => Promise<void>;
+  pauseDeployment: (params: DeploymentActionParams) => Promise<void>;
+  resumeDeployment: (params: DeploymentActionParams) => Promise<void>;
+  setStatefulSetPartition: (params: {
+    contextName?: string;
+    namespace: string;
+    name: string;
+    partition: number;
+  }) => Promise<void>;
   scaleReplicaSet: (params: ReplicaSetActionParams) => Promise<void>;
   deleteReplicaSet: (params: ReplicaSetActionParams) => Promise<void>;
   restartStatefulSet: (params: StatefulSetActionParams) => Promise<void>;

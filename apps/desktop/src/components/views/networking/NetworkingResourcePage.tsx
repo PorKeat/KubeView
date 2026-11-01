@@ -1,7 +1,10 @@
 "use client";
 
+import * as React from "react";
+import { Trash2 } from "lucide-react";
 import { useClusterStore } from "@/stores/clusterStore";
 import { EmptyState, TableSkeleton } from "@/components/ui";
+import { useResourceActions } from "@/components/views/shared/useResourceActions";
 
 import { NetworkingToolbar } from "./components/NetworkingToolbar";
 import { NetworkingEmptyState } from "./components/NetworkingEmptyState";
@@ -45,6 +48,7 @@ export function NetworkingResourcePage<T>({
   onDelete,
   onDiagnose,
   onCreate,
+  bulkDeleteKind,
   testIdPrefix,
   clusterScoped = false,
   includeClusterScoped = false,
@@ -97,6 +101,72 @@ export function NetworkingResourcePage<T>({
     clusterScoped,
     includeClusterScoped,
   });
+  const { deleteResources } = useResourceActions();
+  const selectable = Boolean(bulkDeleteKind);
+  const [selectedKeys, setSelectedKeys] = React.useState<Set<string>>(
+    () => new Set(),
+  );
+  const [bulkConfirm, setBulkConfirm] = React.useState(false);
+  const [isBulkDeleting, setIsBulkDeleting] = React.useState(false);
+
+  React.useEffect(() => {
+    setSelectedKeys(new Set());
+    setBulkConfirm(false);
+  }, [activeFilter, currentNamespace, search]);
+
+  const selectedItems = React.useMemo(
+    () => sortedItems.filter((item) => selectedKeys.has(getKey(item))),
+    [getKey, selectedKeys, sortedItems],
+  );
+  const allSelected =
+    paginatedItems.length > 0 &&
+    paginatedItems.every((item) => selectedKeys.has(getKey(item)));
+  const someSelected = paginatedItems.some((item) =>
+    selectedKeys.has(getKey(item)),
+  );
+
+  const toggleSelect = (key: string) => {
+    setSelectedKeys((previous) => {
+      const next = new Set(previous);
+      if (next.has(key)) next.delete(key);
+      else next.add(key);
+      return next;
+    });
+  };
+
+  const toggleSelectAll = () => {
+    setSelectedKeys((previous) => {
+      const next = new Set(previous);
+      for (const item of paginatedItems) {
+        const key = getKey(item);
+        if (allSelected) next.delete(key);
+        else next.add(key);
+      }
+      return next;
+    });
+  };
+
+  const deleteSelected = async () => {
+    if (!bulkDeleteKind || selectedItems.length === 0) return;
+    setIsBulkDeleting(true);
+    try {
+      await deleteResources(
+        bulkDeleteKind,
+        selectedItems.map((item) => {
+          const namespace = getNamespace(item);
+          return {
+            name: getName(item),
+            namespace: namespace === "Cluster Scope" ? "" : namespace,
+          };
+        }),
+      );
+      setSelectedKeys(new Set());
+      setBulkConfirm(false);
+      onRefresh();
+    } finally {
+      setIsBulkDeleting(false);
+    }
+  };
 
   if (connectionStatus === "offline") {
     return (
@@ -132,6 +202,62 @@ export function NetworkingResourcePage<T>({
         onCreate={onCreate}
         isLoading={isLoading}
       />
+
+      {selectable && selectedKeys.size > 0 && (
+        <div
+          data-testid={`${testIdPrefix}-bulk-bar`}
+          className="flex shrink-0 flex-wrap items-center justify-between gap-2 border-b border-[var(--accent)]/30 bg-[var(--accent)]/10 px-3 py-1.5"
+        >
+          <span className="font-mono text-[11px] text-[var(--foreground)]">
+            {selectedItems.length} selected
+          </span>
+          <div className="flex items-center gap-2">
+            {bulkConfirm ? (
+              <>
+                <span className="text-[10px] text-[var(--muted)]">
+                  Delete {selectedItems.length} {nounPlural}?
+                </span>
+                <button
+                  type="button"
+                  data-testid={`${testIdPrefix}-bulk-delete-confirm`}
+                  onClick={() => void deleteSelected()}
+                  disabled={isBulkDeleting}
+                  className="rounded-md bg-rose-600 px-2.5 py-1 text-[10px] font-semibold text-white transition-colors hover:bg-rose-500 disabled:opacity-60 cursor-pointer"
+                >
+                  {isBulkDeleting ? "Deleting..." : "Delete"}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setBulkConfirm(false)}
+                  className="rounded-md px-2 py-1 text-[10px] font-medium text-[var(--muted)] transition-colors hover:text-[var(--foreground)] cursor-pointer"
+                >
+                  Cancel
+                </button>
+              </>
+            ) : (
+              <button
+                type="button"
+                data-testid={`${testIdPrefix}-bulk-delete`}
+                onClick={() => setBulkConfirm(true)}
+                className="inline-flex items-center gap-1.5 rounded-md border border-rose-500/25 bg-rose-500/10 px-2.5 py-1 text-[10px] font-medium text-rose-600 transition-colors hover:bg-rose-500/20 cursor-pointer dark:text-rose-400"
+              >
+                <Trash2 className="h-3 w-3" />
+                Delete selected
+              </button>
+            )}
+            <button
+              type="button"
+              onClick={() => {
+                setSelectedKeys(new Set());
+                setBulkConfirm(false);
+              }}
+              className="rounded-md px-2 py-1 text-[10px] font-medium text-[var(--muted)] transition-colors hover:text-[var(--foreground)] cursor-pointer"
+            >
+              Clear
+            </button>
+          </div>
+        </div>
+      )}
 
       {!hasLoadedOnce || (isLoading && filteredItems.length === 0) ? (
         <TableSkeleton rows={10} columns={columns.length + 4} />
@@ -173,6 +299,12 @@ export function NetworkingResourcePage<T>({
           onEdit={onEdit}
           onDelete={onDelete}
           onDiagnose={onDiagnose}
+          selectable={selectable}
+          selectedKeys={selectedKeys}
+          onToggleSelect={toggleSelect}
+          onToggleSelectAll={toggleSelectAll}
+          allSelected={allSelected}
+          someSelected={someSelected}
           testIdPrefix={testIdPrefix}
         />
       )}

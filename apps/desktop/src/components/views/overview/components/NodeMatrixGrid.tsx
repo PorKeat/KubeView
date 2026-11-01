@@ -2,6 +2,7 @@
 
 import { Box, ArrowRight } from "lucide-react";
 import { SpotlightCard } from "@/components/ui";
+import { NodeOperationsButton } from "@/components/modals/NodeOperationsModal";
 import { NodeTelemetryGraph } from "./NodeTelemetryGraph";
 import { cleanAlloc } from "../types";
 import { cn } from "@/lib/utils";
@@ -83,16 +84,19 @@ export function NodeMatrixGrid({
                   </p>
                 </div>
 
-                <span
-                  className={cn(
-                    "inline-flex shrink-0 items-center rounded-full border px-2 py-0.5 font-mono text-[10px] font-medium",
-                    isNodeReady
-                      ? "border-emerald-500/25 bg-emerald-500/10 text-emerald-400"
-                      : "border-rose-500/25 bg-rose-500/10 text-rose-400",
-                  )}
-                >
-                  {n.status}
-                </span>
+                <div className="flex shrink-0 items-center gap-1">
+                  <NodeOperationsButton nodeName={n.name} />
+                  <span
+                    className={cn(
+                      "inline-flex shrink-0 items-center rounded-full border px-2 py-0.5 font-mono text-[10px] font-medium",
+                      isNodeReady
+                        ? "border-emerald-500/25 bg-emerald-500/10 text-emerald-400"
+                        : "border-rose-500/25 bg-rose-500/10 text-rose-400",
+                    )}
+                  >
+                    {n.status}
+                  </span>
+                </div>
               </div>
 
               {/* Core metrics */}

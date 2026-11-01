@@ -26,6 +26,36 @@ async function reloadResourceKind(
   const state = get();
   const namespace = state.currentNamespace;
   switch (kind) {
+    case "Job":
+      await state.loadJobs(namespace);
+      await state.loadPods(namespace);
+      await state.loadClusterOverview(state.currentContext, namespace);
+      break;
+    case "CronJob":
+      await state.loadCronJobs(namespace);
+      await state.loadJobs(namespace);
+      await state.loadPods(namespace);
+      await state.loadClusterOverview(state.currentContext, namespace);
+      break;
+    case "Deployment":
+      await state.loadDeployments(namespace);
+      await state.loadClusterOverview(state.currentContext, namespace);
+      break;
+    case "ReplicaSet":
+      await state.loadReplicaSets(namespace);
+      break;
+    case "StatefulSet":
+      await state.loadStatefulSets(namespace);
+      await state.loadClusterOverview(state.currentContext, namespace);
+      break;
+    case "DaemonSet":
+      await state.loadDaemonSets(namespace);
+      await state.loadClusterOverview(state.currentContext, namespace);
+      break;
+    case "Pod":
+      await state.loadPods(namespace);
+      await state.loadClusterOverview(state.currentContext, namespace);
+      break;
     case "Ingress":
       await state.loadIngresses(namespace);
       break;
@@ -104,6 +134,7 @@ export const createNetworkingActionsSlice: StateCreator<
   resourceEditorValidationSuccess: false,
   resourceEditorError: null,
   deleteResourceTarget: null,
+  resourceRevision: 0,
   diagnosticsTarget: null,
   diagnosticsResult: null,
   isDiagnosticsLoading: false,
@@ -249,6 +280,7 @@ export const createNetworkingActionsSlice: StateCreator<
         yaml: get().resourceEditorYaml,
         resource: target.resource,
         dryRun: true,
+        mode: target.mode === "create" ? "create" : "update",
         name: target.mode === "create" ? undefined : target.name,
         namespace:
           target.mode === "create" ? undefined : target.namespace || undefined,
@@ -291,11 +323,13 @@ export const createNetworkingActionsSlice: StateCreator<
         yaml: get().resourceEditorYaml,
         resource: target.resource,
         dryRun: false,
+        mode: target.mode === "create" ? "create" : "update",
         name: target.mode === "create" ? undefined : target.name,
         namespace:
           target.mode === "create" ? undefined : target.namespace || undefined,
       });
       await reloadResourceKind(get, target.kind);
+      set((state) => ({ resourceRevision: state.resourceRevision + 1 }));
       toast.success(
         `${result.kind} ${result.name} ${result.created ? "created" : "updated"}`,
       );
@@ -310,6 +344,7 @@ export const createNetworkingActionsSlice: StateCreator<
   openDeleteResource: (target) => set({ deleteResourceTarget: target }),
   closeDeleteResource: () => set({ deleteResourceTarget: null }),
   refreshResourceKind: async (kind) => {
+    set((state) => ({ resourceRevision: state.resourceRevision + 1 }));
     await reloadResourceKind(get, kind);
   },
 
@@ -326,8 +361,11 @@ export const createNetworkingActionsSlice: StateCreator<
         namespace: target.namespace || undefined,
       });
       await reloadResourceKind(get, target.kind);
+      set((state) => ({
+        deleteResourceTarget: null,
+        resourceRevision: state.resourceRevision + 1,
+      }));
       toast.success(`${target.kind} ${target.name} deleted`);
-      set({ deleteResourceTarget: null });
       get().closeInspector();
     } catch (err) {
       const message = err instanceof Error ? err.message : String(err);

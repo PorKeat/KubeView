@@ -9,6 +9,35 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- Create flows for Pods, ReplicaSets, StatefulSets, DaemonSets, ConfigMaps, Secrets, PVCs, HPAs, VPAs, PDBs, quotas, limit ranges, priority/runtime classes, leases, webhooks, admission policies, RBAC resources, Gateway API resources, and custom resource instances.
+- Edit, guarded delete, and typed-name namespace deletion for every mutable simple-resource kind.
+- Bulk delete on simple-resource pages and on services, endpoints, ingresses, network policies, configmaps, secrets, persistent volumes, storage classes, and service accounts.
+- Helm lifecycle: install from chart repositories, upgrade with values, rollback to a revision, and uninstall with confirmation.
+- Node operations: cordon, uncordon, drain with eviction options, taint editing, and label editing.
+- Deployment rollout history, rollback, pause, and resume.
+- StatefulSet update partitioning, Job retry/clone, and PVC expansion.
+- New engine RPCs: `nodes.*`, `deployments.rolloutHistory|rollback|pause|resume`, `statefulsets.partition`, `jobs.retry|clone`, `persistentvolumeclaims.expand`, and `helm.install|upgrade|rollback|uninstall|history|values`.
+
+### Fixed
+
+- Node, Helm, and workload-operation RPCs now preserve Kubernetes error kinds, so RBAC denials, conflicts, and invalid requests surface with the correct codes and permission guidance.
+- Draining a node now waits for evicted pods to terminate and reports pods that time out, instead of returning as soon as eviction requests are accepted.
+- Bulk delete runs with bounded concurrency and reports per-item failures instead of silently counting them.
+
+### Changed
+
+- Critical deletes (PVCs, webhook configs, admission policies, namespaces) require typing the resource name, and critical kinds are excluded from bulk delete.
+- Switching from Advanced YAML back to Form now asks before discarding YAML-only edits.
+- Helm remembers the chart repository for each release, installs into the selected namespace from Charts, and verifies chart digests when the index provides one.
+- Custom resource instances can now be edited and deleted from a CRD's instance tab.
+- Every create dialog now offers a guided **Form** tab and an **Advanced YAML** tab. Form changes generate the manifest live, so users can start with fields and switch to YAML for anything not surfaced.
+- Namespace creation gained the same Form / Advanced YAML tabs.
+- Job and CronJob creation keep their dedicated form with an Advanced YAML tab.
+- Helm SDK (`helm.sh/helm/v3` v3.17.4) now backs release lifecycle operations in the Go engine.
+- Resource starter manifests now cover every creatable kind.
+
 ## [0.2.1] - 2026-10-30
 
 ### Changed

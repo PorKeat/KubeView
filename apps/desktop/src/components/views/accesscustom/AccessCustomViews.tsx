@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { Shield, Users } from "lucide-react";
+import { Shield, Users, X } from "lucide-react";
 import type {
   RBACResourceSummary,
   ServiceAccountSummary,
@@ -196,6 +196,7 @@ export function ServiceAccountsView() {
         deleteResource("ServiceAccount", item.name, item.namespace)
       }
       onCreate={() => createResource("ServiceAccount", currentNamespace)}
+      bulkDeleteKind="ServiceAccount"
       testIdPrefix="serviceaccounts"
       autoRefresh={false}
       codeCommand={(namespace) => `kubectl get serviceaccounts -n ${namespace}`}
@@ -204,9 +205,29 @@ export function ServiceAccountsView() {
   );
 }
 
+const RBAC_CREATE_KINDS = [
+  {
+    kind: "Role",
+    description: "Namespaced permission rules for resources in one namespace.",
+  },
+  {
+    kind: "ClusterRole",
+    description: "Cluster-wide permission rules and aggregation.",
+  },
+  {
+    kind: "RoleBinding",
+    description: "Grant a Role to subjects in a namespace.",
+  },
+  {
+    kind: "ClusterRoleBinding",
+    description: "Grant a ClusterRole to subjects cluster-wide.",
+  },
+] as const;
+
 export function RBACView() {
   const [filter, setFilter] = React.useState("all");
-  const { editResource, deleteResource } = useResourceActions();
+  const [showCreatePicker, setShowCreatePicker] = React.useState(false);
+  const { editResource, deleteResource, createResource } = useResourceActions();
   const {
     rbacResources,
     totalRBACResourcesCount,
@@ -293,64 +314,119 @@ export function RBACView() {
   );
 
   return (
-    <NetworkingResourcePage
-      icon={Shield}
-      nounSingular="RBAC resource"
-      nounPlural="RBAC resources"
-      items={rbacResources}
-      totalCount={totalRBACResourcesCount}
-      isLoading={isRBACResourcesLoading}
-      hasLoadedOnce={hasLoadedRBACResourcesOnce}
-      onRefresh={refresh}
-      searchPlaceholder="Filter RBAC by kind, name, role, subject..."
-      matchesSearch={rbacMatches}
-      filterOptions={filterOptions}
-      activeFilter={filter}
-      setActiveFilter={setFilter}
-      matchesFilter={(item, value) => value === "all" || item.kind === value}
-      columns={columns}
-      getKey={(item) => `${item.kind}/${item.namespace ?? ""}/${item.name}`}
-      getName={(item) => item.name}
-      getNamespace={(item) => item.namespace ?? ""}
-      getStatus={(item) =>
-        item.kind === "Role" || item.kind === "ClusterRole"
-          ? { label: "Role", variant: "muted" }
-          : { label: "Binding", variant: "pending" }
-      }
-      getAge={(item) => item.age}
-      getCreationTimestamp={(item) => item.creationTimestamp}
-      onRowClick={(item) =>
-        openInspector({
-          kind: item.kind,
-          name: item.name,
-          namespace: item.namespace ?? "",
-          status: item.kind.includes("Binding") ? "Binding" : "Role",
-          data: item as unknown as Record<string, unknown>,
-        })
-      }
-      describeCommand={(item) =>
-        `kubectl describe ${item.kind.toLowerCase()} ${item.name}${item.namespace ? ` -n ${item.namespace}` : ""}`
-      }
-      onEdit={(item) =>
-        editResource(
-          item.kind,
-          item.name,
-          item.namespace ?? "",
-          item.kind.includes("Binding") ? "Binding" : "Role",
-          item as unknown as Record<string, unknown>,
-        )
-      }
-      onDelete={(item) =>
-        deleteResource(item.kind, item.name, item.namespace ?? "")
-      }
-      testIdPrefix="rbac"
-      includeClusterScoped
-      autoRefresh={false}
-      codeCommand={(namespace) =>
-        `kubectl get roles,rolebindings -n ${namespace}`
-      }
-      emptyDescription="Roles and bindings define who can perform which actions in the cluster."
-    />
+    <>
+      <NetworkingResourcePage
+        icon={Shield}
+        nounSingular="RBAC resource"
+        nounPlural="RBAC resources"
+        items={rbacResources}
+        totalCount={totalRBACResourcesCount}
+        isLoading={isRBACResourcesLoading}
+        hasLoadedOnce={hasLoadedRBACResourcesOnce}
+        onRefresh={refresh}
+        searchPlaceholder="Filter RBAC by kind, name, role, subject..."
+        matchesSearch={rbacMatches}
+        filterOptions={filterOptions}
+        activeFilter={filter}
+        setActiveFilter={setFilter}
+        matchesFilter={(item, value) => value === "all" || item.kind === value}
+        columns={columns}
+        getKey={(item) => `${item.kind}/${item.namespace ?? ""}/${item.name}`}
+        getName={(item) => item.name}
+        getNamespace={(item) => item.namespace ?? ""}
+        getStatus={(item) =>
+          item.kind === "Role" || item.kind === "ClusterRole"
+            ? { label: "Role", variant: "muted" }
+            : { label: "Binding", variant: "pending" }
+        }
+        getAge={(item) => item.age}
+        getCreationTimestamp={(item) => item.creationTimestamp}
+        onRowClick={(item) =>
+          openInspector({
+            kind: item.kind,
+            name: item.name,
+            namespace: item.namespace ?? "",
+            status: item.kind.includes("Binding") ? "Binding" : "Role",
+            data: item as unknown as Record<string, unknown>,
+          })
+        }
+        describeCommand={(item) =>
+          `kubectl describe ${item.kind.toLowerCase()} ${item.name}${item.namespace ? ` -n ${item.namespace}` : ""}`
+        }
+        onEdit={(item) =>
+          editResource(
+            item.kind,
+            item.name,
+            item.namespace ?? "",
+            item.kind.includes("Binding") ? "Binding" : "Role",
+            item as unknown as Record<string, unknown>,
+          )
+        }
+        onDelete={(item) =>
+          deleteResource(item.kind, item.name, item.namespace ?? "")
+        }
+        onCreate={() => setShowCreatePicker(true)}
+        testIdPrefix="rbac"
+        includeClusterScoped
+        autoRefresh={false}
+        codeCommand={(namespace) =>
+          `kubectl get roles,rolebindings -n ${namespace}`
+        }
+        emptyDescription="Roles and bindings define who can perform which actions in the cluster."
+      />
+
+      {showCreatePicker && (
+        <div
+          data-testid="rbac-create-picker"
+          role="dialog"
+          aria-modal="true"
+          aria-label="Create RBAC resource"
+          className="fixed inset-0 z-[70] flex items-end justify-center bg-black/60 p-0 backdrop-blur-md animate-in fade-in duration-150 sm:items-center sm:p-4"
+        >
+          <div
+            className="absolute inset-0 cursor-pointer"
+            onClick={() => setShowCreatePicker(false)}
+            aria-hidden="true"
+          />
+          <div className="relative w-full max-w-md overflow-hidden rounded-t-2xl border border-[var(--border)] bg-[var(--surface)] shadow-2xl sm:rounded-2xl">
+            <header className="flex items-center justify-between border-b border-[var(--border)] px-4 py-3">
+              <h2 className="text-sm font-semibold text-[var(--foreground)]">
+                Create RBAC resource
+              </h2>
+              <button
+                type="button"
+                onClick={() => setShowCreatePicker(false)}
+                aria-label="Close create picker"
+                className="cursor-pointer rounded-md p-1.5 text-[var(--muted)] hover:bg-[var(--surface-hover)] hover:text-[var(--foreground)]"
+              >
+                <X className="h-4 w-4" />
+              </button>
+            </header>
+            <div className="space-y-1.5 p-3">
+              {RBAC_CREATE_KINDS.map((option) => (
+                <button
+                  key={option.kind}
+                  type="button"
+                  data-testid={`rbac-create-${option.kind}`}
+                  onClick={() => {
+                    setShowCreatePicker(false);
+                    createResource(option.kind, currentNamespace);
+                  }}
+                  className="w-full rounded-lg border border-[var(--border)] bg-[var(--background)] p-2.5 text-left transition-colors hover:border-[var(--accent)]/50 hover:bg-[var(--surface-hover)] cursor-pointer"
+                >
+                  <span className="block text-xs font-semibold text-[var(--foreground)]">
+                    {option.kind}
+                  </span>
+                  <span className="mt-0.5 block text-[10px] leading-relaxed text-[var(--muted)]">
+                    {option.description}
+                  </span>
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
+    </>
   );
 }
 

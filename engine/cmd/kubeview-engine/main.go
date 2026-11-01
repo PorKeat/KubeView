@@ -50,10 +50,12 @@ func main() {
 	registerCoreHandlers(server, streamSrv)
 	registerClusterHandlers(server, mgr, diagRunner)
 	registerWorkloadHandlers(server, mgr)
+	registerWorkloadOperationHandlers(server, mgr)
 	registerNetworkingHandlers(server, mgr)
 	registerConfigAccessHandlers(server, mgr)
 	registerSimpleResourceHandlers(server, mgr)
-	registerHelmHandlers(server)
+	registerNodeHandlers(server, mgr)
+	registerHelmHandlers(server, mgr)
 	registerActionHandlers(server, mgr)
 	registerYAMLWatchHandlers(server, yamlHub)
 	if err := bootstrap.RegisterContextsModule(server, mgr, getResWatcher, yamlHub.CancelAll); err != nil {

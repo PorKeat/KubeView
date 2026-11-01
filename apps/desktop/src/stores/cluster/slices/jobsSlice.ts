@@ -3,6 +3,8 @@ import type {
   CronJobActionParams,
   CronJobTriggerResult,
   JobActionParams,
+  JobCloneParams,
+  JobCloneResult,
   ListCronJobsResult,
   ListJobsResult,
 } from "@kubeview/contracts";
@@ -224,6 +226,30 @@ export const createJobsSlice: StateCreator<ClusterState, [], [], JobsSlice> = (
     await get().loadJobs();
     await get().loadPods();
     await get().loadClusterOverview();
+  },
+
+  retryJob: async (params: JobCloneParams) => {
+    const targetCtx = params.contextName || get().currentContext;
+    const job = await invokeRpc<JobCloneResult>("jobs.retry", {
+      ...params,
+      contextName: targetCtx,
+    });
+    await get().loadJobs();
+    await get().loadPods();
+    await get().loadClusterOverview();
+    return job;
+  },
+
+  cloneJob: async (params: JobCloneParams) => {
+    const targetCtx = params.contextName || get().currentContext;
+    const job = await invokeRpc<JobCloneResult>("jobs.clone", {
+      ...params,
+      contextName: targetCtx,
+    });
+    await get().loadJobs();
+    await get().loadPods();
+    await get().loadClusterOverview();
+    return job;
   },
 
   deleteCronJob: async (params: CronJobActionParams) => {

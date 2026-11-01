@@ -1,7 +1,15 @@
 "use client";
 
 import * as React from "react";
-import { Search, X, RefreshCw, PauseCircle, Clock, Radio } from "lucide-react";
+import {
+  Search,
+  X,
+  RefreshCw,
+  PauseCircle,
+  Clock,
+  Radio,
+  Plus,
+} from "lucide-react";
 import { motion } from "motion/react";
 import { cn } from "@/lib/utils";
 import { Tooltip } from "@/components/ui/Tooltip";
@@ -23,6 +31,7 @@ export function CronJobTableToolbar({
   sortedItemsCount,
   handleRefresh,
   isLoading,
+  onCreate,
 }: {
   search: string;
   setSearch: (value: string) => void;
@@ -33,6 +42,7 @@ export function CronJobTableToolbar({
   sortedItemsCount: number;
   handleRefresh: () => void;
   isLoading: boolean;
+  onCreate?: () => void;
 }) {
   const base = React.useMemo(
     () =>
@@ -141,6 +151,19 @@ export function CronJobTableToolbar({
       <div className="flex max-w-full flex-wrap items-center gap-2 text-xs text-[var(--muted)] shrink-0 order-3 sm:order-none">
         <span className="font-mono text-[11px]">{sortedItemsCount} items</span>
         <div className="h-3 w-[1px] bg-[var(--border)]" />
+        {onCreate && (
+          <Tooltip content="Create CronJob">
+            <button
+              type="button"
+              data-testid="cronjobs-create"
+              onClick={onCreate}
+              className="p-1.5 rounded-lg hover:bg-[var(--surface-hover)] text-[var(--muted)] hover:text-[var(--foreground)] transition-colors cursor-pointer"
+              aria-label="Create CronJob"
+            >
+              <Plus className="w-3.5 h-3.5" />
+            </button>
+          </Tooltip>
+        )}
         <Tooltip content="Refresh cronjobs">
           <button
             onClick={handleRefresh}

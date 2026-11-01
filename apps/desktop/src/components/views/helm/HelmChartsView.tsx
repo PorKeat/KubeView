@@ -1,14 +1,24 @@
 "use client";
 
 import * as React from "react";
-import { Boxes, Plus, RefreshCw, Search, Trash2, X } from "lucide-react";
-import type { HelmChartsResult } from "@kubeview/contracts";
+import {
+  Boxes,
+  Plus,
+  RefreshCw,
+  Search,
+  Trash2,
+  Upload,
+  X,
+} from "lucide-react";
+import type { HelmChartSummary, HelmChartsResult } from "@kubeview/contracts";
 import { toast } from "sonner";
 import { invokeRpc } from "@/lib/ipc";
 import { useHelmStore } from "@/stores/helmStore";
+import { useClusterStore } from "@/stores/clusterStore";
 import { cn } from "@/lib/utils";
 import { EmptyState, ErrorBanner } from "@/components/ui";
 import { CustomSelect } from "@/components/ui/CustomSelect";
+import { HelmChartActionModal } from "@/components/modals/HelmLifecycleModals";
 
 function isValidRepoUrl(value: string) {
   try {
@@ -20,6 +30,7 @@ function isValidRepoUrl(value: string) {
 }
 
 export function HelmChartsView() {
+  const currentNamespace = useClusterStore((state) => state.currentNamespace);
   const repositories = useHelmStore((state) => state.repositories);
   const selectedRepositoryId = useHelmStore(
     (state) => state.selectedRepositoryId,
@@ -36,6 +47,10 @@ export function HelmChartsView() {
   const [name, setName] = React.useState("");
   const [url, setUrl] = React.useState("");
   const [formError, setFormError] = React.useState<string | null>(null);
+  const [installChart, setInstallChart] = React.useState<{
+    chart: HelmChartSummary;
+    repositoryUrl: string;
+  } | null>(null);
   const requestId = React.useRef(0);
 
   const selectedRepository = repositories.find(
@@ -227,8 +242,8 @@ export function HelmChartsView() {
             No chart repositories yet
           </h2>
           <p className="mt-1 max-w-sm text-[11px] text-[var(--muted)]">
-            Add a Helm repository index to search its charts. Nothing is
-            installed from this page.
+            Add a Helm repository index to search its charts, then install a
+            release directly from the results.
           </p>
           <button
             type="button"
@@ -354,6 +369,12 @@ export function HelmChartsView() {
                     <th scope="col" className="px-3 py-2 font-medium">
                       Description
                     </th>
+                    <th
+                      scope="col"
+                      className="px-3 py-2 text-right font-medium"
+                    >
+                      Action
+                    </th>
                   </tr>
                 </thead>
                 <tbody>
@@ -387,6 +408,23 @@ export function HelmChartsView() {
                           {chart.description || "—"}
                         </span>
                       </td>
+                      <td className="px-3 py-2.5 text-right">
+                        <button
+                          type="button"
+                          data-testid="helm-chart-install"
+                          onClick={() => {
+                            if (!selectedRepository) return;
+                            setInstallChart({
+                              chart,
+                              repositoryUrl: selectedRepository.url,
+                            });
+                          }}
+                          className="inline-flex items-center gap-1.5 rounded-md border border-[var(--border)] px-2 py-1 text-[10px] font-medium text-[var(--foreground)] transition-colors hover:bg-[var(--surface-hover)] cursor-pointer"
+                        >
+                          <Upload className="h-3 w-3 text-[var(--accent)]" />
+                          Install
+                        </button>
+                      </td>
                     </tr>
                   ))}
                 </tbody>
@@ -397,8 +435,27 @@ export function HelmChartsView() {
       )}
 
       <p className="mt-3 text-[10px] text-[var(--muted)]">
-        Read-only chart index. Install, upgrade, and rollback are not enabled.
+        Charts are indexed from the selected repository. Install writes a
+        release to the cluster; upgrade, rollback, and uninstall live on the
+        Releases page.
       </p>
+
+      {installChart && (
+        <HelmChartActionModal
+          open
+          mode="install"
+          target={{
+            name: "",
+            namespace:
+              currentNamespace === "all" ? "default" : currentNamespace,
+            chart: installChart.chart.name,
+            chartVersion: installChart.chart.version,
+            repositoryUrl: installChart.repositoryUrl,
+          }}
+          onClose={() => setInstallChart(null)}
+          onCompleted={() => toast.success("Helm release installed")}
+        />
+      )}
     </div>
   );
 }

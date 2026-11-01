@@ -208,6 +208,7 @@ export function InspectorResourceEditor({
       await invokeRpc<ResourceApplyResult>("resources.apply", {
         ...refParams,
         dryRun: true,
+        mode: "update",
       });
       setValidationSuccess(true);
       if (diff.hasChanges) setViewMode("diff");
@@ -235,6 +236,7 @@ export function InspectorResourceEditor({
       const result = await invokeRpc<ResourceApplyResult>("resources.apply", {
         ...refParams,
         dryRun: false,
+        mode: "update",
       });
       setYaml(result.yaml);
       setBaselineYaml(result.yaml);

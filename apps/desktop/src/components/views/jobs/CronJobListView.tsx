@@ -19,6 +19,7 @@ import { useSettingsStore } from "@/stores/settingsStore";
 import type { CronJobSummary } from "@kubeview/contracts";
 import { EmptyState, TableSkeleton, Tooltip } from "@/components/ui";
 import { CronJobTableToolbar } from "./components/CronJobTableToolbar";
+import { CreateWorkloadModal } from "@/components/modals/CreateWorkloadModal";
 import { CronJobTableRow } from "./components/CronJobTableRow";
 import {
   cronJobMatchesSearch,
@@ -45,6 +46,7 @@ export function CronJobListView() {
     openKubeconfigModal,
     autoRefreshInterval,
   } = useClusterStore();
+  const [createOpen, setCreateOpen] = React.useState(false);
   const [search, setSearch] = React.useState("");
   const deferredSearch = React.useDeferredValue(search);
   const [statusFilter, setStatusFilter] =
@@ -186,6 +188,13 @@ export function CronJobListView() {
         sortedItemsCount={sortedItems.length}
         handleRefresh={handleRefresh}
         isLoading={isCronJobsLoading}
+        onCreate={() => setCreateOpen(true)}
+      />
+      <CreateWorkloadModal
+        kind="CronJob"
+        open={createOpen}
+        namespace={currentNamespace}
+        onClose={() => setCreateOpen(false)}
       />
       {!hasLoadedCronJobsOnce ||
       (isCronJobsLoading && filteredItems.length === 0) ? (

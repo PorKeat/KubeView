@@ -10,6 +10,7 @@ import { useTabStore } from "@/stores/tabStore";
 import type { JobSummary } from "@kubeview/contracts";
 import { EmptyState, TableSkeleton } from "@/components/ui";
 import { JobTableToolbar } from "./components/JobTableToolbar";
+import { CreateWorkloadModal } from "@/components/modals/CreateWorkloadModal";
 import { JobTableRow } from "./components/JobTableRow";
 import { JobEmptyState } from "./components/JobEmptyState";
 import { JobListFooter } from "./components/JobListFooter";
@@ -46,6 +47,7 @@ export function JobListView() {
     openBulkWorkloadAction,
   } = useClusterStore();
   const { openTab } = useTabStore();
+  const [createOpen, setCreateOpen] = React.useState(false);
   const [search, setSearch] = React.useState("");
   const deferredSearch = React.useDeferredValue(search);
   const [statusFilter, setStatusFilter] =
@@ -208,6 +210,13 @@ export function JobListView() {
         sortedItemsCount={sortedItems.length}
         handleRefresh={handleRefresh}
         isLoading={isJobsLoading}
+        onCreate={() => setCreateOpen(true)}
+      />
+      <CreateWorkloadModal
+        kind="Job"
+        open={createOpen}
+        namespace={currentNamespace}
+        onClose={() => setCreateOpen(false)}
       />
       {jobOwnerFilter && (
         <div className="h-9 border-b border-[var(--border)] px-3 flex items-center justify-between gap-3 bg-amber-500/5 text-[11px] font-mono text-amber-700 dark:text-amber-400 shrink-0">

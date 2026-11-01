@@ -5,9 +5,20 @@ import type { HelmRepository } from "@kubeview/contracts";
 interface HelmState {
   repositories: HelmRepository[];
   selectedRepositoryId: string | null;
+  /** Last-used chart repository per release, keyed by namespace/name. */
+  releaseRepositories: Record<string, string>;
   addRepository: (name: string, url: string) => HelmRepository;
   removeRepository: (id: string) => void;
   selectRepository: (id: string | null) => void;
+  rememberReleaseRepository: (
+    namespace: string,
+    name: string,
+    url: string,
+  ) => void;
+}
+
+function releaseKey(namespace: string, name: string): string {
+  return `${namespace}/${name}`;
 }
 
 function createId() {
@@ -22,6 +33,7 @@ export const useHelmStore = create<HelmState>()(
     (set) => ({
       repositories: [],
       selectedRepositoryId: null,
+      releaseRepositories: {},
       addRepository: (name, url) => {
         const repository: HelmRepository = {
           id: createId(),
@@ -43,6 +55,16 @@ export const useHelmStore = create<HelmState>()(
               : state.selectedRepositoryId,
         })),
       selectRepository: (id) => set({ selectedRepositoryId: id }),
+      rememberReleaseRepository: (namespace, name, url) => {
+        const trimmed = url.trim();
+        if (!namespace || !name || !trimmed) return;
+        set((state) => ({
+          releaseRepositories: {
+            ...state.releaseRepositories,
+            [releaseKey(namespace, name)]: trimmed,
+          },
+        }));
+      },
     }),
     {
       name: "kubeview-helm",
@@ -50,6 +72,7 @@ export const useHelmStore = create<HelmState>()(
       partialize: (state) => ({
         repositories: state.repositories,
         selectedRepositoryId: state.selectedRepositoryId,
+        releaseRepositories: state.releaseRepositories,
       }),
     },
   ),

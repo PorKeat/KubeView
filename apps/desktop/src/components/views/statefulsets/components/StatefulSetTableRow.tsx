@@ -20,6 +20,7 @@ import {
 import { useStatefulSetRowActions } from "./row/useStatefulSetRowActions";
 import { StatefulSetActionMenu } from "./row/StatefulSetActionMenu";
 import { StatefulSetExpandedRow } from "./row/StatefulSetExpandedRow";
+import { StatefulSetPartitionModal } from "@/components/modals/StatefulSetPartitionModal";
 
 export interface StatefulSetTableRowProps {
   item: StatefulSetSummary;
@@ -67,6 +68,9 @@ export function StatefulSetTableRow({
     handleScaleWorkload,
     handleRestartWorkload,
     handleDeleteWorkload,
+    showPartitionModal,
+    setShowPartitionModal,
+    handleOpenPartition,
     kubectlCommands,
     handleCopyKubectl,
   } = useStatefulSetRowActions(item, desired);
@@ -266,6 +270,7 @@ export function StatefulSetTableRow({
               onViewPods={handleViewPodsFromMenu}
               onScale={handleScaleWorkload}
               onRestart={handleRestartWorkload}
+              onPartition={handleOpenPartition}
               onDelete={handleDeleteWorkload}
             />
           </div>
@@ -283,6 +288,12 @@ export function StatefulSetTableRow({
           onViewPods={() => onViewPods(item)}
         />
       )}
+
+      <StatefulSetPartitionModal
+        open={showPartitionModal}
+        item={item}
+        onClose={() => setShowPartitionModal(false)}
+      />
     </React.Fragment>
   );
 }

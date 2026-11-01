@@ -47,14 +47,27 @@ Vertical Pod Autoscalers are exposed under Scaling as well. VPA is an addon CRD 
 ### Contracts
 
 - `SimpleResourceItem`, `SimpleResourceListResult`, `SimpleResourceCountsResult`.
-- Helm releases and chart browsing are implemented; install/upgrade/rollback are out of scope.
+- Helm releases and chart browsing are implemented, plus install, upgrade, rollback, and uninstall through the Helm SDK.
 
 ### Desktop
 
-- `SimpleResourcesView`: shared toolbar, search, filters, sorting, refresh, loading/empty/403 states, and a read-only detail drawer.
+- `SimpleResourcesView`: shared toolbar, search, filters, sorting, refresh, loading/empty/403 states, a detail drawer, create/edit YAML, guarded delete, and bulk delete.
 - `simpleResourceConfigs.tsx`: per-kind columns, labels, filters, and empty copy.
 - Sidebar count badges load through `simpleResources.counts`.
-- Helm release rows use the shared resource table; Charts has a dedicated repository browser.
+- Helm release rows use the shared resource table; the drawer exposes upgrade, rollback, and uninstall, and Charts has install actions.
+
+### Mutations
+
+- Generic create is available for the mutable simple-resource kinds through `resources.apply`. Every create dialog offers a guided Form tab plus an Advanced YAML tab: form changes generate the manifest live, and YAML-only edits can be made in the second tab.
+- Kind-specific form definitions live in `resourceCreateForms.ts`; the form covers common name/namespace/labels plus the fields operators need most, while Advanced YAML covers everything else.
+- Job/CronJob keep their dedicated form and YAML tab; Namespace creation has the same two-mode layout.
+- Edit and delete are available for every mutable simple-resource kind; namespace deletion requires typing the namespace name and is excluded from bulk actions.
+- PVCs support expansion through `persistentvolumeclaims.expand`.
+- Workload creation covers Pods, Deployments, ReplicaSets, StatefulSets, DaemonSets, Jobs, and CronJobs.
+- RBAC creation covers Roles, ClusterRoles, RoleBindings, and ClusterRoleBindings.
+- Gateway API creation covers GatewayClass, Gateway, HTTPRoute, and GRPCRoute.
+- Custom resource instances can be created, edited, and deleted from the Custom Resources page or a CRD's instance tab.
+- Bulk delete is available on simple-resource pages and on services, endpoints, ingresses, network policies, configmaps, secrets, persistent volumes, storage classes, and service accounts.
 
 ### Navigation
 
@@ -164,6 +177,6 @@ Notes: discovery-based version selection; unsupported kinds are omitted from nav
 
 ## Out of Scope
 
-- Editing or creating most new resources (except the safe deletes in RC5).
-- Helm install, upgrade, rollback, and repository credential management.
+- Helm repository credential management and OCI chart registries.
 - VolumeAttachments and other resource types not present in the reference sidebar.
+- Batch label editing across arbitrary resource kinds.

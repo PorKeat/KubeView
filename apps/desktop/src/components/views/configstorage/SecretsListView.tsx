@@ -4,6 +4,7 @@ import * as React from "react";
 import { FolderLock } from "lucide-react";
 import type { SecretSummary } from "@kubeview/contracts";
 import { useClusterStore } from "@/stores/clusterStore";
+import { useResourceActions } from "../shared/useResourceActions";
 import {
   NetworkingResourcePage,
   type NetworkingColumn,
@@ -27,6 +28,7 @@ export function SecretsListView() {
     currentNamespace,
     openInspector,
   } = useClusterStore();
+  const { createResource } = useResourceActions();
 
   React.useEffect(() => {
     if (currentContext) void loadSecrets(currentNamespace);
@@ -149,6 +151,8 @@ export function SecretsListView() {
           initialTab: "edit",
         })
       }
+      onCreate={() => createResource("Secret", currentNamespace)}
+      bulkDeleteKind="Secret"
       testIdPrefix="secrets"
       autoRefresh={false}
       codeCommand={(namespace) => `kubectl get secrets -n ${namespace}`}

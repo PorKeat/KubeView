@@ -9,6 +9,7 @@ import {
   AlertTriangle,
   Clock,
   Tag,
+  Plus,
 } from "lucide-react";
 import { motion } from "motion/react";
 import { cn } from "@/lib/utils";
@@ -34,6 +35,7 @@ export interface ResourceTableToolbarProps {
   autoRefreshInterval?: number;
   setAutoRefreshInterval?: (interval: number) => void;
   handleRefresh: () => void;
+  onCreate?: () => void;
   isPodsLoading: boolean;
   density: "comfortable" | "compact";
   onToggleDensity: () => void;
@@ -56,6 +58,7 @@ export function ResourceTableToolbar({
   autoRefreshInterval,
   setAutoRefreshInterval,
   handleRefresh,
+  onCreate,
   isPodsLoading,
   density,
   onToggleDensity,
@@ -258,6 +261,18 @@ export function ResourceTableToolbar({
       <div className="flex max-w-full flex-wrap items-center gap-2 text-xs text-[var(--muted)] shrink-0 order-3 sm:order-none">
         <span className="font-mono text-[11px]">{sortedItemsCount} items</span>
         <div className="h-3 w-[1px] bg-[var(--border)]" />
+        {onCreate && (
+          <Tooltip content="Create Pod">
+            <button
+              onClick={onCreate}
+              className="p-1.5 rounded-lg hover:bg-[var(--surface-hover)] text-[var(--muted)] hover:text-[var(--foreground)] transition-colors cursor-pointer"
+              aria-label="Create Pod"
+              data-testid="pods-create"
+            >
+              <Plus className="w-3.5 h-3.5" />
+            </button>
+          </Tooltip>
+        )}
         <Tooltip content="Refresh list">
           <button
             onClick={handleRefresh}

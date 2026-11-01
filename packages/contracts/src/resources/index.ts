@@ -9,5 +9,6 @@ export * from "./access.js";
 export * from "./pod-diagnosis.js";
 export * from "./permissions.js";
 export * from "./resource-actions.js";
+export * from "./operations.js";
 export * from "./gitops.js";
 export * from "./yaml-watch.js";

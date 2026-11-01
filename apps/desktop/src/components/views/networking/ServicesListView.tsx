@@ -346,6 +346,7 @@ export function ServicesListView() {
         deleteResource("Service", service.name, service.namespace)
       }
       onCreate={() => createResource("Service", currentNamespace)}
+      bulkDeleteKind="Service"
       testIdPrefix="services"
       codeCommand={(namespace) => `kubectl get services -n ${namespace}`}
       emptyDescription="Services expose selected pods through a stable virtual IP, node port, or external load balancer."

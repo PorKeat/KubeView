@@ -9,6 +9,7 @@ import {
   Copy,
   RotateCw,
   SlidersHorizontal,
+  Split,
   Trash2,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -27,6 +28,7 @@ export function StatefulSetActionMenu({
   onViewPods,
   onScale,
   onRestart,
+  onPartition,
   onDelete,
 }: {
   open: boolean;
@@ -40,6 +42,7 @@ export function StatefulSetActionMenu({
   onViewPods: () => void;
   onScale: () => void;
   onRestart: () => void;
+  onPartition: () => void;
   onDelete: () => void;
 }) {
   return (
@@ -107,6 +110,16 @@ export function StatefulSetActionMenu({
                     : "Patch pod template and roll pods by strategy"
               }
               onClick={onRestart}
+            />
+            <RowAction
+              icon={Split}
+              title="Set Update Partition"
+              detail={
+                item.partition > 0
+                  ? `Partitioned rollout at ${item.partition}; pin or advance pods`
+                  : "Stage a partitioned rollout across pod ordinals"
+              }
+              onClick={onPartition}
             />
             <RowAction
               icon={Trash2}

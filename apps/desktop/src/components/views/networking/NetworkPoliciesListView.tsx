@@ -264,6 +264,7 @@ export function NetworkPoliciesListView() {
         deleteResource("NetworkPolicy", policy.name, policy.namespace)
       }
       onCreate={() => createResource("NetworkPolicy", currentNamespace)}
+      bulkDeleteKind="NetworkPolicy"
       testIdPrefix="network-policies"
       codeCommand={(namespace) => `kubectl get networkpolicies -n ${namespace}`}
       emptyDescription="NetworkPolicies select pods and declare which ingress and egress traffic is allowed."

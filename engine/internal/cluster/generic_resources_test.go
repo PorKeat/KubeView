@@ -6,6 +6,7 @@ import (
 
 	appsv1 "k8s.io/api/apps/v1"
 	authorizationv1 "k8s.io/api/authorization/v1"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -159,6 +160,62 @@ func TestApplyGenericResourceCreatesAndUpdates(t *testing.T) {
 	}
 	if replicas, _, _ := unstructured.NestedInt64(applied.Object, "spec", "replicas"); replicas != 5 {
 		t.Fatalf("expected updated replicas, got %d", replicas)
+	}
+}
+
+func TestApplyGenericResourceCreateModeRejectsExisting(t *testing.T) {
+	manager, _ := newGenericResourceTestManager(t)
+	target, err := manager.ResolveGenericResource(
+		context.Background(), "test", "apps/v1", "Deployment", "deployments", "apps",
+	)
+	if err != nil {
+		t.Fatalf("resolve: %v", err)
+	}
+
+	existing := &unstructured.Unstructured{Object: map[string]interface{}{
+		"apiVersion": "apps/v1",
+		"kind":       "Deployment",
+		"metadata":   map[string]interface{}{"name": "web", "namespace": "apps"},
+		"spec":       map[string]interface{}{"replicas": int64(3)},
+	}}
+	if _, _, err := manager.ApplyGenericResource(
+		context.Background(), "test", existing, *target, false, "create",
+	); !apierrors.IsAlreadyExists(err) {
+		t.Fatalf("expected AlreadyExists for create-only apply, got %v", err)
+	}
+
+	fresh := &unstructured.Unstructured{Object: map[string]interface{}{
+		"apiVersion": "apps/v1",
+		"kind":       "Deployment",
+		"metadata":   map[string]interface{}{"name": "api", "namespace": "apps"},
+		"spec":       map[string]interface{}{"replicas": int64(1)},
+	}}
+	applied, created, err := manager.ApplyGenericResource(
+		context.Background(), "test", fresh, *target, false, "create",
+	)
+	if err != nil || !created || applied.GetName() != "api" {
+		t.Fatalf("expected create-only apply to create api: created=%v err=%v", created, err)
+	}
+}
+
+func TestApplyGenericResourceUpdateModeRequiresExisting(t *testing.T) {
+	manager, _ := newGenericResourceTestManager(t)
+	target, err := manager.ResolveGenericResource(
+		context.Background(), "test", "apps/v1", "Deployment", "deployments", "apps",
+	)
+	if err != nil {
+		t.Fatalf("resolve: %v", err)
+	}
+	missing := &unstructured.Unstructured{Object: map[string]interface{}{
+		"apiVersion": "apps/v1",
+		"kind":       "Deployment",
+		"metadata":   map[string]interface{}{"name": "missing", "namespace": "apps"},
+		"spec":       map[string]interface{}{"replicas": int64(1)},
+	}}
+	if _, _, err := manager.ApplyGenericResource(
+		context.Background(), "test", missing, *target, false, "update",
+	); !apierrors.IsNotFound(err) {
+		t.Fatalf("expected NotFound for update-only apply, got %v", err)
 	}
 }
 

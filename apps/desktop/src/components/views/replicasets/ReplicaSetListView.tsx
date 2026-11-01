@@ -20,6 +20,7 @@ import {
 } from "./components/ReplicaSetTableHeader";
 import { BulkWorkloadToolbar } from "@/components/views/shared/BulkWorkloadToolbar";
 import { useWorkloadSelection } from "@/components/views/shared/useWorkloadSelection";
+import { useResourceActions } from "@/components/views/shared/useResourceActions";
 import {
   replicaSetMatchesSearch,
   replicaSetMatchesStatus,
@@ -49,6 +50,7 @@ export function ReplicaSetListView() {
     openBulkWorkloadAction,
   } = useClusterStore();
   const { openTab } = useTabStore();
+  const { createResource } = useResourceActions();
 
   const [search, setSearch] = React.useState("");
   const deferredSearch = React.useDeferredValue(search);
@@ -229,6 +231,7 @@ export function ReplicaSetListView() {
         setStatusFilter={setStatusFilter}
         sortedItemsCount={sortedItems.length}
         handleRefresh={handleRefresh}
+        onCreate={() => createResource("ReplicaSet", currentNamespace)}
         isLoading={isReplicaSetsLoading}
       />
 

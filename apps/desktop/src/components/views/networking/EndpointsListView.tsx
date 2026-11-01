@@ -338,6 +338,7 @@ export function EndpointsListView() {
         deleteResource("Endpoints", item.name, item.namespace)
       }
       onCreate={() => createResource("Endpoints", currentNamespace)}
+      bulkDeleteKind="Endpoints"
       testIdPrefix="endpoints"
       codeCommand={(namespace) => `kubectl get endpoints -n ${namespace}`}
       emptyDescription="Endpoints track the ready pod addresses behind each Service selector."

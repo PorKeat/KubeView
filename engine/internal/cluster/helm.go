@@ -149,48 +149,70 @@ type HelmChartsResult struct {
 	TotalCount    int                `json:"totalCount"`
 }
 
+type helmIndexEntry struct {
+	Name        string   `yaml:"name"`
+	Version     string   `yaml:"version"`
+	AppVersion  string   `yaml:"appVersion"`
+	Description string   `yaml:"description"`
+	URLs        []string `yaml:"urls"`
+	Digest      string   `yaml:"digest"`
+}
+
 type helmIndexFile struct {
-	Entries map[string][]struct {
-		Name        string `yaml:"name"`
-		Version     string `yaml:"version"`
-		AppVersion  string `yaml:"appVersion"`
-		Description string `yaml:"description"`
-	} `yaml:"entries"`
+	Entries map[string][]helmIndexEntry `yaml:"entries"`
+}
+
+func helmRepositoryURLs(repositoryURL string) (baseURL, indexURL string, err error) {
+	parsed, parseErr := url.Parse(strings.TrimSpace(repositoryURL))
+	if parseErr != nil || (parsed.Scheme != "http" && parsed.Scheme != "https") || parsed.Host == "" {
+		return "", "", fmt.Errorf("repository URL must be http:// or https://")
+	}
+	trimmed := strings.TrimRight(parsed.String(), "/")
+	indexURL = trimmed
+	if !strings.HasSuffix(strings.ToLower(indexURL), ".yaml") && !strings.HasSuffix(strings.ToLower(indexURL), ".yml") {
+		indexURL += "/index.yaml"
+	}
+	baseURL = strings.TrimSuffix(trimmed, "/index.yaml")
+	baseURL = strings.TrimSuffix(baseURL, "/index.yml")
+	return baseURL, indexURL, nil
+}
+
+func fetchHelmIndex(ctx context.Context, repositoryURL string) (*helmIndexFile, string, error) {
+	baseURL, indexURL, err := helmRepositoryURLs(repositoryURL)
+	if err != nil {
+		return nil, "", err
+	}
+	request, err := http.NewRequestWithContext(ctx, http.MethodGet, indexURL, nil)
+	if err != nil {
+		return nil, "", fmt.Errorf("invalid chart repository URL: %w", err)
+	}
+	httpClient := &http.Client{Timeout: 15 * time.Second}
+	response, err := httpClient.Do(request)
+	if err != nil {
+		return nil, "", fmt.Errorf("failed to fetch chart repository: %w", err)
+	}
+	defer response.Body.Close()
+	if response.StatusCode < 200 || response.StatusCode >= 300 {
+		return nil, "", fmt.Errorf("chart repository returned HTTP %d", response.StatusCode)
+	}
+
+	body, err := io.ReadAll(io.LimitReader(response.Body, 10<<20))
+	if err != nil {
+		return nil, "", fmt.Errorf("failed to read chart index: %w", err)
+	}
+	index := &helmIndexFile{}
+	if err := yaml.Unmarshal(body, index); err != nil {
+		return nil, "", fmt.Errorf("invalid Helm index: %w", err)
+	}
+	return index, baseURL, nil
 }
 
 // FetchHelmCharts downloads and parses a Helm repository index. It only
 // accepts HTTP(S) URLs, caps the response size, and never writes to disk.
 func FetchHelmCharts(ctx context.Context, repositoryURL string) (*HelmChartsResult, error) {
-	parsed, err := url.Parse(strings.TrimSpace(repositoryURL))
-	if err != nil || (parsed.Scheme != "http" && parsed.Scheme != "https") || parsed.Host == "" {
-		return nil, fmt.Errorf("repository URL must be http:// or https://")
-	}
-	indexURL := strings.TrimRight(parsed.String(), "/")
-	if !strings.HasSuffix(strings.ToLower(indexURL), ".yaml") && !strings.HasSuffix(strings.ToLower(indexURL), ".yml") {
-		indexURL += "/index.yaml"
-	}
-
-	request, err := http.NewRequestWithContext(ctx, http.MethodGet, indexURL, nil)
+	index, _, err := fetchHelmIndex(ctx, repositoryURL)
 	if err != nil {
-		return nil, fmt.Errorf("invalid chart repository URL: %w", err)
-	}
-	httpClient := &http.Client{Timeout: 15 * time.Second}
-	response, err := httpClient.Do(request)
-	if err != nil {
-		return nil, fmt.Errorf("failed to fetch chart repository: %w", err)
-	}
-	defer response.Body.Close()
-	if response.StatusCode < 200 || response.StatusCode >= 300 {
-		return nil, fmt.Errorf("chart repository returned HTTP %d", response.StatusCode)
-	}
-
-	body, err := io.ReadAll(io.LimitReader(response.Body, 10<<20))
-	if err != nil {
-		return nil, fmt.Errorf("failed to read chart index: %w", err)
-	}
-	index := &helmIndexFile{}
-	if err := yaml.Unmarshal(body, index); err != nil {
-		return nil, fmt.Errorf("invalid Helm index: %w", err)
+		return nil, err
 	}
 
 	charts := make([]HelmChartSummary, 0)

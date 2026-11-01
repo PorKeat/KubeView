@@ -8,6 +8,35 @@ import type {
 
 const MOCK_MODE = process.env.NEXT_PUBLIC_KUBEVIEW_MOCK === "1";
 const RPC_TIMEOUT_MS = 30_000;
+const LONG_RPC_TIMEOUT_MS = 60_000;
+const HELM_LIFECYCLE_TIMEOUT_MS = 35 * 60_000;
+const DRAIN_TIMEOUT_MS = 20 * 60_000;
+
+function rpcTimeoutMs(method: string): number {
+  if (
+    method === "helm.install" ||
+    method === "helm.upgrade" ||
+    method === "helm.rollback" ||
+    method === "helm.uninstall"
+  ) {
+    return HELM_LIFECYCLE_TIMEOUT_MS;
+  }
+  if (method === "nodes.drain") return DRAIN_TIMEOUT_MS;
+  if (method === "pods.move") return 2 * 60_000;
+  if (
+    method.startsWith("helm.") ||
+    method === "deployments.rollback" ||
+    method === "deployments.rolloutHistory" ||
+    method === "statefulsets.partition" ||
+    method === "jobs.retry" ||
+    method === "jobs.clone" ||
+    method === "persistentvolumeclaims.expand" ||
+    method.startsWith("resources.")
+  ) {
+    return LONG_RPC_TIMEOUT_MS;
+  }
+  return RPC_TIMEOUT_MS;
+}
 
 const MUTATING_METHODS = new Set([
   "configmaps.apply",
@@ -38,13 +67,51 @@ const MUTATING_METHODS = new Set([
   "resources.delete",
 ]);
 
+const MUTATING_ACTIONS = new Set([
+  "apply",
+  "create",
+  "delete",
+  "update",
+  "scale",
+  "restart",
+  "suspend",
+  "resume",
+  "trigger",
+  "pause",
+  "rollback",
+  "upgrade",
+  "install",
+  "uninstall",
+  "resize",
+  "expand",
+  "retry",
+  "clone",
+  "partition",
+  "cordon",
+  "uncordon",
+  "drain",
+  "taint",
+  "label",
+  "exec",
+  "move",
+  "stop",
+  "start",
+  "launchDebugContainer",
+]);
+
+function isMutatingMethod(method: string): boolean {
+  if (MUTATING_METHODS.has(method)) return true;
+  const action = method.slice(method.lastIndexOf(".") + 1);
+  return MUTATING_ACTIONS.has(action);
+}
+
 function safetyError(method: string, params: unknown): Error | null {
   const settings = useSettingsStore.getState();
   const contextName =
     params && typeof params === "object" && "contextName" in params
       ? String((params as { contextName?: unknown }).contextName ?? "")
       : "";
-  const mutating = MUTATING_METHODS.has(method);
+  const mutating = isMutatingMethod(method);
   const isProtected =
     contextName.length > 0 &&
     (settings.protectedContexts.includes(contextName) ||
@@ -118,7 +185,7 @@ export async function invokeRpc<T>(
 
   // Browser preview: proxy to the local Next.js route. Mock data is opt-in only.
   const controller = new AbortController();
-  const timeout = setTimeout(() => controller.abort(), RPC_TIMEOUT_MS);
+  const timeout = setTimeout(() => controller.abort(), rpcTimeoutMs(method));
   let res: Response;
   try {
     res = await fetch("/api/rpc", {

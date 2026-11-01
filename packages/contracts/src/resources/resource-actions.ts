@@ -17,6 +17,7 @@ export interface ResourceApplyParams {
   dryRun?: boolean;
   name?: string;
   namespace?: string;
+  mode?: "create" | "update" | "upsert";
 }
 
 export interface ResourceDeleteParams extends GenericResourceRef {

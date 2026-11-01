@@ -278,6 +278,7 @@ export function IngressTable({
         if (target) openDeleteResource(target);
       }}
       onCreate={() => createResource("Ingress", currentNamespace)}
+      bulkDeleteKind="Ingress"
       testIdPrefix="ingresses"
       codeCommand={(namespace) => `kubectl get ingress -n ${namespace}`}
       emptyDescription="Ingresses route external HTTP and HTTPS traffic to Services inside the cluster."

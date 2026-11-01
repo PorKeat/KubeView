@@ -176,6 +176,10 @@ test.describe("KubeView generic resource editor", () => {
     await page.locator('[data-testid="gateways-view-tab"]').click();
     await expect(page.locator('[data-testid="gateways-create"]')).toBeVisible();
     await page.locator('[data-testid="gateways-create"]').click();
+    await expect(
+      page.locator('[data-testid="gateway-create-picker"]'),
+    ).toBeVisible();
+    await page.locator('[data-testid="gateway-create-Gateway"]').click();
     await expect(modal.getByText("Create Gateway")).toBeVisible();
   });
 

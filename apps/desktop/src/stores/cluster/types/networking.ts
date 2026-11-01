@@ -113,6 +113,8 @@ export interface NetworkingActionsSlice {
   resourceEditorValidationSuccess: boolean;
   resourceEditorError: string | null;
   deleteResourceTarget: ResourceEditorTarget | null;
+  /** Incremented after any generic resource apply/delete so passive views reload. */
+  resourceRevision: number;
 
   // Service diagnostics
   diagnosticsTarget: ServiceDiagnosticsTarget | null;

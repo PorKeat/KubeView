@@ -4,6 +4,7 @@ import * as React from "react";
 import { FileCode } from "lucide-react";
 import type { ConfigMapSummary } from "@kubeview/contracts";
 import { useClusterStore } from "@/stores/clusterStore";
+import { useResourceActions } from "../shared/useResourceActions";
 import {
   NetworkingResourcePage,
   type NetworkingColumn,
@@ -27,6 +28,7 @@ export function ConfigMapsListView() {
     currentNamespace,
     openInspector,
   } = useClusterStore();
+  const { createResource } = useResourceActions();
 
   React.useEffect(() => {
     if (currentContext) void loadConfigMaps(currentNamespace);
@@ -145,6 +147,8 @@ export function ConfigMapsListView() {
           initialTab: "edit",
         })
       }
+      onCreate={() => createResource("ConfigMap", currentNamespace)}
+      bulkDeleteKind="ConfigMap"
       testIdPrefix="configmaps"
       autoRefresh={false}
       codeCommand={(namespace) => `kubectl get configmaps -n ${namespace}`}

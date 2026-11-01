@@ -36,7 +36,7 @@ func MapError(err error, fallbackCode interface{}, fallbackMessage string) *ipc.
 		case shared.KindUnavailable:
 			code = ipc.ErrK8sConnFailed
 		case shared.KindConflict:
-			code = ipc.ErrCodeInvalidRequest
+			code = ipc.ErrK8sConflict
 		case shared.KindInternal:
 			code = ipc.ErrCodeInternalError
 		}

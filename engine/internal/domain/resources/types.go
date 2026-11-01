@@ -58,6 +58,10 @@ type ApplyRequest struct {
 	Name      string
 	Namespace string
 	DryRun    bool
+	// Mode controls whether apply may create, update, or both:
+	// "create" rejects an existing object; "update" requires an existing
+	// object; empty or "upsert" keeps the legacy both-ways behavior.
+	Mode string
 }
 
 // Validate checks the request fields that can be validated without parsing
@@ -66,7 +70,12 @@ func (request ApplyRequest) Validate() error {
 	if strings.TrimSpace(request.YAML) == "" {
 		return shared.Validation("yaml is required")
 	}
-	return nil
+	switch strings.ToLower(strings.TrimSpace(request.Mode)) {
+	case "", "create", "update", "upsert":
+		return nil
+	default:
+		return shared.Validation(`mode must be "create", "update", or "upsert"`)
+	}
 }
 
 // ApplyResult is the normalized result of a create or update.

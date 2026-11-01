@@ -19,6 +19,7 @@ import {
 } from "./components/DaemonSetTableHeader";
 import { BulkWorkloadToolbar } from "@/components/views/shared/BulkWorkloadToolbar";
 import { useWorkloadSelection } from "@/components/views/shared/useWorkloadSelection";
+import { useResourceActions } from "@/components/views/shared/useResourceActions";
 import {
   daemonSetMatchesSearch,
   daemonSetMatchesStatus,
@@ -48,6 +49,7 @@ export function DaemonSetListView() {
     openBulkWorkloadAction,
   } = useClusterStore();
   const { openTab } = useTabStore();
+  const { createResource } = useResourceActions();
 
   const [search, setSearch] = React.useState("");
   const deferredSearch = React.useDeferredValue(search);
@@ -223,6 +225,7 @@ export function DaemonSetListView() {
         setStatusFilter={setStatusFilter}
         sortedItemsCount={sortedItems.length}
         handleRefresh={handleRefresh}
+        onCreate={() => createResource("DaemonSet", currentNamespace)}
         isLoading={isDaemonSetsLoading}
       />
       <BulkWorkloadToolbar

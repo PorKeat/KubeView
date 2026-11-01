@@ -33,6 +33,9 @@ type SimpleResourceListResult struct {
 	// Available is set only for kinds backed by optional APIs (CRDs). A nil
 	// value means the kind is a built-in API and is assumed to be available.
 	Available *bool `json:"available,omitempty"`
+	// APIVersion is the served version used for CRD-backed kinds so create and
+	// edit actions target the version the cluster actually serves.
+	APIVersion string `json:"apiVersion,omitempty"`
 }
 
 func normalizeResourceNamespace(namespace string) string {

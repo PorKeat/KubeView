@@ -3,3 +3,4 @@ export * from "./cluster";
 export * from "./config";
 export * from "./permissions";
 export * from "./gitops";
+export * from "./jobs";

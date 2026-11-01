@@ -5,6 +5,7 @@ import {
   Search,
   X,
   RefreshCw,
+  Plus,
   AlertTriangle,
   Clock,
   CheckCircle2,
@@ -32,6 +33,7 @@ export function JobTableToolbar({
   sortedItemsCount,
   handleRefresh,
   isLoading,
+  onCreate,
 }: {
   search: string;
   setSearch: (value: string) => void;
@@ -42,6 +44,7 @@ export function JobTableToolbar({
   sortedItemsCount: number;
   handleRefresh: () => void;
   isLoading: boolean;
+  onCreate?: () => void;
 }) {
   const base = React.useMemo(
     () =>
@@ -165,6 +168,19 @@ export function JobTableToolbar({
       <div className="flex max-w-full flex-wrap items-center gap-2 text-xs text-[var(--muted)] shrink-0 order-3 sm:order-none">
         <span className="font-mono text-[11px]">{sortedItemsCount} items</span>
         <div className="h-3 w-[1px] bg-[var(--border)]" />
+        {onCreate && (
+          <Tooltip content="Create Job">
+            <button
+              type="button"
+              data-testid="jobs-create"
+              onClick={onCreate}
+              className="p-1.5 rounded-lg hover:bg-[var(--surface-hover)] text-[var(--muted)] hover:text-[var(--foreground)] transition-colors cursor-pointer"
+              aria-label="Create Job"
+            >
+              <Plus className="w-3.5 h-3.5" />
+            </button>
+          </Tooltip>
+        )}
         <Tooltip content="Refresh jobs">
           <button
             onClick={handleRefresh}

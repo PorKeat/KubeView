@@ -176,7 +176,29 @@ export interface StreamEvent<T = unknown> {
 | `portForward.start` | `{ clusterId, namespace, podName, targetPort: number, localPort?: number }` | `{ streamId: string, localPort: number }` | Establishes local port-forward tunnel. |
 | `portForward.stop`  | `{ streamId: string }`                                                      | `{ stopped: boolean }`                    | Tears down active port-forward tunnel. |
 
-### 4.9 Domain: `metrics`
+### 4.9 Domain: `operations`
+
+Operational RPCs are explicit, resource-scoped, and never accept arbitrary commands.
+
+| Method                            | Params                                                                        | Result                       |
+| :-------------------------------- | :---------------------------------------------------------------------------- | :--------------------------- |
+| `nodes.list` / `nodes.get`        | `contextName`, `nodeName?`                                                    | Node summary / detail        |
+| `nodes.cordon` / `nodes.uncordon` | `contextName`, `nodeName`                                                     | Updated node                 |
+| `nodes.drain`                     | `contextName`, `nodeName`, `force?`, `deleteEmptyDirData?`, `timeoutSeconds?` | Evicted/skipped/failed lists |
+| `nodes.taint` / `nodes.label`     | `contextName`, `nodeName`, `taints` / `labels`+`removeLabels`                 | Updated node                 |
+| `deployments.rolloutHistory`      | `contextName`, `namespace`, `name`                                            | ReplicaSet revisions         |
+| `deployments.rollback`            | `contextName`, `namespace`, `name`, `revision`                                | Success                      |
+| `deployments.pause` / `.resume`   | `contextName`, `namespace`, `name`                                            | Success                      |
+| `statefulsets.partition`          | `contextName`, `namespace`, `name`, `partition`                               | Success                      |
+| `jobs.retry` / `jobs.clone`       | `contextName`, `namespace`, `name`, `newName?`                                | Created Job                  |
+| `persistentvolumeclaims.expand`   | `contextName`, `namespace`, `name`, `storage`                                 | New storage size             |
+| `helm.install` / `.upgrade`       | release, namespace, repository URL, chart, version, values                    | Release summary              |
+| `helm.rollback` / `.uninstall`    | release, namespace, revision                                                  | Release summary / success    |
+| `helm.history` / `.values`        | release, namespace                                                            | Revision list / values YAML  |
+
+All mutating methods honor the desktop's read-only mode, protected-context guardrails, and RBAC 403 mapping.
+
+### 4.10 Domain: `metrics`
 
 | Method            | Params                                                                           | Result                              | Description                          |
 | :---------------- | :------------------------------------------------------------------------------- | :---------------------------------- | :----------------------------------- |

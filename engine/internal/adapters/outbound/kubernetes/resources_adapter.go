@@ -94,14 +94,20 @@ func (adapter *ResourcesAdapter) Apply(
 
 	unstructured.RemoveNestedField(object.Object, "metadata", "managedFields")
 	unstructured.RemoveNestedField(object.Object, "status")
+	if strings.EqualFold(strings.TrimSpace(request.Mode), "create") {
+		stripCreateServerFields(object)
+	}
 	applied, created, err := adapter.manager.ApplyGenericResource(
-		ctx, contextName, object, *target, request.DryRun,
+		ctx, contextName, object, *target, request.DryRun, request.Mode,
 	)
 	if err != nil {
 		return nil, mapResourceError("apply", domainresources.Ref{
 			APIVersion: apiVersion, Kind: kind, Resource: target.GVR.Resource, Name: name,
 			Namespace: object.GetNamespace(),
 		}, err)
+	}
+	if !request.DryRun {
+		adapter.manager.InvalidateOverviewCache(contextName)
 	}
 
 	yamlText, err := marshalResource(applied, true)
@@ -139,6 +145,7 @@ func (adapter *ResourcesAdapter) Delete(
 	if err := adapter.manager.DeleteGenericResource(ctx, contextName, toClusterRef(ref)); err != nil {
 		return mapResourceError("delete", ref, err)
 	}
+	adapter.manager.InvalidateOverviewCache(contextName)
 	return nil
 }
 
@@ -264,6 +271,22 @@ func toClusterRef(ref domainresources.Ref) legacycluster.GenericResourceRef {
 		Name:       strings.TrimSpace(ref.Name),
 		Namespace:  strings.TrimSpace(ref.Namespace),
 	}
+}
+
+// stripCreateServerFields removes fields the API server assigns. A create
+// manifest may come from a copied/exported object, and carrying these fields
+// into Create is either rejected or misleading.
+func stripCreateServerFields(object *unstructured.Unstructured) {
+	for _, field := range [][]string{
+		{"metadata", "uid"},
+		{"metadata", "resourceVersion"},
+		{"metadata", "creationTimestamp"},
+		{"metadata", "generation"},
+		{"metadata", "managedFields"},
+	} {
+		unstructured.RemoveNestedField(object.Object, field...)
+	}
+	unstructured.RemoveNestedField(object.Object, "status")
 }
 
 func mapResourceError(action string, ref domainresources.Ref, err error) error {

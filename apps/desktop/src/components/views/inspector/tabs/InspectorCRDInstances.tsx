@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { Boxes, RefreshCw } from "lucide-react";
+import { Boxes, Pencil, Plus, RefreshCw, Trash2 } from "lucide-react";
 import { invokeRpc } from "@/lib/ipc";
 import { useClusterStore } from "@/stores/clusterStore";
 import { EmptyState, StatusBeacon } from "@/components/ui";
@@ -13,6 +13,13 @@ import type {
 export function InspectorCRDInstances({ crd }: { crd: CRDSummary }) {
   const currentContext = useClusterStore((state) => state.currentContext);
   const currentNamespace = useClusterStore((state) => state.currentNamespace);
+  const openResourceEditor = useClusterStore(
+    (state) => state.openResourceEditor,
+  );
+  const openDeleteResource = useClusterStore(
+    (state) => state.openDeleteResource,
+  );
+  const resourceRevision = useClusterStore((state) => state.resourceRevision);
   const [items, setItems] = React.useState<ListCustomResourcesResult["items"]>(
     [],
   );
@@ -22,6 +29,45 @@ export function InspectorCRDInstances({ crd }: { crd: CRDSummary }) {
     crd.versions.find((entry) => entry.storage)?.name ??
     crd.versions.find((entry) => entry.served)?.name ??
     crd.versions[0]?.name;
+
+  const createInstance = () => {
+    if (!version) return;
+    void openResourceEditor({
+      apiVersion: `${crd.group}/${version}`,
+      kind: crd.kind,
+      resource: crd.plural,
+      name: "",
+      namespace:
+        crd.scope === "Namespaced"
+          ? currentNamespace === "all"
+            ? "default"
+            : currentNamespace
+          : "",
+      mode: "create",
+    });
+  };
+
+  const instanceTarget = (item: {
+    name: string;
+    namespace?: string;
+  }): {
+    apiVersion: string;
+    kind: string;
+    resource: string;
+    name: string;
+    namespace: string;
+    mode: "edit";
+  } | null => {
+    if (!version) return null;
+    return {
+      apiVersion: `${crd.group}/${version}`,
+      kind: crd.kind,
+      resource: crd.plural,
+      name: item.name,
+      namespace: item.namespace ?? "",
+      mode: "edit",
+    };
+  };
 
   const load = React.useCallback(async () => {
     if (!currentContext || !version) {
@@ -58,6 +104,7 @@ export function InspectorCRDInstances({ crd }: { crd: CRDSummary }) {
     crd.scope,
     currentContext,
     currentNamespace,
+    resourceRevision,
     version,
   ]);
 
@@ -88,6 +135,11 @@ export function InspectorCRDInstances({ crd }: { crd: CRDSummary }) {
         variant="empty"
         title="No custom resources"
         description={`No ${crd.kind} objects exist in this scope.`}
+        action={
+          version
+            ? { label: `Create ${crd.kind}`, onClick: createInstance }
+            : undefined
+        }
       />
     );
   }
@@ -102,7 +154,21 @@ export function InspectorCRDInstances({ crd }: { crd: CRDSummary }) {
           <Boxes className="h-3.5 w-3.5 text-[var(--accent)]" />
           {crd.kind}
         </span>
-        <span>{items.length} items</span>
+        <span className="flex items-center gap-2">
+          {items.length} items
+          {version && (
+            <button
+              type="button"
+              data-testid="crd-instance-create"
+              onClick={createInstance}
+              aria-label={`Create ${crd.kind}`}
+              className="inline-flex cursor-pointer items-center gap-1 rounded border border-[var(--border)] px-1.5 py-0.5 text-[9px] normal-case text-[var(--foreground)] transition-colors hover:bg-[var(--surface-hover)]"
+            >
+              <Plus className="h-3 w-3" />
+              Create
+            </button>
+          )}
+        </span>
       </div>
       <div className="divide-y divide-[var(--border)]">
         {items.map((item) => (
@@ -127,6 +193,34 @@ export function InspectorCRDInstances({ crd }: { crd: CRDSummary }) {
               <span className="font-mono text-[10px] text-[var(--muted)]">
                 {item.age}
               </span>
+              <div className="flex items-center gap-0.5">
+                <button
+                  type="button"
+                  data-testid="crd-instance-edit"
+                  aria-label={`Edit ${item.name}`}
+                  title={`Edit ${item.name}`}
+                  onClick={() => {
+                    const target = instanceTarget(item);
+                    if (target) void openResourceEditor(target);
+                  }}
+                  className="cursor-pointer rounded p-1 text-[var(--muted)] transition-colors hover:bg-[var(--surface-hover)] hover:text-[var(--foreground)]"
+                >
+                  <Pencil className="h-3 w-3" />
+                </button>
+                <button
+                  type="button"
+                  data-testid="crd-instance-delete"
+                  aria-label={`Delete ${item.name}`}
+                  title={`Delete ${item.name}`}
+                  onClick={() => {
+                    const target = instanceTarget(item);
+                    if (target) openDeleteResource(target);
+                  }}
+                  className="cursor-pointer rounded p-1 text-[var(--muted)] transition-colors hover:bg-rose-500/10 hover:text-rose-500"
+                >
+                  <Trash2 className="h-3 w-3" />
+                </button>
+              </div>
             </div>
           </div>
         ))}
