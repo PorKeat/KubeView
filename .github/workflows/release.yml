@@ -261,7 +261,7 @@ jobs:
           VERSION="${RELEASE_TAG#v}"
           EXE="$(find dist -name '*.exe' | head -1)"
           SHA="$(sha256sum "${EXE}" | awk '{print $1}')"
-          URL="https://kubeview.sengporkeat.com/downloads/KubeView_${VERSION}_x64-setup.exe"
+          URL="https://github.com/PorKeat/KubeView/releases/download/v${VERSION}/KubeView_${VERSION}_x64-setup.exe"
           git clone --depth 1 "https://x-access-token:${DISTRIBUTION_TOKEN}@github.com/PorKeat/scoop-kubeview.git" scoop
           cd scoop
           jq --arg version "${VERSION}" --arg url "${URL}" --arg hash "${SHA}" \
