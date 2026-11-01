@@ -30,12 +30,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Critical deletes (PVCs, webhook configs, admission policies, namespaces) require typing the resource name, and critical kinds are excluded from bulk delete.
 - Switching from Advanced YAML back to Form now asks before discarding YAML-only edits.
-- Helm remembers the chart repository for each release, installs into the selected namespace from Charts, and verifies chart digests when the index provides one.
+- Helm remembers the chart repository for each release, installs into the selected namespace from Charts, verifies chart digests when the index provides one, and uses Helm 3.22.1 to avoid vulnerable containerd/ORAS dependencies.
 - Custom resource instances can now be edited and deleted from a CRD's instance tab.
 - Every create dialog now offers a guided **Form** tab and an **Advanced YAML** tab. Form changes generate the manifest live, so users can start with fields and switch to YAML for anything not surfaced.
 - Namespace creation gained the same Form / Advanced YAML tabs.
 - Job and CronJob creation keep their dedicated form with an Advanced YAML tab.
-- Helm SDK (`helm.sh/helm/v3` v3.17.4) now backs release lifecycle operations in the Go engine.
+- Helm SDK (`helm.sh/helm/v3` v3.22.1) now backs release lifecycle operations in the Go engine.
 - Resource starter manifests now cover every creatable kind.
 
 ## [0.2.1] - 2026-10-30
