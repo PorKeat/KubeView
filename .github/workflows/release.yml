@@ -225,6 +225,7 @@ jobs:
           VERSION="${RELEASE_TAG#v}"
           git clone --depth 1 "https://x-access-token:${DISTRIBUTION_TOKEN}@github.com/PorKeat/KubeView-landing.git" landing
           mkdir -p landing/public/downloads landing/public/updates
+          find landing/public/downloads -maxdepth 1 -type f -name 'KubeView_*' -delete
           find dist -type f \( -name '*.dmg' -o -name '*.exe' -o -name '*.AppImage' -o -name '*.deb' \) -exec cp {} landing/public/downloads/ \;
           cp dist/latest.json landing/public/updates/latest.json
           sed -i -E "s/version: \"[0-9.]+\"/version: \"${VERSION}\"/" landing/src/lib/site.ts

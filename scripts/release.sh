@@ -616,6 +616,9 @@ fs.writeFileSync(file, text);
 NODE
 
   mkdir -p "$dir/public/downloads" "$dir/public/updates"
+  # The landing site only serves the current version; keeping every historical
+  # installer makes the Vercel deployment exceed practical upload sizes.
+  find "$dir/public/downloads" -maxdepth 1 -type f -name 'KubeView_*' -delete
   cp "$ASSET_DIR/KubeView_${VERSION}_universal.dmg" "$dir/public/downloads/"
   cp "$ASSET_DIR/KubeView_${VERSION}_x64-setup.exe" "$dir/public/downloads/"
   cp "$ASSET_DIR/KubeView_${VERSION}_amd64.AppImage" "$dir/public/downloads/"
