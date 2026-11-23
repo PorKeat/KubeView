@@ -62,4 +62,30 @@ func registerSimpleResourceHandlers(server *ipc.Server, mgr *cluster.Manager) {
 		defer cancel()
 		return mgr.CountSimpleResources(ctx, p.ContextName), nil
 	})
+
+	// Method: sidebar.counts
+	server.Register("sidebar.counts", func(params json.RawMessage) (interface{}, *ipc.RPCError) {
+		var p struct {
+			ContextName string `json:"contextName"`
+			Namespace   string `json:"namespace"`
+		}
+		if len(params) > 0 {
+			_ = json.Unmarshal(params, &p)
+		}
+		if p.ContextName == "" {
+			if listRes, err := mgr.ListContexts(); err == nil {
+				p.ContextName = listRes.CurrentContext
+			}
+		}
+		ctx, cancel := context.WithTimeout(context.Background(), 20*time.Second)
+		defer cancel()
+		res, err := mgr.GetSidebarCounts(ctx, p.ContextName, p.Namespace)
+		if err != nil {
+			return nil, &ipc.RPCError{
+				Code:    ipc.ErrK8sConnFailed,
+				Message: fmt.Sprintf("Failed to count sidebar resources: %v", err),
+			}
+		}
+		return res, nil
+	})
 }

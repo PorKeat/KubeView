@@ -8,6 +8,35 @@ export const inFlightOverviewPromises = new Map<
   Promise<ClusterOverviewResult | null>
 >();
 
+const recentResponses = new Map<string, { at: number; value: unknown }>();
+
+export function getRecentResponse<T>(
+  key: string,
+  maxAgeMs: number,
+): T | undefined {
+  const entry = recentResponses.get(key);
+  if (!entry) return undefined;
+  if (Date.now() - entry.at > maxAgeMs) {
+    recentResponses.delete(key);
+    return undefined;
+  }
+  return entry.value as T;
+}
+
+export function setRecentResponse(key: string, value: unknown): void {
+  recentResponses.set(key, { at: Date.now(), value });
+}
+
+export function clearRecentResponses(prefix?: string): void {
+  if (!prefix) {
+    recentResponses.clear();
+    return;
+  }
+  for (const key of recentResponses.keys()) {
+    if (key.startsWith(prefix)) recentResponses.delete(key);
+  }
+}
+
 let contextSwitchSeq = 0;
 
 export function beginContextSwitch(): number {

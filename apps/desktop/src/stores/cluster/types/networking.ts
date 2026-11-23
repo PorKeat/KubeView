@@ -12,6 +12,7 @@ import type {
   ListCiliumResourcesResult,
   HubbleFlowSummary,
   ResourceCapabilities,
+  SimpleResourceCountsResult,
 } from "@kubeview/contracts";
 
 export interface ResourceEditorTarget {
@@ -58,6 +59,14 @@ export interface NetworkingSlice {
   hasLoadedNetworkPoliciesOnce: boolean;
 
   loadServices: (namespace?: string, contextName?: string) => Promise<void>;
+  loadTopologySnapshot: (
+    namespace?: string,
+    contextName?: string,
+  ) => Promise<void>;
+  loadSidebarCounts: (
+    namespace?: string,
+    contextName?: string,
+  ) => Promise<SimpleResourceCountsResult | null>;
   loadEndpoints: (namespace?: string, contextName?: string) => Promise<void>;
   loadIngresses: (namespace?: string, contextName?: string) => Promise<void>;
   loadGatewayResources: (

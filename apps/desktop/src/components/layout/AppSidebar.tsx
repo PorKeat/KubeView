@@ -7,7 +7,6 @@ import { useTabStore } from "@/stores/tabStore";
 import { useClusterStore } from "@/stores/clusterStore";
 import { useSettingsStore, type SettingsSection } from "@/stores/settingsStore";
 import { cn } from "@/lib/utils";
-import { invokeRpc } from "@/lib/ipc";
 import type { SimpleResourceCountsResult } from "@kubeview/contracts";
 import { Tooltip } from "@/components/ui/Tooltip";
 import {
@@ -19,6 +18,7 @@ import { SidebarNavList } from "./sidebar/SidebarNavList";
 import { SidebarSettingsNav } from "./sidebar/SidebarSettingsNav";
 import { SidebarFooter } from "./sidebar/SidebarFooter";
 import { CatalogSidebarNav } from "./sidebar/CatalogSidebarNav";
+import { useShallow } from "zustand/react/shallow";
 
 export function AppSidebar() {
   const {
@@ -44,6 +44,7 @@ export function AppSidebar() {
   const {
     availableContexts,
     currentContext,
+    currentNamespace,
     connectionStatus,
     clusterOverview,
     totalPodsCount,
@@ -72,6 +73,7 @@ export function AppSidebar() {
     loadPortForwards,
     loadCiliumResources,
     loadNetworkObservability,
+    loadSidebarCounts,
     loadServiceAccounts,
     loadRBACResources,
     loadCRDs,
@@ -80,7 +82,50 @@ export function AppSidebar() {
     setCurrentNamespace,
     setPodNodeFilter,
     setPodLabelFilter,
-  } = useClusterStore();
+  } = useClusterStore(
+    useShallow((state) => ({
+      availableContexts: state.availableContexts,
+      currentContext: state.currentContext,
+      currentNamespace: state.currentNamespace,
+      connectionStatus: state.connectionStatus,
+      clusterOverview: state.clusterOverview,
+      totalPodsCount: state.totalPodsCount,
+      pods: state.pods,
+      deployments: state.deployments,
+      replicaSets: state.replicaSets,
+      statefulSets: state.statefulSets,
+      daemonSets: state.daemonSets,
+      jobs: state.jobs,
+      cronJobs: state.cronJobs,
+      totalJobsCount: state.totalJobsCount,
+      totalCronJobsCount: state.totalCronJobsCount,
+      networkingCounts: state.networkingCounts,
+      loadPods: state.loadPods,
+      loadDeployments: state.loadDeployments,
+      loadReplicaSets: state.loadReplicaSets,
+      loadStatefulSets: state.loadStatefulSets,
+      loadDaemonSets: state.loadDaemonSets,
+      loadJobs: state.loadJobs,
+      loadCronJobs: state.loadCronJobs,
+      loadServices: state.loadServices,
+      loadEndpoints: state.loadEndpoints,
+      loadIngresses: state.loadIngresses,
+      loadGatewayResources: state.loadGatewayResources,
+      loadNetworkPolicies: state.loadNetworkPolicies,
+      loadPortForwards: state.loadPortForwards,
+      loadCiliumResources: state.loadCiliumResources,
+      loadNetworkObservability: state.loadNetworkObservability,
+      loadSidebarCounts: state.loadSidebarCounts,
+      loadServiceAccounts: state.loadServiceAccounts,
+      loadRBACResources: state.loadRBACResources,
+      loadCRDs: state.loadCRDs,
+      setJobOwnerFilter: state.setJobOwnerFilter,
+      setJobsViewMode: state.setJobsViewMode,
+      setCurrentNamespace: state.setCurrentNamespace,
+      setPodNodeFilter: state.setPodNodeFilter,
+      setPodLabelFilter: state.setPodLabelFilter,
+    })),
+  );
   const [collapsedGroups, setCollapsedGroups] = React.useState<
     Record<string, boolean>
   >({});
@@ -94,9 +139,7 @@ export function AppSidebar() {
       setSimpleResourceCounts(null);
       return;
     }
-    invokeRpc<SimpleResourceCountsResult>("simpleResources.counts", {
-      contextName: currentContext,
-    })
+    void loadSidebarCounts()
       .then((counts) => {
         if (!cancelled) setSimpleResourceCounts(counts);
       })
@@ -106,7 +149,7 @@ export function AppSidebar() {
     return () => {
       cancelled = true;
     };
-  }, [currentContext, namespaceRevision]);
+  }, [currentContext, currentNamespace, namespaceRevision, loadSidebarCounts]);
   const isSettingsActive = activeTabId === "settings";
   const isLearningActive = activeTabId === "learning";
   const isCatalogActive =

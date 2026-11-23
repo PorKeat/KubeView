@@ -55,8 +55,11 @@ export function ClusterOverviewView() {
   React.useEffect(() => {
     if (connectionStatus === "connected" || connectionStatus === "degraded") {
       loadClusterOverview(currentContext, currentNamespace);
-      if (useClusterStore.getState().pods.length === 0) {
-        loadPods();
+      // The all-namespaces overview uses cluster totals and per-node counts
+      // from the overview payload. Only load the full pod list when a specific
+      // namespace is selected and the view needs per-pod filtering.
+      if (currentNamespace !== "all") {
+        loadPods(currentNamespace);
       }
     }
   }, [

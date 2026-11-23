@@ -5,6 +5,8 @@ import type {
   ListIngressesResult,
   ListNetworkPoliciesResult,
   ListServicesResult,
+  SidebarCountsResult,
+  TopologySnapshotResult,
 } from "@kubeview/contracts";
 import { invokeRpc } from "@/lib/ipc";
 import { inFlightResourcePromises, resolveQueryNamespace } from "../shared";
@@ -93,6 +95,83 @@ export const createNetworkingSlice: StateCreator<
 
     inFlightResourcePromises.set(fetchKey, promise);
     return promise;
+  },
+
+  loadTopologySnapshot: async (namespace = "all", contextName) => {
+    const targetCtx = contextName || get().currentContext;
+    if (!targetCtx) return;
+
+    const queryNs = resolveQueryNamespace(get(), targetCtx, namespace);
+    const fetchKey = `topology::${targetCtx}::${queryNs}`;
+
+    if (inFlightResourcePromises.has(fetchKey)) {
+      return inFlightResourcePromises.get(fetchKey);
+    }
+
+    const promise = (async () => {
+      try {
+        const res = await invokeRpc<TopologySnapshotResult>(
+          "topology.snapshot",
+          { contextName: targetCtx, namespace: queryNs },
+        );
+        if (get().currentContext !== targetCtx) return;
+
+        set({
+          clusterOverview: res.overview,
+          isOverviewLoading: false,
+          networkingCounts: res.networkingCounts,
+          isNetworkingCountsLoading: false,
+          services: res.services?.items ?? [],
+          totalServicesCount: res.services?.totalCount ?? 0,
+          isServicesLoading: false,
+          hasLoadedServicesOnce: true,
+          endpoints: res.endpoints?.items ?? [],
+          totalEndpointsCount: res.endpoints?.totalCount ?? 0,
+          isEndpointsLoading: false,
+          hasLoadedEndpointsOnce: true,
+          ingresses: res.ingresses?.items ?? [],
+          totalIngressesCount: res.ingresses?.totalCount ?? 0,
+          isIngressesLoading: false,
+          hasLoadedIngressesOnce: true,
+          networkPolicies: res.networkPolicies?.items ?? [],
+          totalNetworkPoliciesCount: res.networkPolicies?.totalCount ?? 0,
+          isNetworkPoliciesLoading: false,
+          hasLoadedNetworkPoliciesOnce: true,
+        });
+      } catch (err) {
+        console.warn("[ClusterStore] Failed to load topology snapshot:", err);
+      } finally {
+        inFlightResourcePromises.delete(fetchKey);
+      }
+    })();
+
+    inFlightResourcePromises.set(fetchKey, promise);
+    return promise;
+  },
+
+  loadSidebarCounts: async (namespace?: string, contextName?: string) => {
+    const targetCtx = contextName || get().currentContext;
+    if (!targetCtx) return null;
+
+    const targetNs = namespace ?? get().currentNamespace;
+    const queryNs = resolveQueryNamespace(get(), targetCtx, targetNs);
+
+    try {
+      const res = await invokeRpc<SidebarCountsResult>("sidebar.counts", {
+        contextName: targetCtx,
+        namespace: queryNs,
+      });
+      if (get().currentContext === targetCtx) {
+        set({
+          networkingCounts: res.networkingCounts,
+          isNetworkingCountsLoading: false,
+        });
+      }
+      return res.simpleCounts ?? null;
+    } catch (err) {
+      console.warn("[ClusterStore] Failed to load sidebar counts:", err);
+      return null;
+    }
   },
 
   loadEndpoints: async (namespace?: string, contextName?: string) => {

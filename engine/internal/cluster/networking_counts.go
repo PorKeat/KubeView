@@ -2,6 +2,7 @@ package cluster
 
 import (
 	"context"
+	"sync"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
@@ -49,63 +50,203 @@ func (m *Manager) GetNetworkingCounts(ctx context.Context, contextName, namespac
 	options := metav1.ListOptions{Limit: 1}
 	counts := &NetworkingCountsResult{}
 
-	if list, listErr := client.CoreV1().Services(targetNs).List(ctx, options); listErr == nil {
-		counts.Services = listTotalCount(len(list.Items), list.RemainingItemCount)
+	type countJob struct {
+		key string
+		run func() (int, error)
 	}
-	if list, listErr := client.CoreV1().Endpoints(targetNs).List(ctx, options); listErr == nil {
-		counts.Endpoints = listTotalCount(len(list.Items), list.RemainingItemCount)
+	type countResult struct {
+		key   string
+		value int
 	}
-	if list, listErr := client.NetworkingV1().Ingresses(targetNs).List(ctx, options); listErr == nil {
-		counts.Ingresses = listTotalCount(len(list.Items), list.RemainingItemCount)
-	}
-	if list, listErr := client.NetworkingV1().NetworkPolicies(targetNs).List(ctx, options); listErr == nil {
-		counts.NetworkPolicies = listTotalCount(len(list.Items), list.RemainingItemCount)
-	}
-	if list, listErr := client.CoreV1().ConfigMaps(targetNs).List(ctx, options); listErr == nil {
-		counts.ConfigMaps = listTotalCount(len(list.Items), list.RemainingItemCount)
-	}
-	if list, listErr := client.CoreV1().Secrets(targetNs).List(ctx, options); listErr == nil {
-		counts.Secrets = listTotalCount(len(list.Items), list.RemainingItemCount)
-	}
-	if list, listErr := client.CoreV1().PersistentVolumes().List(ctx, options); listErr == nil {
-		counts.PersistentVolumes = listTotalCount(len(list.Items), list.RemainingItemCount)
-	}
-	if list, listErr := client.StorageV1().StorageClasses().List(ctx, options); listErr == nil {
-		counts.StorageClasses = listTotalCount(len(list.Items), list.RemainingItemCount)
-	}
-	if list, listErr := client.CoreV1().ServiceAccounts(targetNs).List(ctx, options); listErr == nil {
-		counts.ServiceAccounts = listTotalCount(len(list.Items), list.RemainingItemCount)
-	}
-	if list, listErr := client.RbacV1().Roles(targetNs).List(ctx, options); listErr == nil {
-		counts.Roles = listTotalCount(len(list.Items), list.RemainingItemCount)
-	}
-	if list, listErr := client.RbacV1().ClusterRoles().List(ctx, options); listErr == nil {
-		counts.ClusterRoles = listTotalCount(len(list.Items), list.RemainingItemCount)
-	}
-	if list, listErr := client.RbacV1().RoleBindings(targetNs).List(ctx, options); listErr == nil {
-		counts.RoleBindings = listTotalCount(len(list.Items), list.RemainingItemCount)
-	}
-	if list, listErr := client.RbacV1().ClusterRoleBindings().List(ctx, options); listErr == nil {
-		counts.ClusterRoleBindings = listTotalCount(len(list.Items), list.RemainingItemCount)
+
+	jobs := []countJob{
+		{"services", func() (int, error) {
+			list, err := client.CoreV1().Services(targetNs).List(ctx, options)
+			if err != nil {
+				return 0, err
+			}
+			return listTotalCount(len(list.Items), list.RemainingItemCount), nil
+		}},
+		{"endpoints", func() (int, error) {
+			list, err := client.CoreV1().Endpoints(targetNs).List(ctx, options)
+			if err != nil {
+				return 0, err
+			}
+			return listTotalCount(len(list.Items), list.RemainingItemCount), nil
+		}},
+		{"ingresses", func() (int, error) {
+			list, err := client.NetworkingV1().Ingresses(targetNs).List(ctx, options)
+			if err != nil {
+				return 0, err
+			}
+			return listTotalCount(len(list.Items), list.RemainingItemCount), nil
+		}},
+		{"networkpolicies", func() (int, error) {
+			list, err := client.NetworkingV1().NetworkPolicies(targetNs).List(ctx, options)
+			if err != nil {
+				return 0, err
+			}
+			return listTotalCount(len(list.Items), list.RemainingItemCount), nil
+		}},
+		{"configmaps", func() (int, error) {
+			list, err := client.CoreV1().ConfigMaps(targetNs).List(ctx, options)
+			if err != nil {
+				return 0, err
+			}
+			return listTotalCount(len(list.Items), list.RemainingItemCount), nil
+		}},
+		{"secrets", func() (int, error) {
+			list, err := client.CoreV1().Secrets(targetNs).List(ctx, options)
+			if err != nil {
+				return 0, err
+			}
+			return listTotalCount(len(list.Items), list.RemainingItemCount), nil
+		}},
+		{"persistentvolumes", func() (int, error) {
+			list, err := client.CoreV1().PersistentVolumes().List(ctx, options)
+			if err != nil {
+				return 0, err
+			}
+			return listTotalCount(len(list.Items), list.RemainingItemCount), nil
+		}},
+		{"storageclasses", func() (int, error) {
+			list, err := client.StorageV1().StorageClasses().List(ctx, options)
+			if err != nil {
+				return 0, err
+			}
+			return listTotalCount(len(list.Items), list.RemainingItemCount), nil
+		}},
+		{"serviceaccounts", func() (int, error) {
+			list, err := client.CoreV1().ServiceAccounts(targetNs).List(ctx, options)
+			if err != nil {
+				return 0, err
+			}
+			return listTotalCount(len(list.Items), list.RemainingItemCount), nil
+		}},
+		{"roles", func() (int, error) {
+			list, err := client.RbacV1().Roles(targetNs).List(ctx, options)
+			if err != nil {
+				return 0, err
+			}
+			return listTotalCount(len(list.Items), list.RemainingItemCount), nil
+		}},
+		{"clusterroles", func() (int, error) {
+			list, err := client.RbacV1().ClusterRoles().List(ctx, options)
+			if err != nil {
+				return 0, err
+			}
+			return listTotalCount(len(list.Items), list.RemainingItemCount), nil
+		}},
+		{"rolebindings", func() (int, error) {
+			list, err := client.RbacV1().RoleBindings(targetNs).List(ctx, options)
+			if err != nil {
+				return 0, err
+			}
+			return listTotalCount(len(list.Items), list.RemainingItemCount), nil
+		}},
+		{"clusterrolebindings", func() (int, error) {
+			list, err := client.RbacV1().ClusterRoleBindings().List(ctx, options)
+			if err != nil {
+				return 0, err
+			}
+			return listTotalCount(len(list.Items), list.RemainingItemCount), nil
+		}},
 	}
 
 	if dynamicClient, dynamicErr := m.getDynamicClient(contextName); dynamicErr == nil {
 		for _, kind := range gatewayAPIKinds {
+			kind := kind
 			if kind.ClusterScoped && targetNs != "" {
 				continue
 			}
-			if list, listErr := listGatewayResourceKindWithOptions(ctx, dynamicClient, kind, targetNs, options); listErr == nil {
-				counts.GatewayResources += listTotalCount(len(list.Items), list.GetRemainingItemCount())
+			jobs = append(jobs, countJob{"gatewayresources", func() (int, error) {
+				list, err := listGatewayResourceKindWithOptions(ctx, dynamicClient, kind, targetNs, options)
+				if err != nil {
+					return 0, err
+				}
+				return listTotalCount(len(list.Items), list.GetRemainingItemCount()), nil
+			}})
+		}
+		jobs = append(jobs,
+			countJob{"ciliumpolicies", func() (int, error) {
+				list, err := dynamicClient.Resource(ciliumNetworkPolicyGVR).Namespace(targetNs).List(ctx, options)
+				if err != nil {
+					return 0, err
+				}
+				return listTotalCount(len(list.Items), list.GetRemainingItemCount()), nil
+			}},
+			countJob{"ciliumendpoints", func() (int, error) {
+				list, err := dynamicClient.Resource(ciliumEndpointGVR).Namespace(targetNs).List(ctx, options)
+				if err != nil {
+					return 0, err
+				}
+				return listTotalCount(len(list.Items), list.GetRemainingItemCount()), nil
+			}},
+			countJob{"crds", func() (int, error) {
+				list, err := dynamicClient.Resource(customResourceDefinitionGVR).List(ctx, options)
+				if err != nil {
+					return 0, err
+				}
+				return listTotalCount(len(list.Items), list.GetRemainingItemCount()), nil
+			}},
+		)
+	}
+
+	// Run the independent list calls concurrently. The previous sequential
+	// implementation took ~2s on a busy cluster for what is only badge data.
+	results := make(chan countResult, len(jobs))
+	var wg sync.WaitGroup
+	for _, job := range jobs {
+		job := job
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+			if value, err := job.run(); err == nil {
+				results <- countResult{key: job.key, value: value}
 			}
-		}
-		if list, listErr := dynamicClient.Resource(ciliumNetworkPolicyGVR).Namespace(targetNs).List(ctx, options); listErr == nil {
-			counts.CiliumPolicies = listTotalCount(len(list.Items), list.GetRemainingItemCount())
-		}
-		if list, listErr := dynamicClient.Resource(ciliumEndpointGVR).Namespace(targetNs).List(ctx, options); listErr == nil {
-			counts.CiliumEndpoints = listTotalCount(len(list.Items), list.GetRemainingItemCount())
-		}
-		if list, listErr := dynamicClient.Resource(customResourceDefinitionGVR).List(ctx, options); listErr == nil {
-			counts.CRDs = listTotalCount(len(list.Items), list.GetRemainingItemCount())
+		}()
+	}
+	go func() {
+		wg.Wait()
+		close(results)
+	}()
+
+	for result := range results {
+		switch result.key {
+		case "services":
+			counts.Services = result.value
+		case "endpoints":
+			counts.Endpoints = result.value
+		case "ingresses":
+			counts.Ingresses = result.value
+		case "gatewayresources":
+			counts.GatewayResources += result.value
+		case "networkpolicies":
+			counts.NetworkPolicies = result.value
+		case "ciliumpolicies":
+			counts.CiliumPolicies = result.value
+		case "ciliumendpoints":
+			counts.CiliumEndpoints = result.value
+		case "configmaps":
+			counts.ConfigMaps = result.value
+		case "secrets":
+			counts.Secrets = result.value
+		case "persistentvolumes":
+			counts.PersistentVolumes = result.value
+		case "storageclasses":
+			counts.StorageClasses = result.value
+		case "serviceaccounts":
+			counts.ServiceAccounts = result.value
+		case "roles":
+			counts.Roles = result.value
+		case "clusterroles":
+			counts.ClusterRoles = result.value
+		case "rolebindings":
+			counts.RoleBindings = result.value
+		case "clusterrolebindings":
+			counts.ClusterRoleBindings = result.value
+		case "crds":
+			counts.CRDs = result.value
 		}
 	}
 

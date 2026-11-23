@@ -1,7 +1,11 @@
 import type { StateCreator } from "zustand";
 import type { ClusterOverviewResult } from "@kubeview/contracts";
 import { invokeRpc } from "@/lib/ipc";
-import { inFlightOverviewPromises } from "../shared";
+import {
+  getRecentResponse,
+  inFlightOverviewPromises,
+  setRecentResponse,
+} from "../shared";
 import type { ClusterState } from "../types/cluster";
 import type { OverviewSlice } from "../types/overview";
 
@@ -30,6 +34,16 @@ export const createOverviewSlice: StateCreator<
       return inFlightOverviewPromises.get(fetchKey)!;
     }
 
+    // Collapse the duplicate startup/mount fetch into a short-lived cache.
+    // Watch streams remain the source of truth for changes.
+    const cacheKey = `overview::${fetchKey}`;
+    const cached = getRecentResponse<ClusterOverviewResult>(cacheKey, 2_000);
+    if (cached && get().currentContext === target) {
+      if (get().isOverviewLoading) set({ isOverviewLoading: false });
+      if (get().clusterOverview !== cached) set({ clusterOverview: cached });
+      return cached;
+    }
+
     const promise = (async () => {
       if (!get().clusterOverview && get().currentContext === target) {
         set({ isOverviewLoading: true });
@@ -50,6 +64,7 @@ export const createOverviewSlice: StateCreator<
             get().currentContext === target &&
             (namespace === undefined || get().currentNamespace === targetNs)
           ) {
+            setRecentResponse(cacheKey, res);
             set({
               clusterOverview: res,
               ...(get().isOverviewLoading ? { isOverviewLoading: false } : {}),

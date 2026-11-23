@@ -2,6 +2,10 @@
 // Networking Resources (Phase 9)
 // ---------------------------------------------------------------------------
 
+import type { ClusterOverviewResult } from "./overview.js";
+import type { NetworkingCountsResult } from "./networking-operations.js";
+import type { SimpleResourceCountsResult } from "../simple-resources.js";
+
 export interface ServicePortSummary {
   name?: string;
   protocol: string;
@@ -186,4 +190,18 @@ export interface ListNetworkPoliciesParams {
 export interface ListNetworkPoliciesResult {
   items: NetworkPolicySummary[];
   totalCount: number;
+}
+
+export interface TopologySnapshotResult {
+  overview: ClusterOverviewResult;
+  networkingCounts: NetworkingCountsResult;
+  services: ListServicesResult;
+  endpoints: ListEndpointsResult;
+  ingresses: ListIngressesResult;
+  networkPolicies: ListNetworkPoliciesResult;
+}
+
+export interface SidebarCountsResult {
+  networkingCounts: NetworkingCountsResult;
+  simpleCounts: SimpleResourceCountsResult;
 }

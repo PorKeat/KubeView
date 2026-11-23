@@ -52,8 +52,6 @@ export const createContextsSlice: StateCreator<
           get().diagnoseContext(activeCtx);
           get().loadNamespaces(activeCtx);
           get().loadClusterOverview(activeCtx);
-          get().loadPods(get().currentNamespace, activeCtx);
-          get().loadNetworkingCounts(get().currentNamespace, activeCtx);
         }
       } else {
         set({

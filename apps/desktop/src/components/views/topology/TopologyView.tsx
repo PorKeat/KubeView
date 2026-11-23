@@ -13,6 +13,7 @@ import {
   type NodeProps,
 } from "@xyflow/react";
 import "@xyflow/react/dist/style.css";
+import { useShallow } from "zustand/react/shallow";
 import {
   Activity,
   ArrowRight,
@@ -91,7 +92,7 @@ function TrafficNodeView({ data }: NodeProps<TrafficFlowNode>) {
         position={Position.Right}
         className="!h-1.5 !w-1.5 !border !border-[var(--surface)] !bg-[var(--accent)]"
       />
-      <div className="flex items-center gap-1.5 font-mono text-[8px] uppercase tracking-[0.1em] text-[var(--muted)]">
+      <div className="flex items-center gap-1.5 font-mono text-[10px] uppercase tracking-[0.1em] text-[var(--muted)]">
         <Icon className={cn("h-3 w-3", data.tone)} aria-hidden="true" />
         <span className="truncate">{data.label}</span>
       </div>
@@ -113,7 +114,7 @@ function TrafficSignal({
 }) {
   return (
     <div className="flex items-center justify-between gap-2 py-1.5">
-      <span className="text-[9px] text-[var(--muted)]">{label}</span>
+      <span className="text-[10px] text-[var(--muted)]">{label}</span>
       <span
         className={cn(
           "font-mono text-[10px] font-semibold",
@@ -164,7 +165,7 @@ function ClusterNodeView({ data }: NodeProps<ClusterFlowNode>) {
             {node.name}
           </span>
         </div>
-        <span className="shrink-0 rounded border border-[var(--border)] px-1.5 py-0.5 font-mono text-[8px] uppercase tracking-wide text-[var(--muted)]">
+        <span className="shrink-0 rounded border border-[var(--border)] px-1.5 py-0.5 font-mono text-[10px] uppercase tracking-wide text-[var(--muted)]">
           {node.roles.join(", ") || "worker"}
         </span>
       </div>
@@ -178,7 +179,7 @@ function ClusterNodeView({ data }: NodeProps<ClusterFlowNode>) {
           <span className="font-mono">{node.memoryGiB} GiB</span>
         </div>
         <div className="col-span-2 flex items-center gap-2">
-          <span className="w-7 font-mono text-[9px] text-[var(--muted)]">
+          <span className="w-7 font-mono text-[10px] text-[var(--muted)]">
             CPU
           </span>
           <span className="h-1 flex-1 overflow-hidden rounded-full bg-[var(--surface-active)]">
@@ -187,12 +188,12 @@ function ClusterNodeView({ data }: NodeProps<ClusterFlowNode>) {
               style={{ width: `${cpu}%` }}
             />
           </span>
-          <span className="w-7 text-right font-mono text-[9px] text-[var(--muted)]">
+          <span className="w-7 text-right font-mono text-[10px] text-[var(--muted)]">
             {cpu}%
           </span>
         </div>
         <div className="col-span-2 flex items-center gap-2">
-          <span className="w-7 font-mono text-[9px] text-[var(--muted)]">
+          <span className="w-7 font-mono text-[10px] text-[var(--muted)]">
             MEM
           </span>
           <span className="h-1 flex-1 overflow-hidden rounded-full bg-[var(--surface-active)]">
@@ -201,12 +202,12 @@ function ClusterNodeView({ data }: NodeProps<ClusterFlowNode>) {
               style={{ width: `${memory}%` }}
             />
           </span>
-          <span className="w-7 text-right font-mono text-[9px] text-[var(--muted)]">
+          <span className="w-7 text-right font-mono text-[10px] text-[var(--muted)]">
             {memory}%
           </span>
         </div>
       </div>
-      <div className="mt-2 flex items-center justify-between font-mono text-[9px] text-[var(--muted)]">
+      <div className="mt-2 flex items-center justify-between font-mono text-[10px] text-[var(--muted)]">
         <span>{node.internalIP}</span>
         <span>
           {node.activePods}/{node.podCapacity} pods
@@ -228,10 +229,10 @@ function ApiNodeView({ data }: NodeProps<ApiFlowNode>) {
         <Waypoints className="h-4 w-4" aria-hidden="true" />
         <span className="text-[11px] font-semibold">Kubernetes API</span>
       </div>
-      <div className="mt-2 truncate font-mono text-[9px] text-[var(--muted)]">
+      <div className="mt-2 truncate font-mono text-[10px] text-[var(--muted)]">
         {data.context}
       </div>
-      <div className="mt-1 font-mono text-[9px] text-[var(--muted)]">
+      <div className="mt-1 font-mono text-[10px] text-[var(--muted)]">
         {data.pods} pods scheduled
       </div>
     </div>
@@ -277,7 +278,7 @@ function WorkloadCard({
             {ready}/{total}
           </span>
         </span>
-        <span className="mt-0.5 block text-[9px] font-mono text-[var(--muted)]">
+        <span className="mt-0.5 block text-[10px] font-mono text-[var(--muted)]">
           {degraded > 0 ? `${degraded} degraded` : "healthy"}
         </span>
       </span>
@@ -296,44 +297,37 @@ export function TopologyView() {
     clusterOverview,
     isOverviewLoading,
     loadClusterOverview,
+    loadTopologySnapshot,
     networkingCounts,
-    loadNetworkingCounts,
     services: serviceItems,
     endpoints: endpointItems,
     ingresses: ingressItems,
     networkPolicies: networkPolicyItems,
-    loadServices,
-    loadEndpoints,
-    loadIngresses,
-    loadNetworkPolicies,
     openInspector,
     autoRefreshInterval,
-  } = useClusterStore();
+  } = useClusterStore(
+    useShallow((state) => ({
+      currentContext: state.currentContext,
+      connectionStatus: state.connectionStatus,
+      clusterOverview: state.clusterOverview,
+      isOverviewLoading: state.isOverviewLoading,
+      loadClusterOverview: state.loadClusterOverview,
+      loadTopologySnapshot: state.loadTopologySnapshot,
+      networkingCounts: state.networkingCounts,
+      services: state.services,
+      endpoints: state.endpoints,
+      ingresses: state.ingresses,
+      networkPolicies: state.networkPolicies,
+      openInspector: state.openInspector,
+      autoRefreshInterval: state.autoRefreshInterval,
+    })),
+  );
   const openTab = useTabStore((state) => state.openTab);
-  const [isEntering, setIsEntering] = React.useState(true);
-
-  React.useEffect(() => {
-    const timer = window.setTimeout(() => setIsEntering(false), 550);
-    return () => window.clearTimeout(timer);
-  }, []);
 
   React.useEffect(() => {
     if (!currentContext) return;
-    void loadClusterOverview();
-    void loadNetworkingCounts("all");
-    void loadServices("all");
-    void loadEndpoints("all");
-    void loadIngresses("all");
-    void loadNetworkPolicies("all");
-  }, [
-    currentContext,
-    loadClusterOverview,
-    loadNetworkingCounts,
-    loadServices,
-    loadEndpoints,
-    loadIngresses,
-    loadNetworkPolicies,
-  ]);
+    void loadTopologySnapshot("all");
+  }, [currentContext, loadTopologySnapshot]);
 
   React.useEffect(() => {
     if (!currentContext || autoRefreshInterval <= 0) return;
@@ -343,7 +337,7 @@ export function TopologyView() {
     return () => window.clearInterval(timer);
   }, [autoRefreshInterval, currentContext, loadClusterOverview]);
 
-  if (isEntering || (isOverviewLoading && !clusterOverview)) {
+  if (isOverviewLoading && !clusterOverview) {
     return (
       <div
         data-testid="topology-loading"
@@ -612,7 +606,7 @@ export function TopologyView() {
             <h1 className="text-sm font-semibold tracking-tight text-[var(--foreground)]">
               Topology
             </h1>
-            <span className="rounded border border-[var(--border)] bg-[var(--surface-active)] px-1.5 py-0.5 font-mono text-[9px] text-[var(--muted)]">
+            <span className="rounded border border-[var(--border)] bg-[var(--surface-active)] px-1.5 py-0.5 font-mono text-[10px] text-[var(--muted)]">
               {overview.contextName || currentContext}
             </span>
           </div>
@@ -623,7 +617,7 @@ export function TopologyView() {
         <button
           type="button"
           onClick={() => {
-            void loadClusterOverview();
+            void loadTopologySnapshot("all");
             toast.info("Refreshing topology");
           }}
           className="inline-flex cursor-pointer items-center gap-1.5 rounded-md border border-[var(--border)] bg-[var(--surface)] px-2.5 py-1.5 text-[10px] font-medium text-[var(--foreground)] transition-colors hover:bg-[var(--surface-hover)]"
@@ -660,7 +654,7 @@ export function TopologyView() {
             key={label}
             className="rounded-xl border border-[var(--border)] bg-[var(--surface)] p-3"
           >
-            <div className="flex items-center gap-1.5 font-mono text-[9px] uppercase tracking-[0.12em] text-[var(--muted)]">
+            <div className="flex items-center gap-1.5 font-mono text-[10px] uppercase tracking-[0.12em] text-[var(--muted)]">
               <Icon className="h-3 w-3" aria-hidden="true" />
               {label}
             </div>
@@ -681,7 +675,7 @@ export function TopologyView() {
               Control plane and worker capacity
             </p>
           </div>
-          <span className="font-mono text-[9px] text-[var(--muted)]">
+          <span className="font-mono text-[10px] text-[var(--muted)]">
             {overview.nodes.length}{" "}
             {overview.nodes.length === 1 ? "node" : "nodes"}
           </span>
@@ -764,7 +758,7 @@ export function TopologyView() {
               </p>
             </div>
             <div className="flex items-center gap-2">
-              <span className="font-mono text-[9px] text-[var(--muted)]">
+              <span className="font-mono text-[10px] text-[var(--muted)]">
                 {activePortForwards} active forwards
               </span>
               <Network
@@ -775,7 +769,7 @@ export function TopologyView() {
           </div>
 
           <div className="mt-3">
-            <div className="font-mono text-[8px] uppercase tracking-[0.12em] text-[var(--muted)]">
+            <div className="font-mono text-[10px] uppercase tracking-[0.12em] text-[var(--muted)]">
               Traffic chain
             </div>
             <div
@@ -812,7 +806,7 @@ export function TopologyView() {
 
           <div className="mt-4 grid gap-4 border-t border-[var(--border)] pt-3 sm:grid-cols-2 sm:divide-x sm:divide-[var(--border)]">
             <div className="sm:pr-4">
-              <div className="font-mono text-[8px] uppercase tracking-[0.12em] text-[var(--muted)]">
+              <div className="font-mono text-[10px] uppercase tracking-[0.12em] text-[var(--muted)]">
                 Exposure mix
               </div>
               <div className="mt-2 flex h-1.5 overflow-hidden rounded-full bg-[var(--surface-active)]">
@@ -831,14 +825,14 @@ export function TopologyView() {
               </div>
               <div className="mt-2 flex flex-wrap gap-1">
                 {exposureEntries.length === 0 ? (
-                  <span className="text-[9px] text-[var(--muted)]">
+                  <span className="text-[10px] text-[var(--muted)]">
                     No services
                   </span>
                 ) : (
                   exposureEntries.map(([type, count]) => (
                     <span
                       key={type}
-                      className="inline-flex items-center gap-1 rounded border border-[var(--border)] bg-[var(--surface)] px-1.5 py-0.5 font-mono text-[8px] text-[var(--muted)]"
+                      className="inline-flex items-center gap-1 rounded border border-[var(--border)] bg-[var(--surface)] px-1.5 py-0.5 font-mono text-[10px] text-[var(--muted)]"
                     >
                       {type}
                       <strong className="text-[var(--foreground)]">
@@ -848,7 +842,7 @@ export function TopologyView() {
                   ))
                 )}
               </div>
-              <div className="mt-2 flex items-center justify-between border-t border-[var(--border)]/60 pt-2 font-mono text-[8px] text-[var(--muted)]">
+              <div className="mt-2 flex items-center justify-between border-t border-[var(--border)]/60 pt-2 font-mono text-[10px] text-[var(--muted)]">
                 <span>
                   Internal{" "}
                   <strong className="text-[var(--foreground)]">
@@ -864,7 +858,7 @@ export function TopologyView() {
               </div>
             </div>
             <div className="sm:pl-4">
-              <div className="font-mono text-[8px] uppercase tracking-[0.12em] text-[var(--muted)]">
+              <div className="font-mono text-[10px] uppercase tracking-[0.12em] text-[var(--muted)]">
                 Signals
               </div>
               <div className="mt-1 divide-y divide-[var(--border)]/60">
@@ -887,7 +881,7 @@ export function TopologyView() {
 
           <div className="mt-4 border-t border-[var(--border)] pt-3">
             <div className="flex items-center justify-between gap-2">
-              <span className="font-mono text-[8px] uppercase tracking-[0.12em] text-[var(--muted)]">
+              <span className="font-mono text-[10px] uppercase tracking-[0.12em] text-[var(--muted)]">
                 Top exposed services
               </span>
               <button
@@ -895,13 +889,13 @@ export function TopologyView() {
                 onClick={() =>
                   openTab({ id: "services", title: "Services", closable: true })
                 }
-                className="font-mono text-[8px] text-[var(--accent)] hover:underline"
+                className="font-mono text-[10px] text-[var(--accent)] hover:underline"
               >
                 View all
               </button>
             </div>
             {exposedServices.length === 0 ? (
-              <p className="mt-2 text-[9px] text-[var(--muted)]">
+              <p className="mt-2 text-[10px] text-[var(--muted)]">
                 No externally exposed services. ClusterIP services are internal.
               </p>
             ) : (
@@ -928,11 +922,11 @@ export function TopologyView() {
                           {service.type}
                         </span>
                       </span>
-                      <span className="block truncate font-mono text-[8px] text-[var(--muted)]">
+                      <span className="block truncate font-mono text-[10px] text-[var(--muted)]">
                         {service.namespace} · {servicePorts(service)}
                       </span>
                     </span>
-                    <span className="shrink-0 font-mono text-[9px] text-[var(--muted)]">
+                    <span className="shrink-0 font-mono text-[10px] text-[var(--muted)]">
                       {service.readyEndpoints}/{service.totalEndpoints}
                     </span>
                     <ArrowRight
