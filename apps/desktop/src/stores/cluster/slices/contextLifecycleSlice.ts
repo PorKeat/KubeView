@@ -48,8 +48,6 @@ export const createContextLifecycleSlice: StateCreator<
         await Promise.all([
           get().loadNamespaces(contextName),
           get().loadClusterOverview(contextName),
-          get().loadPods(get().currentNamespace, contextName),
-          get().loadNetworkingCounts(get().currentNamespace, contextName),
         ]);
       }
     } catch (err) {
