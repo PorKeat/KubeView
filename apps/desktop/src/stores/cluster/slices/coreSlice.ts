@@ -46,24 +46,38 @@ export const createCoreSlice: StateCreator<ClusterState, [], [], CoreSlice> = (
     set((state) => ({ namespaceRevision: state.namespaceRevision + 1 })),
   setCurrentContext: (context) => set({ currentContext: context }),
   setCurrentNamespace: (namespace) => {
-    set({ currentNamespace: namespace });
+    if (get().currentNamespace === namespace) return;
+    set({
+      currentNamespace: namespace,
+      podUsage: {},
+      podUsageAvailable: false,
+      podUsageReason: null,
+    });
     // In namespace-scoped mode or if pods haven't loaded yet, query the scoped namespace
     if (get().rbacMode === "namespace-scoped" || get().pods.length === 0) {
       get().loadPods(namespace);
     }
+    void get().loadPodUsage(namespace);
     // Refresh cluster overview dynamically for the scoped namespace
     get().loadClusterOverview(get().currentContext, namespace);
-    get().loadNetworkingCounts(namespace, get().currentContext);
   },
   setConnectionStatus: (status) => set({ connectionStatus: status }),
   setServerInfo: (version, latency) =>
     set({ serverVersion: version, latencyMs: latency }),
-  openInspector: (resource) =>
+  openInspector: (resource) => {
     set({
       selectedResource: resource,
       isInspectorOpen: true,
       isInspectorEditDirty: false,
-    }),
+    });
+    if (
+      resource.kind === "Pod" &&
+      resource.namespace &&
+      resource.namespace !== "Cluster Scope"
+    ) {
+      void get().loadPodUsage(resource.namespace);
+    }
+  },
   closeInspector: () =>
     set({
       selectedResource: null,

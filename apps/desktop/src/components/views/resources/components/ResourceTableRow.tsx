@@ -11,7 +11,13 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
-import type { PodSummary } from "@kubeview/contracts";
+import {
+  formatBytesCompact,
+  formatMillicores,
+  usagePercent,
+  usageToneClass,
+} from "@/lib/format";
+import type { PodSummary, PodUsage } from "@kubeview/contracts";
 import { Tooltip } from "@/components/ui";
 import { PodStatusBeacon } from "./ResourceRowStatus";
 import { ResourceRowActions } from "./ResourceRowActions";
@@ -19,6 +25,9 @@ import { ResourceRowDetails } from "./ResourceRowDetails";
 
 export interface ResourceTableRowProps {
   item: PodSummary;
+  usage?: PodUsage;
+  metricsAvailable?: boolean;
+  metricsReason?: string | null;
   isSelected: boolean;
   density?: "comfortable" | "compact";
   isFailingView?: boolean;
@@ -35,6 +44,9 @@ export interface ResourceTableRowProps {
 
 export function ResourceTableRow({
   item,
+  usage,
+  metricsAvailable,
+  metricsReason,
   isSelected,
   density = "comfortable",
   isFailingView = false,
@@ -71,6 +83,27 @@ export function ResourceTableRow({
   };
 
   const isCompact = density === "compact";
+  const cpuLimitPercent = usagePercent(
+    usage?.cpuUsageMillicores,
+    item.cpuLimitMillicores,
+  );
+  const memoryLimitPercent = usagePercent(
+    usage?.memoryUsageBytes,
+    item.memoryLimitBytes,
+  );
+  const cpuUsage = usage ? formatMillicores(usage.cpuUsageMillicores) : null;
+  const memoryUsage = usage ? formatBytesCompact(usage.memoryUsageBytes) : null;
+  const unavailableReason = metricsReason
+    ? metricsReason
+    : metricsAvailable
+      ? "This pod has not reported live usage yet."
+      : "Live usage is loading or unavailable for this pod.";
+  const cpuTitle = cpuUsage
+    ? `Usage ${cpuUsage}${item.cpu !== "-" ? ` · Request ${item.cpu}` : ""}${item.cpuLimitMillicores ? ` · Limit ${formatMillicores(item.cpuLimitMillicores)}` : ""}${cpuLimitPercent !== undefined ? ` · ${cpuLimitPercent}% of limit` : ""}`
+    : `${unavailableReason}${item.cpu !== "-" ? ` Showing CPU request ${item.cpu}.` : ""}`;
+  const memoryTitle = memoryUsage
+    ? `Usage ${memoryUsage}${item.memory !== "-" ? ` · Request ${item.memory}` : ""}${item.memoryLimitBytes ? ` · Limit ${formatBytesCompact(item.memoryLimitBytes)}` : ""}${memoryLimitPercent !== undefined ? ` · ${memoryLimitPercent}% of limit` : ""}`
+    : `${unavailableReason}${item.memory !== "-" ? ` Showing memory request ${item.memory}.` : ""}`;
 
   return (
     <React.Fragment>
@@ -184,19 +217,22 @@ export function ResourceTableRow({
         </td>
 
         {/* Node (Clickable Filter Pill) */}
-        <td className="py-1 px-3 truncate" onClick={(e) => e.stopPropagation()}>
+        <td
+          className="hidden xl:table-cell py-1 px-3 truncate"
+          onClick={(e) => e.stopPropagation()}
+        >
           {item.nodeName ? (
             <button
               type="button"
               onClick={() => onFilterNode && onFilterNode(item.nodeName!)}
               title={`Filter pods on node '${item.nodeName}'`}
-              className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-mono bg-black/5 dark:bg-white/5 hover:bg-[var(--accent)]/15 hover:text-[var(--accent)] border border-[var(--border)] transition-colors cursor-pointer truncate max-w-full"
+              className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[11px] font-mono bg-black/5 dark:bg-white/5 hover:bg-[var(--accent)]/15 hover:text-[var(--accent)] border border-[var(--border)] transition-colors cursor-pointer truncate max-w-full"
             >
-              <Server className="w-2.5 h-2.5 shrink-0 opacity-60" />
+              <Server className="w-3 h-3 shrink-0 opacity-60" />
               <span className="truncate">{item.nodeName}</span>
             </button>
           ) : (
-            <span className="text-[10px] text-[var(--muted)] font-mono italic">
+            <span className="text-[11px] text-[var(--muted)] font-mono italic">
               unassigned
             </span>
           )}
@@ -204,7 +240,7 @@ export function ResourceTableRow({
 
         {/* IP with Click-to-Copy */}
         <td
-          className="py-1 px-3 font-mono text-[var(--muted)] text-[11px] truncate"
+          className="hidden xl:table-cell py-1 px-3 font-mono text-[var(--muted)] text-[11px] truncate"
           onClick={(e) => e.stopPropagation()}
         >
           {item.ip ? (
@@ -226,36 +262,58 @@ export function ResourceTableRow({
           )}
         </td>
 
-        {/* CPU */}
-        <td className="py-1 px-3 font-mono text-[var(--foreground)] text-[11px] truncate">
+        {/* CPU: live usage / request when metrics are available */}
+        <td className="hidden xl:table-cell py-1 px-3 font-mono text-[var(--foreground)] text-[11px] truncate">
           <span
-            className={cn(item.cpu === "-" && "opacity-40")}
-            title={
-              item.cpu !== "-"
-                ? `CPU Request: ${item.cpu}`
-                : "No CPU request specified"
-            }
+            title={cpuTitle}
+            className="inline-flex min-w-0 items-baseline gap-1"
           >
-            {item.cpu}
+            {cpuUsage ? (
+              <>
+                <span className={usageToneClass(cpuLimitPercent)}>
+                  {cpuUsage}
+                </span>
+                {item.cpu !== "-" && (
+                  <span className="text-[10px] text-[var(--muted)]">
+                    / {item.cpu}
+                  </span>
+                )}
+              </>
+            ) : (
+              <span className={cn(item.cpu === "-" && "opacity-40")}>
+                {item.cpu}
+              </span>
+            )}
           </span>
         </td>
 
-        {/* Memory */}
-        <td className="py-1 px-3 font-mono text-[var(--foreground)] text-[11px] truncate">
+        {/* Memory: live usage / request when metrics are available */}
+        <td className="hidden xl:table-cell py-1 px-3 font-mono text-[var(--foreground)] text-[11px] truncate">
           <span
-            className={cn(item.memory === "-" && "opacity-40")}
-            title={
-              item.memory !== "-"
-                ? `Memory Request: ${item.memory}`
-                : "No memory request specified"
-            }
+            title={memoryTitle}
+            className="inline-flex min-w-0 items-baseline gap-1"
           >
-            {item.memory}
+            {memoryUsage ? (
+              <>
+                <span className={usageToneClass(memoryLimitPercent)}>
+                  {memoryUsage}
+                </span>
+                {item.memory !== "-" && (
+                  <span className="text-[10px] text-[var(--muted)]">
+                    / {item.memory}
+                  </span>
+                )}
+              </>
+            ) : (
+              <span className={cn(item.memory === "-" && "opacity-40")}>
+                {item.memory}
+              </span>
+            )}
           </span>
         </td>
 
         {/* Age */}
-        <td className="py-1 px-3 font-mono text-[var(--muted)] truncate">
+        <td className="w-[5%] py-1 px-2 font-mono text-[var(--muted)] whitespace-nowrap">
           {item.age}
         </td>
 
@@ -278,6 +336,7 @@ export function ResourceTableRow({
       {isExpanded && (
         <ResourceRowDetails
           item={item}
+          usage={usage}
           onLogsClick={onLogsClick}
           onExecClick={onExecClick}
           onFilterLabel={onFilterLabel}

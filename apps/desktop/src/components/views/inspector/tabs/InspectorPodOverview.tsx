@@ -8,6 +8,7 @@ import {
   getPodPendingInfo,
 } from "@/components/views/resources/lib/podIssues";
 import { PodDiagnostics } from "./PodDiagnostics";
+import { PodUsageCard } from "../components/PodUsageCard";
 import { PodResourceMetadataCard } from "./PodResourceMetadataCard";
 import { PodLabelsCard } from "./PodLabelsCard";
 import { PodAnnotationsCard } from "./PodAnnotationsCard";
@@ -52,6 +53,12 @@ export function InspectorPodOverview({
         issueInfo={issueInfo}
         pendingInfo={pendingInfo}
         onOpenLogsModal={onOpenLogsModal}
+      />
+
+      <PodUsageCard
+        podData={podData}
+        namespace={currentResource.namespace}
+        podName={currentResource.name}
       />
 
       <PodResourceMetadataCard podData={podData} nodePodCIDR={nodePodCIDR} />

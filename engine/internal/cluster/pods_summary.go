@@ -58,6 +58,10 @@ func convertPodToSummary(pod *corev1.Pod) PodSummary {
 		var portsList []ContainerPortInfo
 		var volumeMountsList []ContainerVolumeMountInfo
 		var resourcesInfo *ContainerResourcesInfo
+		var cpuReqMillis int64
+		var cpuLimMillis int64
+		var memReqBytes int64
+		var memLimBytes int64
 
 		if sc, found := specContainerMap[cs.Name]; found {
 			for _, env := range sc.Env {
@@ -101,18 +105,22 @@ func convertPodToSummary(pod *corev1.Pod) PodSummary {
 				reqItem = &ContainerResourceItem{}
 				if cpu, ok := sc.Resources.Requests[corev1.ResourceCPU]; ok {
 					reqItem.Cpu = cpu.String()
+					cpuReqMillis = cpu.MilliValue()
 				}
 				if mem, ok := sc.Resources.Requests[corev1.ResourceMemory]; ok {
 					reqItem.Memory = mem.String()
+					memReqBytes = mem.Value()
 				}
 			}
 			if len(sc.Resources.Limits) > 0 {
 				limItem = &ContainerResourceItem{}
 				if cpu, ok := sc.Resources.Limits[corev1.ResourceCPU]; ok {
 					limItem.Cpu = cpu.String()
+					cpuLimMillis = cpu.MilliValue()
 				}
 				if mem, ok := sc.Resources.Limits[corev1.ResourceMemory]; ok {
 					limItem.Memory = mem.String()
+					memLimBytes = mem.Value()
 				}
 			}
 			if reqItem != nil || limItem != nil {
@@ -139,6 +147,10 @@ func convertPodToSummary(pod *corev1.Pod) PodSummary {
 			Ports:                 portsList,
 			VolumeMounts:          volumeMountsList,
 			Resources:             resourcesInfo,
+			CPURequestMillicores:  cpuReqMillis,
+			CPULimitMillicores:    cpuLimMillis,
+			MemoryRequestBytes:    memReqBytes,
+			MemoryLimitBytes:      memLimBytes,
 		})
 	}
 
@@ -258,24 +270,46 @@ func convertPodToSummary(pod *corev1.Pod) PodSummary {
 	qosClass := string(pod.Status.QOSClass)
 
 	return PodSummary{
-		Name:              pod.Name,
-		Namespace:         pod.Namespace,
-		Status:            status,
-		Ready:             fmt.Sprintf("%d/%d", readyContainers, totalContainers),
-		Restarts:          totalRestarts,
-		Age:               age,
-		Cpu:               cpuStr,
-		CpuPercent:        cpuPercent,
-		Memory:            memStr,
-		MemoryPercent:     memPercent,
-		NodeName:          pod.Spec.NodeName,
-		IP:                pod.Status.PodIP,
-		Containers:        containerInfos,
-		CreationTimestamp: pod.CreationTimestamp.Time.Format(time.RFC3339),
-		Labels:            pod.Labels,
-		Annotations:       pod.Annotations,
-		ControlledBy:      controlledBy,
-		QoSClass:          qosClass,
-		Conditions:        conditionItems,
+		Name:                 pod.Name,
+		Namespace:            pod.Namespace,
+		Status:               status,
+		Ready:                fmt.Sprintf("%d/%d", readyContainers, totalContainers),
+		Restarts:             totalRestarts,
+		Age:                  age,
+		Cpu:                  cpuStr,
+		CpuPercent:           cpuPercent,
+		Memory:               memStr,
+		MemoryPercent:        memPercent,
+		CPURequestMillicores: cpuMillis,
+		CPULimitMillicores:   cpuLimitMillis,
+		MemoryRequestBytes:   memBytes,
+		MemoryLimitBytes:     memLimitBytes,
+		NodeName:             pod.Spec.NodeName,
+		IP:                   pod.Status.PodIP,
+		Containers:           containerInfos,
+		CreationTimestamp:    pod.CreationTimestamp.Time.Format(time.RFC3339),
+		Labels:               pod.Labels,
+		Annotations:          pod.Annotations,
+		ControlledBy:         controlledBy,
+		QoSClass:             qosClass,
+		Conditions:           conditionItems,
 	}
+}
+
+// compactPodSummary strips fields that the list/table does not need. The
+// inspector hydrates the full summary on demand through pods.detail.
+func compactPodSummary(p PodSummary) PodSummary {
+	p.Compact = true
+	p.Annotations = nil
+	p.Conditions = nil
+	for i := range p.Containers {
+		p.Containers[i].Env = nil
+		p.Containers[i].VolumeMounts = nil
+		p.Containers[i].ExitCode = nil
+		p.Containers[i].LastTerminatedReason = ""
+		p.Containers[i].LastTerminatedMessage = ""
+		p.Containers[i].WaitingReason = ""
+		p.Containers[i].WaitingMessage = ""
+	}
+	return p
 }

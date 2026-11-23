@@ -27,6 +27,10 @@ export function ResourceListView({ resourceType }: ResourceListViewProps) {
     hasLoadedPodsOnce,
     totalPodsCount,
     loadPods,
+    podUsage,
+    podUsageAvailable,
+    podUsageReason,
+    loadPodUsage,
     currentNamespace,
     currentContext,
     setCurrentNamespace,
@@ -76,6 +80,7 @@ export function ResourceListView({ resourceType }: ResourceListViewProps) {
     paginatedItems,
   } = usePodListModel({
     pods,
+    podUsage,
     currentNamespace,
     podNodeFilter,
     podLabelFilter,
@@ -91,17 +96,27 @@ export function ResourceListView({ resourceType }: ResourceListViewProps) {
     }
   }, [currentContext, hasLoadedPodsOnce, loadPods]);
 
+  React.useEffect(() => {
+    // Always refresh the current scope when the Pods view mounts. The engine
+    // caches Metrics Server responses, so this stays cheap when switching tabs.
+    if (currentContext) {
+      void loadPodUsage();
+    }
+  }, [currentContext, currentNamespace, loadPodUsage]);
+
   // Periodic Auto-refresh timer
   React.useEffect(() => {
     if (autoRefreshInterval <= 0 || !currentContext) return;
     const timer = setInterval(() => {
       loadPods();
+      void loadPodUsage();
     }, autoRefreshInterval);
     return () => clearInterval(timer);
-  }, [autoRefreshInterval, currentContext, loadPods]);
+  }, [autoRefreshInterval, currentContext, loadPods, loadPodUsage]);
 
   const handleRefresh = () => {
     loadPods();
+    void loadPodUsage();
     toast.info("Refreshed pod telemetry");
   };
 
@@ -124,7 +139,7 @@ export function ResourceListView({ resourceType }: ResourceListViewProps) {
   }
 
   return (
-    <div className="flex-1 flex flex-col h-full overflow-hidden select-none">
+    <div className="flex-1 flex flex-col h-full overflow-hidden">
       {/* Table Command & Filter Toolbar */}
       <ResourceTableToolbar
         search={search}
@@ -203,11 +218,8 @@ export function ResourceListView({ resourceType }: ResourceListViewProps) {
           loadPods={loadPods}
         />
       ) : (
-        <div
-          data-tour="pods-table"
-          className="flex-1 overflow-y-auto overflow-x-hidden min-h-0"
-        >
-          <table className="w-full text-left text-xs border-collapse table-fixed">
+        <div data-tour="pods-table" className="flex-1 min-h-0 overflow-auto">
+          <table className="w-full min-w-[720px] text-left text-xs border-collapse table-fixed">
             <ResourceTableHeader
               sortField={sortField}
               sortAsc={sortAsc}
@@ -222,6 +234,9 @@ export function ResourceListView({ resourceType }: ResourceListViewProps) {
                 <ResourceTableRow
                   key={`${item.namespace}/${item.name}`}
                   item={item}
+                  usage={podUsage[`${item.namespace}/${item.name}`]}
+                  metricsAvailable={podUsageAvailable}
+                  metricsReason={podUsageReason}
                   isSelected={selectedItems.has(
                     `${item.namespace}/${item.name}`,
                   )}

@@ -38,6 +38,9 @@ type Manager struct {
 	overviewMu     sync.RWMutex
 	overviewCalls  map[string]*overviewCall
 	overviewCallMu sync.Mutex
+
+	podMetricsCache map[string]cachedPodMetrics
+	podMetricsMu    sync.RWMutex
 }
 
 // InvalidateOverviewCache purges cached overview data for a specific context, or all contexts if contextName is empty.
@@ -58,13 +61,14 @@ func (m *Manager) InvalidateOverviewCache(contextName string) {
 // NewManager creates a new cluster Manager
 func NewManager(customConfigPath string) (*Manager, error) {
 	mgr := &Manager{
-		configPath:     customConfigPath,
-		clientsets:     make(map[string]kubernetes.Interface),
-		restConfigs:    make(map[string]*rest.Config),
-		dynamicClients: make(map[string]dynamic.Interface),
-		forwards:       make(map[string]*portForwardSession),
-		overviewCache:  make(map[string]cachedOverview),
-		overviewCalls:  make(map[string]*overviewCall),
+		configPath:      customConfigPath,
+		clientsets:      make(map[string]kubernetes.Interface),
+		restConfigs:     make(map[string]*rest.Config),
+		dynamicClients:  make(map[string]dynamic.Interface),
+		forwards:        make(map[string]*portForwardSession),
+		overviewCache:   make(map[string]cachedOverview),
+		overviewCalls:   make(map[string]*overviewCall),
+		podMetricsCache: make(map[string]cachedPodMetrics),
 	}
 
 	if err := mgr.ReloadConfig(); err != nil {

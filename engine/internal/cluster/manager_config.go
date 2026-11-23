@@ -99,10 +99,11 @@ func (m *Manager) ReloadConfig() error {
 		m.currentContext = mergedConfig.CurrentContext
 	}
 
-	// Invalidate cached clientsets
+	// Invalidate cached clientsets and metrics snapshots
 	m.clientsets = make(map[string]kubernetes.Interface)
 	m.dynamicClients = make(map[string]dynamic.Interface)
 	m.restConfigs = make(map[string]*rest.Config)
+	m.resetPodMetricsCache()
 
 	return nil
 }

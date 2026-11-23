@@ -53,6 +53,10 @@ type ContainerInfo struct {
 	Ports                 []ContainerPortInfo        `json:"ports,omitempty"`
 	VolumeMounts          []ContainerVolumeMountInfo `json:"volumeMounts,omitempty"`
 	Resources             *ContainerResourcesInfo    `json:"resources,omitempty"`
+	CPURequestMillicores  int64                      `json:"cpuRequestMillicores,omitempty"`
+	CPULimitMillicores    int64                      `json:"cpuLimitMillicores,omitempty"`
+	MemoryRequestBytes    int64                      `json:"memoryRequestBytes,omitempty"`
+	MemoryLimitBytes      int64                      `json:"memoryLimitBytes,omitempty"`
 }
 
 // PodConditionItem represents a live Kubernetes status condition
@@ -66,25 +70,36 @@ type PodConditionItem struct {
 
 // PodSummary provides display-ready metadata and metrics for list/detail views
 type PodSummary struct {
-	Name              string             `json:"name"`
-	Namespace         string             `json:"namespace"`
-	Status            string             `json:"status"`
-	Ready             string             `json:"ready"`
-	Restarts          int32              `json:"restarts"`
-	Age               string             `json:"age"`
-	Cpu               string             `json:"cpu"`
-	CpuPercent        int                `json:"cpuPercent"`
-	Memory            string             `json:"memory"`
-	MemoryPercent     int                `json:"memoryPercent"`
-	NodeName          string             `json:"nodeName"`
-	IP                string             `json:"ip"`
-	Containers        []ContainerInfo    `json:"containers"`
-	CreationTimestamp string             `json:"creationTimestamp"`
-	Labels            map[string]string  `json:"labels,omitempty"`
-	Annotations       map[string]string  `json:"annotations,omitempty"`
-	ControlledBy      string             `json:"controlledBy,omitempty"`
-	QoSClass          string             `json:"qosClass,omitempty"`
-	Conditions        []PodConditionItem `json:"conditions,omitempty"`
+	Name                 string             `json:"name"`
+	Namespace            string             `json:"namespace"`
+	Status               string             `json:"status"`
+	Ready                string             `json:"ready"`
+	Restarts             int32              `json:"restarts"`
+	Age                  string             `json:"age"`
+	Cpu                  string             `json:"cpu"`
+	CpuPercent           int                `json:"cpuPercent"`
+	Memory               string             `json:"memory"`
+	MemoryPercent        int                `json:"memoryPercent"`
+	CPURequestMillicores int64              `json:"cpuRequestMillicores,omitempty"`
+	CPULimitMillicores   int64              `json:"cpuLimitMillicores,omitempty"`
+	MemoryRequestBytes   int64              `json:"memoryRequestBytes,omitempty"`
+	MemoryLimitBytes     int64              `json:"memoryLimitBytes,omitempty"`
+	NodeName             string             `json:"nodeName"`
+	IP                   string             `json:"ip"`
+	Containers           []ContainerInfo    `json:"containers"`
+	CreationTimestamp    string             `json:"creationTimestamp"`
+	Labels               map[string]string  `json:"labels,omitempty"`
+	Annotations          map[string]string  `json:"annotations,omitempty"`
+	ControlledBy         string             `json:"controlledBy,omitempty"`
+	QoSClass             string             `json:"qosClass,omitempty"`
+	Conditions           []PodConditionItem `json:"conditions,omitempty"`
+	Compact              bool               `json:"compact,omitempty"`
+}
+
+type GetPodParams struct {
+	ContextName string `json:"contextName"`
+	Namespace   string `json:"namespace"`
+	PodName     string `json:"podName"`
 }
 
 type ListPodsParams struct {
@@ -212,13 +227,31 @@ func (m *Manager) ListPods(ctx context.Context, contextName, namespace string) (
 
 	var items []PodSummary
 	for _, p := range podList.Items {
-		items = append(items, convertPodToSummary(&p))
+		items = append(items, compactPodSummary(convertPodToSummary(&p)))
 	}
 
 	return &ListPodsResult{
 		Items:      items,
 		TotalCount: len(items),
 	}, nil
+}
+
+// GetPod returns the full summary for a single pod. Lists intentionally omit
+// detail fields; the inspector calls this to hydrate env, mounts, conditions,
+// and termination state on demand.
+func (m *Manager) GetPod(ctx context.Context, contextName, namespace, podName string) (*PodSummary, error) {
+	client, _, err := m.GetClientForContext(contextName)
+	if err != nil {
+		return nil, err
+	}
+
+	pod, err := client.CoreV1().Pods(namespace).Get(ctx, podName, metav1.GetOptions{})
+	if err != nil {
+		return nil, fmt.Errorf("failed to get pod %s: %w", podName, err)
+	}
+
+	summary := convertPodToSummary(pod)
+	return &summary, nil
 }
 
 // GetPodYaml exports the live Kubernetes resource definition as YAML

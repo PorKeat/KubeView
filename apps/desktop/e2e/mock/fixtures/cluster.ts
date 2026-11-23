@@ -112,14 +112,59 @@ export const pod = {
   cpuPercent: 2,
   memory: "20Mi",
   memoryPercent: 3,
+  cpuRequestMillicores: 10,
+  cpuLimitMillicores: 500,
+  memoryRequestBytes: 20 * 1024 * 1024,
+  memoryLimitBytes: 512 * 1024 * 1024,
   nodeName: "worker-1",
   ip: "10.244.1.10",
-  containers: [],
+  containers: [
+    {
+      name: "web",
+      image: "example/web:v1",
+      ready: true,
+      restartCount: 0,
+      state: "Running",
+      env: [],
+      ports: [{ containerPort: 8080, protocol: "TCP" }],
+      volumeMounts: [],
+      resources: {
+        requests: { cpu: "10m", memory: "20Mi" },
+        limits: { cpu: "500m", memory: "512Mi" },
+      },
+      cpuRequestMillicores: 10,
+      cpuLimitMillicores: 500,
+      memoryRequestBytes: 20 * 1024 * 1024,
+      memoryLimitBytes: 512 * 1024 * 1024,
+    },
+  ],
   creationTimestamp: now,
   labels: { app: "web" },
   annotations: {},
   qosClass: "Burstable",
   conditions: [{ type: "Ready", status: "True", reason: "ContainersReady" }],
+};
+
+export const podUsage = {
+  contextName: "mock-cluster",
+  namespace: "production",
+  metricsAvailable: true,
+  fetchedAt: now,
+  items: [
+    {
+      namespace: "production",
+      name: "web-1",
+      cpuUsageMillicores: 12,
+      memoryUsageBytes: 180 * 1024 * 1024,
+      containers: [
+        {
+          name: "web",
+          cpuUsageMillicores: 12,
+          memoryUsageBytes: 180 * 1024 * 1024,
+        },
+      ],
+    },
+  ],
 };
 
 export const service = {

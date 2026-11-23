@@ -42,6 +42,11 @@ export interface ContainerInfo {
   ports?: ContainerPortInfo[];
   volumeMounts?: ContainerVolumeMountInfo[];
   resources?: ContainerResourcesInfo;
+  /** Numeric request/limit values used for usage percentages. */
+  cpuRequestMillicores?: number;
+  cpuLimitMillicores?: number;
+  memoryRequestBytes?: number;
+  memoryLimitBytes?: number;
 }
 
 export interface PodConditionItem {
@@ -59,19 +64,65 @@ export interface PodSummary {
   ready: string;
   restarts: number;
   age: string;
+  /** CPU request total, formatted for display (for example "100m"). */
   cpu: string;
+  /** CPU request relative to the limit. Kept for backward compatibility. */
   cpuPercent: number;
+  /** Memory request total, formatted for display (for example "256.0Mi"). */
   memory: string;
+  /** Memory request relative to the limit. Kept for backward compatibility. */
   memoryPercent: number;
+  /** Numeric request/limit values used for live usage percentages. */
+  cpuRequestMillicores?: number;
+  cpuLimitMillicores?: number;
+  memoryRequestBytes?: number;
+  memoryLimitBytes?: number;
   nodeName: string;
   ip: string;
   containers: ContainerInfo[];
   creationTimestamp: string;
   labels?: Record<string, string>;
   annotations?: Record<string, string>;
+  body?: string;
   controlledBy?: string;
   qosClass?: string;
   conditions?: PodConditionItem[];
+  /** List payloads omit detail fields; call pods.detail to hydrate. */
+  compact?: boolean;
+}
+
+export interface GetPodParams {
+  contextName?: string;
+  namespace: string;
+  podName: string;
+}
+
+export interface PodUsageParams {
+  contextName?: string;
+  namespace?: string;
+}
+
+export interface PodContainerUsage {
+  name: string;
+  cpuUsageMillicores: number;
+  memoryUsageBytes: number;
+}
+
+export interface PodUsage {
+  namespace: string;
+  name: string;
+  cpuUsageMillicores: number;
+  memoryUsageBytes: number;
+  containers: PodContainerUsage[];
+}
+
+export interface PodUsageResult {
+  contextName: string;
+  namespace: string;
+  metricsAvailable: boolean;
+  reason?: string;
+  fetchedAt: string;
+  items: PodUsage[];
 }
 
 export interface ListPodsParams {

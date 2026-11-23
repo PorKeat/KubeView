@@ -37,6 +37,32 @@ func registerWorkloadHandlers(server *ipc.Server, mgr *cluster.Manager) {
 		return res, nil
 	})
 
+	// Method: pods.detail
+	server.Register("pods.detail", func(params json.RawMessage) (interface{}, *ipc.RPCError) {
+		var p cluster.GetPodParams
+		if len(params) > 0 {
+			_ = json.Unmarshal(params, &p)
+		}
+		ctxName := p.ContextName
+		if ctxName == "" {
+			if listRes, err := mgr.ListContexts(); err == nil {
+				ctxName = listRes.CurrentContext
+			}
+		}
+
+		ctx, cancel := context.WithTimeout(context.Background(), 16*time.Second)
+		defer cancel()
+
+		res, err := mgr.GetPod(ctx, ctxName, p.Namespace, p.PodName)
+		if err != nil {
+			return nil, &ipc.RPCError{
+				Code:    ipc.ErrK8sConnFailed,
+				Message: fmt.Sprintf("Failed to load pod detail: %v", err),
+			}
+		}
+		return res, nil
+	})
+
 	// Method: deployments.list
 	server.Register("deployments.list", func(params json.RawMessage) (interface{}, *ipc.RPCError) {
 		var p cluster.ListDeploymentsParams
@@ -201,6 +227,32 @@ func registerWorkloadHandlers(server *ipc.Server, mgr *cluster.Manager) {
 			return nil, &ipc.RPCError{
 				Code:    ipc.ErrK8sConnFailed,
 				Message: fmt.Sprintf("Failed to get pod logs: %v", err),
+			}
+		}
+		return res, nil
+	})
+
+	// Method: pods.metrics
+	server.Register("pods.metrics", func(params json.RawMessage) (interface{}, *ipc.RPCError) {
+		var p cluster.PodUsageParams
+		if len(params) > 0 {
+			_ = json.Unmarshal(params, &p)
+		}
+		ctxName := p.ContextName
+		if ctxName == "" {
+			if listRes, err := mgr.ListContexts(); err == nil {
+				ctxName = listRes.CurrentContext
+			}
+		}
+
+		ctx, cancel := context.WithTimeout(context.Background(), 6*time.Second)
+		defer cancel()
+
+		res, err := mgr.GetPodUsage(ctx, ctxName, p.Namespace)
+		if err != nil {
+			return nil, &ipc.RPCError{
+				Code:    ipc.ErrK8sConnFailed,
+				Message: fmt.Sprintf("Failed to read pod metrics: %v", err),
 			}
 		}
 		return res, nil

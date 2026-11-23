@@ -5,10 +5,17 @@ import { motion } from "motion/react";
 import { FileText, Terminal, Copy, Layers, Tag } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
-import type { PodSummary } from "@kubeview/contracts";
+import {
+  formatBytesCompact,
+  formatMillicores,
+  usagePercent,
+  usageToneClass,
+} from "@/lib/format";
+import type { PodSummary, PodUsage } from "@kubeview/contracts";
 
 export interface ResourceRowDetailsProps {
   item: PodSummary;
+  usage?: PodUsage;
   onLogsClick: (item: PodSummary, containerName?: string) => void;
   onExecClick: (item: PodSummary, containerName?: string) => void;
   onFilterLabel?: (label: string) => void;
@@ -16,6 +23,7 @@ export interface ResourceRowDetailsProps {
 
 export function ResourceRowDetails({
   item,
+  usage,
   onLogsClick,
   onExecClick,
   onFilterLabel,
@@ -38,7 +46,7 @@ export function ResourceRowDetails({
             <div className="flex items-center gap-2.5">
               <Layers className="w-3.5 h-3.5 text-[var(--accent)]" />
               <span className="font-semibold text-[var(--foreground)]">
-                Containers &amp; Sidecars ({item.containers?.length || 0})
+                Containers and sidecars ({item.containers?.length || 0})
               </span>
               {item.controlledBy && (
                 <span className="text-[11px] text-[var(--muted)] font-mono">
@@ -49,7 +57,7 @@ export function ResourceRowDetails({
                 </span>
               )}
               {item.qosClass && (
-                <span className="px-1.5 py-0.5 rounded text-[10px] font-mono uppercase bg-black/5 dark:bg-white/5 border border-[var(--border)] text-[var(--muted)]">
+                <span className="px-1.5 py-0.5 rounded text-[10px] font-mono bg-black/5 dark:bg-white/5 border border-[var(--border)] text-[var(--muted)]">
                   QoS: {item.qosClass}
                 </span>
               )}
@@ -99,6 +107,17 @@ export function ResourceRowDetails({
               item.containers.map((c) => {
                 const isReady = c.ready;
                 const stateStr = c.state || (isReady ? "Running" : "Pending");
+                const containerUsage = usage?.containers.find(
+                  (entry) => entry.name === c.name,
+                );
+                const cpuLimitPercent = usagePercent(
+                  containerUsage?.cpuUsageMillicores,
+                  c.cpuLimitMillicores,
+                );
+                const memoryLimitPercent = usagePercent(
+                  containerUsage?.memoryUsageBytes,
+                  c.memoryLimitBytes,
+                );
                 return (
                   <div
                     key={c.name}
@@ -113,7 +132,7 @@ export function ResourceRowDetails({
                           </span>
                           <span
                             className={cn(
-                              "px-1.5 py-0.5 rounded text-[10px] font-mono uppercase font-semibold",
+                              "px-1.5 py-0.5 rounded text-[10px] font-semibold",
                               isReady
                                 ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20"
                                 : "bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20",
@@ -133,6 +152,40 @@ export function ResourceRowDetails({
                             {c.image}
                           </span>
                         </div>
+                        {containerUsage && (
+                          <div className="mt-0.5 flex flex-wrap items-center gap-2 text-[10px] font-mono text-[var(--muted)]">
+                            <span
+                              title={`Usage ${formatMillicores(containerUsage.cpuUsageMillicores)} · Request ${c.resources?.requests?.cpu || "—"}${c.cpuLimitMillicores ? ` · Limit ${formatMillicores(c.cpuLimitMillicores)}` : ""}`}
+                            >
+                              CPU{" "}
+                              <strong
+                                className={usageToneClass(cpuLimitPercent)}
+                              >
+                                {formatMillicores(
+                                  containerUsage.cpuUsageMillicores,
+                                )}
+                              </strong>
+                              {c.resources?.requests?.cpu
+                                ? ` / ${c.resources.requests.cpu}`
+                                : ""}
+                            </span>
+                            <span
+                              title={`Usage ${formatBytesCompact(containerUsage.memoryUsageBytes)} · Request ${c.resources?.requests?.memory || "—"}${c.memoryLimitBytes ? ` · Limit ${formatBytesCompact(c.memoryLimitBytes)}` : ""}`}
+                            >
+                              Mem{" "}
+                              <strong
+                                className={usageToneClass(memoryLimitPercent)}
+                              >
+                                {formatBytesCompact(
+                                  containerUsage.memoryUsageBytes,
+                                )}
+                              </strong>
+                              {c.resources?.requests?.memory
+                                ? ` / ${c.resources.requests.memory}`
+                                : ""}
+                            </span>
+                          </div>
+                        )}
                       </div>
                     </div>
 

@@ -2,7 +2,7 @@
 
 import * as React from "react";
 import { useSettingsStore } from "@/stores/settingsStore";
-import type { PodSummary } from "@kubeview/contracts";
+import type { PodSummary, PodUsage } from "@kubeview/contracts";
 import { matchesLabelSelector } from "@/lib/labelSelector";
 import {
   getPodIssue,
@@ -12,10 +12,18 @@ import {
 } from "../lib/podIssues";
 
 export type PodListSortField =
-  "name" | "namespace" | "status" | "age" | "restarts" | "node";
+  | "name"
+  | "namespace"
+  | "status"
+  | "age"
+  | "restarts"
+  | "node"
+  | "cpu"
+  | "memory";
 
 export interface UsePodListModelOptions {
   pods: PodSummary[];
+  podUsage: Record<string, PodUsage>;
   currentNamespace: string;
   podNodeFilter: string | null;
   podLabelFilter: string | null;
@@ -23,6 +31,7 @@ export interface UsePodListModelOptions {
 
 export function usePodListModel({
   pods,
+  podUsage,
   currentNamespace,
   podNodeFilter,
   podLabelFilter,
@@ -204,10 +213,34 @@ export function usePodListModel({
         case "age":
           comparison = a.age.localeCompare(b.age);
           break;
+        case "cpu": {
+          const aUsage =
+            podUsage[`${a.namespace}/${a.name}`]?.cpuUsageMillicores ??
+            a.cpuRequestMillicores ??
+            0;
+          const bUsage =
+            podUsage[`${b.namespace}/${b.name}`]?.cpuUsageMillicores ??
+            b.cpuRequestMillicores ??
+            0;
+          comparison = aUsage - bUsage;
+          break;
+        }
+        case "memory": {
+          const aUsage =
+            podUsage[`${a.namespace}/${a.name}`]?.memoryUsageBytes ??
+            a.memoryRequestBytes ??
+            0;
+          const bUsage =
+            podUsage[`${b.namespace}/${b.name}`]?.memoryUsageBytes ??
+            b.memoryRequestBytes ??
+            0;
+          comparison = aUsage - bUsage;
+          break;
+        }
       }
       return sortAsc ? comparison : -comparison;
     });
-  }, [filteredItems, sortField, sortAsc, statusFilter]);
+  }, [filteredItems, sortField, sortAsc, statusFilter, podUsage]);
 
   const totalPages =
     pageSize > 0 ? Math.max(1, Math.ceil(sortedItems.length / pageSize)) : 1;

@@ -29,6 +29,7 @@ export function useInspectorResourceState(isInspectorOpen: boolean) {
   const selectedResource = useClusterStore((state) => state.selectedResource);
   const clusterOverview = useClusterStore((state) => state.clusterOverview);
   const loadPods = useClusterStore((state) => state.loadPods);
+  const loadPodDetail = useClusterStore((state) => state.loadPodDetail);
   const [cachedResource, setCachedResource] =
     React.useState<SelectedResource | null>(selectedResource);
 
@@ -144,6 +145,26 @@ export function useInspectorResourceState(isInspectorOpen: boolean) {
     daemonSetData?.conditions ??
     jobData?.conditions ??
     [];
+
+  // List payloads are compact. When the inspector opens a pod, hydrate the
+  // detail fields (env, mounts, conditions, termination state) on demand.
+  React.useEffect(() => {
+    if (
+      !isInspectorOpen ||
+      !podData?.compact ||
+      !podData.name ||
+      !podData.namespace
+    ) {
+      return;
+    }
+    void loadPodDetail(podData.namespace, podData.name);
+  }, [
+    isInspectorOpen,
+    podData?.compact,
+    podData?.name,
+    podData?.namespace,
+    loadPodDetail,
+  ]);
 
   // Filter pods running on the currently inspected node
   const nodePods = React.useMemo(() => {

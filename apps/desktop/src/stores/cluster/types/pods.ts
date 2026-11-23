@@ -2,6 +2,7 @@ import type {
   PodSummary,
   PodLogsParams,
   PodLogsResult,
+  PodUsage,
   DeletePodParams,
   RestartPodParams,
   MovePodParams,
@@ -15,6 +16,11 @@ export interface PodsSlice {
   totalPodsCount: number;
   isPodsLoading: boolean;
   hasLoadedPodsOnce: boolean;
+  podUsage: Record<string, PodUsage>;
+  podUsageAvailable: boolean;
+  podUsageReason: string | null;
+  isPodUsageLoading: boolean;
+  hasLoadedPodUsageOnce: boolean;
   podNodeFilter: string | null;
   setPodNodeFilter: (nodeName: string | null) => void;
   podLabelFilter: string | null;
@@ -22,6 +28,12 @@ export interface PodsSlice {
   setPodLabelFilter: (selector: string | null, source?: string | null) => void;
 
   loadPods: (namespace?: string, contextName?: string) => Promise<void>;
+  loadPodDetail: (
+    namespace: string,
+    podName: string,
+    contextName?: string,
+  ) => Promise<PodSummary | null>;
+  loadPodUsage: (namespace?: string, contextName?: string) => Promise<void>;
   getPodLogs: (params: PodLogsParams) => Promise<PodLogsResult>;
   deletePod: (params: DeletePodParams) => Promise<void>;
   restartPod: (params: RestartPodParams) => Promise<void>;

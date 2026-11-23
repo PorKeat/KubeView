@@ -95,6 +95,7 @@ func (m *Manager) ClearAllContexts() error {
 	m.restConfigs = make(map[string]*rest.Config)
 	m.mu.Unlock()
 
+	m.resetPodMetricsCache()
 	return nil
 }
 

@@ -8,10 +8,18 @@ import type {
   MovePodResult,
   PodLogsParams,
   PodLogsResult,
+  PodUsage,
+  PodUsageResult,
+  PodSummary,
   RestartPodParams,
 } from "@kubeview/contracts";
 import { invokeRpc } from "@/lib/ipc";
-import { inFlightResourcePromises, resolveQueryNamespace } from "../shared";
+import {
+  getRecentResponse,
+  inFlightResourcePromises,
+  resolveQueryNamespace,
+  setRecentResponse,
+} from "../shared";
 import type { ClusterState } from "../types/cluster";
 import type { PodsSlice } from "../types/pods";
 
@@ -23,6 +31,11 @@ export const createPodsSlice: StateCreator<ClusterState, [], [], PodsSlice> = (
   totalPodsCount: 0,
   isPodsLoading: true,
   hasLoadedPodsOnce: false,
+  podUsage: {},
+  podUsageAvailable: false,
+  podUsageReason: null,
+  isPodUsageLoading: false,
+  hasLoadedPodUsageOnce: false,
   podNodeFilter: null,
   podLabelFilter: null,
   podLabelFilterSource: null,
@@ -52,6 +65,22 @@ export const createPodsSlice: StateCreator<ClusterState, [], [], PodsSlice> = (
       return inFlightResourcePromises.get(fetchKey);
     }
 
+    // Avoid a duplicate list fetch when switching tabs quickly. Watch events
+    // continue to update the store; this only suppresses an immediate refetch.
+    const cacheKey = `pods::${fetchKey}`;
+    const cached = getRecentResponse<ListPodsResult>(cacheKey, 1_500);
+    if (cached && get().currentContext === targetCtx) {
+      if (get().currentContext === targetCtx) {
+        set({
+          pods: cached.items ?? [],
+          totalPodsCount: cached.totalCount ?? cached.items?.length ?? 0,
+          isPodsLoading: false,
+          hasLoadedPodsOnce: true,
+        });
+      }
+      return;
+    }
+
     const currentPods = get().pods;
     // Stale-While-Revalidate: Only display skeleton loader on first initial cold load for active context
     if (currentPods.length === 0 && get().currentContext === targetCtx) {
@@ -68,6 +97,7 @@ export const createPodsSlice: StateCreator<ClusterState, [], [], PodsSlice> = (
         // Context race condition guard: Only commit pods if user is still on this context
         if (get().currentContext === targetCtx) {
           if (res && res.items) {
+            setRecentResponse(cacheKey, res);
             set({
               pods: res.items,
               totalPodsCount: res.totalCount ?? res.items.length,
@@ -96,6 +126,121 @@ export const createPodsSlice: StateCreator<ClusterState, [], [], PodsSlice> = (
     inFlightResourcePromises.set(fetchKey, promise);
     return promise;
   },
+
+  loadPodDetail: async (namespace, podName, contextName) => {
+    const targetCtx = contextName || get().currentContext;
+    if (!targetCtx) return null;
+
+    try {
+      const res = await invokeRpc<PodSummary>("pods.detail", {
+        contextName: targetCtx,
+        namespace,
+        podName,
+      });
+      if (get().currentContext !== targetCtx) return res;
+
+      const selected = get().selectedResource;
+      if (
+        selected?.kind === "Pod" &&
+        selected.name === podName &&
+        selected.namespace === namespace
+      ) {
+        set({
+          selectedResource: {
+            ...selected,
+            status: res.status,
+            data: res as unknown as Record<string, unknown>,
+          },
+        });
+      }
+      return res;
+    } catch (err) {
+      console.warn("[ClusterStore] Failed to load pod detail:", err);
+      return null;
+    }
+  },
+
+  loadPodUsage: async (namespace?: string, contextName?: string) => {
+    const targetCtx = contextName || get().currentContext;
+    if (!targetCtx) {
+      set({
+        podUsage: {},
+        podUsageAvailable: false,
+        podUsageReason: null,
+        isPodUsageLoading: false,
+      });
+      return;
+    }
+
+    const targetNs = namespace ?? get().currentNamespace;
+    const queryNs = resolveQueryNamespace(get(), targetCtx, targetNs);
+    const fetchKey = `pod-usage::${targetCtx}::${queryNs}`;
+
+    if (inFlightResourcePromises.has(fetchKey)) {
+      return inFlightResourcePromises.get(fetchKey);
+    }
+
+    if (get().currentContext === targetCtx) {
+      set({ isPodUsageLoading: true });
+    }
+
+    const promise = (async () => {
+      try {
+        const res = await invokeRpc<PodUsageResult>("pods.metrics", {
+          contextName: targetCtx,
+          namespace: queryNs,
+        });
+
+        if (get().currentContext !== targetCtx) return;
+
+        const usage: Record<string, PodUsage> =
+          queryNs === "" ? {} : { ...get().podUsage };
+        if (queryNs !== "") {
+          for (const key of Object.keys(usage)) {
+            if (usage[key].namespace === queryNs) delete usage[key];
+          }
+        }
+        for (const item of res?.items ?? []) {
+          usage[`${item.namespace}/${item.name}`] = item;
+        }
+
+        set({
+          podUsage: usage,
+          podUsageAvailable: res?.metricsAvailable ?? false,
+          podUsageReason: res?.reason ?? null,
+          isPodUsageLoading: false,
+          hasLoadedPodUsageOnce: true,
+        });
+      } catch (err) {
+        console.warn("[ClusterStore] Failed to load pod usage:", err);
+        if (get().currentContext === targetCtx) {
+          const usage: Record<string, PodUsage> =
+            queryNs === "" ? {} : { ...get().podUsage };
+          if (queryNs !== "") {
+            for (const key of Object.keys(usage)) {
+              if (usage[key].namespace === queryNs) delete usage[key];
+            }
+          }
+          set({
+            podUsage: usage,
+            podUsageAvailable: false,
+            podUsageReason:
+              err instanceof Error
+                ? err.message
+                : "Unable to read pod metrics.",
+            isPodUsageLoading: false,
+            hasLoadedPodUsageOnce: true,
+          });
+        }
+      } finally {
+        inFlightResourcePromises.delete(fetchKey);
+      }
+    })();
+
+    inFlightResourcePromises.set(fetchKey, promise);
+    return promise;
+  },
+
   getPodLogs: async (params: PodLogsParams) => {
     const targetCtx = params.contextName || get().currentContext;
     return await invokeRpc<PodLogsResult>("pods.logs", {

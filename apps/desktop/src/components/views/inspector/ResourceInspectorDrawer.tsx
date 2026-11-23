@@ -275,7 +275,7 @@ export function ResourceInspectorDrawer() {
       <div
         data-testid="resource-inspector-drawer"
         className={cn(
-          "inspector-drawer fixed inset-y-0 right-0 z-40 w-full origin-right glass-panel border-l border-[var(--border)] shadow-2xl flex flex-col select-none",
+          "inspector-drawer fixed inset-y-0 right-0 z-40 w-full origin-right glass-panel border-l border-[var(--border)] shadow-2xl flex flex-col",
           activeTab === "yaml" && isYamlEditing
             ? isEditorMaximized
               ? "max-w-[100vw]"

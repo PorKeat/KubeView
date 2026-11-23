@@ -33,7 +33,7 @@ export function ResourceTableHeader({
 }: ResourceTableHeaderProps) {
   return (
     <thead className="sticky top-0 bg-[var(--surface)] z-10 border-b border-[var(--border)] select-none">
-      <tr className="text-[11px] font-semibold text-[var(--muted)] uppercase tracking-wider h-8">
+      <tr className="text-[11px] font-semibold text-[var(--muted)] uppercase tracking-wide h-8">
         <th className="w-[3%] px-2 text-center">
           <Tooltip
             content={
@@ -66,7 +66,7 @@ export function ResourceTableHeader({
             ascending: sortAsc,
             onSort: handleSort,
           })}
-          className="w-[20%] py-1 px-3 cursor-pointer hover:text-[var(--foreground)] transition-colors"
+          className="w-[18%] py-1 px-3 cursor-pointer hover:text-[var(--foreground)] transition-colors"
         >
           <div className="flex items-center gap-1">
             <span>Name</span>
@@ -88,7 +88,7 @@ export function ResourceTableHeader({
             ascending: sortAsc,
             onSort: handleSort,
           })}
-          className="w-[11%] py-1 px-3 cursor-pointer hover:text-[var(--foreground)] transition-colors"
+          className="w-[10%] py-1 px-3 cursor-pointer hover:text-[var(--foreground)] transition-colors"
         >
           <div className="flex items-center gap-1">
             <span>Namespace</span>
@@ -155,7 +155,7 @@ export function ResourceTableHeader({
             ascending: sortAsc,
             onSort: handleSort,
           })}
-          className="w-[11%] py-1 px-3 cursor-pointer hover:text-[var(--foreground)] transition-colors"
+          className="hidden xl:table-cell w-[10%] py-1 px-3 cursor-pointer hover:text-[var(--foreground)] transition-colors"
         >
           <div className="flex items-center gap-1">
             <span>Node</span>
@@ -170,9 +170,53 @@ export function ResourceTableHeader({
             )}
           </div>
         </th>
-        <th className="w-[9%] py-1 px-3">IP</th>
-        <th className="w-[6%] py-1 px-3">CPU</th>
-        <th className="w-[7%] py-1 px-3">Memory</th>
+        <th className="hidden xl:table-cell w-[8%] py-1 px-3">IP</th>
+        <th
+          {...sortableHeaderProps({
+            field: "cpu",
+            activeField: sortField,
+            ascending: sortAsc,
+            onSort: handleSort,
+          })}
+          className="hidden xl:table-cell w-[9%] py-1 px-3 cursor-pointer hover:text-[var(--foreground)] transition-colors"
+          title="Sort by live CPU usage (falls back to CPU request)"
+        >
+          <div className="flex items-center gap-1">
+            <span>CPU</span>
+            {sortField === "cpu" ? (
+              sortAsc ? (
+                <ArrowUp className="w-3 h-3 text-[var(--accent)]" />
+              ) : (
+                <ArrowDown className="w-3 h-3 text-[var(--accent)]" />
+              )
+            ) : (
+              <ArrowUpDown className="w-3 h-3 opacity-30" />
+            )}
+          </div>
+        </th>
+        <th
+          {...sortableHeaderProps({
+            field: "memory",
+            activeField: sortField,
+            ascending: sortAsc,
+            onSort: handleSort,
+          })}
+          className="hidden xl:table-cell w-[10%] py-1 px-3 cursor-pointer hover:text-[var(--foreground)] transition-colors"
+          title="Sort by live memory usage (falls back to memory request)"
+        >
+          <div className="flex items-center gap-1">
+            <span>Mem</span>
+            {sortField === "memory" ? (
+              sortAsc ? (
+                <ArrowUp className="w-3 h-3 text-[var(--accent)]" />
+              ) : (
+                <ArrowDown className="w-3 h-3 text-[var(--accent)]" />
+              )
+            ) : (
+              <ArrowUpDown className="w-3 h-3 opacity-30" />
+            )}
+          </div>
+        </th>
         <th
           {...sortableHeaderProps({
             field: "age",
@@ -180,7 +224,7 @@ export function ResourceTableHeader({
             ascending: sortAsc,
             onSort: handleSort,
           })}
-          className="w-[5%] py-1 px-3 cursor-pointer hover:text-[var(--foreground)] transition-colors"
+          className="w-[5%] py-1 px-2 cursor-pointer hover:text-[var(--foreground)] transition-colors"
         >
           <div className="flex items-center gap-1">
             <span>Age</span>
