@@ -2,6 +2,7 @@ import { spawn, type ChildProcessWithoutNullStreams } from "child_process";
 import readline from "readline";
 import path from "path";
 import fs from "fs";
+import { rpcTimeoutMs } from "@/lib/rpcTimeouts";
 
 interface PendingRequest {
   resolve: (value: unknown) => void;
@@ -212,6 +213,7 @@ class EngineBridge {
     }
 
     const id = this.seq++;
+    const requestTimeoutMs = rpcTimeoutMs(method) + 5_000;
     const payload =
       JSON.stringify({
         jsonrpc: "2.0",
@@ -225,12 +227,14 @@ class EngineBridge {
         if (this.pending.delete(id)) {
           reject(
             engineError(
-              `RPC request '${method}' timed out after 20s`,
+              `RPC request '${method}' timed out after ${Math.round(
+                requestTimeoutMs / 1000,
+              )}s`,
               "TIMEOUT",
             ),
           );
         }
-      }, 20_000);
+      }, requestTimeoutMs);
 
       this.pending.set(id, {
         resolve: (value) => resolve(value as T),
