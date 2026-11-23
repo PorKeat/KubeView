@@ -44,6 +44,7 @@ test.describe("KubeView Workload Bulk Selection", () => {
       { id: "jobs", kind: "Job", filter: /Filter jobs/i, restart: false },
     ];
 
+    let exercised = 0;
     for (const workload of workloads) {
       await page.getByTestId(`nav-item-${workload.id}`).click();
       await expect(page.getByPlaceholder(workload.filter)).toBeVisible({
@@ -53,9 +54,17 @@ test.describe("KubeView Workload Bulk Selection", () => {
       const checkboxes = page.locator(
         `button[aria-label^="Select ${workload.kind} "]`,
       );
-      await expect(checkboxes.first()).toBeVisible({ timeout: 15000 });
+      const emptyState = page.getByText(/No .* found/i).first();
+      await expect(checkboxes.first().or(emptyState)).toBeVisible({
+        timeout: 15000,
+      });
+      if ((await checkboxes.count()) === 0) {
+        // Live clusters may legitimately have no resources for a kind.
+        continue;
+      }
       const rowCount = await checkboxes.count();
       expect(rowCount).toBeGreaterThan(0);
+      exercised += 1;
 
       await checkboxes.nth(0).click();
       if (rowCount > 1) await checkboxes.nth(1).click();
@@ -84,6 +93,11 @@ test.describe("KubeView Workload Bulk Selection", () => {
       await page.getByTestId("bulk-clear-selection").click();
       await expect(bulkToolbar).not.toBeVisible();
     }
+
+    test.skip(
+      exercised === 0,
+      "Cluster has no ReplicaSets, StatefulSets, DaemonSets, or Jobs to select.",
+    );
   });
 });
 

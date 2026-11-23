@@ -65,15 +65,29 @@ test.describe("KubeView live networking audit", () => {
     await page.waitForTimeout(500);
     await expandSidebarGroups(page);
 
+    const countsResponse = await page.request.post("/api/rpc", {
+      data: { method: "sidebar.counts", params: {} },
+    });
+    const countsBody = (await countsResponse.json()) as {
+      result?: {
+        networkingCounts?: Record<string, number>;
+      };
+    };
+    const counts = countsBody.result?.networkingCounts ?? {};
+
     for (const id of [
       "services",
       "endpoints",
       "ingresses",
       "networkpolicies",
     ]) {
-      await expect(
-        page.locator(`[data-testid="nav-item-${id}"]`),
-      ).toContainText(/\d+/, { timeout: 20000 });
+      const item = page.locator(`[data-testid="nav-item-${id}"]`);
+      await expect(item).toBeVisible({ timeout: 15000 });
+      // Badges are rendered only for non-zero counts. Assert the digit when
+      // the live cluster actually has resources of that kind.
+      if ((counts[id] ?? 0) > 0) {
+        await expect(item).toContainText(/\d+/, { timeout: 15000 });
+      }
     }
     await expect(page.locator('[data-testid="nav-item-cilium"]')).toBeVisible();
   });

@@ -165,9 +165,9 @@ test.describe("KubeView UI - Accessibility & Keyboard Navigation (WCAG AA)", () 
     });
 
     expect(refreshContrast).not.toBeNull();
-    // Refresh button uses text-zinc-950 on #f08a42 (orange) -> dark text on orange has > 7:1 contrast (AAA)
+    // Refresh button uses --accent-foreground on --accent -> dark text on orange has > 7:1 contrast (AAA)
     expect(refreshContrast?.color).toMatch(
-      /(lab\(|oklch\(|rgb\(9,\s*9,\s*11\))/,
+      /(lab\(|oklch\(|rgb\(9,\s*9,\s*11\)|rgb\(26,\s*14,\s*4\))/,
     );
 
     // Audit status indicators (Healthy / Ready badges)

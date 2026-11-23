@@ -48,7 +48,6 @@ test.describe("KubeView UI - Cluster Overview & Health Metrics", () => {
       .filter({ hasText: /kube-system|woodpecker/i })
       .first();
     await expect(targetNsOption).toBeVisible({ timeout: 5000 });
-    const chosenNs = (await targetNsOption.innerText()).split("\n")[0].trim();
     await targetNsOption.click();
 
     // Verify ambient banner is displayed on Cluster Overview

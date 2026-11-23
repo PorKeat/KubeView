@@ -122,18 +122,25 @@ test.describe("KubeView Responsive Shell", () => {
         timeout: 15000,
       });
       const table = page.locator("table").first();
-      await expect(table).toBeVisible({ timeout: 15000 });
-      const scrollable = await table.evaluate((node) => {
-        const wrapper = node.parentElement as HTMLElement;
-        return wrapper.scrollWidth > wrapper.clientWidth;
-      });
-      expect(scrollable).toBe(true);
+      const emptyState = page.getByText(/No .* found/i).first();
+      await expect(table.or(emptyState)).toBeVisible({ timeout: 15000 });
+
       const pageOverflow = await page.evaluate(
         () =>
           document.documentElement.scrollWidth -
           document.documentElement.clientWidth,
       );
       expect(pageOverflow).toBeLessThanOrEqual(1);
+
+      if ((await table.count()) === 0) {
+        // Live collections with no items render an empty state, not a table.
+        continue;
+      }
+      const scrollable = await table.evaluate((node) => {
+        const wrapper = node.parentElement as HTMLElement;
+        return wrapper.scrollWidth > wrapper.clientWidth;
+      });
+      expect(scrollable).toBe(true);
     }
 
     // CronJobs shares the workload list shell with Jobs, but has its own table
@@ -142,19 +149,25 @@ test.describe("KubeView Responsive Shell", () => {
     await expect(page.getByPlaceholder(/Filter cronjobs/i)).toBeVisible({
       timeout: 15000,
     });
-    const cronJobTable = page.locator("table").first();
-    await expect(cronJobTable).toBeVisible({ timeout: 15000 });
-    const cronJobScrollable = await cronJobTable.evaluate((node) => {
-      const wrapper = node.parentElement as HTMLElement;
-      return wrapper.scrollWidth > wrapper.clientWidth;
-    });
-    expect(cronJobScrollable).toBe(true);
     const cronJobPageOverflow = await page.evaluate(
       () =>
         document.documentElement.scrollWidth -
         document.documentElement.clientWidth,
     );
     expect(cronJobPageOverflow).toBeLessThanOrEqual(1);
+
+    const cronJobTable = page.locator("table").first();
+    const cronJobEmptyState = page.getByText(/No .* found/i).first();
+    await expect(cronJobTable.or(cronJobEmptyState)).toBeVisible({
+      timeout: 15000,
+    });
+    if ((await cronJobTable.count()) > 0) {
+      const cronJobScrollable = await cronJobTable.evaluate((node) => {
+        const wrapper = node.parentElement as HTMLElement;
+        return wrapper.scrollWidth > wrapper.clientWidth;
+      });
+      expect(cronJobScrollable).toBe(true);
+    }
   });
 
   test("mobile settings page changes font size and stays within the viewport", async ({

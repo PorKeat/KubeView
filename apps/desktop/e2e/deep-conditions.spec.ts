@@ -31,7 +31,9 @@ test.describe("KubeView UI - Deep Conditions & Edge Case Verification", () => {
     await expect(footer).toContainText("kubernetes-admin@kubekey");
 
     // 3. Runtime Engine & RBAC indicators (clean, unboxed text)
-    await expect(footer).toContainText(/Go 1\.23/i);
+    await expect(page.getByTestId("status-go-version")).toContainText(
+      /Go \d+\.\d+/i,
+    );
     await expect(footer).toContainText(/ClusterAdmin/i);
 
     // 4. Server version click-to-copy

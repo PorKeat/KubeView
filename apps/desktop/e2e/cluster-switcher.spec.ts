@@ -147,5 +147,17 @@ test.describe("KubeView UI - Cluster Context Switcher & Configuration", () => {
       undefined,
       { timeout: 15000 },
     );
+    // The UI updates optimistically; force the engine back to the primary
+    // context as well so later live specs do not inherit mailconfig.
+    const restored = await page.request.post("/api/rpc", {
+      data: {
+        method: "clusters.switchContext",
+        params: { contextName: "kubernetes-admin@kubekey" },
+      },
+    });
+    const restoredBody = (await restored.json()) as {
+      result?: { activeContext?: string };
+    };
+    expect(restoredBody.result?.activeContext).toBe("kubernetes-admin@kubekey");
   });
 });
