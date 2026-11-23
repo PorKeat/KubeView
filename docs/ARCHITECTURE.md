@@ -323,7 +323,7 @@ KubeView/
 │   ├── capabilities/                # Tauri 2 capability definitions
 │   ├── binaries/                    # Target sidecar binaries for packaging
 │   └── tauri.conf.json              # Tauri windowing & sidecar config
-├── engine/                          # Kubernetes Engine (Go 1.23+ Sidecar)
+├── engine/                          # Kubernetes Engine (Go 1.26.11+ Sidecar)
 │   ├── cmd/                         # Entrypoint
 │   ├── internal/                    # Core subsystems
 │   ├── go.mod

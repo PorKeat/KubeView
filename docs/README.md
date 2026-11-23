@@ -52,15 +52,15 @@
 
 ## 🏛️ Implemented Capabilities & Production Subsystems
 
-| Module                  | Location                                             | Description                                                                                                                               |
-| :---------------------- | :--------------------------------------------------- | :---------------------------------------------------------------------------------------------------------------------------------------- |
-| **Go Engine Sidecar**   | `engine/`                                            | Headless Go 1.23+ process communicating via stdio JSON-RPC 2.0. Native `client-go` informers, watch streams, and multi-kubeconfig parser. |
-| **Cluster Overview**    | `apps/desktop/src/components/views/overview/`        | Bento metric cards, precision SVG charts, node matrix grid, workload controller status, warning event feed, and namespace filtering.      |
-| **Resource Inspector**  | `apps/desktop/src/components/views/inspector/`       | Drawer with Node & Pod detail views, container states, env var viewer, conditions timeline, live events, and formatted YAML.              |
-| **Resource Browser**    | `apps/desktop/src/components/views/resources/`       | Real-time streaming pod list, multi-column sort, status filter pills, and batch restart/delete actions.                                   |
-| **Troubleshooting Hub** | `apps/desktop/src/components/modals/`                | Streaming live logs with search & download, and interactive container terminal PTY exec.                                                  |
-| **Kubeconfig Hub**      | `apps/desktop/src/components/onboarding/kubeconfig/` | System OS scanner, multi-file/folder drag & drop, raw YAML parser, and internal host IP override.                                         |
-| **GitOps Drift**        | `apps/desktop/src/components/views/gitops/`          | Local raw-YAML manifest scanning, desired-versus-live drift classification, shared YAML diff viewer, and RBAC-aware reviewed apply.       |
+| Module                  | Location                                             | Description                                                                                                                                  |
+| :---------------------- | :--------------------------------------------------- | :------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Go Engine Sidecar**   | `engine/`                                            | Headless Go 1.26.11+ process communicating via stdio JSON-RPC 2.0. Native `client-go` informers, watch streams, and multi-kubeconfig parser. |
+| **Cluster Overview**    | `apps/desktop/src/components/views/overview/`        | Bento metric cards, precision SVG charts, node matrix grid, workload controller status, warning event feed, and namespace filtering.         |
+| **Resource Inspector**  | `apps/desktop/src/components/views/inspector/`       | Drawer with Node & Pod detail views, container states, env var viewer, conditions timeline, live events, and formatted YAML.                 |
+| **Resource Browser**    | `apps/desktop/src/components/views/resources/`       | Real-time streaming pod list, multi-column sort, status filter pills, and batch restart/delete actions.                                      |
+| **Troubleshooting Hub** | `apps/desktop/src/components/modals/`                | Streaming live logs with search & download, and interactive container terminal PTY exec.                                                     |
+| **Kubeconfig Hub**      | `apps/desktop/src/components/onboarding/kubeconfig/` | System OS scanner, multi-file/folder drag & drop, raw YAML parser, and internal host IP override.                                            |
+| **GitOps Drift**        | `apps/desktop/src/components/views/gitops/`          | Local raw-YAML manifest scanning, desired-versus-live drift classification, shared YAML diff viewer, and RBAC-aware reviewed apply.          |
 
 ---
 

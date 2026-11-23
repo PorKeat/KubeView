@@ -11,13 +11,25 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Live pod and container CPU/memory usage from Metrics Server, shown beside requests in the Pods table and inspector. The view degrades to requests and limits when Metrics Server is absent or denied.
 - In-app updates: KubeView checks a signed update manifest on launch and every six hours, alerts from a global banner, and installs and restarts with one click from the banner or Settings → About & Updates.
 - An automatic-update toggle and manual “Check now” action in Settings.
 - Release pipeline support for signed Tauri updater bundles and a `latest.json` manifest published to GitHub Releases and the landing site.
+- Hermetic Playwright project for the mocked E2E suite, a separate live-cluster project, and an `e2e` CI job.
+- Engine and Go runtime versions in the handshake response, surfaced in the status bar.
+
+### Changed
+
+- Node role labels are ordered consistently (control-plane before worker), and the table Age column no longer truncates at desktop widths.
 
 ### Security
 
 - Update downloads are signature-verified with a pinned Tauri public key.
+- The web dev server binds to `127.0.0.1`, and `/api/rpc` rejects non-loopback origins in addition to checking the Host header.
+
+### Fixed
+
+- The engine build injects the app version, so the handshake no longer reports a stale `0.1.0`.
 
 ## [0.3.2] - 2026-11-01
 

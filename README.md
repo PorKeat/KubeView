@@ -9,7 +9,7 @@
   <a href="SECURITY.md"><img src="https://img.shields.io/badge/Security-Policy_Active-38B879.svg?style=flat-square" alt="Security Policy" /></a>
   <a href="CONTRIBUTING.md"><img src="https://img.shields.io/badge/PRs-Welcome-F08A42.svg?style=flat-square" alt="PRs Welcome" /></a>
   <a href="CODE_OF_CONDUCT.md"><img src="https://img.shields.io/badge/Contributor_Covenant-v2.1-teal.svg?style=flat-square" alt="Code of Conduct" /></a>
-  <a href="https://go.dev"><img src="https://img.shields.io/badge/Go-1.23+-00ADD8.svg?style=flat-square&logo=go" alt="Go 1.23+" /></a>
+  <a href="https://go.dev"><img src="https://img.shields.io/badge/Go-1.26.11+-00ADD8.svg?style=flat-square&logo=go" alt="Go 1.26.11+" /></a>
   <a href="https://tauri.app"><img src="https://img.shields.io/badge/Tauri-2.0-FFC131.svg?style=flat-square&logo=tauri" alt="Tauri 2" /></a>
   <a href="https://nextjs.org"><img src="https://img.shields.io/badge/Next.js-15-black.svg?style=flat-square&logo=next.js" alt="Next.js 15" /></a>
 </p>
@@ -63,6 +63,7 @@ flowchart LR
 ### 2. ⚡ Pods Management & Data Grid
 
 - **Real-Time Watch Streaming:** Integrated Kubernetes Informer and Watch API stream for zero-polling real-time updates.
+- **Live CPU & Memory Usage:** Pod rows and the inspector show Metrics Server usage alongside requests and limits, with a graceful fallback when Metrics Server is unavailable.
 - **High-Speed Client-Side Filtering:** Instant search by pod name, namespace, node, or IP address. Status filter pills for `All`, `Running`, `Pending`, and `Failing`.
 - **Multi-Column Sorting:** Sort by name, namespace, status, restart count, or age.
 - **Batch Workload Actions:** Multi-select pods with floating batch action bar for bulk pod restarts and deletion.
@@ -127,7 +128,7 @@ flowchart LR
 
 Every major view and component in KubeView adheres to clean architecture principles:
 
-- **Maximum File Length Under 500 Lines:** All legacy monolithic views have been decomposed into cohesive subcomponents with explicit TypeScript contracts.
+- **Modular Views:** Major views are decomposed into cohesive subcomponents with explicit TypeScript contracts. Most files stay under 500 lines; the largest shared table/config modules are tracked for further decomposition.
 - **100% Backward Compatibility:** Re-export barrels preserve standard import paths across the codebase.
 - **WCAG AA Compliance:** High-contrast tokens, semantic ARIA attributes, and full keyboard navigation support across dropdowns, tables, drawers, and modal dialogs.
 
@@ -170,7 +171,7 @@ apps/desktop/src/
 
 - **Node.js** >= 20.x
 - **pnpm** >= 9.x
-- **Go** >= 1.23
+- **Go** >= 1.26.11
 - **Rust & Cargo** (for Tauri native desktop build)
 
 ### Quick Start
@@ -198,9 +199,17 @@ cd engine && go build ./...
 # Check Rust Tauri host
 cargo check --manifest-path src-tauri/Cargo.toml
 
-# Run End-to-End Test Suite (Playwright)
-cd apps/desktop && npx playwright test
+# Run End-to-End test suite (hermetic, mocked RPC)
+pnpm test:e2e
+
+# Run the live-cluster specs (requires a connected kubeconfig)
+pnpm test:e2e:live
+
+# Run all E2E projects serially
+pnpm test:e2e:all
 ```
+
+> **Note:** Stop `./dev.sh` before running `pnpm build`. The dev server and the production build share `apps/desktop/.next`; running both at once can corrupt the Turbopack cache.
 
 ### Release
 

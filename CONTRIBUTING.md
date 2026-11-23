@@ -22,7 +22,7 @@ KubeView enforces a strict 3-tier boundary:
 | :--------------------- | :-------------------------------------------- | :----------------------------------------------------------- | :----------------------------------------------------------------------- |
 | **1. UI Presentation** | Next.js 15, React 19, Tailwind CSS 4, Zustand | Rendering, table grids, view state, user interactions.       | **Zero credentials.** Never store tokens or private keys in React state. |
 | **2. Native Host**     | Tauri 2, Rust, tokio                          | Process supervisor, capability enforcement, window controls. | Supervise Go engine via private stdio pipes. No open host TCP ports.     |
-| **3. Engine Sidecar**  | Go 1.23+, client-go, informers                | Kubernetes API calls, watches, metrics, credential plugins.  | Direct mutual TLS to Kubernetes API. Sensitive data redacting on stderr. |
+| **3. Engine Sidecar**  | Go 1.26.11+, client-go, informers             | Kubernetes API calls, watches, metrics, credential plugins.  | Direct mutual TLS to Kubernetes API. Sensitive data redacting on stderr. |
 
 > **Rule:** Features requiring Kubernetes operations must be defined as typed JSON-RPC methods in `packages/contracts`, implemented in Go (`engine/`), and invoked from the UI via typed IPC callers.
 
@@ -34,7 +34,7 @@ KubeView enforces a strict 3-tier boundary:
 
 - **Node.js** >= 20.x
 - **pnpm** >= 9.x
-- **Go** >= 1.23+
+- **Go** >= 1.26.11+
 - **Rust & Cargo** (latest stable, for native Tauri builds)
 - A local Kubernetes cluster (e.g., KinD, Minikube, or k3s) and a valid `~/.kube/config`.
 
@@ -99,19 +99,24 @@ git commit -m "feat(telemetry): add live pod memory usage gauge to node inspecto
 
 Before submitting a Pull Request, verify that all quality checks pass locally:
 
+> **Build vs. dev server:** `next build` and `next dev` share `apps/desktop/.next`. Stop the dev server before running a production build, or run the build in a clean checkout/CI. Running both at once can corrupt the Turbopack cache and leave the dev server returning 500 until restarted.
+
 ```bash
 # 1. TypeScript contracts & workspace type check
 pnpm build:contracts
 pnpm lint
 
-# 2. Build Go engine sidecar
+# 2. Hermetic E2E suite (mocked RPC, no cluster required)
+pnpm test:e2e
+
+# 3. Build Go engine sidecar
 go -C engine build ./...
 go -C engine test -v ./...
 
-# 3. Tauri host verification (if modifying src-tauri)
+# 4. Tauri host verification (if modifying src-tauri)
 cargo check --manifest-path src-tauri/Cargo.toml
 
-# 4. Formatting check
+# 5. Formatting check
 pnpm format
 ```
 

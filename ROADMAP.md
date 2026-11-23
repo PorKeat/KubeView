@@ -12,7 +12,7 @@ KubeView is engineered with a **three-tier decoupled architecture**:
 - **Desktop Host:** **Tauri 2 (Rust)** — Ultra-lightweight native host (<80MB RAM), system tray, and host-enforced security sandbox.
 - **Frontend UI:** **Next.js (Static Export) + React 19 + TypeScript + Tailwind CSS 4 + shadcn/ui + Motion + Lucide + cmdk + Sonner + next-themes + Geist**.
 - **Data & Tables:** **TanStack Query + Zustand + TanStack Table + Monaco Editor & Monaco Diff Editor + Precision SVG Telemetry Charts + date-fns**.
-- **Kubernetes Engine:** **Go 1.23+ Sidecar with official `k8s.io/client-go` + `clientcmd` + `log/slog`**, communicating via versioned JSON-RPC over local stdio pipes.
+- **Kubernetes Engine:** **Go 1.26.11+ Sidecar with official `k8s.io/client-go` + `clientcmd` + `log/slog`**, communicating via versioned JSON-RPC over local stdio pipes.
 - **Quality & Testing:** **`pnpm` + Lefthook + Vitest + Testing Library + Playwright + Go `testify` + `envtest`**.
 
 ---
@@ -104,7 +104,7 @@ _Establish the application shell before implementing complex Kubernetes workflow
 
 _Make cluster connections reliable and resilient before expanding the resource browser._
 
-- [ ] Dedicated Go 1.23+ engine sidecar running official `k8s.io/client-go`.
+- [ ] Dedicated Go 1.26.11+ engine sidecar running official `k8s.io/client-go`.
 - [ ] Versioned JSON-RPC protocol over local IPC between Tauri 2 host and Go engine.
 - [ ] Load and parse kubeconfig files using `clientcmd` from `~/.kube/config`, custom paths, and `$KUBECONFIG`.
 - [ ] Support seamless switching between multiple clusters and contexts.

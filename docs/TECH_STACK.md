@@ -87,7 +87,7 @@ flowchart TD
 
 | Category                | Technology                   | Role in KubeView                                                                                                    |
 | :---------------------- | :--------------------------- | :------------------------------------------------------------------------------------------------------------------ |
-| **Kubernetes Engine**   | **Go (1.23+)**               | Dedicated, high-performance background daemon/sidecar managing all cluster network I/O.                             |
+| **Kubernetes Engine**   | **Go (1.26.11+)**            | Dedicated, high-performance background daemon/sidecar managing all cluster network I/O.                             |
 | **Kubernetes Client**   | **`client-go`**              | The gold standard Kubernetes client: typed clientsets, informer factories, and connection resilience.               |
 | **Dynamic Resources**   | **`client-go/dynamic`**      | Dynamic client for CRDs and arbitrary custom resources without ahead-of-time code generation.                       |
 | **Resource Discovery**  | **`client-go/discovery`**    | Dynamic API group discovery to adapt to any Kubernetes version (v1.26 - v1.34+).                                    |
