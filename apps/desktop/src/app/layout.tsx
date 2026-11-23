@@ -70,7 +70,7 @@ export default function RootLayout({
       </head>
       <body
         suppressHydrationWarning
-        className="h-screen w-screen font-sans antialiased overflow-hidden select-none"
+        className="h-screen w-screen font-sans antialiased overflow-hidden"
       >
         <ThemeProvider
           attribute="class"

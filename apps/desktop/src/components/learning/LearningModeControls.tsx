@@ -68,7 +68,7 @@ export function LearningModeControls({
             <p
               className={cn(
                 "mt-0.5 leading-relaxed text-[var(--muted)]",
-                compact ? "text-[9px]" : "text-[10px]",
+                compact ? "text-[10px]" : "text-[10px]",
               )}
             >
               {compact
@@ -126,7 +126,7 @@ export function LearningModeControls({
                 className={cn(
                   "rounded-md font-semibold transition-colors cursor-pointer focus-visible:ring-2 focus-visible:ring-[var(--accent)] focus-visible:outline-hidden",
                   compact
-                    ? "px-1.5 py-1 text-[9px]"
+                    ? "px-1.5 py-1 text-[10px]"
                     : "px-2 py-1.5 text-[10px]",
                   isActive
                     ? "border border-[var(--border)] bg-[var(--surface)] text-[var(--foreground)] shadow-2xs"

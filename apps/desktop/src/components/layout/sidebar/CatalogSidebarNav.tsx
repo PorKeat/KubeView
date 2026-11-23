@@ -91,18 +91,16 @@ export function CatalogSidebarNav({
     <div className="space-y-4">
       {!sidebarCollapsed && (
         <div className="flex items-center justify-between border-b border-[var(--border)] px-2 pb-2">
-          <span className="font-mono text-[9px] uppercase tracking-[0.16em] text-[var(--muted)]">
+          <span className="text-[10px] font-semibold text-[var(--muted)]">
             Browse
           </span>
-          <span className="font-mono text-[9px] text-[var(--muted)]/70">
-            kubeconfig
-          </span>
+          <span className="text-[10px] text-[var(--muted)]/70">Kubeconfig</span>
         </div>
       )}
 
       <div className="space-y-0.5">
         {!sidebarCollapsed && (
-          <p className="px-2 pb-1 font-mono text-[9px] uppercase tracking-[0.14em] text-[var(--muted)]">
+          <p className="px-2 pb-1 text-[10px] font-semibold text-[var(--muted)]">
             General
           </p>
         )}
@@ -143,7 +141,7 @@ export function CatalogSidebarNav({
 
       <div className="space-y-0.5">
         {!sidebarCollapsed && (
-          <p className="px-2 pb-1 font-mono text-[9px] uppercase tracking-[0.14em] text-[var(--muted)]">
+          <p className="px-2 pb-1 text-[10px] font-semibold text-[var(--muted)]">
             Fleet
           </p>
         )}

@@ -5,7 +5,7 @@ import { cva, type VariantProps } from "class-variance-authority";
 import { cn } from "@/lib/utils";
 
 const badgeVariants = cva(
-  "inline-flex items-center gap-1.5 rounded-md px-2 py-0.5 text-xs font-mono font-medium transition-colors select-none focus:outline-hidden focus:ring-2 focus:ring-[var(--accent)]",
+  "inline-flex items-center gap-1.5 rounded-md px-2 py-0.5 text-[11px] font-medium transition-colors select-none focus:outline-hidden focus:ring-2 focus:ring-[var(--accent)]",
   {
     variants: {
       variant: {
@@ -18,11 +18,11 @@ const badgeVariants = cva(
         accent:
           "border border-[var(--accent)]/30 bg-[var(--accent)]/10 text-[var(--accent)] font-semibold",
         success:
-          "border border-emerald-500/20 bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 font-semibold",
+          "border border-[var(--status-healthy-border)] bg-[var(--status-healthy-bg)] text-[var(--status-healthy)] font-semibold",
         warning:
-          "border border-amber-500/25 bg-amber-500/10 text-amber-700 dark:text-amber-400 font-semibold",
+          "border border-[var(--status-warning-border)] bg-[var(--status-warning-bg)] text-[var(--status-warning)] font-semibold",
         destructive:
-          "border border-rose-500/25 bg-rose-500/10 text-rose-700 dark:text-rose-400 font-semibold",
+          "border border-[var(--status-critical-border)] bg-[var(--status-critical-bg)] text-[var(--status-critical)] font-semibold",
       },
     },
     defaultVariants: {

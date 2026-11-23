@@ -192,7 +192,7 @@ export function BulkWorkloadActionModal() {
 
           <div className="space-y-1.5 rounded-xl border border-[var(--border)] bg-black/[0.03] p-2.5 dark:bg-white/[0.04]">
             <div className="flex items-center justify-between gap-2">
-              <span className="text-[9px] uppercase tracking-wider text-[var(--muted)] font-semibold">
+              <span className="text-[10px] uppercase tracking-wider text-[var(--muted)] font-semibold">
                 kubectl equivalent
               </span>
               <button

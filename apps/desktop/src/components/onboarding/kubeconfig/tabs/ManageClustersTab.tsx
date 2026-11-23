@@ -71,12 +71,12 @@ export function ManageClustersTab({
                     </span>
                     {getProviderBadge(ctx.provider)}
                     {isSelected && (
-                      <span className="rounded-full bg-[var(--accent)]/15 px-1.5 py-0.5 font-mono text-[9px] font-medium text-[var(--accent)]">
+                      <span className="rounded-full bg-[var(--accent)]/15 px-1.5 py-0.5 font-mono text-[10px] font-medium text-[var(--accent)]">
                         Active
                       </span>
                     )}
                     {isInternal && (
-                      <span className="rounded border border-amber-500/30 bg-amber-500/15 px-1.5 py-0.5 font-mono text-[9px] text-amber-600 dark:text-amber-400">
+                      <span className="rounded border border-amber-500/30 bg-amber-500/15 px-1.5 py-0.5 font-mono text-[10px] text-amber-600 dark:text-amber-400">
                         Internal
                       </span>
                     )}

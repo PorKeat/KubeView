@@ -43,7 +43,7 @@ function initialState(defaultNamespace: string): OperationFormState {
 const fieldClass =
   "w-full rounded-lg border border-[var(--border)] bg-slate-50 px-2 py-1.5 font-mono text-[11px] text-[var(--foreground)] outline-hidden placeholder:text-[var(--muted)] focus:border-[var(--accent)] dark:bg-black/30";
 const labelClass =
-  "block font-mono text-[9px] uppercase tracking-wider text-[var(--muted)]";
+  "block font-mono text-[10px] uppercase tracking-wider text-[var(--muted)]";
 
 export function PermissionCheckForm({
   defaultNamespace,

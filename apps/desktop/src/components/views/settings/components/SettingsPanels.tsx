@@ -255,7 +255,7 @@ export function SafetySettingsPanel() {
                     <span className="block truncate font-mono text-[11px] text-[var(--foreground)]">
                       {context.name}
                     </span>
-                    <span className="block truncate font-mono text-[9px] text-[var(--muted)]">
+                    <span className="block truncate font-mono text-[10px] text-[var(--muted)]">
                       {context.cluster}
                     </span>
                   </span>
@@ -523,7 +523,7 @@ export function IntegrationsSettingsPanel() {
                   <span className="block truncate text-[11px] font-medium text-[var(--foreground)]">
                     {repository.name}
                   </span>
-                  <span className="block truncate font-mono text-[9px] text-[var(--muted)]">
+                  <span className="block truncate font-mono text-[10px] text-[var(--muted)]">
                     {repository.url}
                   </span>
                 </span>
@@ -726,7 +726,7 @@ function UpdateCommandRow({
           <span className="text-[11px] font-semibold text-[var(--foreground)]">
             {label}
           </span>
-          <span className="rounded border border-[var(--border)] bg-[var(--surface)] px-1.5 py-0.2 font-mono text-[9px] text-[var(--muted)]">
+          <span className="rounded border border-[var(--border)] bg-[var(--surface)] px-1.5 py-0.2 font-mono text-[10px] text-[var(--muted)]">
             {platform}
           </span>
         </div>
@@ -957,7 +957,7 @@ export function AboutSettingsPanel() {
               : "No update check has run yet."}
           </p>
         ) : null}
-        <p className="mt-2 font-mono text-[9px] text-[var(--muted)]">
+        <p className="mt-2 font-mono text-[10px] text-[var(--muted)]">
           Last checked: {lastChecked}
         </p>
       </div>

@@ -54,7 +54,7 @@ export function InspectorTabBar({
               {t.count !== null && (
                 <span
                   className={cn(
-                    "px-1.5 py-0.2 rounded-full text-[9px] font-mono tabular-nums transition-colors",
+                    "px-1.5 py-0.2 rounded-full text-[10px] font-mono tabular-nums transition-colors",
                     isActive
                       ? "bg-[var(--accent)]/15 text-[var(--accent)] font-bold"
                       : "bg-black/5 dark:bg-white/5 text-[var(--muted)]",

@@ -1,6 +1,7 @@
 "use client";
 
 import * as React from "react";
+import dynamic from "next/dynamic";
 import { Clock, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { formatLabelSelector } from "@/lib/labelSelector";
@@ -10,7 +11,6 @@ import { useTabStore } from "@/stores/tabStore";
 import type { JobSummary } from "@kubeview/contracts";
 import { EmptyState, TableSkeleton } from "@/components/ui";
 import { JobTableToolbar } from "./components/JobTableToolbar";
-import { CreateWorkloadModal } from "@/components/modals/CreateWorkloadModal";
 import { JobTableRow } from "./components/JobTableRow";
 import { JobEmptyState } from "./components/JobEmptyState";
 import { JobListFooter } from "./components/JobListFooter";
@@ -24,6 +24,14 @@ import {
 } from "./lib/jobStatus";
 
 const getJobKey = (item: JobSummary) => `${item.namespace}/${item.name}`;
+
+const CreateWorkloadModal = dynamic(
+  () =>
+    import("@/components/modals/CreateWorkloadModal").then(
+      (module) => module.CreateWorkloadModal,
+    ),
+  { ssr: false },
+);
 
 export function JobListView() {
   const {

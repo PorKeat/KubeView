@@ -320,7 +320,7 @@ export function KubeconfigEditModal({
                     key={label}
                     className="rounded-lg border border-[var(--border)] bg-black/[0.02] px-2.5 py-2 dark:bg-white/[0.02]"
                   >
-                    <div className="font-mono text-[8px] uppercase tracking-[0.14em] text-[var(--muted)]">
+                    <div className="font-mono text-[10px] uppercase tracking-[0.14em] text-[var(--muted)]">
                       {label}
                     </div>
                     <div
@@ -346,7 +346,7 @@ export function KubeconfigEditModal({
         </div>
 
         <div className="flex shrink-0 items-center justify-between gap-2 border-t border-[var(--border)] bg-[var(--surface)] px-4 py-3 sm:px-5">
-          <span className="flex items-center gap-1.5 font-mono text-[9px] text-amber-700 dark:text-amber-400">
+          <span className="flex items-center gap-1.5 font-mono text-[10px] text-amber-700 dark:text-amber-400">
             <KeyRound className="h-3 w-3" aria-hidden="true" />
             contains credentials
           </span>

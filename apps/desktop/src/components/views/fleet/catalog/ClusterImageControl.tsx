@@ -52,7 +52,7 @@ export function ClusterImageControl({
             inputRef.current?.click();
           }}
           className={cn(
-            "group/image relative flex shrink-0 items-center justify-center overflow-hidden rounded-md border border-[var(--border)] text-[9px] font-semibold tracking-wide text-white shadow-sm transition-colors hover:border-white/40 focus-visible:ring-2 focus-visible:ring-[var(--accent)] focus-visible:outline-hidden cursor-pointer",
+            "group/image relative flex shrink-0 items-center justify-center overflow-hidden rounded-md border border-[var(--border)] text-[10px] font-semibold tracking-wide text-white shadow-sm transition-colors hover:border-white/40 focus-visible:ring-2 focus-visible:ring-[var(--accent)] focus-visible:outline-hidden cursor-pointer",
             variant === "avatar"
               ? "h-7 w-7"
               : "h-7 w-7 bg-[var(--surface)] text-[var(--muted)]",

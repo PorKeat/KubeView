@@ -193,7 +193,7 @@ export function CustomSelect<T extends string | number>({
                         {option.icon}
                         <span className="truncate">{option.label}</span>
                         {option.badge && (
-                          <span className="rounded border border-[var(--border)] bg-black/5 px-1.5 py-0.2 font-mono text-[9px] text-[var(--muted)] dark:bg-white/5">
+                          <span className="rounded border border-[var(--border)] bg-black/5 px-1.5 py-0.2 font-mono text-[10px] text-[var(--muted)] dark:bg-white/5">
                             {option.badge}
                           </span>
                         )}

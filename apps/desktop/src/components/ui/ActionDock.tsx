@@ -59,7 +59,7 @@ export function ActionDock({ items, className, size = "md" }: ActionDockProps) {
                 "relative flex items-center justify-center rounded-lg transition-colors cursor-pointer outline-hidden focus-visible:ring-2 focus-visible:ring-[var(--accent)]",
                 size === "sm" ? "w-7 h-7" : "w-8 h-8",
                 isPrimary
-                  ? "bg-[#f08a42] text-zinc-950 hover:bg-[#ff9d5c] font-semibold"
+                  ? "bg-[var(--accent)] text-[var(--accent-foreground)] hover:bg-[var(--accent-hover)] font-semibold"
                   : isAccent
                     ? "bg-[var(--accent)]/10 text-[var(--accent)] hover:bg-[var(--accent)]/20 border border-[var(--accent)]/30"
                     : "bg-transparent text-[var(--foreground)] hover:bg-[var(--surface-hover)] hover:text-[var(--foreground)]",
@@ -69,7 +69,7 @@ export function ActionDock({ items, className, size = "md" }: ActionDockProps) {
                 className={cn(
                   size === "sm" ? "w-3.5 h-3.5" : "w-4 h-4",
                   isPrimary
-                    ? "text-zinc-950"
+                    ? "text-[var(--accent-foreground)]"
                     : isAccent
                       ? "text-[var(--accent)]"
                       : "text-[var(--muted)] hover:text-[var(--foreground)]",
@@ -78,7 +78,7 @@ export function ActionDock({ items, className, size = "md" }: ActionDockProps) {
               />
 
               {item.badge !== undefined && (
-                <span className="absolute -top-1 -right-1 px-1 rounded-full text-[9px] font-mono font-bold bg-[var(--accent)] text-white leading-tight">
+                <span className="absolute -top-1 -right-1 px-1 rounded-full text-[10px] font-mono font-bold bg-[var(--accent)] text-white leading-tight">
                   {item.badge}
                 </span>
               )}
@@ -95,7 +95,7 @@ export function ActionDock({ items, className, size = "md" }: ActionDockProps) {
               >
                 <span>{item.label}</span>
                 {item.shortcut && (
-                  <kbd className="px-1 py-0.2 rounded bg-black/10 dark:bg-white/10 text-[9px] text-[var(--muted)]">
+                  <kbd className="px-1 py-0.2 rounded bg-black/10 dark:bg-white/10 text-[10px] text-[var(--muted)]">
                     {item.shortcut}
                   </kbd>
                 )}

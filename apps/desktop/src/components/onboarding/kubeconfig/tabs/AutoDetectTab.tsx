@@ -236,12 +236,12 @@ export function AutoDetectTab({
                           </span>
                           {getProviderBadge(c.provider)}
                           {isInternal && (
-                            <span className="rounded border border-amber-500/30 bg-amber-500/15 px-1.5 py-0.5 font-mono text-[9px] text-amber-600 dark:text-amber-400">
+                            <span className="rounded border border-amber-500/30 bg-amber-500/15 px-1.5 py-0.5 font-mono text-[10px] text-amber-600 dark:text-amber-400">
                               Internal
                             </span>
                           )}
                           {c.authType && (
-                            <span className="rounded border border-[var(--border)] bg-black/5 px-1.5 py-0.5 font-mono text-[9px] text-[var(--muted)] dark:bg-white/5">
+                            <span className="rounded border border-[var(--border)] bg-black/5 px-1.5 py-0.5 font-mono text-[10px] text-[var(--muted)] dark:bg-white/5">
                               auth: {c.authType}
                             </span>
                           )}

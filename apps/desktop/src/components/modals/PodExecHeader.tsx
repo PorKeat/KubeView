@@ -61,7 +61,7 @@ export function PodExecHeader({
           <span className="hidden sm:inline-flex px-2 py-0.5 rounded-full text-[10px] font-mono bg-black/[0.05] dark:bg-white/[0.08] text-[var(--muted)] border border-[var(--border)]">
             ns: {namespace}
           </span>
-          <span className="hidden sm:inline-flex items-center px-2 py-0.5 rounded-md text-[9px] font-semibold font-mono bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border border-emerald-500/30">
+          <span className="hidden sm:inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-semibold font-mono bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border border-emerald-500/30">
             {execMode === "interactive" ? "WebSocket PTY" : "SPDY Exec"}
           </span>
         </div>
@@ -104,7 +104,7 @@ export function PodExecHeader({
             value={selectedContainer}
             onChange={onSelectContainer}
             options={containerList.map((c) => ({ value: c, label: c }))}
-            icon={<Layers className="w-3.5 h-3.5 text-[#F08A42]" />}
+            icon={<Layers className="w-3.5 h-3.5 text-[var(--accent)]" />}
             placeholder="Container"
           />
         )}

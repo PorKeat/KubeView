@@ -166,7 +166,7 @@ export function EndpointsDetail({
                 <div className="flex items-center gap-2 font-mono text-[11px]">
                   <span
                     className={cn(
-                      "text-[9px] font-medium uppercase tracking-[0.08em]",
+                      "text-[10px] font-medium uppercase tracking-[0.08em]",
                       address.ready
                         ? "text-emerald-600 dark:text-emerald-400"
                         : "text-amber-600 dark:text-amber-400",

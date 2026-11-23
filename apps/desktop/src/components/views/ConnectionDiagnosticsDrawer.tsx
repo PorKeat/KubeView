@@ -15,7 +15,6 @@ import {
   Check,
   ChevronDown,
   ChevronRight,
-  Zap,
 } from "lucide-react";
 import { useClusterStore } from "@/stores/clusterStore";
 import { toast } from "sonner";
@@ -36,7 +35,6 @@ export function ConnectionDiagnosticsDrawer({
     serverVersion,
     latencyMs,
     diagnosticResult,
-    connectionStatus,
     diagnoseContext,
   } = useClusterStore();
 

@@ -37,8 +37,9 @@ export function PodResourceMetadataCard({
   return (
     <div className="p-4 rounded-2xl bg-[var(--surface)] border border-[var(--border)] space-y-3.5 shadow-2xs">
       <div className="flex items-center justify-between">
-        <span className="text-[11px] font-semibold text-[var(--muted)] uppercase tracking-wider flex items-center gap-1.5">
-          <Layers className="w-3.5 h-3.5 text-[#F08A42]" /> Resource Metadata
+        <span className="text-[11px] font-semibold text-[var(--foreground)] flex items-center gap-1.5">
+          <Layers className="w-3.5 h-3.5 text-[var(--accent)]" /> Resource
+          metadata
         </span>
         <span className="text-[10px] font-mono text-[var(--muted)]">
           {podData?.creationTimestamp
@@ -168,7 +169,7 @@ export function PodResourceMetadataCard({
             </span>
             <div className="flex items-center gap-2">
               {controllerKind && (
-                <span className="px-2 py-0.5 rounded text-[10px] font-semibold bg-[#F08A42]/15 text-[#F08A42] border border-[#F08A42]/25 font-mono">
+                <span className="px-2 py-0.5 rounded text-[10px] font-semibold bg-[var(--accent)]/15 text-[var(--accent)] border border-[var(--accent)]/25 font-mono">
                   {controllerKind}
                 </span>
               )}

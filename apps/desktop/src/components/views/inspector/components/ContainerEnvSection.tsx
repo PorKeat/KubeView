@@ -114,7 +114,7 @@ export function ContainerEnvSection({ env }: ContainerEnvSectionProps) {
                           {item.name}
                         </span>
                         {item.valueFrom && (
-                          <span className="text-[9px] px-1.5 py-0.2 rounded bg-black/5 dark:bg-white/5 border border-[var(--border)] text-[var(--muted)]">
+                          <span className="text-[10px] px-1.5 py-0.2 rounded bg-black/5 dark:bg-white/5 border border-[var(--border)] text-[var(--muted)]">
                             {item.valueFrom}
                           </span>
                         )}

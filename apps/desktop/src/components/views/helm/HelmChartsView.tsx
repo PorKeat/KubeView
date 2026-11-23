@@ -170,7 +170,7 @@ export function HelmChartsView() {
             data-testid="helm-refresh-charts"
             onClick={() => void loadCharts()}
             disabled={!selectedRepository || isLoading}
-            className="inline-flex items-center gap-1.5 rounded-md bg-gradient-to-r from-[#f08a42] to-[#e85d26] px-3 py-1.5 text-xs font-semibold text-zinc-950 shadow-xs transition-all hover:from-[#ff9d5c] hover:to-[#f08a42] cursor-pointer focus-visible:ring-2 focus-visible:ring-[var(--accent)] focus-visible:outline-hidden disabled:cursor-wait disabled:opacity-60"
+            className="inline-flex items-center gap-1.5 rounded-md bg-[var(--accent)] px-3 py-1.5 text-xs font-semibold text-[var(--accent-foreground)] shadow-xs transition-all hover:bg-[var(--accent-hover)] cursor-pointer focus-visible:ring-2 focus-visible:ring-[var(--accent)] focus-visible:outline-hidden disabled:cursor-wait disabled:opacity-60"
           >
             <RefreshCw className={cn("h-3 w-3", isLoading && "animate-spin")} />
             <span>Refresh</span>
@@ -356,7 +356,7 @@ export function HelmChartsView() {
             <div className="mt-3 overflow-x-auto">
               <table className="w-full border-collapse text-left text-xs">
                 <thead>
-                  <tr className="border-b border-[var(--border)] font-mono text-[9px] uppercase tracking-[0.12em] text-[var(--muted)]">
+                  <tr className="border-b border-[var(--border)] font-mono text-[10px] uppercase tracking-[0.12em] text-[var(--muted)]">
                     <th scope="col" className="px-3 py-2 font-medium">
                       Chart
                     </th>

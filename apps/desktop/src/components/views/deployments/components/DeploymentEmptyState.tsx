@@ -42,16 +42,16 @@ export function DeploymentEmptyState({
         }
         title={
           statusFilter === "degraded" && !search
-            ? "All Deployments Healthy"
+            ? "All deployments healthy"
             : statusFilter === "progressing" && !search
-              ? "All Rollouts Complete"
+              ? "All rollouts complete"
               : statusFilter === "paused" && !search
-                ? "No Paused Deployments"
+                ? "No paused deployments"
                 : isFiltered
                   ? `No deployments match filter "${search || statusFilter}"`
                   : currentNamespace !== "all"
                     ? `No deployments in "${currentNamespace}"`
-                    : "No Deployments Found"
+                    : "No deployments found"
         }
         description={
           statusFilter === "degraded" && !search

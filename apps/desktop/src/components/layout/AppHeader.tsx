@@ -6,9 +6,11 @@ import { useTheme } from "next-themes";
 import { useLayoutStore } from "@/stores/layoutStore";
 import { useClusterStore } from "@/stores/clusterStore";
 import { useTabStore } from "@/stores/tabStore";
+import { useShallow } from "zustand/react/shallow";
 import { toast } from "sonner";
 
 import { Logo } from "@/components/brand/Logo";
+import { cn } from "@/lib/utils";
 import { ContextSwitcherDropdown } from "./ContextSwitcherDropdown";
 import { NamespaceSelectorDropdown } from "./NamespaceSelectorDropdown";
 import { NotificationCenterDropdown } from "./NotificationCenterDropdown";
@@ -25,15 +27,20 @@ export function AppHeader() {
   } = useLayoutStore();
   const { openTab } = useTabStore();
   const {
-    currentContext,
-    currentNamespace,
     connectionStatus,
-    latencyMs,
     diagnoseContext,
     loadClusterOverview,
     loadPods,
     loadNamespaces,
-  } = useClusterStore();
+  } = useClusterStore(
+    useShallow((state) => ({
+      connectionStatus: state.connectionStatus,
+      diagnoseContext: state.diagnoseContext,
+      loadClusterOverview: state.loadClusterOverview,
+      loadPods: state.loadPods,
+      loadNamespaces: state.loadNamespaces,
+    })),
+  );
 
   const [isRefreshing, setIsRefreshing] = React.useState(false);
 
@@ -144,9 +151,13 @@ export function AppHeader() {
           <button
             onClick={handleRefresh}
             aria-label="Refresh Resources"
-            className="hidden sm:flex h-9 w-9 rounded-lg items-center justify-center hover:bg-black/[0.05] dark:hover:bg-white/[0.06] text-[var(--muted)] hover:text-[var(--foreground)] focus-visible:ring-2 focus-visible:ring-[var(--accent)] focus-visible:outline-hidden transition-colors cursor-pointer"
+            disabled={isRefreshing}
+            className="hidden sm:flex h-9 w-9 rounded-lg items-center justify-center hover:bg-black/[0.05] dark:hover:bg-white/[0.06] text-[var(--muted)] hover:text-[var(--foreground)] focus-visible:ring-2 focus-visible:ring-[var(--accent)] focus-visible:outline-hidden transition-colors cursor-pointer disabled:cursor-wait disabled:opacity-60"
           >
-            <RefreshCw className="w-4 h-4" aria-hidden="true" />
+            <RefreshCw
+              className={cn("w-4 h-4", isRefreshing && "animate-spin")}
+              aria-hidden="true"
+            />
           </button>
         </Tooltip>
 

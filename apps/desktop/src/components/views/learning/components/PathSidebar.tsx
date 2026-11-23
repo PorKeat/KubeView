@@ -91,7 +91,7 @@ export function PathSidebar({
                   style={{ width: `${percent}%` }}
                 />
               </div>
-              <span className="shrink-0 font-mono text-[9px] text-[var(--muted)]">
+              <span className="shrink-0 font-mono text-[10px] text-[var(--muted)]">
                 {completed}/{path.lessons.length}
               </span>
             </div>

@@ -36,7 +36,7 @@ export function ErrorExplanationContent({
         </p>
       </div>
       <div>
-        <p className="text-[9px] font-semibold uppercase tracking-wider text-[var(--muted)]">
+        <p className="text-[10px] font-semibold uppercase tracking-wider text-[var(--muted)]">
           Common causes
         </p>
         <ul className="mt-1 space-y-0.5 text-[10px] leading-relaxed text-[var(--muted)]">
@@ -49,13 +49,13 @@ export function ErrorExplanationContent({
         </ul>
       </div>
       <div>
-        <p className="text-[9px] font-semibold uppercase tracking-wider text-[var(--muted)]">
+        <p className="text-[10px] font-semibold uppercase tracking-wider text-[var(--muted)]">
           What to do next
         </p>
         <ol className="mt-1 space-y-0.5 text-[10px] leading-relaxed text-[var(--muted)]">
           {explanation.nextSteps.map((step, index) => (
             <li key={step} className="flex gap-1.5">
-              <span className="font-mono text-[9px] text-amber-600 dark:text-amber-400">
+              <span className="font-mono text-[10px] text-amber-600 dark:text-amber-400">
                 {index + 1}.
               </span>
               <span>{step}</span>

@@ -2,7 +2,6 @@
 
 import * as React from "react";
 import { ArrowRight, Compass, GraduationCap, Lightbulb, X } from "lucide-react";
-import { cn } from "@/lib/utils";
 import { useTabStore } from "@/stores/tabStore";
 import { useLayoutStore } from "@/stores/layoutStore";
 import { useLearningStore } from "@/stores/learningStore";
@@ -66,13 +65,10 @@ export function LearningContextStrip() {
       data-testid="learning-context-strip"
       role="note"
       aria-label={`${guide.title} learning guide`}
-      className={cn(
-        "border-b border-[var(--border)] bg-[var(--surface)]/80 px-3 py-2.5 backdrop-blur-sm sm:px-4",
-        "select-none",
-      )}
+      className="border-b border-[var(--border)] bg-[var(--background)] px-3 py-2 sm:px-4"
     >
       <div className="flex items-start gap-2.5 sm:items-center">
-        <span className="mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-lg border border-[var(--accent)]/20 bg-[var(--accent)]/10 text-[var(--accent)] sm:mt-0">
+        <span className="mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-md text-[var(--accent)] sm:mt-0">
           {level === "beginner" ? (
             <Lightbulb className="h-3.5 w-3.5" aria-hidden="true" />
           ) : (
@@ -81,19 +77,19 @@ export function LearningContextStrip() {
         </span>
 
         <div className="min-w-0 flex-1">
-          <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
-            <span className="text-[10px] font-semibold uppercase tracking-wider text-[var(--accent)]">
+          <div className="flex flex-wrap items-baseline gap-x-2 gap-y-0.5">
+            <span className="text-[11px] font-semibold text-[var(--foreground)]">
               {LEARNING_LEVEL_LABELS[level].shortLabel} guide
             </span>
-            <span className="text-[10px] font-mono text-[var(--muted)]">
+            <span className="text-[11px] text-[var(--muted)]">
               {guide.title}
             </span>
           </div>
-          <p className="mt-0.5 text-[11px] leading-relaxed text-[var(--foreground)]/90">
+          <p className="mt-0.5 text-[11px] leading-relaxed text-[var(--muted)]">
             {body}
           </p>
           {level !== "beginner" && guide.command ? (
-            <code className="mt-1 block w-fit max-w-full overflow-x-auto rounded border border-[var(--border)] bg-black/[0.03] px-1.5 py-0.5 font-mono text-[9px] text-[var(--muted)] dark:bg-white/[0.04]">
+            <code className="mt-1 block w-fit max-w-full overflow-x-auto rounded border border-[var(--border)] bg-[var(--surface)] px-1.5 py-0.5 font-mono text-[10px] text-[var(--muted)]">
               {guide.command}
             </code>
           ) : null}
@@ -126,7 +122,7 @@ export function LearningContextStrip() {
               type="button"
               onClick={openGuide}
               data-testid="learning-context-open"
-              className="inline-flex items-center gap-1 rounded-md border border-[var(--border)] bg-[var(--surface)] px-2 py-1 text-[10px] font-medium text-[var(--foreground)] transition-colors hover:bg-[var(--surface-hover)] cursor-pointer focus-visible:ring-2 focus-visible:ring-[var(--accent)] focus-visible:outline-hidden"
+              className="inline-flex items-center gap-1 rounded-md px-1.5 py-1 text-[10px] font-medium text-[var(--muted)] transition-colors hover:text-[var(--foreground)] cursor-pointer focus-visible:ring-2 focus-visible:ring-[var(--accent)] focus-visible:outline-hidden"
             >
               <span className="hidden sm:inline">
                 {guide.lessonId ? "Open lesson" : "Open path"}

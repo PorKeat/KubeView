@@ -6,6 +6,7 @@ import { NodeOperationsButton } from "@/components/modals/NodeOperationsModal";
 import { NodeTelemetryGraph } from "./NodeTelemetryGraph";
 import { cleanAlloc } from "../types";
 import { cn } from "@/lib/utils";
+import { sortNodeRoles } from "@/lib/format";
 import type { NodeSummary } from "@kubeview/contracts";
 
 export interface NodeMatrixGridProps {
@@ -69,7 +70,12 @@ export function NodeMatrixGrid({
                 onInspectNode(n);
               }
             }}
-            containerClassName="group/node aspect-square w-full max-w-[360px] justify-self-center cursor-pointer rounded-2xl hover:-translate-y-0.5 active:scale-[0.99] active:translate-y-0 focus-visible:ring-2 focus-visible:ring-[var(--accent)] focus-visible:outline-hidden"
+            containerClassName={cn(
+              "group/node cursor-pointer rounded-2xl hover:-translate-y-0.5 active:scale-[0.99] active:translate-y-0 focus-visible:ring-2 focus-visible:ring-[var(--accent)] focus-visible:outline-hidden",
+              nodes.length === 1
+                ? "aspect-auto w-full"
+                : "aspect-square w-full max-w-[360px] justify-self-center",
+            )}
             className="flex h-full flex-col"
           >
             <div className="flex h-full flex-col p-4">
@@ -79,8 +85,11 @@ export function NodeMatrixGrid({
                   <h3 className="truncate font-mono text-base font-semibold tracking-tight text-[var(--foreground)]">
                     {n.name}
                   </h3>
-                  <p className="mt-0.5 truncate font-mono text-[9px] uppercase tracking-[0.14em] text-[var(--muted)]">
-                    {(n.roles.length > 0 ? n.roles : ["worker"]).join(" · ")}
+                  <p className="mt-0.5 truncate font-mono text-[10px] uppercase tracking-[0.12em] text-[var(--muted)]">
+                    {(n.roles.length > 0
+                      ? sortNodeRoles(n.roles)
+                      : ["worker"]
+                    ).join(" · ")}
                   </p>
                 </div>
 
@@ -88,7 +97,7 @@ export function NodeMatrixGrid({
                   <NodeOperationsButton nodeName={n.name} />
                   <span
                     className={cn(
-                      "inline-flex shrink-0 items-center rounded-full border px-2 py-0.5 font-mono text-[10px] font-medium",
+                      "inline-flex shrink-0 items-center rounded-full border px-2 py-0.5 font-mono text-[11px] font-medium",
                       isNodeReady
                         ? "border-emerald-500/25 bg-emerald-500/10 text-emerald-400"
                         : "border-rose-500/25 bg-rose-500/10 text-rose-400",

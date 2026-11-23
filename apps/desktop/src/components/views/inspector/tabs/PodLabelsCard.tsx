@@ -25,9 +25,9 @@ export function PodLabelsCard({ labels }: { labels: Record<string, string> }) {
     <div className="p-4 rounded-2xl bg-[var(--surface)] border border-[var(--border)] space-y-3 shadow-2xs">
       <div className="flex items-center justify-between gap-2">
         <div className="flex items-center gap-1.5 text-[11px] font-semibold text-[var(--muted)] uppercase tracking-wider">
-          <Tag className="w-3.5 h-3.5 text-[#F08A42]" />
+          <Tag className="w-3.5 h-3.5 text-[var(--accent)]" />
           <span>Labels</span>
-          <span className="px-1.5 py-0.2 rounded-full text-[9px] font-mono bg-black/5 dark:bg-white/5 text-[var(--muted)] border border-[var(--border)]">
+          <span className="px-1.5 py-0.2 rounded-full text-[10px] font-mono bg-black/5 dark:bg-white/5 text-[var(--muted)] border border-[var(--border)]">
             {labelEntries.length}
           </span>
         </div>
@@ -53,7 +53,7 @@ export function PodLabelsCard({ labels }: { labels: Record<string, string> }) {
               className={cn(
                 "p-1 rounded cursor-pointer transition-colors",
                 labelViewMode === "chips"
-                  ? "bg-[var(--surface-active)] text-[#F08A42]"
+                  ? "bg-[var(--surface-active)] text-[var(--accent)]"
                   : "text-[var(--muted)] hover:text-[var(--foreground)]",
               )}
               title="Chips View"
@@ -65,7 +65,7 @@ export function PodLabelsCard({ labels }: { labels: Record<string, string> }) {
               className={cn(
                 "p-1 rounded cursor-pointer transition-colors",
                 labelViewMode === "table"
-                  ? "bg-[var(--surface-active)] text-[#F08A42]"
+                  ? "bg-[var(--surface-active)] text-[var(--accent)]"
                   : "text-[var(--muted)] hover:text-[var(--foreground)]",
               )}
               title="Table View"

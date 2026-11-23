@@ -347,7 +347,7 @@ export function SidebarSettingsPanel() {
                   {group.category}
                 </span>
                 {groupHidden && (
-                  <span className="rounded border border-[var(--border)] px-1.5 py-0.5 font-mono text-[8px] uppercase tracking-wide text-[var(--muted)]">
+                  <span className="rounded border border-[var(--border)] px-1.5 py-0.5 font-mono text-[10px] uppercase tracking-wide text-[var(--muted)]">
                     Hidden
                   </span>
                 )}
@@ -431,7 +431,7 @@ export function SidebarSettingsPanel() {
                         {item.title}
                       </span>
                       {item.desktopHidden && (
-                        <span className="rounded border border-[var(--border)] px-1.5 py-0.5 font-mono text-[8px] uppercase tracking-wide text-[var(--muted)]">
+                        <span className="rounded border border-[var(--border)] px-1.5 py-0.5 font-mono text-[10px] uppercase tracking-wide text-[var(--muted)]">
                           Mobile
                         </span>
                       )}

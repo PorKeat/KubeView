@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { X, Trash2, AlertTriangle, RotateCw, CheckCircle2 } from "lucide-react";
+import { Trash2, AlertTriangle, RotateCw } from "lucide-react";
 import { useClusterStore } from "@/stores/clusterStore";
 import { toast } from "sonner";
 

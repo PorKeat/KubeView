@@ -3,6 +3,7 @@
 import * as React from "react";
 import { Radio } from "lucide-react";
 import { useClusterStore } from "@/stores/clusterStore";
+import { cn } from "@/lib/utils";
 import { useResourceActions } from "../shared/useResourceActions";
 import type { EndpointsSummary } from "@kubeview/contracts";
 import {
@@ -124,47 +125,37 @@ export function EndpointsListView() {
       {
         key: "ready",
         label: "Ready",
-        widthClass: "w-[6%]",
+        widthClass: "w-[12%]",
         sortValue: (item) => item.readyCount,
-        render: (item) => {
-          const tone =
-            item.readyCount > 0
-              ? "text-emerald-600 dark:text-emerald-400"
-              : item.notReadyCount > 0
-                ? "text-amber-500"
-                : "text-[var(--muted)]";
-          return (
-            <span
-              className={`font-mono text-xs tabular-nums ${tone}`}
-              title={`${item.readyCount} ready addresses`}
-            >
-              {item.readyCount}
-            </span>
-          );
-        },
-      },
-      {
-        key: "notReady",
-        label: "Not Ready",
-        widthClass: "w-[7%]",
-        sortValue: (item) => item.notReadyCount,
         render: (item) => (
-          <span
-            className={
-              item.notReadyCount > 0
-                ? "font-mono text-xs tabular-nums text-amber-500 font-semibold"
-                : "font-mono text-xs tabular-nums text-[var(--muted)]"
-            }
-            title={`${item.notReadyCount} not-ready addresses`}
+          <div
+            className={cn(
+              "flex min-w-0 gap-0.5 font-mono text-[10px] tabular-nums",
+              item.notReadyCount > 0 ? "flex-col items-start" : "items-center",
+            )}
+            title={`${item.readyCount} ready, ${item.notReadyCount} not ready`}
           >
-            {item.notReadyCount}
-          </span>
+            <span
+              className={
+                item.readyCount > 0
+                  ? "text-emerald-600 dark:text-emerald-400"
+                  : "text-[var(--muted)]"
+              }
+            >
+              {item.readyCount} ready
+            </span>
+            {item.notReadyCount > 0 && (
+              <span className="text-amber-600 dark:text-amber-400">
+                {item.notReadyCount} not ready
+              </span>
+            )}
+          </div>
         ),
       },
       {
         key: "addresses",
         label: "Addresses",
-        widthClass: "w-[15%]",
+        widthClass: "w-[14%]",
         render: (item) => {
           if (item.addresses.length === 0) {
             return (
@@ -173,9 +164,11 @@ export function EndpointsListView() {
               </span>
             );
           }
+          const first = item.addresses[0];
+          const extra = item.addresses.length - 1;
           return (
             <div
-              className="flex flex-nowrap items-center gap-1 overflow-hidden"
+              className="flex min-w-0 items-center gap-1.5"
               title={item.addresses
                 .map(
                   (address) =>
@@ -183,27 +176,22 @@ export function EndpointsListView() {
                 )
                 .join("\n")}
             >
-              {item.addresses.slice(0, 1).map((address, index) => (
-                <span
-                  key={`${address.ip}-${index}`}
-                  className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-mono bg-black/5 dark:bg-white/5 border border-[var(--border)]"
-                  title={`${address.ip}${address.targetName ? ` → ${address.targetKind ?? "Pod"}/${address.targetName}` : ""}${address.nodeName ? ` on ${address.nodeName}` : ""}`}
-                >
-                  <span
-                    className={
-                      address.ready
-                        ? "text-[9px] font-medium text-emerald-600 dark:text-emerald-400"
-                        : "text-[9px] font-medium text-amber-600 dark:text-amber-400"
-                    }
-                  >
-                    {address.ready ? "Ready" : "Pending"}
-                  </span>
-                  <span className="text-[var(--foreground)]">{address.ip}</span>
-                </span>
-              ))}
-              {item.addresses.length > 1 && (
-                <span className="text-[10px] font-mono text-[var(--muted)]">
-                  +{item.addresses.length - 1}
+              <span
+                aria-hidden="true"
+                className={cn(
+                  "h-1.5 w-1.5 shrink-0 rounded-full",
+                  first.ready ? "bg-emerald-500" : "bg-amber-500",
+                )}
+              />
+              <span
+                className="truncate font-mono text-[11px] text-[var(--foreground)]"
+                title={`${first.ip}${first.nodeName ? ` on ${first.nodeName}` : ""}`}
+              >
+                {first.ip}
+              </span>
+              {extra > 0 && (
+                <span className="shrink-0 font-mono text-[10px] text-[var(--muted)]">
+                  +{extra}
                 </span>
               )}
             </div>
@@ -223,9 +211,11 @@ export function EndpointsListView() {
               <span className="text-[10px] text-[var(--muted)] italic">—</span>
             );
           }
+          const first = targets[0];
+          const extra = targets.length - 1;
           return (
             <div
-              className="flex flex-nowrap items-center gap-1 overflow-hidden"
+              className="flex min-w-0 items-center gap-1"
               title={targets
                 .map(
                   (address) =>
@@ -233,18 +223,20 @@ export function EndpointsListView() {
                 )
                 .join("\n")}
             >
-              {targets.slice(0, 1).map((address, index) => (
-                <span
-                  key={`${address.targetName}-${index}`}
-                  className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-mono bg-sky-500/10 text-sky-600 dark:text-sky-400 border border-sky-500/20"
-                  title={`${address.targetKind ?? "Pod"}/${address.targetName}${address.nodeName ? ` on ${address.nodeName}` : ""}`}
-                >
-                  {address.targetKind ?? "Pod"}/{address.targetName}
-                </span>
-              ))}
-              {targets.length > 1 && (
-                <span className="text-[10px] font-mono text-[var(--muted)]">
-                  +{targets.length - 1}
+              <span className="shrink-0 font-mono text-[10px] text-[var(--muted)]">
+                {first.targetKind && first.targetKind !== "Pod"
+                  ? `${first.targetKind}/`
+                  : ""}
+              </span>
+              <span
+                className="truncate font-mono text-[11px] text-[var(--foreground)]"
+                title={`${first.targetKind ?? "Pod"}/${first.targetName}${first.nodeName ? ` on ${first.nodeName}` : ""}`}
+              >
+                {first.targetName}
+              </span>
+              {extra > 0 && (
+                <span className="shrink-0 font-mono text-[10px] text-[var(--muted)]">
+                  +{extra}
                 </span>
               )}
             </div>
@@ -255,36 +247,38 @@ export function EndpointsListView() {
         key: "ports",
         label: "Ports",
         widthClass: "w-[11%]",
-        render: (item) =>
-          item.ports.length === 0 ? (
-            <span className="text-[10px] text-[var(--muted)] italic">
-              no ports
-            </span>
-          ) : (
-            <div className="flex flex-wrap items-center gap-1">
-              {item.ports.slice(0, 2).map((port, index) => (
-                <span
-                  key={`${port.name ?? "port"}-${port.port}-${index}`}
-                  className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-mono bg-black/5 dark:bg-white/5 border border-[var(--border)] text-[var(--muted)]"
-                >
-                  {port.name && (
-                    <span className="text-[var(--foreground)]">
-                      {port.name}:
-                    </span>
-                  )}
-                  <span className="tabular-nums text-[var(--foreground)]">
-                    {port.port}
-                  </span>
-                  <span className="opacity-60">{port.protocol}</span>
-                </span>
-              ))}
-              {item.ports.length > 2 && (
-                <span className="text-[10px] font-mono text-[var(--muted)]">
-                  +{item.ports.length - 2}
+        render: (item) => {
+          if (item.ports.length === 0) {
+            return (
+              <span className="text-[10px] text-[var(--muted)] italic">
+                no ports
+              </span>
+            );
+          }
+          const first = item.ports[0];
+          const extra = item.ports.length - 1;
+          const allPorts = item.ports
+            .map(
+              (port) =>
+                `${port.name ? `${port.name}:` : ""}${port.port} ${port.protocol}`,
+            )
+            .join("\n");
+          return (
+            <div className="flex min-w-0 items-center gap-1.5" title={allPorts}>
+              <span className="truncate font-mono text-[11px] text-[var(--foreground)]">
+                {first.port}
+              </span>
+              <span className="shrink-0 font-mono text-[10px] text-[var(--muted)]">
+                {first.protocol}
+              </span>
+              {extra > 0 && (
+                <span className="shrink-0 font-mono text-[10px] text-[var(--muted)]">
+                  +{extra}
                 </span>
               )}
             </div>
-          ),
+          );
+        },
       },
     ],
     [],

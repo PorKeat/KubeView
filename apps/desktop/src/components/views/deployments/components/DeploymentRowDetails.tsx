@@ -210,7 +210,7 @@ function ReplicaTile({
 }) {
   return (
     <div className="rounded-lg border border-[var(--border)]/70 bg-black/[0.02] dark:bg-white/[0.02] px-2.5 py-1.5">
-      <div className="text-[9px] uppercase tracking-wider text-[var(--muted)] font-semibold">
+      <div className="text-[10px] uppercase tracking-wider text-[var(--muted)] font-semibold">
         {label}
       </div>
       <div

@@ -1,15 +1,7 @@
 "use client";
 
 import * as React from "react";
-import {
-  FileQuestion,
-  Search,
-  ArrowLeft,
-  Compass,
-  Layers,
-  Box,
-  RefreshCw,
-} from "lucide-react";
+import { FileQuestion, ArrowLeft, Layers, Box, RefreshCw } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useTabStore } from "@/stores/tabStore";
 import { useClusterStore } from "@/stores/clusterStore";
@@ -63,7 +55,7 @@ export function NotFoundState({
         {/* Visual 404 / Compass Graphic */}
         <div className="relative mx-auto w-16 h-16 rounded-2xl bg-black/[0.04] dark:bg-gradient-to-b dark:from-white/[0.08] dark:to-white/[0.02] border border-[var(--border)] flex items-center justify-center text-[var(--accent)] shadow-[0_0_30px_rgba(240,138,66,0.18)]">
           <FileQuestion className="w-8 h-8 stroke-[1.75]" />
-          <span className="absolute -bottom-1 -right-1 px-1.5 py-0.5 rounded text-[9px] font-mono font-bold bg-[var(--accent)] text-white shadow-sm">
+          <span className="absolute -bottom-1 -right-1 px-1.5 py-0.5 rounded text-[10px] font-mono font-bold bg-[var(--accent)] text-white shadow-sm">
             404
           </span>
         </div>

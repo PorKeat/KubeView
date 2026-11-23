@@ -1,6 +1,7 @@
 "use client";
 
 import * as React from "react";
+import dynamic from "next/dynamic";
 import { AppHeader } from "./AppHeader";
 import { AppSidebar } from "./AppSidebar";
 import { ClusterRail } from "./ClusterRail";
@@ -11,16 +12,12 @@ import { CommandPalette } from "@/components/command/CommandPalette";
 import { ResourceInspectorDrawer } from "@/components/views/ResourceInspectorDrawer";
 import { SplashScreen } from "@/components/onboarding/SplashScreen";
 import { KubeconfigModal } from "@/components/onboarding/KubeconfigModal";
-import { PodLogsModal } from "@/components/modals/PodLogsModal";
-import { PodExecModal } from "@/components/modals/PodExecModal";
 import { PodDeleteModal } from "@/components/modals/PodDeleteModal";
 import { PodRestartModal } from "@/components/modals/PodRestartModal";
 import { MovePodModal } from "@/components/modals/MovePodModal";
 import { WorkloadActionModal } from "@/components/modals/WorkloadActionModal";
 import { BulkWorkloadActionModal } from "@/components/modals/BulkWorkloadActionModal";
 import { EndpointEditModal } from "@/components/modals/EndpointEditModal";
-import { ResourceEditorModal } from "@/components/modals/ResourceEditorModal";
-import { CreateNamespaceModal } from "@/components/modals/CreateNamespaceModal";
 import { DeleteResourceModal } from "@/components/modals/DeleteResourceModal";
 import { ServiceDiagnosticsModal } from "@/components/modals/ServiceDiagnosticsModal";
 import { RbacForbiddenBridge } from "@/components/permissions/RbacForbiddenBridge";
@@ -37,6 +34,38 @@ import { useHelmStore } from "@/stores/helmStore";
 import { useLayoutStore } from "@/stores/layoutStore";
 import { useUpdateStore } from "@/stores/updateStore";
 
+const PodLogsModal = dynamic(
+  () =>
+    import("@/components/modals/PodLogsModal").then(
+      (module) => module.PodLogsModal,
+    ),
+  { ssr: false },
+);
+
+const PodExecModal = dynamic(
+  () =>
+    import("@/components/modals/PodExecModal").then(
+      (module) => module.PodExecModal,
+    ),
+  { ssr: false },
+);
+
+const ResourceEditorModal = dynamic(
+  () =>
+    import("@/components/modals/ResourceEditorModal").then(
+      (module) => module.ResourceEditorModal,
+    ),
+  { ssr: false },
+);
+
+const CreateNamespaceModal = dynamic(
+  () =>
+    import("@/components/modals/CreateNamespaceModal").then(
+      (module) => module.CreateNamespaceModal,
+    ),
+  { ssr: false },
+);
+
 const useIsomorphicLayoutEffect =
   typeof window !== "undefined" ? React.useLayoutEffect : React.useEffect;
 
@@ -46,6 +75,12 @@ export function AppShell() {
   const setAutoRefreshInterval = useClusterStore(
     (s) => s.setAutoRefreshInterval,
   );
+  const logsModalOpen = useClusterStore((s) => s.logsModalPod !== null);
+  const execModalOpen = useClusterStore((s) => s.execModalPod !== null);
+  const resourceEditorOpen = useClusterStore(
+    (s) => s.resourceEditorTarget !== null,
+  );
+  const createNamespaceOpen = useClusterStore((s) => s.isCreateNamespaceOpen);
   const fontSize = useSettingsStore((s) => s.fontSize);
   const reducedMotion = useSettingsStore((s) => s.reducedMotion);
   const autoRefreshSeconds = useSettingsStore((s) => s.autoRefreshSeconds);
@@ -210,16 +245,16 @@ export function AppShell() {
       <KubeconfigModal />
 
       {/* 7. Pod Action Modals (Logs, Exec, Delete, Restart) */}
-      <PodLogsModal />
-      <PodExecModal />
+      {logsModalOpen && <PodLogsModal />}
+      {execModalOpen && <PodExecModal />}
       <PodDeleteModal />
       <PodRestartModal />
       <MovePodModal />
       <WorkloadActionModal />
       <BulkWorkloadActionModal />
       <EndpointEditModal />
-      <ResourceEditorModal />
-      <CreateNamespaceModal />
+      {resourceEditorOpen && <ResourceEditorModal />}
+      {createNamespaceOpen && <CreateNamespaceModal />}
       <DeleteResourceModal />
       <ServiceDiagnosticsModal />
       <RbacForbiddenBridge />

@@ -57,7 +57,7 @@ function ReplicaTile({
 }) {
   return (
     <div className="rounded-lg border border-[var(--border)]/70 bg-black/[0.02] dark:bg-white/[0.02] px-2.5 py-1.5">
-      <div className="text-[9px] uppercase tracking-wider text-[var(--muted)] font-semibold whitespace-nowrap">
+      <div className="text-[10px] uppercase tracking-wider text-[var(--muted)] font-semibold whitespace-nowrap">
         {label}
       </div>
       <div
@@ -151,7 +151,7 @@ export function WorkloadHealthCard({
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div className="space-y-1.5 min-w-0">
           <span className="text-[11px] font-semibold text-[var(--muted)] uppercase tracking-wider flex items-center gap-1.5">
-            <KindIcon className="w-3.5 h-3.5 text-[#F08A42]" />
+            <KindIcon className="w-3.5 h-3.5 text-[var(--accent)]" />
             Workload Health
           </span>
           <div className="flex flex-wrap items-center gap-2">
@@ -293,7 +293,7 @@ export function WorkloadHealthCard({
       </div>
 
       <div className="rounded-xl border border-[var(--border)]/70 overflow-hidden">
-        <div className="grid grid-cols-5 gap-1 bg-black/[0.03] dark:bg-white/[0.03] px-2.5 py-1 text-[9px] uppercase tracking-wider text-[var(--muted)] font-semibold">
+        <div className="grid grid-cols-5 gap-1 bg-black/[0.03] dark:bg-white/[0.03] px-2.5 py-1 text-[10px] uppercase tracking-wider text-[var(--muted)] font-semibold">
           {summaryColumns.map((column) => (
             <span key={column} className="truncate">
               {column}

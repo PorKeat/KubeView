@@ -6,12 +6,8 @@ import {
   SearchX,
   CheckCircle2,
   FolderOpen,
-  Terminal,
   Copy,
   Check,
-  Globe,
-  RefreshCw,
-  Layers,
   ArrowRight,
 } from "lucide-react";
 import { cn } from "@/lib/utils";

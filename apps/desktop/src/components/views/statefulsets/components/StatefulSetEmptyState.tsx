@@ -44,16 +44,16 @@ export function StatefulSetEmptyState({
         }
         title={
           statusFilter === "degraded" && !search
-            ? "All StatefulSets Healthy"
+            ? "All StatefulSets healthy"
             : statusFilter === "progressing" && !search
-              ? "All StatefulSets Settled"
+              ? "All StatefulSets settled"
               : statusFilter === "scaleddown" && !search
-                ? "No Scaled Down StatefulSets"
+                ? "No scaled-down StatefulSets"
                 : isFiltered
                   ? `No statefulsets match filter "${search || statusFilter}"`
                   : currentNamespace !== "all"
                     ? `No statefulsets in "${currentNamespace}"`
-                    : "No StatefulSets Found"
+                    : "No StatefulSets found"
         }
         description={
           statusFilter === "degraded" && !search

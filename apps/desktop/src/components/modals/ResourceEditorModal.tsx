@@ -74,7 +74,7 @@ function CreateFormFields({
               {nameError}
             </span>
           ) : (
-            <span className="mt-1 block text-[9px] text-[var(--muted)]">
+            <span className="mt-1 block text-[10px] text-[var(--muted)]">
               Lowercase DNS name. Dots are allowed for cluster-scoped names.
             </span>
           )}
@@ -106,7 +106,7 @@ function CreateFormFields({
             data-testid="create-resource-labels"
             className="w-full resize-y rounded-lg border border-[var(--border)] bg-[var(--background)] px-2.5 py-1.5 font-mono text-[11px] text-[var(--foreground)] outline-hidden focus:border-[var(--accent)]"
           />
-          <span className="mt-1 block text-[9px] text-[var(--muted)]">
+          <span className="mt-1 block text-[10px] text-[var(--muted)]">
             One key=value pair per line.
           </span>
         </label>
@@ -114,7 +114,7 @@ function CreateFormFields({
 
       {spec.fields.length > 0 && (
         <div className="space-y-3 border-t border-[var(--border)] pt-3">
-          <p className="font-mono text-[9px] uppercase tracking-[0.14em] text-[var(--muted)]">
+          <p className="font-mono text-[10px] uppercase tracking-[0.14em] text-[var(--muted)]">
             {spec.fields.length} {spec.fields.length === 1 ? "field" : "fields"}
           </p>
           <div className="grid gap-3 sm:grid-cols-2">
@@ -169,7 +169,7 @@ function CreateFormFields({
                     />
                   )}
                   {field.hint && (
-                    <span className="mt-1 block text-[9px] leading-relaxed text-[var(--muted)]">
+                    <span className="mt-1 block text-[10px] leading-relaxed text-[var(--muted)]">
                       {field.hint}
                     </span>
                   )}
@@ -357,7 +357,7 @@ export function ResourceEditorModal() {
               <h3 className="text-sm font-bold tracking-tight text-[var(--foreground)]">
                 {isCreate ? "Create" : "Edit"} {target.kind}
               </h3>
-              <div className="mt-1 flex min-w-0 flex-wrap items-center gap-1.5 font-mono text-[9px] text-[var(--muted)]">
+              <div className="mt-1 flex min-w-0 flex-wrap items-center gap-1.5 font-mono text-[10px] text-[var(--muted)]">
                 <span className="rounded border border-[var(--border)] bg-[var(--surface-active)]/60 px-1.5 py-0.5">
                   {target.apiVersion}
                 </span>
@@ -414,7 +414,7 @@ export function ResourceEditorModal() {
                   {label}
                 </button>
               ))}
-              <span className="ml-auto hidden pb-1 font-mono text-[9px] text-[var(--muted)] lg:block">
+              <span className="ml-auto hidden pb-1 font-mono text-[10px] text-[var(--muted)] lg:block">
                 Form changes generate YAML live.
               </span>
             </div>

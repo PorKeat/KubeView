@@ -32,39 +32,39 @@ export function StatusBeacon({
     { text: string; bg: string; border: string }
   > = {
     healthy: {
-      text: "text-emerald-700 dark:text-emerald-400",
-      bg: "bg-emerald-500/10",
-      border: "border-emerald-500/20",
+      text: "text-[var(--status-healthy)]",
+      bg: "bg-[var(--status-healthy-bg)]",
+      border: "border-[var(--status-healthy-border)]",
     },
     active: {
-      text: "text-emerald-700 dark:text-emerald-400",
-      bg: "bg-emerald-500/10",
-      border: "border-emerald-500/20",
+      text: "text-[var(--status-healthy)]",
+      bg: "bg-[var(--status-healthy-bg)]",
+      border: "border-[var(--status-healthy-border)]",
     },
     warning: {
-      text: "text-amber-700 dark:text-amber-400",
-      bg: "bg-amber-500/10",
-      border: "border-amber-500/25",
+      text: "text-[var(--status-warning)]",
+      bg: "bg-[var(--status-warning-bg)]",
+      border: "border-[var(--status-warning-border)]",
     },
     critical: {
-      text: "text-rose-700 dark:text-rose-400",
-      bg: "bg-rose-500/10",
-      border: "border-rose-500/25",
+      text: "text-[var(--status-critical)]",
+      bg: "bg-[var(--status-critical-bg)]",
+      border: "border-[var(--status-critical-border)]",
     },
     pending: {
-      text: "text-sky-700 dark:text-sky-400",
-      bg: "bg-sky-500/10",
-      border: "border-sky-500/20",
+      text: "text-[var(--status-info)]",
+      bg: "bg-[var(--status-info-bg)]",
+      border: "border-[var(--status-info-border)]",
     },
     offline: {
-      text: "text-zinc-600 dark:text-zinc-400",
-      bg: "bg-zinc-500/10",
-      border: "border-zinc-500/20",
+      text: "text-[var(--status-muted)]",
+      bg: "bg-[var(--status-muted-bg)]",
+      border: "border-[var(--status-muted-border)]",
     },
     muted: {
-      text: "text-[var(--muted)]",
-      bg: "bg-black/[0.04] dark:bg-white/[0.04]",
-      border: "border-[var(--border)]",
+      text: "text-[var(--status-muted)]",
+      bg: "bg-[var(--status-muted-bg)]",
+      border: "border-[var(--status-muted-border)]",
     },
   };
 
@@ -80,7 +80,7 @@ export function StatusBeacon({
     <span
       data-status-beacon={size}
       className={cn(
-        "inline-flex items-center whitespace-nowrap leading-none font-mono font-medium select-none border",
+        "inline-flex items-center whitespace-nowrap leading-none font-medium select-none border",
         sizeClasses[size],
         current.bg,
         current.border,

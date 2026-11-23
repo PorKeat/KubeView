@@ -59,7 +59,7 @@ function FormField({
       </span>
       {children}
       {hint && (
-        <span className="text-[9px] leading-relaxed text-[var(--muted)]">
+        <span className="text-[10px] leading-relaxed text-[var(--muted)]">
           {hint}
         </span>
       )}
@@ -584,7 +584,7 @@ export function CreateWorkloadModal({
         </div>
 
         <footer className="flex shrink-0 flex-wrap items-center justify-between gap-2 border-t border-[var(--border)] px-4 py-3 sm:px-5">
-          <span className="font-mono text-[9px] text-[var(--muted)]">
+          <span className="font-mono text-[10px] text-[var(--muted)]">
             create-only · kubeview field manager
           </span>
           <div className="flex items-center gap-2">

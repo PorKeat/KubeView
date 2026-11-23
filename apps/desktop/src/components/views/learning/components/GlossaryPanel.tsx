@@ -135,7 +135,7 @@ export function GlossaryPanel() {
                     <span className="block text-[11px] font-semibold text-[var(--foreground)]">
                       {term.term}
                     </span>
-                    <span className="mt-0.5 block text-[9px] font-mono uppercase tracking-wider text-[var(--muted)]">
+                    <span className="mt-0.5 block text-[10px] font-mono uppercase tracking-wider text-[var(--muted)]">
                       {term.category}
                     </span>
                   </span>
@@ -165,7 +165,7 @@ export function GlossaryPanel() {
                       </p>
                     )}
                     {term.command && (
-                      <code className="block overflow-x-auto whitespace-pre-wrap break-all rounded border border-[var(--border)] bg-black/[0.025] px-1.5 py-1 font-mono text-[9px] text-[var(--muted)] dark:bg-white/[0.03]">
+                      <code className="block overflow-x-auto whitespace-pre-wrap break-all rounded border border-[var(--border)] bg-black/[0.025] px-1.5 py-1 font-mono text-[10px] text-[var(--muted)] dark:bg-white/[0.03]">
                         {term.command}
                       </code>
                     )}

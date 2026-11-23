@@ -33,7 +33,7 @@ export function FleetOverviewHeader({
             {hasSnapshot && (
               <span
                 data-testid="fleet-live-indicator"
-                className="inline-flex items-center rounded-full border border-emerald-500/20 bg-emerald-500/10 px-2 py-0.5 font-mono text-[9px] font-medium uppercase tracking-[0.12em] text-emerald-700 dark:text-emerald-400"
+                className="inline-flex items-center rounded-full border border-emerald-500/20 bg-emerald-500/10 px-2 py-0.5 font-mono text-[10px] font-medium uppercase tracking-[0.12em] text-emerald-700 dark:text-emerald-400"
               >
                 Live fleet
               </span>
@@ -64,7 +64,7 @@ export function FleetOverviewHeader({
             data-testid="fleet-refresh"
             onClick={onRefresh}
             disabled={isRefreshing}
-            className="inline-flex items-center gap-1.5 rounded-md bg-gradient-to-r from-[#f08a42] to-[#e85d26] px-3 py-1 text-xs font-semibold text-zinc-950 shadow-xs transition-all hover:from-[#ff9d5c] hover:to-[#f08a42] cursor-pointer focus-visible:ring-2 focus-visible:ring-[var(--accent)] focus-visible:outline-hidden disabled:cursor-wait disabled:opacity-60"
+            className="inline-flex items-center gap-1.5 rounded-md bg-[var(--accent)] px-3 py-1 text-xs font-semibold text-[var(--accent-foreground)] shadow-xs transition-all hover:bg-[var(--accent-hover)] cursor-pointer focus-visible:ring-2 focus-visible:ring-[var(--accent)] focus-visible:outline-hidden disabled:cursor-wait disabled:opacity-60"
           >
             <RefreshCw
               className={cn("h-3 w-3", isRefreshing && "animate-spin")}

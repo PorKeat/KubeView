@@ -72,7 +72,7 @@ export function FleetToolbar({
               )}
             >
               <span>{option.label}</span>
-              <span className="font-mono text-[9px] tabular-nums text-[var(--muted)]">
+              <span className="font-mono text-[10px] tabular-nums text-[var(--muted)]">
                 {option.count}
               </span>
             </button>

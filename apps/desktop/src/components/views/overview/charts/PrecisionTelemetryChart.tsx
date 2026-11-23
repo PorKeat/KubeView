@@ -288,7 +288,7 @@ export function PrecisionTelemetryChart({
                   x={plotLeft - 4}
                   y={y + 3}
                   textAnchor="end"
-                  className="text-[9px] font-mono fill-[var(--muted)]/75"
+                  className="text-[10px] font-mono fill-[var(--muted)]/75"
                 >
                   {tick}
                 </text>

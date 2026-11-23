@@ -483,7 +483,7 @@ export function ClusterCatalogView() {
                 {availableContexts.length === 1 ? "item" : "items"}
               </span>
               {overview && (
-                <span className="inline-flex items-center rounded-full border border-emerald-500/20 bg-emerald-500/10 px-2 py-0.5 font-mono text-[9px] font-medium uppercase tracking-[0.12em] text-emerald-700 dark:text-emerald-400">
+                <span className="inline-flex items-center rounded-full border border-emerald-500/20 bg-emerald-500/10 px-2 py-0.5 font-mono text-[10px] font-medium uppercase tracking-[0.12em] text-emerald-700 dark:text-emerald-400">
                   Live
                 </span>
               )}
@@ -515,7 +515,7 @@ export function ClusterCatalogView() {
               type="button"
               onClick={() => void handleRefresh()}
               disabled={isFleetLoading}
-              className="inline-flex items-center gap-1.5 rounded-md bg-gradient-to-r from-[#f08a42] to-[#e85d26] px-3 py-1.5 text-xs font-semibold text-zinc-950 shadow-xs transition-all hover:from-[#ff9d5c] hover:to-[#f08a42] cursor-pointer focus-visible:ring-2 focus-visible:ring-[var(--accent)] focus-visible:outline-hidden disabled:cursor-wait disabled:opacity-60"
+              className="inline-flex items-center gap-1.5 rounded-md bg-[var(--accent)] px-3 py-1.5 text-xs font-semibold text-[var(--accent-foreground)] shadow-xs transition-all hover:bg-[var(--accent-hover)] cursor-pointer focus-visible:ring-2 focus-visible:ring-[var(--accent)] focus-visible:outline-hidden disabled:cursor-wait disabled:opacity-60"
             >
               <RefreshCw
                 className={cn("h-3 w-3", isFleetLoading && "animate-spin")}
@@ -683,7 +683,7 @@ export function ClusterCatalogView() {
                     )}
                   >
                     <span>{option.label}</span>
-                    <span className="font-mono text-[9px] tabular-nums text-[var(--muted)]">
+                    <span className="font-mono text-[10px] tabular-nums text-[var(--muted)]">
                       {filterCounts[option.id]}
                     </span>
                   </button>
@@ -732,7 +732,7 @@ export function ClusterCatalogView() {
                 <col className="w-[12%]" />
               </colgroup>
               <thead>
-                <tr className="border-b border-[var(--border)] font-mono text-[9px] uppercase tracking-[0.12em] text-[var(--muted)]">
+                <tr className="border-b border-[var(--border)] font-mono text-[10px] uppercase tracking-[0.12em] text-[var(--muted)]">
                   <th scope="col" className="w-9 px-3 py-2">
                     <input
                       ref={selectAllRef}
@@ -846,14 +846,14 @@ export function ClusterCatalogView() {
                                 {alias || context.name}
                               </span>
                               {isActive && (
-                                <span className="rounded border border-[var(--accent)]/25 bg-[var(--accent)]/10 px-1.5 py-0.5 font-mono text-[9px] font-semibold uppercase tracking-wide text-[var(--accent)]">
+                                <span className="rounded border border-[var(--accent)]/25 bg-[var(--accent)]/10 px-1.5 py-0.5 font-mono text-[10px] font-semibold uppercase tracking-wide text-[var(--accent)]">
                                   Active
                                 </span>
                               )}
                               <span
                                 data-testid="catalog-env-badge"
                                 className={cn(
-                                  "rounded border px-1.5 py-0.5 font-mono text-[8px] font-semibold tracking-wide",
+                                  "rounded border px-1.5 py-0.5 font-mono text-[10px] font-semibold tracking-wide",
                                   envMeta.badge,
                                 )}
                               >
@@ -1032,7 +1032,7 @@ function SortableHeader({
         aria-label={`Sort by ${label}`}
         aria-pressed={active}
         className={cn(
-          "inline-flex items-center gap-1 rounded text-[9px] uppercase tracking-[0.12em] transition-colors cursor-pointer hover:text-[var(--foreground)] focus-visible:ring-2 focus-visible:ring-[var(--accent)] focus-visible:outline-hidden",
+          "inline-flex items-center gap-1 rounded text-[10px] uppercase tracking-[0.12em] transition-colors cursor-pointer hover:text-[var(--foreground)] focus-visible:ring-2 focus-visible:ring-[var(--accent)] focus-visible:outline-hidden",
           active ? "text-[var(--foreground)]" : "text-[var(--muted)]",
         )}
       >

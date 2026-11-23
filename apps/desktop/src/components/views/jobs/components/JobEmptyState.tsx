@@ -36,7 +36,7 @@ export function JobEmptyState({
               ? `No jobs match filter "${search || statusFilter}"`
               : currentNamespace !== "all"
                 ? `No jobs in "${currentNamespace}"`
-                : "No Jobs Found"
+                : "No jobs found"
         }
         description={
           jobOwnerFilter

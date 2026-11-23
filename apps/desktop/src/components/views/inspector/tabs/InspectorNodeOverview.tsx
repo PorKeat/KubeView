@@ -1,8 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { Cpu, Activity, Box, Copy } from "lucide-react";
-import { toast } from "sonner";
+import { Cpu, Activity, Box } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { NodeSummary, PodSummary } from "@kubeview/contracts";
 import type { SelectedResource } from "@/stores/clusterStore";

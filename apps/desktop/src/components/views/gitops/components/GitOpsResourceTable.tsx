@@ -36,7 +36,7 @@ export function GitOpsResourceTable({
       className="overflow-y-auto overflow-x-hidden"
     >
       <table className="w-full text-left text-[10px]">
-        <thead className="border-b border-[var(--border)] bg-[var(--surface-hover)]/40 text-[9px] uppercase tracking-wider text-[var(--muted)]">
+        <thead className="border-b border-[var(--border)] bg-[var(--surface-hover)]/40 text-[10px] uppercase tracking-wider text-[var(--muted)]">
           <tr>
             <th className="px-3 py-2 font-medium">Status</th>
             <th className="px-3 py-2 font-medium">Kind</th>
@@ -60,7 +60,7 @@ export function GitOpsResourceTable({
               >
                 <td className="px-3 py-2">
                   <span
-                    className={`inline-flex rounded border px-1.5 py-0.5 text-[9px] font-medium ${tone.className}`}
+                    className={`inline-flex rounded border px-1.5 py-0.5 text-[10px] font-medium ${tone.className}`}
                   >
                     {tone.label}
                   </span>
@@ -75,7 +75,7 @@ export function GitOpsResourceTable({
                   {resource.namespace || "Cluster"}
                 </td>
                 <td
-                  className="max-w-[220px] truncate px-3 py-2 font-mono text-[9px] text-[var(--muted)]"
+                  className="max-w-[220px] truncate px-3 py-2 font-mono text-[10px] text-[var(--muted)]"
                   title={resource.sourceFile}
                 >
                   {resource.sourceFile}

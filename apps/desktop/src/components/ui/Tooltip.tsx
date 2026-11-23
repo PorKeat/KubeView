@@ -55,7 +55,7 @@ export function Tooltip({
         >
           <span>{content}</span>
           {shortcut && (
-            <kbd className="px-1 py-0.2 rounded text-[9px] font-mono bg-white/15 dark:bg-white/10 text-slate-300 dark:text-slate-400 border border-white/15">
+            <kbd className="px-1 py-0.2 rounded text-[10px] font-mono bg-white/15 dark:bg-white/10 text-slate-300 dark:text-slate-400 border border-white/15">
               {shortcut}
             </kbd>
           )}

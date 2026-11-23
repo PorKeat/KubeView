@@ -32,7 +32,7 @@ export function ConfigStorageEditorEntry({
         <div className="min-w-0 flex-1">
           <label
             htmlFor={`config-storage-key-${index}`}
-            className="mb-1 block text-[9px] font-mono uppercase tracking-wider text-[var(--muted)]"
+            className="mb-1 block text-[10px] font-mono uppercase tracking-wider text-[var(--muted)]"
           >
             Key
           </label>
@@ -51,7 +51,7 @@ export function ConfigStorageEditorEntry({
         </div>
         <div className="flex items-center gap-1 pt-4">
           {entry.binary && (
-            <span className="rounded border border-[var(--border)] bg-black/5 px-1.5 py-0.5 font-mono text-[9px] text-[var(--muted)] dark:bg-white/5">
+            <span className="rounded border border-[var(--border)] bg-black/5 px-1.5 py-0.5 font-mono text-[10px] text-[var(--muted)] dark:bg-white/5">
               base64
             </span>
           )}
@@ -69,11 +69,11 @@ export function ConfigStorageEditorEntry({
 
       <div className="mt-2 overflow-hidden rounded-lg border border-[var(--border)] bg-[var(--background)] focus-within:border-[var(--accent)]/50">
         <div className="flex items-center justify-between gap-2 border-b border-[var(--border)] px-2.5 py-1.5">
-          <span className="text-[9px] font-mono uppercase tracking-wider text-[var(--muted)]">
+          <span className="text-[10px] font-mono uppercase tracking-wider text-[var(--muted)]">
             Value
           </span>
           <div className="flex items-center gap-2">
-            <span className="font-mono text-[9px] text-[var(--muted)]">
+            <span className="font-mono text-[10px] text-[var(--muted)]">
               {lineCount} line{lineCount === 1 ? "" : "s"}
             </span>
             {isSecret && (

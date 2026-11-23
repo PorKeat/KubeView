@@ -3,7 +3,7 @@
 import * as React from "react";
 import { useClusterStore } from "@/stores/clusterStore";
 import { toast } from "sonner";
-import { getStreamCredentials, resetStreamCredentials } from "@/lib/ipc";
+import { getStreamCredentials } from "@/lib/ipc";
 import { saveTextFile } from "@/lib/saveFile";
 import { PodLogsHeader } from "./PodLogsHeader";
 import { PodLogsToolbar } from "./PodLogsToolbar";
@@ -233,7 +233,6 @@ export function PodLogsModal() {
         };
 
         es.onerror = () => {
-          resetStreamCredentials();
           if (flushTimer) clearTimeout(flushTimer);
           flushBuffer();
           if (!isCancelled) {

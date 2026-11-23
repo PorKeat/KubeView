@@ -130,12 +130,12 @@ export function ShellSelector({
             }}
           >
             {/* Header Strip */}
-            <div className="flex items-center justify-between px-2 py-1 mb-0.5 border-b border-white/[0.06] text-[9px]">
+            <div className="flex items-center justify-between px-2 py-1 mb-0.5 border-b border-white/[0.06] text-[10px]">
               <span className="font-semibold text-slate-400 uppercase tracking-wider flex items-center gap-1.5">
                 <TerminalIcon className="w-2.5 h-2.5 text-[var(--accent)]" />{" "}
                 Shell
               </span>
-              <span className="px-1 py-0.2 rounded text-[8px] font-mono bg-white/[0.06] text-slate-400">
+              <span className="px-1 py-0.2 rounded text-[10px] font-mono bg-white/[0.06] text-slate-400">
                 {SHELL_OPTIONS.length}
               </span>
             </div>
@@ -187,7 +187,7 @@ export function ShellSelector({
                     <div className="flex items-center gap-1.5 shrink-0">
                       <span
                         className={cn(
-                          "px-1 py-0.2 rounded text-[9px] font-mono border",
+                          "px-1 py-0.2 rounded text-[10px] font-mono border",
                           opt.badgeClass,
                         )}
                       >

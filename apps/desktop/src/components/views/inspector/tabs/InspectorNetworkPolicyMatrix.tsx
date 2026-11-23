@@ -86,7 +86,7 @@ export function InspectorNetworkPolicyMatrix({
           </span>
           <span
             className={cn(
-              "ml-auto inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[9px] font-mono font-semibold border",
+              "ml-auto inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-mono font-semibold border",
               !selected
                 ? "bg-black/5 dark:bg-white/5 text-[var(--muted)] border-[var(--border)]"
                 : denied
@@ -123,7 +123,7 @@ export function InspectorNetworkPolicyMatrix({
               key={`${direction}-${index}`}
               className="rounded-lg border border-[var(--border)]/70 bg-[var(--surface)] p-2 space-y-1.5"
             >
-              <div className="flex items-center gap-1.5 text-[9px] uppercase tracking-wider text-[var(--muted)] font-semibold">
+              <div className="flex items-center gap-1.5 text-[10px] uppercase tracking-wider text-[var(--muted)] font-semibold">
                 <span className="px-1.5 py-0.5 rounded bg-black/5 dark:bg-white/5 border border-[var(--border)] font-mono">
                   Rule {index + 1}
                 </span>
@@ -195,7 +195,7 @@ function DirectionCard({
         </span>
         <span
           className={cn(
-            "text-[9px] font-mono px-1.5 py-0.5 rounded border",
+            "text-[10px] font-mono px-1.5 py-0.5 rounded border",
             !selected
               ? "bg-black/5 dark:bg-white/5 text-[var(--muted)] border-[var(--border)]"
               : denied

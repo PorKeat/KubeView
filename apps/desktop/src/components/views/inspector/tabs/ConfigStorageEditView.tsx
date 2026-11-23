@@ -149,7 +149,7 @@ export function ConfigStorageEditView({
     <div className="flex flex-wrap items-center gap-1.5">
       <EditorModeSwitch mode={mode} onChange={switchMode} />
       {!isConfigMap && mode === "yaml" && secretRevealed && (
-        <span className="rounded border border-amber-500/25 bg-amber-500/10 px-1.5 py-0.5 font-mono text-[9px] text-amber-700 dark:text-amber-400">
+        <span className="rounded border border-amber-500/25 bg-amber-500/10 px-1.5 py-0.5 font-mono text-[10px] text-amber-700 dark:text-amber-400">
           values visible
         </span>
       )}
@@ -170,7 +170,7 @@ export function ConfigStorageEditView({
               <h3 className="text-xs font-semibold text-[var(--foreground)]">
                 Secret YAML
               </h3>
-              <p className="font-mono text-[9px] text-[var(--muted)]">
+              <p className="font-mono text-[10px] text-[var(--muted)]">
                 Reveal is required before raw values are loaded
               </p>
             </div>

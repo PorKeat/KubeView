@@ -120,12 +120,12 @@ export function SplashScreen() {
         <div className="mt-8 h-[3px] w-56 overflow-hidden rounded-full bg-[var(--border)]">
           <div className="splash-progress h-full w-full rounded-full bg-gradient-to-r from-[#F08A42] via-[#FF9E59] to-[#FFD0A8]" />
         </div>
-        <div className="mt-3 flex items-center gap-2 font-mono text-[9px] uppercase tracking-[0.18em] text-[var(--muted)]">
+        <div className="mt-3 flex items-center gap-2 font-mono text-[10px] uppercase tracking-[0.18em] text-[var(--muted)]">
           Preparing your workspace
         </div>
       </div>
 
-      <div className="absolute bottom-7 z-10 flex items-center gap-2 font-mono text-[9px] uppercase tracking-[0.18em] text-[var(--muted)]/60">
+      <div className="absolute bottom-7 z-10 flex items-center gap-2 font-mono text-[10px] uppercase tracking-[0.18em] text-[var(--muted)]/60">
         <span className="h-px w-6 bg-[var(--border)]" />
         KubeView Engine
         <span className="h-px w-6 bg-[var(--border)]" />

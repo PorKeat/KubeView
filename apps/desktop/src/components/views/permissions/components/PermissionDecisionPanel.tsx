@@ -35,7 +35,7 @@ export function PermissionDecisionPanel({
             <div className="text-sm font-semibold text-[var(--foreground)]">
               {decision.allowed ? "Operation allowed" : "Operation denied"}
             </div>
-            <div className="mt-0.5 font-mono text-[9px] uppercase tracking-wider text-[var(--muted)]">
+            <div className="mt-0.5 font-mono text-[10px] uppercase tracking-wider text-[var(--muted)]">
               reason: {decision.reason}
             </div>
           </div>
@@ -54,7 +54,7 @@ export function PermissionDecisionPanel({
       {decision.sar && (
         <div className="rounded-lg border border-[var(--border)]/70 bg-black/[0.02] px-2.5 py-2 dark:bg-white/[0.02]">
           <div className="flex flex-wrap items-center gap-1.5">
-            <span className="font-mono text-[9px] uppercase tracking-wider text-[var(--muted)]">
+            <span className="font-mono text-[10px] uppercase tracking-wider text-[var(--muted)]">
               SubjectAccessReview
             </span>
             <StatusBeacon
@@ -71,12 +71,12 @@ export function PermissionDecisionPanel({
             />
           </div>
           {decision.sar.reason && (
-            <div className="mt-1 break-words font-mono text-[9px] text-[var(--muted)]">
+            <div className="mt-1 break-words font-mono text-[10px] text-[var(--muted)]">
               {decision.sar.reason}
             </div>
           )}
           {decision.sar.evaluationError && (
-            <div className="mt-1 break-words font-mono text-[9px] text-rose-600 dark:text-rose-400">
+            <div className="mt-1 break-words font-mono text-[10px] text-rose-600 dark:text-rose-400">
               {decision.sar.evaluationError}
             </div>
           )}
@@ -92,7 +92,7 @@ export function PermissionDecisionPanel({
           {decision.warnings.map((warning, index) => (
             <p
               key={`${warning}-${index}`}
-              className="mt-1 break-words font-mono text-[9px] leading-relaxed text-[var(--muted)]"
+              className="mt-1 break-words font-mono text-[10px] leading-relaxed text-[var(--muted)]"
             >
               {warning}
             </p>
@@ -101,7 +101,7 @@ export function PermissionDecisionPanel({
       )}
 
       <div>
-        <div className="mb-1.5 font-mono text-[9px] uppercase tracking-wider text-[var(--muted)]">
+        <div className="mb-1.5 font-mono text-[10px] uppercase tracking-wider text-[var(--muted)]">
           Matched rules ({decision.matchedRules.length})
         </div>
         <PermissionRuleTable
@@ -111,7 +111,7 @@ export function PermissionDecisionPanel({
       </div>
 
       <div>
-        <div className="mb-1.5 font-mono text-[9px] uppercase tracking-wider text-[var(--muted)]">
+        <div className="mb-1.5 font-mono text-[10px] uppercase tracking-wider text-[var(--muted)]">
           Matched bindings ({decision.matchedBindings.length})
         </div>
         <PermissionBindingList

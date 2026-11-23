@@ -270,7 +270,7 @@ function ResourceDetailDrawer({
       >
         <header className="flex items-start justify-between gap-3 border-b border-[var(--border)] p-4">
           <div className="min-w-0">
-            <p className="font-mono text-[9px] uppercase tracking-[0.14em] text-[var(--muted)]">
+            <p className="font-mono text-[10px] uppercase tracking-[0.14em] text-[var(--muted)]">
               {configTitle}
             </p>
             <h2 className="mt-1 truncate text-sm font-semibold text-[var(--foreground)]">
@@ -330,14 +330,14 @@ function ResourceDetailDrawer({
 
           {item.labels && Object.keys(item.labels).length > 0 && (
             <section className="rounded-xl border border-[var(--border)] bg-[var(--background)] p-3">
-              <h3 className="font-mono text-[9px] uppercase tracking-[0.14em] text-[var(--muted)]">
+              <h3 className="font-mono text-[10px] uppercase tracking-[0.14em] text-[var(--muted)]">
                 Labels
               </h3>
               <div className="mt-2 flex flex-wrap gap-1">
                 {Object.entries(item.labels).map(([key, value]) => (
                   <span
                     key={key}
-                    className="max-w-full truncate rounded border border-[var(--border)] bg-[var(--surface)] px-1.5 py-0.5 font-mono text-[9px] text-[var(--muted)]"
+                    className="max-w-full truncate rounded border border-[var(--border)] bg-[var(--surface)] px-1.5 py-0.5 font-mono text-[10px] text-[var(--muted)]"
                     title={`${key}=${value}`}
                   >
                     {key}={value}
@@ -349,14 +349,14 @@ function ResourceDetailDrawer({
 
           {item.annotations && Object.keys(item.annotations).length > 0 && (
             <section className="rounded-xl border border-[var(--border)] bg-[var(--background)] p-3">
-              <h3 className="font-mono text-[9px] uppercase tracking-[0.14em] text-[var(--muted)]">
+              <h3 className="font-mono text-[10px] uppercase tracking-[0.14em] text-[var(--muted)]">
                 Annotations
               </h3>
               <div className="mt-2 space-y-1">
                 {Object.entries(item.annotations).map(([key, value]) => (
                   <div
                     key={key}
-                    className="truncate font-mono text-[9px] text-[var(--muted)]"
+                    className="truncate font-mono text-[10px] text-[var(--muted)]"
                     title={`${key}=${value}`}
                   >
                     {key}={value}
@@ -462,7 +462,7 @@ function ResourceDetailDrawer({
                       Cancel
                     </button>
                   </div>
-                  <p className="mt-1.5 text-[9px] leading-relaxed text-[var(--muted)]">
+                  <p className="mt-1.5 text-[10px] leading-relaxed text-[var(--muted)]">
                     The StorageClass must allow volume expansion. Shrinking a
                     claim is not supported.
                   </p>

@@ -72,7 +72,7 @@ export function GitOpsSourceForm({
               <div className="text-[10px] font-medium text-[var(--foreground)]">
                 {isDragActive ? "Drop folder to scan" : "Local manifest folder"}
               </div>
-              <div className="truncate font-mono text-[9px] text-[var(--muted)]">
+              <div className="truncate font-mono text-[10px] text-[var(--muted)]">
                 {path || "Drag and drop, or choose a folder"}
               </div>
             </div>
@@ -94,7 +94,7 @@ export function GitOpsSourceForm({
               type="button"
               data-testid="gitops-manual-toggle"
               onClick={() => setManualMode((current) => !current)}
-              className="inline-flex items-center gap-1 rounded-md border border-[var(--border)] px-2.5 py-1.5 text-[9px] font-medium text-[var(--muted)] transition-colors hover:bg-[var(--surface-hover)] hover:text-[var(--foreground)]"
+              className="inline-flex items-center gap-1 rounded-md border border-[var(--border)] px-2.5 py-1.5 text-[10px] font-medium text-[var(--muted)] transition-colors hover:bg-[var(--surface-hover)] hover:text-[var(--foreground)]"
             >
               <ChevronDown
                 className={cn(
@@ -136,14 +136,14 @@ export function GitOpsSourceForm({
 
       {!manualMode && path && (
         <div className="mt-2 flex flex-wrap items-center justify-between gap-2 rounded-lg border border-[var(--border)] bg-black/[0.02] px-2.5 py-2 dark:bg-white/[0.02]">
-          <span className="min-w-0 truncate font-mono text-[9px] text-[var(--muted)]">
+          <span className="min-w-0 truncate font-mono text-[10px] text-[var(--muted)]">
             Selected: {path}
           </span>
           <button
             type="submit"
             data-testid="gitops-scan"
             disabled={isScanning}
-            className="inline-flex items-center gap-1.5 rounded-md border border-[var(--border)] px-2.5 py-1 text-[9px] font-medium text-[var(--foreground)] hover:bg-[var(--surface-hover)] disabled:opacity-50"
+            className="inline-flex items-center gap-1.5 rounded-md border border-[var(--border)] px-2.5 py-1 text-[10px] font-medium text-[var(--foreground)] hover:bg-[var(--surface-hover)] disabled:opacity-50"
           >
             <ScanSearch
               className={cn("h-3 w-3", isScanning && "animate-pulse")}
@@ -156,7 +156,7 @@ export function GitOpsSourceForm({
       {recentPaths.length > 0 && (
         <div className="mt-2 flex flex-wrap items-center gap-1.5">
           <History className="h-3 w-3 text-[var(--muted)]" />
-          <span className="font-mono text-[9px] uppercase tracking-wider text-[var(--muted)]">
+          <span className="font-mono text-[10px] uppercase tracking-wider text-[var(--muted)]">
             Recent
           </span>
           {recentPaths.map((recentPath) => (
@@ -165,7 +165,7 @@ export function GitOpsSourceForm({
               type="button"
               data-testid="gitops-recent-path"
               onClick={() => onUseRecentPath(recentPath)}
-              className="max-w-[220px] truncate rounded-md border border-[var(--border)] bg-[var(--surface)] px-2 py-1 font-mono text-[9px] text-[var(--muted)] transition-colors hover:border-[var(--accent)]/40 hover:text-[var(--foreground)]"
+              className="max-w-[220px] truncate rounded-md border border-[var(--border)] bg-[var(--surface)] px-2 py-1 font-mono text-[10px] text-[var(--muted)] transition-colors hover:border-[var(--accent)]/40 hover:text-[var(--foreground)]"
               title={recentPath}
             >
               {sourceLabel(recentPath)}
@@ -174,7 +174,7 @@ export function GitOpsSourceForm({
         </div>
       )}
 
-      <div className="mt-2 flex items-center gap-1.5 text-[9px] text-[var(--muted)]">
+      <div className="mt-2 flex items-center gap-1.5 text-[10px] text-[var(--muted)]">
         <Tooltip content="Secrets are excluded until redaction support is implemented.">
           <span className="rounded border border-[var(--border)] px-1.5 py-0.5 font-mono">
             raw YAML only

@@ -43,7 +43,7 @@ export function InspectorCronJobOverview({
       <div className="p-4 rounded-2xl bg-[var(--surface)] border border-[var(--border)] shadow-2xs space-y-4">
         <div className="space-y-1.5 min-w-0">
           <span className="text-[11px] font-semibold text-[var(--muted)] uppercase tracking-wider flex items-center gap-1.5">
-            <Calendar className="w-3.5 h-3.5 text-[#F08A42]" />
+            <Calendar className="w-3.5 h-3.5 text-[var(--accent)]" />
             CronJob Schedule
           </span>
           <div className="flex flex-wrap items-center gap-2">
@@ -92,7 +92,7 @@ export function InspectorCronJobOverview({
           <ReplicaTile label="Job Parallelism" value={cj.parallelism ?? 1} />
         </div>
         <div className="rounded-xl border border-[var(--border)]/70 overflow-hidden">
-          <div className="grid grid-cols-5 bg-black/[0.03] dark:bg-white/[0.03] px-2.5 py-1 text-[9px] uppercase tracking-wider text-[var(--muted)] font-semibold">
+          <div className="grid grid-cols-5 bg-black/[0.03] dark:bg-white/[0.03] px-2.5 py-1 text-[10px] uppercase tracking-wider text-[var(--muted)] font-semibold">
             {["NAME", "SCHEDULE", "SUSPENDED", "ACTIVE", "AGE"].map(
               (column) => (
                 <span key={column}>{column}</span>
@@ -123,7 +123,7 @@ export function InspectorCronJobOverview({
       <div className="p-4 rounded-2xl bg-[var(--surface)] border border-[var(--border)] shadow-2xs space-y-4">
         <div className="flex items-center justify-between gap-3">
           <span className="text-[11px] font-semibold text-[var(--muted)] uppercase tracking-wider flex items-center gap-1.5">
-            <Calendar className="w-3.5 h-3.5 text-[#F08A42]" />
+            <Calendar className="w-3.5 h-3.5 text-[var(--accent)]" />
             Resource Metadata
           </span>
           <span className="text-[10px] font-mono text-[var(--muted)]">
@@ -338,7 +338,7 @@ function ReplicaTile({
 }) {
   return (
     <div className="rounded-lg border border-[var(--border)]/70 bg-black/[0.02] dark:bg-white/[0.02] px-2.5 py-1.5">
-      <div className="text-[9px] uppercase tracking-wider text-[var(--muted)] font-semibold whitespace-nowrap">
+      <div className="text-[10px] uppercase tracking-wider text-[var(--muted)] font-semibold whitespace-nowrap">
         {label}
       </div>
       <div

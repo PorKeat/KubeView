@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { AlertTriangle, RotateCw, Trash2, X } from "lucide-react";
+import { AlertTriangle, RotateCw, Trash2 } from "lucide-react";
 import { useClusterStore } from "@/stores/clusterStore";
 
 export function DeleteResourceModal() {

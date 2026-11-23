@@ -25,8 +25,8 @@ function SummaryTile({
   warning?: boolean;
 }) {
   return (
-    <div className="min-w-0 rounded-xl border border-[var(--border)] bg-[var(--surface)] p-3 shadow-xs">
-      <div className="flex items-center gap-1.5 text-[9px] font-mono uppercase tracking-wider text-[var(--muted)]">
+    <div className="min-w-0 bg-[var(--surface)] p-3">
+      <div className="flex items-center gap-1.5 text-[10px] font-medium text-[var(--muted)]">
         <Icon
           className={cn(
             "h-3 w-3 shrink-0",
@@ -52,52 +52,64 @@ export function FleetSummaryStrip({
   hasSnapshot: boolean;
 }) {
   return (
-    <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-3 xl:grid-cols-5">
-      <SummaryTile
-        icon={Server}
-        label="Clusters"
-        value={hasSnapshot ? `${totals.healthy}/${totals.total}` : "—"}
-        detail={
-          hasSnapshot
-            ? `${totals.offline} offline · ${totals.degraded} attention`
-            : "Loading cluster data"
-        }
-      />
-      <SummaryTile
-        icon={CheckCircle2}
-        label="Nodes ready"
-        value={hasSnapshot ? `${totals.readyNodes}/${totals.totalNodes}` : "—"}
-        detail={
-          hasSnapshot
-            ? totals.totalNodes > 0
-              ? `${Math.round((totals.readyNodes / totals.totalNodes) * 100)}% ready`
-              : "No nodes reported"
-            : "Waiting for snapshots"
-        }
-      />
-      <SummaryTile
-        icon={Box}
-        label="Pods running"
-        value={hasSnapshot ? `${totals.runningPods}/${totals.totalPods}` : "—"}
-        detail={
-          hasSnapshot ? `${totals.failedPods} failed` : "Waiting for snapshots"
-        }
-        warning={hasSnapshot && totals.failedPods > 0}
-      />
-      <SummaryTile
-        icon={Activity}
-        label="Workloads"
-        value={hasSnapshot ? String(totals.degradedWorkloads) : "—"}
-        detail={hasSnapshot ? "degraded controllers" : "Waiting for snapshots"}
-        warning={hasSnapshot && totals.degradedWorkloads > 0}
-      />
-      <SummaryTile
-        icon={AlertTriangle}
-        label="Warnings"
-        value={hasSnapshot ? String(totals.warningCount) : "—"}
-        detail={hasSnapshot ? "recent cluster events" : "Waiting for snapshots"}
-        warning={hasSnapshot && totals.warningCount > 0}
-      />
+    <div className="overflow-hidden rounded-xl border border-[var(--border)] shadow-xs">
+      <div className="grid grid-cols-2 gap-px bg-[var(--border)] sm:grid-cols-3 xl:grid-cols-5">
+        <SummaryTile
+          icon={Server}
+          label="Clusters"
+          value={hasSnapshot ? `${totals.healthy}/${totals.total}` : "—"}
+          detail={
+            hasSnapshot
+              ? `${totals.offline} offline, ${totals.degraded} attention`
+              : "Loading cluster data"
+          }
+        />
+        <SummaryTile
+          icon={CheckCircle2}
+          label="Nodes ready"
+          value={
+            hasSnapshot ? `${totals.readyNodes}/${totals.totalNodes}` : "—"
+          }
+          detail={
+            hasSnapshot
+              ? totals.totalNodes > 0
+                ? `${Math.round((totals.readyNodes / totals.totalNodes) * 100)}% ready`
+                : "No nodes reported"
+              : "Waiting for snapshots"
+          }
+        />
+        <SummaryTile
+          icon={Box}
+          label="Pods running"
+          value={
+            hasSnapshot ? `${totals.runningPods}/${totals.totalPods}` : "—"
+          }
+          detail={
+            hasSnapshot
+              ? `${totals.failedPods} failed`
+              : "Waiting for snapshots"
+          }
+          warning={hasSnapshot && totals.failedPods > 0}
+        />
+        <SummaryTile
+          icon={Activity}
+          label="Workloads"
+          value={hasSnapshot ? String(totals.degradedWorkloads) : "—"}
+          detail={
+            hasSnapshot ? "degraded controllers" : "Waiting for snapshots"
+          }
+          warning={hasSnapshot && totals.degradedWorkloads > 0}
+        />
+        <SummaryTile
+          icon={AlertTriangle}
+          label="Warnings"
+          value={hasSnapshot ? String(totals.warningCount) : "—"}
+          detail={
+            hasSnapshot ? "recent cluster events" : "Waiting for snapshots"
+          }
+          warning={hasSnapshot && totals.warningCount > 0}
+        />
+      </div>
     </div>
   );
 }

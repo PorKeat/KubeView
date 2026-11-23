@@ -154,7 +154,7 @@ export function WebLinksCatalogView() {
           type="button"
           data-testid="web-links-add"
           onClick={startCreate}
-          className="inline-flex shrink-0 items-center gap-1.5 rounded-md bg-gradient-to-r from-[#f08a42] to-[#e85d26] px-3 py-1.5 text-xs font-semibold text-zinc-950 shadow-xs transition-all hover:from-[#ff9d5c] hover:to-[#f08a42] cursor-pointer focus-visible:ring-2 focus-visible:ring-[var(--accent)] focus-visible:outline-hidden"
+          className="inline-flex shrink-0 items-center gap-1.5 rounded-md bg-[var(--accent)] px-3 py-1.5 text-xs font-semibold text-[var(--accent-foreground)] shadow-xs transition-all hover:bg-[var(--accent-hover)] cursor-pointer focus-visible:ring-2 focus-visible:ring-[var(--accent)] focus-visible:outline-hidden"
         >
           <Plus className="h-3.5 w-3.5" aria-hidden="true" />
           Add link
@@ -185,7 +185,7 @@ export function WebLinksCatalogView() {
 
           <div className="mt-2 grid gap-2 md:grid-cols-2 xl:grid-cols-[1.2fr_2fr_1fr_auto]">
             <label className="flex flex-col gap-1">
-              <span className="font-mono text-[9px] uppercase tracking-[0.12em] text-[var(--muted)]">
+              <span className="font-mono text-[10px] uppercase tracking-[0.12em] text-[var(--muted)]">
                 Name
               </span>
               <input
@@ -201,7 +201,7 @@ export function WebLinksCatalogView() {
             </label>
 
             <label className="flex flex-col gap-1">
-              <span className="font-mono text-[9px] uppercase tracking-[0.12em] text-[var(--muted)]">
+              <span className="font-mono text-[10px] uppercase tracking-[0.12em] text-[var(--muted)]">
                 URL
               </span>
               <input
@@ -217,7 +217,7 @@ export function WebLinksCatalogView() {
             </label>
 
             <div className="flex flex-col gap-1">
-              <span className="font-mono text-[9px] uppercase tracking-[0.12em] text-[var(--muted)]">
+              <span className="font-mono text-[10px] uppercase tracking-[0.12em] text-[var(--muted)]">
                 Cluster
               </span>
               <CustomSelect
@@ -293,7 +293,7 @@ export function WebLinksCatalogView() {
         <div className="mt-3 overflow-x-auto">
           <table className="w-full border-collapse text-left text-xs">
             <thead>
-              <tr className="border-b border-[var(--border)] font-mono text-[9px] uppercase tracking-[0.12em] text-[var(--muted)]">
+              <tr className="border-b border-[var(--border)] font-mono text-[10px] uppercase tracking-[0.12em] text-[var(--muted)]">
                 <th scope="col" className="px-3 py-2 font-medium">
                   Name
                 </th>

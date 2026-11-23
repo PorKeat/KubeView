@@ -301,7 +301,7 @@ export function InspectorResourceEditor({
             <h3 className="text-xs font-semibold text-[var(--foreground)]">
               Edit {target.kind}
             </h3>
-            <div className="mt-1 flex min-w-0 flex-wrap items-center gap-1.5 font-mono text-[9px] text-[var(--muted)]">
+            <div className="mt-1 flex min-w-0 flex-wrap items-center gap-1.5 font-mono text-[10px] text-[var(--muted)]">
               <span className="rounded border border-[var(--border)] bg-[var(--surface-active)]/60 px-1.5 py-0.5">
                 {target.apiVersion}
               </span>
@@ -348,13 +348,13 @@ export function InspectorResourceEditor({
               <FileDiff className="h-3 w-3" aria-hidden="true" />
               Changes
               {diff.hasChanges && (
-                <span className="font-mono text-[9px]">
+                <span className="font-mono text-[10px]">
                   +{diff.added} −{diff.removed}
                 </span>
               )}
             </button>
           </div>
-          <span className="hidden font-mono text-[9px] text-[var(--muted)] sm:inline">
+          <span className="hidden font-mono text-[10px] text-[var(--muted)] sm:inline">
             {lineCount} lines · {yaml.length} bytes
           </span>
           {onToggleMaximize && (
@@ -500,7 +500,7 @@ export function InspectorResourceEditor({
           Delete
         </button>
         <div className="flex flex-wrap items-center gap-2">
-          <span className="hidden font-mono text-[9px] text-[var(--muted)] lg:inline">
+          <span className="hidden font-mono text-[10px] text-[var(--muted)] lg:inline">
             {diff.hasChanges
               ? `+${diff.added} −${diff.removed} vs live`
               : "No changes"}

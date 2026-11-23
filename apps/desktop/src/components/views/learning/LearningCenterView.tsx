@@ -53,7 +53,7 @@ export function LearningCenterView() {
   return (
     <div
       data-testid="learning-center-view"
-      className="flex-1 flex flex-col h-full overflow-hidden select-none"
+      className="flex-1 flex flex-col h-full overflow-hidden"
     >
       <div
         data-testid="learning-center-scroll"
@@ -75,7 +75,7 @@ export function LearningCenterView() {
               size="sm"
               className="w-full sm:w-auto"
             />
-            <p className="text-[10px] font-mono text-[var(--muted)]">
+            <p className="text-[10px] text-[var(--muted)]">
               Progress is stored only on this device.
             </p>
           </div>

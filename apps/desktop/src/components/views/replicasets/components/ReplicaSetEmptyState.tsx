@@ -44,16 +44,16 @@ export function ReplicaSetEmptyState({
         }
         title={
           statusFilter === "degraded" && !search
-            ? "All ReplicaSets Healthy"
+            ? "All ReplicaSets healthy"
             : statusFilter === "progressing" && !search
-              ? "All ReplicaSets Settled"
+              ? "All ReplicaSets settled"
               : statusFilter === "scaleddown" && !search
-                ? "No Scaled Down ReplicaSets"
+                ? "No scaled-down ReplicaSets"
                 : isFiltered
                   ? `No replicasets match filter "${search || statusFilter}"`
                   : currentNamespace !== "all"
                     ? `No replicasets in "${currentNamespace}"`
-                    : "No ReplicaSets Found"
+                    : "No ReplicaSets found"
         }
         description={
           statusFilter === "degraded" && !search

@@ -59,7 +59,7 @@ export function JobListFooter({
             Rows:
           </span>
           <div className="inline-flex items-center rounded-lg border border-[var(--border)] bg-black/5 dark:bg-white/[0.04] p-0.5">
-            {[50, 100, 250, 0].map((size) => (
+            {[50, 100, 250].map((size) => (
               <button
                 key={size}
                 type="button"
@@ -73,7 +73,7 @@ export function JobListFooter({
                     : "text-[var(--muted)] hover:text-[var(--foreground)]",
                 )}
               >
-                {size === 0 ? "All" : size}
+                {size}
               </button>
             ))}
           </div>

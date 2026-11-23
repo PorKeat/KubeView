@@ -29,7 +29,7 @@ export function PermissionRuleTable({
       className="overflow-y-auto overflow-x-hidden rounded-lg border border-[var(--border)]"
     >
       <table className="w-full text-left text-[10px]">
-        <thead className="border-b border-[var(--border)] bg-[var(--surface-hover)]/40 text-[9px] uppercase tracking-wider text-[var(--muted)]">
+        <thead className="border-b border-[var(--border)] bg-[var(--surface-hover)]/40 text-[10px] uppercase tracking-wider text-[var(--muted)]">
           <tr>
             <th className="px-2.5 py-2 font-medium">Scope</th>
             <th className="px-2.5 py-2 font-medium">Role</th>

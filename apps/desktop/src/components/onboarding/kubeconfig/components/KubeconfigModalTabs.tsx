@@ -78,7 +78,7 @@ export function KubeconfigModalTabs({
             {tab.count !== undefined && tab.count > 0 && (
               <span
                 className={cn(
-                  "rounded-full px-1.5 py-0.5 font-mono text-[9px] tabular-nums",
+                  "rounded-full px-1.5 py-0.5 font-mono text-[10px] tabular-nums",
                   active
                     ? "bg-[var(--accent)]/15 text-[var(--accent)]"
                     : "bg-[var(--surface-hover)] text-[var(--muted)]",

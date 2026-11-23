@@ -13,7 +13,7 @@ const buttonVariants = cva(
         default:
           "bg-[var(--foreground)] text-[var(--background)] hover:bg-[var(--foreground)]/90 shadow-xs",
         primary:
-          "bg-[#f08a42] text-zinc-950 font-semibold hover:bg-[#ff9d5c] shadow-xs",
+          "bg-[var(--accent)] text-[var(--accent-foreground)] font-semibold hover:bg-[var(--accent-hover)] shadow-xs",
         secondary:
           "bg-[var(--surface)] text-[var(--foreground)] border border-[var(--border)] hover:bg-[var(--surface-hover)] hover:border-black/20 dark:hover:border-white/20",
         outline:

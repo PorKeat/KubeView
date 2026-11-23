@@ -23,7 +23,7 @@ export function KubeconfigModalHeader() {
       </div>
 
       <div className="flex items-center gap-2">
-        <kbd className="hidden rounded border border-[var(--border)] bg-black/[0.03] px-1.5 py-0.5 font-mono text-[9px] text-[var(--muted)] sm:inline-block dark:bg-white/[0.04]">
+        <kbd className="hidden rounded border border-[var(--border)] bg-black/[0.03] px-1.5 py-0.5 font-mono text-[10px] text-[var(--muted)] sm:inline-block dark:bg-white/[0.04]">
           Esc
         </kbd>
         <Tooltip content="Close dialog" shortcut="Esc">

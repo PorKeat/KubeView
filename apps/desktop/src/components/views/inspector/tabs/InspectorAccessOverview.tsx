@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { Boxes, Key, Shield, Users } from "lucide-react";
+import { Boxes, Shield, Users } from "lucide-react";
 import { StatusBeacon, type StatusBeaconVariant } from "@/components/ui";
 import type {
   CRDSummary,

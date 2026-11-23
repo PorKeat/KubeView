@@ -42,7 +42,6 @@ export const SpotlightCard = React.forwardRef<
         card.style.setProperty("--mouse-x", `${x}px`);
         card.style.setProperty("--mouse-y", `${y}px`);
       }
-      setIsHovered(true);
       onMouseMove?.(e);
     };
 
@@ -63,6 +62,7 @@ export const SpotlightCard = React.forwardRef<
           }
         }}
         onMouseMove={handleMouseMove}
+        onMouseEnter={() => setIsHovered(true)}
         onMouseLeave={handleMouseLeave}
         className={cn(
           "group/spotlight relative rounded-xl border overflow-hidden bg-[var(--surface)] text-[var(--foreground)]",

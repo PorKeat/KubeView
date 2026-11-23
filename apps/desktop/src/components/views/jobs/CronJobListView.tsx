@@ -3,6 +3,7 @@
 import { sortableHeaderProps } from "@/lib/sortableHeader";
 
 import * as React from "react";
+import dynamic from "next/dynamic";
 import {
   ArrowUpDown,
   ArrowUp,
@@ -19,7 +20,6 @@ import { useSettingsStore } from "@/stores/settingsStore";
 import type { CronJobSummary } from "@kubeview/contracts";
 import { EmptyState, TableSkeleton, Tooltip } from "@/components/ui";
 import { CronJobTableToolbar } from "./components/CronJobTableToolbar";
-import { CreateWorkloadModal } from "@/components/modals/CreateWorkloadModal";
 import { CronJobTableRow } from "./components/CronJobTableRow";
 import {
   cronJobMatchesSearch,
@@ -28,6 +28,14 @@ import {
 } from "./lib/cronJobStatus";
 
 type SortField = "name" | "namespace" | "status" | "age";
+
+const CreateWorkloadModal = dynamic(
+  () =>
+    import("@/components/modals/CreateWorkloadModal").then(
+      (module) => module.CreateWorkloadModal,
+    ),
+  { ssr: false },
+);
 
 export function CronJobListView() {
   const {
@@ -208,7 +216,7 @@ export function CronJobListView() {
                 ? `No cronjobs match filter "${search || statusFilter}"`
                 : currentNamespace !== "all"
                   ? `No cronjobs in "${currentNamespace}"`
-                  : "No CronJobs Found"
+                  : "No CronJobs found"
             }
             description={
               isFiltered
@@ -366,7 +374,7 @@ export function CronJobListView() {
               Rows:
             </span>
             <div className="inline-flex items-center rounded-lg border border-[var(--border)] bg-black/5 dark:bg-white/[0.04] p-0.5">
-              {[50, 100, 250, 0].map((size) => (
+              {[50, 100, 250].map((size) => (
                 <button
                   key={size}
                   type="button"
@@ -383,7 +391,7 @@ export function CronJobListView() {
                       : "text-[var(--muted)] hover:text-[var(--foreground)]",
                   )}
                 >
-                  {size === 0 ? "All" : size}
+                  {size}
                 </button>
               ))}
             </div>

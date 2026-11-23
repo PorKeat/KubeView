@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { X, RotateCw, RefreshCw, Layers } from "lucide-react";
+import { RotateCw } from "lucide-react";
 import { useClusterStore } from "@/stores/clusterStore";
 import { toast } from "sonner";
 

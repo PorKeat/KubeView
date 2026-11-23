@@ -50,7 +50,7 @@ export function PermissionSubjectForm({
           data-testid="permission-use-current"
           onClick={onUseCurrentIdentity}
           disabled={isIdentityLoading}
-          className="inline-flex items-center gap-1.5 rounded-md border border-[var(--border)] px-2.5 py-1 text-[9px] font-medium text-[var(--muted)] transition-colors hover:bg-[var(--surface-hover)] hover:text-[var(--foreground)] disabled:cursor-wait disabled:opacity-50"
+          className="inline-flex items-center gap-1.5 rounded-md border border-[var(--border)] px-2.5 py-1 text-[10px] font-medium text-[var(--muted)] transition-colors hover:bg-[var(--surface-hover)] hover:text-[var(--foreground)] disabled:cursor-wait disabled:opacity-50"
         >
           {isIdentityLoading ? (
             <LoaderCircle className="h-3 w-3 animate-spin" />
@@ -62,7 +62,7 @@ export function PermissionSubjectForm({
       </div>
 
       {identityError && (
-        <p className="mt-2 rounded-md border border-amber-500/20 bg-amber-500/5 px-2 py-1.5 text-[9px] text-amber-700 dark:text-amber-400">
+        <p className="mt-2 rounded-md border border-amber-500/20 bg-amber-500/5 px-2 py-1.5 text-[10px] text-amber-700 dark:text-amber-400">
           Current identity unavailable: {identityError}. Using the fallback
           service account.
         </p>
@@ -70,7 +70,7 @@ export function PermissionSubjectForm({
 
       <div className="mt-2.5 grid gap-2 sm:grid-cols-2 lg:grid-cols-4">
         <label className="space-y-1">
-          <span className="block font-mono text-[9px] uppercase tracking-wider text-[var(--muted)]">
+          <span className="block font-mono text-[10px] uppercase tracking-wider text-[var(--muted)]">
             Kind
           </span>
           <CustomSelect<PermissionSubject["kind"]>
@@ -89,7 +89,7 @@ export function PermissionSubjectForm({
         </label>
 
         <label className="space-y-1">
-          <span className="block font-mono text-[9px] uppercase tracking-wider text-[var(--muted)]">
+          <span className="block font-mono text-[10px] uppercase tracking-wider text-[var(--muted)]">
             Name
           </span>
           <input
@@ -105,7 +105,7 @@ export function PermissionSubjectForm({
 
         {isServiceAccount && (
           <label className="space-y-1">
-            <span className="block font-mono text-[9px] uppercase tracking-wider text-[var(--muted)]">
+            <span className="block font-mono text-[10px] uppercase tracking-wider text-[var(--muted)]">
               Namespace
             </span>
             <input
@@ -121,7 +121,7 @@ export function PermissionSubjectForm({
         )}
 
         <label className="space-y-1">
-          <span className="block font-mono text-[9px] uppercase tracking-wider text-[var(--muted)]">
+          <span className="block font-mono text-[10px] uppercase tracking-wider text-[var(--muted)]">
             Groups
           </span>
           <input
@@ -155,7 +155,7 @@ export function PermissionSubjectForm({
         </button>
         <span
           className={cn(
-            "text-[9px] font-mono text-[var(--muted)]",
+            "text-[10px] font-mono text-[var(--muted)]",
             !isServiceAccount && "hidden sm:inline",
           )}
         >

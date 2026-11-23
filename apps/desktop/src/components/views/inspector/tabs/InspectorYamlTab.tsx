@@ -170,12 +170,12 @@ export function InspectorYamlTabComponent({
           <div className="flex items-center h-full pt-1.5">
             <div className="relative flex items-center gap-2 px-3.5 h-[calc(100%+1px)] bg-[#1e1e1e] rounded-t-lg border-t border-x border-white/[0.1] text-slate-200 text-xs font-mono font-medium shadow-xs">
               {/* Refined gradient active indicator */}
-              <div className="absolute top-0 inset-x-2 h-[2px] bg-gradient-to-r from-[var(--accent)] to-[#e85d26] rounded-full" />
+              <div className="absolute top-0 inset-x-2 h-[2px] bg-[var(--accent)] rounded-full" />
               <FileCode className="w-3.5 h-3.5 text-[var(--accent)] shrink-0" />
               <span className="truncate max-w-[220px] tracking-tight">
                 {resourceName ? `${resourceName}.yaml` : "manifest.yaml"}
               </span>
-              <span className="text-[9px] px-1.5 py-0.5 rounded font-mono font-semibold bg-white/[0.06] text-slate-400 border border-white/[0.08] tracking-wider">
+              <span className="text-[10px] px-1.5 py-0.5 rounded font-mono font-semibold bg-white/[0.06] text-slate-400 border border-white/[0.08] tracking-wider">
                 YAML
               </span>
             </div>
@@ -331,7 +331,7 @@ export function InspectorYamlTabComponent({
         {/* Editor Content Area */}
         {isLoading ? (
           <div className="h-72 flex items-center justify-center text-slate-400 gap-2 bg-[#1e1e1e] font-mono text-xs">
-            <RotateCw className="w-4 h-4 animate-spin text-[#f08a42]" />
+            <RotateCw className="w-4 h-4 animate-spin text-[var(--accent)]" />
             <span>Fetching live manifest from cluster...</span>
           </div>
         ) : (

@@ -120,7 +120,7 @@ function Field({
       </span>
       {children}
       {hint && (
-        <span className="mt-0.5 block text-[9px] text-[var(--muted)]">
+        <span className="mt-0.5 block text-[10px] text-[var(--muted)]">
           {hint}
         </span>
       )}
@@ -547,7 +547,7 @@ export function HelmRollbackModal({
                   <span className="font-mono text-xs font-semibold text-[var(--foreground)]">
                     Revision {revision.revision}
                   </span>
-                  <span className="rounded border border-[var(--border)] px-1.5 py-0.5 font-mono text-[9px] text-[var(--muted)]">
+                  <span className="rounded border border-[var(--border)] px-1.5 py-0.5 font-mono text-[10px] text-[var(--muted)]">
                     {revision.status}
                   </span>
                 </div>

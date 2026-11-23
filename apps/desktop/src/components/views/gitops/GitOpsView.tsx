@@ -86,7 +86,7 @@ export function GitOpsView() {
           {report ? (
             <>
               <GitOpsSummary report={report} />
-              <div className="flex flex-wrap items-center justify-between gap-2 font-mono text-[9px] text-[var(--muted)]">
+              <div className="flex flex-wrap items-center justify-between gap-2 font-mono text-[10px] text-[var(--muted)]">
                 <span className="truncate">
                   {report.path} · {report.total} manifests
                 </span>

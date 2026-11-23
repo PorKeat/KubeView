@@ -203,7 +203,7 @@ export function DaemonSetTableRow({
                 {nodeSelectorEntries[0][0]}={nodeSelectorEntries[0][1]}
               </span>
               {nodeSelectorEntries.length > 1 && (
-                <span className="text-[9px] opacity-70">
+                <span className="text-[10px] opacity-70">
                   +{nodeSelectorEntries.length - 1}
                 </span>
               )}

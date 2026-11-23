@@ -120,20 +120,20 @@ export function OfflineState({ className }: { className?: string }) {
     return (
       <div
         className={cn(
-          "flex-1 flex flex-col items-center justify-center p-8 select-none relative overflow-hidden",
+          "flex-1 flex flex-col items-center justify-center p-8 relative overflow-hidden",
           className,
         )}
       >
-        <div className="absolute w-96 h-96 bg-[#F08A42]/10 rounded-full blur-3xl pointer-events-none -top-24" />
+        <div className="absolute w-96 h-96 bg-[var(--accent)]/10 rounded-full blur-3xl pointer-events-none -top-24" />
 
         <div className="relative z-10 max-w-md w-full space-y-5 text-center">
-          <div className="relative mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-[#F08A42]/10 text-[#F08A42]">
+          <div className="relative mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-[var(--accent)]/10 text-[var(--accent)]">
             <Layers className="w-8 h-8" />
           </div>
 
           <div className="space-y-2">
-            <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-mono font-semibold bg-[var(--accent)]/10 text-[var(--accent)] border border-[var(--accent)]/20 mb-1">
-              <span>NO KUBECONFIG LOADED</span>
+            <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-medium bg-[var(--accent)]/10 text-[var(--accent)] border border-[var(--accent)]/20 mb-1">
+              <span>No kubeconfig loaded</span>
             </div>
             <h2 className="text-base font-bold text-[var(--foreground)] tracking-tight">
               No Kubernetes Cluster Configured
@@ -145,9 +145,9 @@ export function OfflineState({ className }: { className?: string }) {
           </div>
 
           {detectedSystemConfigs.length > 0 && (
-            <div className="flex items-center justify-between gap-3 border-l-2 border-[#F08A42]/50 pl-3 text-left">
+            <div className="flex items-center justify-between gap-3 rounded-lg border border-[var(--border)] bg-[var(--surface)] p-2.5 text-left">
               <div className="flex items-center gap-2.5">
-                <Sparkles className="w-4 h-4 text-[#F08A42] shrink-0" />
+                <Sparkles className="w-4 h-4 text-[var(--accent)] shrink-0" />
                 <div>
                   <span className="font-semibold text-xs text-[var(--foreground)] block">
                     Found {detectedSystemConfigs.length} Cluster
@@ -161,7 +161,7 @@ export function OfflineState({ className }: { className?: string }) {
               </div>
               <button
                 onClick={() => openKubeconfigModal("auto")}
-                className="px-3 py-1.5 rounded-xl bg-[#F08A42] hover:bg-[#E07931] text-white text-xs font-semibold shadow-xs transition-all cursor-pointer shrink-0"
+                className="px-3 py-1.5 rounded-xl bg-[var(--accent)] hover:bg-[var(--accent-hover)] text-[var(--accent-foreground)] text-xs font-semibold shadow-xs transition-all cursor-pointer shrink-0"
               >
                 Add Cluster
               </button>
@@ -173,7 +173,7 @@ export function OfflineState({ className }: { className?: string }) {
               onClick={() => openKubeconfigModal("browse")}
               className="px-5 py-2.5 rounded-xl bg-[var(--surface-active)] hover:bg-[var(--surface-hover)] border border-[var(--border)] text-[var(--foreground)] text-xs font-semibold shadow-xs transition-all cursor-pointer flex items-center gap-2"
             >
-              <UploadCloud className="w-4 h-4 text-[#F08A42]" />
+              <UploadCloud className="w-4 h-4 text-[var(--accent)]" />
               <span>Browse File or Folder</span>
             </button>
 

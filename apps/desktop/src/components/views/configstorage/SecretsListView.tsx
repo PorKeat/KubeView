@@ -81,7 +81,7 @@ export function SecretsListView() {
           const meta = secretTypeMeta(item.type);
           return (
             <span
-              className={`inline-flex h-4 max-w-full items-center truncate rounded border px-1.5 font-mono text-[9px] leading-none ${meta.className}`}
+              className={`inline-flex h-4 max-w-full items-center truncate rounded border px-1.5 font-mono text-[10px] leading-none ${meta.className}`}
               title={item.type || "Opaque"}
             >
               {meta.label}

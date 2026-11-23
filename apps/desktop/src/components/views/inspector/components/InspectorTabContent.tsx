@@ -1,6 +1,7 @@
 "use client";
 
 import type { SelectedResource } from "@/stores/clusterStore";
+import dynamic from "next/dynamic";
 import type {
   PodSummary,
   PodEventItem,
@@ -21,9 +22,37 @@ import type {
   CRDSummary,
 } from "@kubeview/contracts";
 import { PodTroubleshootingAssistant } from "@/components/views/troubleshooting";
-import { ConfigStorageEditView } from "../tabs/ConfigStorageEditView";
-import { InspectorResourceEditor } from "../tabs/InspectorResourceEditor";
 import { InspectorExitEditButton } from "./InspectorExitEditButton";
+
+const ConfigStorageEditView = dynamic(
+  () =>
+    import("../tabs/ConfigStorageEditView").then(
+      (module) => module.ConfigStorageEditView,
+    ),
+  {
+    ssr: false,
+    loading: () => (
+      <div className="p-4 text-[11px] text-[var(--muted)]">
+        Loading editor...
+      </div>
+    ),
+  },
+);
+
+const InspectorResourceEditor = dynamic(
+  () =>
+    import("../tabs/InspectorResourceEditor").then(
+      (module) => module.InspectorResourceEditor,
+    ),
+  {
+    ssr: false,
+    loading: () => (
+      <div className="p-4 text-[11px] text-[var(--muted)]">
+        Loading editor...
+      </div>
+    ),
+  },
+);
 
 import { InspectorNodeOverview } from "../tabs/InspectorNodeOverview";
 import { InspectorPodOverview } from "../tabs/InspectorPodOverview";

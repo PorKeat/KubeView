@@ -306,13 +306,13 @@ export function BrowseFilesTab({
                         {file.contexts.slice(0, 3).map((c) => (
                           <span
                             key={c}
-                            className="px-1.5 py-0.2 text-[9px] font-mono rounded bg-black/5 dark:bg-white/5 border border-[var(--border)] text-[var(--muted)]"
+                            className="px-1.5 py-0.2 text-[10px] font-mono rounded bg-black/5 dark:bg-white/5 border border-[var(--border)] text-[var(--muted)]"
                           >
                             {c}
                           </span>
                         ))}
                         {file.contexts.length > 3 && (
-                          <span className="text-[9px] text-[var(--muted)] font-mono self-center">
+                          <span className="text-[10px] text-[var(--muted)] font-mono self-center">
                             +{file.contexts.length - 3} more
                           </span>
                         )}

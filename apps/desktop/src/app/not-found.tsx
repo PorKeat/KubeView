@@ -1,7 +1,6 @@
 "use client";
 
 import * as React from "react";
-import Link from "next/link";
 import { NotFoundState } from "@/components/ui";
 
 export default function NotFound() {

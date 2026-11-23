@@ -68,7 +68,7 @@ export function LessonQuiz({
             >
               <span
                 className={cn(
-                  "mt-0.5 flex h-4 w-4 shrink-0 items-center justify-center rounded-full border font-mono text-[9px]",
+                  "mt-0.5 flex h-4 w-4 shrink-0 items-center justify-center rounded-full border font-mono text-[10px]",
                   answered && isOptionCorrect
                     ? "border-emerald-500/40 text-emerald-600 dark:text-emerald-400"
                     : isSelected

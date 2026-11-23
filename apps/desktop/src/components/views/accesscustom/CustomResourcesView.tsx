@@ -238,7 +238,7 @@ export function CustomResourcesView() {
                   Define a new API kind for the cluster.
                 </span>
               </button>
-              <p className="pt-1 font-mono text-[9px] uppercase tracking-[0.14em] text-[var(--muted)]">
+              <p className="pt-1 font-mono text-[10px] uppercase tracking-[0.14em] text-[var(--muted)]">
                 Create an instance
               </p>
               {crds.length === 0 ? (
@@ -258,7 +258,7 @@ export function CustomResourcesView() {
                       <span className="text-xs font-semibold text-[var(--foreground)]">
                         {crd.kind}
                       </span>
-                      <span className="font-mono text-[9px] text-[var(--muted)]">
+                      <span className="font-mono text-[10px] text-[var(--muted)]">
                         {crd.scope}
                       </span>
                     </span>

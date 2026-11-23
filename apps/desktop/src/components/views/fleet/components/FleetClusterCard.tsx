@@ -100,7 +100,7 @@ export function FleetClusterCard({
                 {cluster.contextName}
               </h2>
               {isActive && (
-                <span className="rounded border border-[var(--accent)]/25 bg-[var(--accent)]/10 px-1.5 py-0.5 text-[9px] font-mono font-semibold uppercase tracking-wide text-[var(--accent)]">
+                <span className="rounded border border-[var(--accent)]/25 bg-[var(--accent)]/10 px-1.5 py-0.5 text-[10px] font-mono font-semibold uppercase tracking-wide text-[var(--accent)]">
                   Active
                 </span>
               )}
@@ -221,7 +221,7 @@ export function FleetClusterCard({
           <div className="truncate font-mono text-[10px] text-[var(--muted)]">
             {providerLabel(cluster.provider)} · {authLabel(cluster.authType)}
           </div>
-          <div className="truncate text-[9px] text-[var(--muted)]/80">
+          <div className="truncate text-[10px] text-[var(--muted)]/80">
             Updated {relativeTime(cluster.fetchedAt)}
           </div>
         </div>

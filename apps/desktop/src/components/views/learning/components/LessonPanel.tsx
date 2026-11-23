@@ -83,7 +83,7 @@ export function LessonPanel({
       <div className="border-b border-[var(--border)] px-4 py-3.5 sm:px-5">
         <div className="flex flex-wrap items-center justify-between gap-2">
           <div className="min-w-0">
-            <p className="text-[9px] font-semibold uppercase tracking-wider text-[var(--accent)]">
+            <p className="text-[10px] font-semibold text-[var(--accent)]">
               {path.title}
             </p>
             <p className="mt-0.5 font-mono text-[10px] text-[var(--muted)]">
@@ -91,7 +91,7 @@ export function LessonPanel({
               {pathCompleted}/{path.lessons.length} complete
             </p>
           </div>
-          <span className="inline-flex items-center gap-1 rounded-md border border-[var(--border)] bg-black/[0.02] px-1.5 py-0.5 text-[9px] font-mono text-[var(--muted)] dark:bg-white/[0.03]">
+          <span className="inline-flex items-center gap-1 rounded-md border border-[var(--border)] bg-black/[0.02] px-1.5 py-0.5 text-[10px] font-mono text-[var(--muted)] dark:bg-white/[0.03]">
             <Clock3 className="h-3 w-3" aria-hidden="true" />
             {lesson.minutes} min
           </span>
@@ -113,7 +113,7 @@ export function LessonPanel({
                 aria-label={`Lesson ${index + 1}: ${item.title}${done ? ", complete" : ""}`}
                 data-testid={`learning-lesson-${item.id}`}
                 className={cn(
-                  "inline-flex max-w-full items-center gap-1.5 rounded-md border px-1.5 py-1 text-[9px] font-mono transition-colors cursor-pointer focus-visible:ring-2 focus-visible:ring-[var(--accent)] focus-visible:outline-hidden",
+                  "inline-flex max-w-full items-center gap-1.5 rounded-md border px-1.5 py-1 text-[10px] font-mono transition-colors cursor-pointer focus-visible:ring-2 focus-visible:ring-[var(--accent)] focus-visible:outline-hidden",
                   isActive
                     ? "border-[var(--accent)]/35 bg-[var(--accent)]/10 text-[var(--accent)]"
                     : done
@@ -128,7 +128,7 @@ export function LessonPanel({
                     index + 1
                   )}
                 </span>
-                <span className="max-w-[150px] truncate">{item.title}</span>
+                <span className="max-w-[240px] truncate">{item.title}</span>
               </button>
             );
           })}
@@ -146,7 +146,7 @@ export function LessonPanel({
         </div>
 
         <div className="rounded-xl border border-[var(--accent)]/20 bg-[var(--accent)]/[0.05] px-3 py-2.5">
-          <p className="text-[9px] font-semibold uppercase tracking-wider text-[var(--accent)]">
+          <p className="text-[10px] font-semibold text-[var(--accent)]">
             Your goal
           </p>
           <p className="mt-0.5 text-[11px] leading-relaxed text-[var(--foreground)]">
@@ -155,13 +155,13 @@ export function LessonPanel({
         </div>
 
         <div>
-          <p className="text-[10px] font-semibold uppercase tracking-wider text-[var(--muted)]">
+          <p className="text-[10px] font-semibold text-[var(--muted)]">
             What to do
           </p>
           <ol className="mt-2 space-y-2">
             {lesson.steps.map((step, index) => (
               <li key={step} className="flex gap-2.5">
-                <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full border border-[var(--border)] bg-[var(--surface)] font-mono text-[9px] text-[var(--muted)]">
+                <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full border border-[var(--border)] bg-[var(--surface)] font-mono text-[10px] text-[var(--muted)]">
                   {index + 1}
                 </span>
                 <span className="text-[11px] leading-relaxed text-[var(--foreground)]/90">
@@ -186,7 +186,7 @@ export function LessonPanel({
                 type="button"
                 onClick={() => void copyCommand()}
                 data-testid={`learning-copy-${lesson.id}`}
-                className="inline-flex items-center gap-1 rounded-md border border-[var(--border)] bg-[var(--surface)] px-1.5 py-0.5 text-[9px] font-medium text-[var(--muted)] transition-colors hover:text-[var(--foreground)] cursor-pointer focus-visible:ring-2 focus-visible:ring-[var(--accent)] focus-visible:outline-hidden"
+                className="inline-flex items-center gap-1 rounded-md border border-[var(--border)] bg-[var(--surface)] px-1.5 py-0.5 text-[10px] font-medium text-[var(--muted)] transition-colors hover:text-[var(--foreground)] cursor-pointer focus-visible:ring-2 focus-visible:ring-[var(--accent)] focus-visible:outline-hidden"
                 aria-label="Copy command"
               >
                 {copied ? (
@@ -213,7 +213,7 @@ export function LessonPanel({
 
         {level === "advanced" && lesson.deepDive && (
           <div className="rounded-xl border border-sky-500/20 bg-sky-500/[0.05] px-3 py-2.5">
-            <p className="flex items-center gap-1.5 text-[9px] font-semibold uppercase tracking-wider text-sky-700 dark:text-sky-300">
+            <p className="flex items-center gap-1.5 text-[10px] font-semibold text-sky-700 dark:text-sky-300">
               <Lightbulb className="h-3 w-3" aria-hidden="true" />
               Advanced detail
             </p>

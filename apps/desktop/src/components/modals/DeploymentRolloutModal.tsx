@@ -174,7 +174,7 @@ export function DeploymentRolloutModal({
                           Revision {revision.revision}
                         </span>
                         {revision.current && (
-                          <span className="rounded border border-[var(--accent)]/30 bg-[var(--accent)]/10 px-1.5 py-0.5 font-mono text-[9px] text-[var(--accent)]">
+                          <span className="rounded border border-[var(--accent)]/30 bg-[var(--accent)]/10 px-1.5 py-0.5 font-mono text-[10px] text-[var(--accent)]">
                             current
                           </span>
                         )}
@@ -190,7 +190,7 @@ export function DeploymentRolloutModal({
                           {revision.changeCause}
                         </p>
                       )}
-                      <p className="mt-1 font-mono text-[9px] text-[var(--muted)]">
+                      <p className="mt-1 font-mono text-[10px] text-[var(--muted)]">
                         {revision.replicaSetName} ·{" "}
                         {new Date(revision.createdAt).toLocaleString()}
                       </p>

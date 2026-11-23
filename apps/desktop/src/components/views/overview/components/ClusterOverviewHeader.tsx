@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { RotateCw, ChevronRight } from "lucide-react";
+import { RotateCw } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { OverviewViewSwitch } from "./OverviewViewSwitch";
 
@@ -31,17 +31,13 @@ export function ClusterOverviewHeader({
   onRefresh,
 }: ClusterOverviewHeaderProps) {
   return (
-    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-2.5 border-b border-[var(--border)] select-none">
+    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-2.5 border-b border-[var(--border)]">
       {/* Left: Breadcrumb Identity & Live Socket Telemetry */}
       <div className="flex items-center gap-2.5 min-w-0 flex-wrap">
-        <div className="flex items-center gap-1.5 min-w-0">
-          <h1 className="text-sm font-semibold text-[var(--foreground)] tracking-tight">
-            Cluster Overview
-          </h1>
-          <ChevronRight className="w-3.5 h-3.5 text-[var(--muted)]/60 shrink-0" />
-          <span className="px-2 py-0.5 rounded text-xs font-mono font-medium bg-[var(--surface-active)] text-[var(--foreground)] border border-[var(--border)] truncate max-w-[200px]">
+        <div className="flex min-w-0 items-center gap-1.5">
+          <h1 className="truncate text-sm font-semibold text-[var(--foreground)] tracking-tight">
             {currentContext || "default"}
-          </span>
+          </h1>
         </div>
 
         {/* Status Badge with Diagnostic Link */}
@@ -101,9 +97,12 @@ export function ClusterOverviewHeader({
           type="button"
           onClick={onRefresh}
           aria-label="Refresh cluster telemetry and diagnostics"
-          className="flex items-center gap-1.5 px-3 py-1 rounded-md bg-gradient-to-r from-[#f08a42] to-[#e85d26] hover:from-[#ff9d5c] hover:to-[#f08a42] text-zinc-950 text-xs font-semibold shadow-xs shadow-[#f08a42]/20 transition-all cursor-pointer focus-visible:ring-2 focus-visible:ring-[var(--accent)] outline-hidden active:scale-[0.98]"
+          className="flex items-center gap-1.5 px-3 py-1 rounded-md bg-[var(--accent)] hover:bg-[var(--accent-hover)] text-[var(--accent-foreground)] text-xs font-semibold shadow-xs shadow-black/10 transition-all cursor-pointer focus-visible:ring-2 focus-visible:ring-[var(--accent)] outline-hidden active:scale-[0.98]"
         >
-          <RotateCw className="w-3 h-3 text-zinc-950" aria-hidden="true" />
+          <RotateCw
+            className="w-3 h-3 text-[var(--accent-foreground)]"
+            aria-hidden="true"
+          />
           <span>Refresh</span>
         </button>
       </div>

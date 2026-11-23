@@ -144,7 +144,7 @@ export function ServicesListView() {
         render: (service) => (
           <span
             className={cn(
-              "inline-flex items-center whitespace-nowrap px-1 py-0.5 rounded text-[9px] font-mono border",
+              "inline-flex items-center whitespace-nowrap px-1 py-0.5 rounded text-[10px] font-mono border",
               SERVICE_TYPE_TONES[service.type] ??
                 "bg-black/5 dark:bg-white/5 text-[var(--muted)] border-[var(--border)]",
             )}
@@ -178,7 +178,7 @@ export function ServicesListView() {
                 {service.clusterIP}
               </span>
               {headless && (
-                <span className="px-1 py-0.5 rounded text-[9px] font-mono bg-sky-500/10 text-sky-600 dark:text-sky-400 border border-sky-500/20">
+                <span className="px-1 py-0.5 rounded text-[10px] font-mono bg-sky-500/10 text-sky-600 dark:text-sky-400 border border-sky-500/20">
                   headless
                 </span>
               )}

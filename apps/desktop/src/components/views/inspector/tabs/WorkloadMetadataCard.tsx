@@ -68,7 +68,7 @@ export function WorkloadMetadataCard({
     <div className="p-4 rounded-2xl bg-[var(--surface)] border border-[var(--border)] shadow-2xs space-y-4">
       <div className="flex items-center justify-between gap-3">
         <span className="text-[11px] font-semibold text-[var(--muted)] uppercase tracking-wider flex items-center gap-1.5">
-          <Layers className="w-3.5 h-3.5 text-[#F08A42]" />
+          <Layers className="w-3.5 h-3.5 text-[var(--accent)]" />
           Resource Metadata
         </span>
         <span className="text-[10px] font-mono text-[var(--muted)]">

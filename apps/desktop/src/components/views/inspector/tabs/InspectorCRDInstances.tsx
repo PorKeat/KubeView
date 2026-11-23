@@ -162,7 +162,7 @@ export function InspectorCRDInstances({ crd }: { crd: CRDSummary }) {
               data-testid="crd-instance-create"
               onClick={createInstance}
               aria-label={`Create ${crd.kind}`}
-              className="inline-flex cursor-pointer items-center gap-1 rounded border border-[var(--border)] px-1.5 py-0.5 text-[9px] normal-case text-[var(--foreground)] transition-colors hover:bg-[var(--surface-hover)]"
+              className="inline-flex cursor-pointer items-center gap-1 rounded border border-[var(--border)] px-1.5 py-0.5 text-[10px] normal-case text-[var(--foreground)] transition-colors hover:bg-[var(--surface-hover)]"
             >
               <Plus className="h-3 w-3" />
               Create

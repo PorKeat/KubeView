@@ -1,13 +1,7 @@
 "use client";
 
 import * as React from "react";
-import {
-  Database,
-  FileCode,
-  FolderLock,
-  HardDrive,
-  Pencil,
-} from "lucide-react";
+import { Database, FileCode, FolderLock, HardDrive } from "lucide-react";
 import { StatusBeacon, type StatusBeaconVariant } from "@/components/ui";
 import type {
   ConfigMapSummary,
@@ -113,7 +107,7 @@ export function InspectorConfigStorageOverview({
         <div className="flex flex-wrap items-start justify-between gap-3">
           <div className="space-y-1.5 min-w-0">
             <span className="flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wider text-[var(--muted)]">
-              <Icon className="h-3.5 w-3.5 text-[#F08A42]" />
+              <Icon className="h-3.5 w-3.5 text-[var(--accent)]" />
               {currentResource.kind} detail
             </span>
             <div className="flex flex-wrap items-center gap-2">

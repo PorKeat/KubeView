@@ -58,8 +58,8 @@ export function NodeTopologySection({
               <h2 className="truncate text-sm font-semibold tracking-tight text-[var(--foreground)]">
                 Cluster Nodes
               </h2>
-              <span className="rounded-md border border-[var(--border)] bg-[var(--surface)] px-1.5 py-0.5 font-mono text-[10px] font-medium text-[var(--muted)] tabular-nums">
-                {nodes.length} nodes
+              <span className="rounded-md border border-[var(--border)] bg-[var(--surface)] px-1.5 py-0.5 font-mono text-[11px] font-medium text-[var(--muted)] tabular-nums">
+                {nodes.length} {nodes.length === 1 ? "node" : "nodes"}
               </span>
             </div>
             <div className="mt-0.5 flex flex-wrap items-center gap-x-2 gap-y-0.5 text-[11px] text-[var(--muted)]">

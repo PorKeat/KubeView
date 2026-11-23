@@ -1,14 +1,9 @@
 "use client";
 
 import * as React from "react";
+import dynamic from "next/dynamic";
 import { useTabStore } from "@/stores/tabStore";
 import { ClusterOverviewView } from "./ClusterOverviewView";
-import { TopologyView } from "./topology/TopologyView";
-import { GitOpsView } from "./gitops/GitOpsView";
-import { TerminalView } from "./terminal/TerminalView";
-import { LearningCenterView } from "./learning/LearningCenterView";
-import { FleetCatalogView } from "./fleet/FleetCatalogView";
-import { HelmChartsView } from "./helm/HelmChartsView";
 import { SimpleResourcesView } from "./simple/SimpleResourcesView";
 import { ResourceListView } from "./ResourceListView";
 import { DeploymentListView } from "./deployments/DeploymentListView";
@@ -21,7 +16,6 @@ import { EndpointsListView } from "./networking/EndpointsListView";
 import { IngressesView } from "./networking/IngressesView";
 import { NetworkPoliciesListView } from "./networking/NetworkPoliciesListView";
 import { PortForwardsView } from "./networking/PortForwardsView";
-import { NetworkObservabilityView } from "./networking/NetworkObservabilityView";
 import {
   ConfigMapsListView,
   SecretsListView,
@@ -34,11 +28,56 @@ import {
   CustomResourcesView,
 } from "./accesscustom/AccessCustomViews";
 import { PermissionsView } from "./permissions/PermissionsView";
-import { SettingsView } from "./settings/SettingsView";
 import { ErrorBoundary, NotFoundState } from "@/components/ui";
 
+function ViewLoading() {
+  return (
+    <div className="flex-1 space-y-3 p-4 sm:p-5">
+      <div className="h-7 w-40 animate-pulse rounded-lg bg-[var(--surface-active)]/70" />
+      <div className="h-24 animate-pulse rounded-xl bg-[var(--surface-active)]/40" />
+      <div className="h-40 animate-pulse rounded-xl bg-[var(--surface-active)]/25" />
+    </div>
+  );
+}
+
+const dynamicView = (loader: () => Promise<React.ComponentType>) =>
+  dynamic(loader, {
+    ssr: false,
+    loading: ViewLoading,
+  });
+
+const TopologyView = dynamicView(() =>
+  import("./topology/TopologyView").then((module) => module.TopologyView),
+);
+const TerminalView = dynamicView(() =>
+  import("./terminal/TerminalView").then((module) => module.TerminalView),
+);
+const GitOpsView = dynamicView(() =>
+  import("./gitops/GitOpsView").then((module) => module.GitOpsView),
+);
+const LearningCenterView = dynamicView(() =>
+  import("./learning/LearningCenterView").then(
+    (module) => module.LearningCenterView,
+  ),
+);
+const FleetCatalogView = dynamicView(() =>
+  import("./fleet/FleetCatalogView").then((module) => module.FleetCatalogView),
+);
+const HelmChartsView = dynamicView(() =>
+  import("./helm/HelmChartsView").then((module) => module.HelmChartsView),
+);
+const SettingsView = dynamicView(() =>
+  import("./settings/SettingsView").then((module) => module.SettingsView),
+);
+const NetworkObservabilityView = dynamicView(() =>
+  import("./networking/NetworkObservabilityView").then(
+    (module) => module.NetworkObservabilityView,
+  ),
+);
+
 export function ActiveViewRenderer() {
-  const { activeTabId, openTabs } = useTabStore();
+  const activeTabId = useTabStore((state) => state.activeTabId);
+  const openTabs = useTabStore((state) => state.openTabs);
   const activeTab = openTabs.find((t) => t.id === activeTabId);
 
   return (

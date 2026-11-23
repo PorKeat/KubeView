@@ -115,7 +115,7 @@ export function InspectorWorkloadConditionsTab({
                 </p>
               )}
               {condition.lastTransitionTime && (
-                <span className="text-[9px] text-[var(--muted)]/70 pl-6 block font-mono">
+                <span className="text-[10px] text-[var(--muted)]/70 pl-6 block font-mono">
                   Transitioned:{" "}
                   {new Date(condition.lastTransitionTime).toLocaleString()}
                 </span>

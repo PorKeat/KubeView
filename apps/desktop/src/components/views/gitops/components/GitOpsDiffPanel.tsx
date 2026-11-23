@@ -61,13 +61,13 @@ export function GitOpsDiffPanel({
             <h2 className="truncate font-mono text-[11px] font-semibold text-[var(--foreground)]">
               {resource.kind}/{resource.name}
             </h2>
-            <p className="truncate font-mono text-[9px] text-[var(--muted)]">
+            <p className="truncate font-mono text-[10px] text-[var(--muted)]">
               {resource.apiVersion} · {resource.namespace || "cluster-scoped"} ·{" "}
               {resource.sourceFile}
             </p>
           </div>
           <span
-            className={`rounded border px-2 py-0.5 text-[9px] font-medium ${tone.className}`}
+            className={`rounded border px-2 py-0.5 text-[10px] font-medium ${tone.className}`}
           >
             {tone.label}
           </span>

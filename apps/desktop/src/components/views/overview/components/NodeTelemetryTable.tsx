@@ -3,6 +3,7 @@
 import * as React from "react";
 import { cleanAlloc } from "../types";
 import { cn } from "@/lib/utils";
+import { sortNodeRoles } from "@/lib/format";
 import type { NodeSummary } from "@kubeview/contracts";
 import { NodeOperationsButton } from "@/components/modals/NodeOperationsModal";
 
@@ -99,7 +100,7 @@ export function NodeTelemetryTable({
                     </span>
                   </td>
                   <td className="py-3 px-3 text-[var(--muted)] truncate">
-                    {n.roles.join(", ") || "worker"}
+                    {sortNodeRoles(n.roles).join(", ") || "worker"}
                   </td>
                   <td className="py-3 px-3 text-[var(--foreground)] truncate">
                     {n.internalIP}

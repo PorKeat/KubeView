@@ -42,14 +42,14 @@ export function DaemonSetEmptyState({
         }
         title={
           statusFilter === "degraded" && !search
-            ? "All DaemonSets Healthy"
+            ? "All DaemonSets healthy"
             : statusFilter === "progressing" && !search
-              ? "All DaemonSets Settled"
+              ? "All DaemonSets settled"
               : isFiltered
                 ? `No daemonsets match filter "${search || statusFilter}"`
                 : currentNamespace !== "all"
                   ? `No daemonsets in "${currentNamespace}"`
-                  : "No DaemonSets Found"
+                  : "No DaemonSets found"
         }
         description={
           statusFilter === "degraded" && !search

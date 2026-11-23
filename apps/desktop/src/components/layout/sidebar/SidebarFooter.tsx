@@ -47,7 +47,7 @@ export function SidebarFooter({
               <>
                 <span className="truncate">Back</span>
                 <span
-                  className="ml-auto max-w-[72px] truncate font-mono text-[9px] text-[var(--muted)]"
+                  className="ml-auto max-w-[72px] truncate font-mono text-[10px] text-[var(--muted)]"
                   title={settingsReturnTab?.title}
                 >
                   {settingsReturnTab?.title ?? "Overview"}
@@ -77,7 +77,7 @@ export function SidebarFooter({
             {!sidebarCollapsed && (
               <>
                 <span className="truncate">Settings</span>
-                <kbd className="ml-auto rounded border border-[var(--border)] bg-black/[0.03] px-1.5 py-0.5 font-mono text-[9px] text-[var(--muted)] dark:bg-white/[0.04]">
+                <kbd className="ml-auto rounded border border-[var(--border)] bg-black/[0.03] px-1.5 py-0.5 font-mono text-[10px] text-[var(--muted)] dark:bg-white/[0.04]">
                   ⌘,
                 </kbd>
               </>

@@ -358,7 +358,7 @@ export function ConfigStorageEditorForm({
                 </div>
               </div>
               {isSecret && (
-                <span className="rounded border border-amber-500/20 bg-amber-500/10 px-1.5 py-0.5 text-[9px] font-mono text-amber-700 dark:text-amber-400">
+                <span className="rounded border border-amber-500/20 bg-amber-500/10 px-1.5 py-0.5 text-[10px] font-mono text-amber-700 dark:text-amber-400">
                   sensitive
                 </span>
               )}

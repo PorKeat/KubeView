@@ -375,14 +375,14 @@ function SessionRow({
     >
       <td className="py-1 px-3 font-mono">
         <div className="flex items-center gap-1.5">
-          <span className="px-1.5 py-0.5 rounded text-[9px] uppercase tracking-wider bg-black/5 dark:bg-white/5 border border-[var(--border)] text-[var(--muted)]">
+          <span className="px-1.5 py-0.5 rounded text-[10px] uppercase tracking-wider bg-black/5 dark:bg-white/5 border border-[var(--border)] text-[var(--muted)]">
             {session.targetKind}
           </span>
           <span className="text-[var(--foreground)] truncate max-w-[180px]">
             {session.targetName}
           </span>
           {session.targetPod !== session.targetName && (
-            <span className="text-[9px] text-[var(--muted)]">
+            <span className="text-[10px] text-[var(--muted)]">
               pod {session.targetPod}
             </span>
           )}

@@ -366,7 +366,7 @@ export function TabBar() {
                   >
                     {contextTab.title}
                   </span>
-                  <span className="shrink-0 rounded border border-[var(--border)] bg-black/5 px-1.5 py-0.5 font-mono text-[9px] text-[var(--muted)] dark:bg-white/5">
+                  <span className="shrink-0 rounded border border-[var(--border)] bg-black/5 px-1.5 py-0.5 font-mono text-[10px] text-[var(--muted)] dark:bg-white/5">
                     Tab
                   </span>
                 </div>
@@ -458,7 +458,7 @@ function TabContextMenuItem({
       />
       <span className="flex-1">{label}</span>
       {shortcut && (
-        <kbd className="rounded border border-[var(--border)] bg-black/[0.03] px-1.5 py-0.5 font-mono text-[9px] text-[var(--muted)] dark:bg-white/[0.04]">
+        <kbd className="rounded border border-[var(--border)] bg-black/[0.03] px-1.5 py-0.5 font-mono text-[10px] text-[var(--muted)] dark:bg-white/[0.04]">
           {shortcut}
         </kbd>
       )}

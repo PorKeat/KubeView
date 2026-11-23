@@ -32,7 +32,7 @@ export function LabelPill({ labelKey, value }: LabelPillProps) {
     >
       <div className="px-2 py-1 flex items-center gap-0.5 border-r border-[var(--border)] bg-black/[0.02] dark:bg-white/[0.02] min-w-0 truncate">
         {prefix && (
-          <span className="text-[var(--muted)]/60 text-[9px] truncate max-w-[120px]">
+          <span className="text-[var(--muted)]/60 text-[10px] truncate max-w-[120px]">
             {prefix}
           </span>
         )}

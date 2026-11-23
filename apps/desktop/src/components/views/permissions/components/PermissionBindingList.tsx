@@ -26,14 +26,14 @@ export function PermissionBindingList({
             {binding.name}
           </span>
           {binding.namespace && (
-            <span className="font-mono text-[9px] text-[var(--muted)]">
+            <span className="font-mono text-[10px] text-[var(--muted)]">
               ns: {binding.namespace}
             </span>
           )}
-          <span className="font-mono text-[9px] text-[var(--muted)]">
+          <span className="font-mono text-[10px] text-[var(--muted)]">
             → {binding.roleKind}/{binding.roleName}
           </span>
-          <span className="w-full truncate font-mono text-[9px] text-[var(--muted)]">
+          <span className="w-full truncate font-mono text-[10px] text-[var(--muted)]">
             subjects:{" "}
             {binding.subjects.length > 0
               ? binding.subjects

@@ -83,7 +83,7 @@ export function NetworkingPaginationFooter({
             Rows:
           </span>
           <div className="inline-flex items-center rounded-lg border border-[var(--border)] bg-black/5 dark:bg-white/[0.04] p-0.5 relative">
-            {[50, 100, 250, 0].map((size) => {
+            {[50, 100, 250].map((size) => {
               const selected = pageSize === size;
               return (
                 <button
@@ -114,9 +114,7 @@ export function NetworkingPaginationFooter({
                       }}
                     />
                   )}
-                  <span className="relative z-10">
-                    {size === 0 ? "All" : size}
-                  </span>
+                  <span className="relative z-10">{size}</span>
                 </button>
               );
             })}

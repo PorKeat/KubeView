@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { AlertTriangle, CheckCircle2, ChevronRight, Clock } from "lucide-react";
+import { AlertTriangle, CheckCircle2, ChevronRight } from "lucide-react";
 import { SpotlightCard } from "@/components/ui";
 import { cn } from "@/lib/utils";
 import type { PodEventItem } from "@kubeview/contracts";

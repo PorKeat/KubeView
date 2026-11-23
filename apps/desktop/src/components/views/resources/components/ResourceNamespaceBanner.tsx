@@ -59,7 +59,7 @@ export function ResourceNamespaceBanner({
               key={ns}
               type="button"
               onClick={() => setCurrentNamespace(ns)}
-              className="px-2 py-0.5 rounded-md bg-white/70 dark:bg-white/10 hover:bg-[#F08A42] hover:text-white border border-[var(--border)] text-[11px] font-medium transition-colors cursor-pointer"
+              className="px-2 py-0.5 rounded-md bg-white/70 dark:bg-white/10 hover:bg-[var(--accent)] hover:text-[var(--accent-foreground)] border border-[var(--border)] text-[11px] font-medium transition-colors cursor-pointer"
             >
               {ns} <span className="opacity-70 tabular-nums">({count})</span>
             </button>
@@ -67,7 +67,7 @@ export function ResourceNamespaceBanner({
         <button
           type="button"
           onClick={() => setCurrentNamespace("all")}
-          className="px-2.5 py-0.5 rounded-md bg-[#F08A42] text-white hover:opacity-90 text-[11px] font-semibold transition-all cursor-pointer shadow-xs"
+          className="px-2.5 py-0.5 rounded-md bg-[var(--accent)] text-[var(--accent-foreground)] hover:opacity-90 text-[11px] font-semibold transition-all cursor-pointer shadow-xs"
         >
           View All ({totalPodsCount}) &rarr;
         </button>

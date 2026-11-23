@@ -161,13 +161,13 @@ export function CatalogClusterDrawer({
                   {context.name}
                 </h2>
                 {isActive && (
-                  <span className="rounded border border-[var(--accent)]/25 bg-[var(--accent)]/10 px-1.5 py-0.5 font-mono text-[9px] font-semibold uppercase tracking-wide text-[var(--accent)]">
+                  <span className="rounded border border-[var(--accent)]/25 bg-[var(--accent)]/10 px-1.5 py-0.5 font-mono text-[10px] font-semibold uppercase tracking-wide text-[var(--accent)]">
                     Active
                   </span>
                 )}
                 <span
                   className={cn(
-                    "rounded border px-1.5 py-0.5 font-mono text-[9px] font-semibold tracking-wide",
+                    "rounded border px-1.5 py-0.5 font-mono text-[10px] font-semibold tracking-wide",
                     envMeta.badge,
                   )}
                 >
@@ -197,7 +197,7 @@ export function CatalogClusterDrawer({
 
         <div className="flex-1 space-y-4 overflow-y-auto p-4">
           <section className="rounded-xl border border-[var(--border)] bg-[var(--background)] p-3">
-            <h3 className="font-mono text-[9px] uppercase tracking-[0.14em] text-[var(--muted)]">
+            <h3 className="font-mono text-[10px] uppercase tracking-[0.14em] text-[var(--muted)]">
               Connection
             </h3>
             <dl className="mt-2 space-y-1.5">
@@ -220,7 +220,7 @@ export function CatalogClusterDrawer({
 
           {health.length > 0 && (
             <section className="rounded-xl border border-[var(--border)] bg-[var(--background)] p-3">
-              <h3 className="font-mono text-[9px] uppercase tracking-[0.14em] text-[var(--muted)]">
+              <h3 className="font-mono text-[10px] uppercase tracking-[0.14em] text-[var(--muted)]">
                 Live health
               </h3>
               <dl className="mt-2 space-y-1.5">
@@ -240,7 +240,7 @@ export function CatalogClusterDrawer({
           )}
 
           <section className="rounded-xl border border-[var(--border)] bg-[var(--background)] p-3">
-            <h3 className="flex items-center gap-1.5 font-mono text-[9px] uppercase tracking-[0.14em] text-[var(--muted)]">
+            <h3 className="flex items-center gap-1.5 font-mono text-[10px] uppercase tracking-[0.14em] text-[var(--muted)]">
               <Camera className="h-3 w-3" aria-hidden="true" />
               Cluster image
             </h3>
@@ -315,7 +315,7 @@ export function CatalogClusterDrawer({
           </section>
 
           <section className="rounded-xl border border-[var(--border)] bg-[var(--background)] p-3">
-            <h3 className="flex items-center gap-1.5 font-mono text-[9px] uppercase tracking-[0.14em] text-[var(--muted)]">
+            <h3 className="flex items-center gap-1.5 font-mono text-[10px] uppercase tracking-[0.14em] text-[var(--muted)]">
               <Tag className="h-3 w-3" aria-hidden="true" />
               Environment label
             </h3>

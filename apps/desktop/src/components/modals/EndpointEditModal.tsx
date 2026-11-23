@@ -176,7 +176,7 @@ export function EndpointEditModal() {
                     {endpointModalContextName}
                   </span>
                   {isInternal && (
-                    <span className="px-1.5 py-0.2 text-[9px] font-mono font-medium rounded bg-amber-500/15 text-amber-500 border border-amber-500/30">
+                    <span className="px-1.5 py-0.2 text-[10px] font-mono font-medium rounded bg-amber-500/15 text-amber-500 border border-amber-500/30">
                       Internal Hostname
                     </span>
                   )}

@@ -8,11 +8,9 @@ import {
   Check,
   ChevronDown,
   ChevronUp,
-  ServerOff,
   ShieldAlert,
   ArrowLeft,
   Terminal,
-  ExternalLink,
   X,
   Lightbulb,
 } from "lucide-react";
@@ -111,7 +109,7 @@ export function ErrorState({
               <span className="text-xs font-semibold text-[var(--foreground)] truncate">
                 {title}
               </span>
-              <span className="px-1.5 py-0.5 rounded text-[9px] font-mono bg-rose-500/10 text-rose-600 dark:text-rose-400 border border-rose-500/20 shrink-0">
+              <span className="px-1.5 py-0.5 rounded text-[10px] font-mono bg-rose-500/10 text-rose-600 dark:text-rose-400 border border-rose-500/20 shrink-0">
                 {code}
               </span>
             </div>

@@ -14,9 +14,9 @@ export function PodQuickCommandsCard({
     <>
       {/* Quick CLI Commands */}
       <div className="p-4 rounded-2xl bg-[var(--surface)] border border-[var(--border)] space-y-2 shadow-2xs">
-        <span className="text-[11px] font-semibold text-[var(--muted)] uppercase tracking-wider flex items-center gap-1.5">
-          <Terminal className="w-3.5 h-3.5 text-[#F08A42]" />
-          <span>Quick CLI Commands</span>
+        <span className="text-[11px] font-semibold text-[var(--foreground)] flex items-center gap-1.5">
+          <Terminal className="w-3.5 h-3.5 text-[var(--accent)]" />
+          <span>Quick commands</span>
         </span>
         <div className="space-y-1.5 font-mono text-[11px]">
           {[
@@ -38,8 +38,8 @@ export function PodQuickCommandsCard({
               className="p-2 px-2.5 rounded-xl bg-black/[0.03] dark:bg-white/[0.03] border border-[var(--border)] flex items-center justify-between group"
             >
               <div className="truncate mr-2">
-                <span className="text-[#F08A42] font-semibold text-[10px] mr-2 uppercase tracking-wide">
-                  {c.label}:
+                <span className="text-[var(--accent)] font-semibold text-[10px] mr-2">
+                  {c.label}
                 </span>
                 <span className="text-[var(--foreground)]">{c.cmd}</span>
               </div>

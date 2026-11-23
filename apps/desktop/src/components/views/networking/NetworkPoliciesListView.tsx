@@ -158,7 +158,7 @@ export function NetworkPoliciesListView() {
             {policy.policyTypes.map((type) => (
               <span
                 key={type}
-                className="inline-flex items-center px-1 py-0.5 rounded text-[9px] font-mono bg-sky-500/10 text-sky-600 dark:text-sky-400 border border-sky-500/20"
+                className="inline-flex items-center px-1 py-0.5 rounded text-[10px] font-mono bg-sky-500/10 text-sky-600 dark:text-sky-400 border border-sky-500/20"
               >
                 {type}
               </span>

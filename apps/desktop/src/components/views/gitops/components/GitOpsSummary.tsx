@@ -22,7 +22,7 @@ export function GitOpsSummary({ report }: { report: GitOpsDriftReport }) {
           key={item.label}
           className="rounded-xl border border-[var(--border)] bg-[var(--surface)] px-3 py-2 shadow-xs"
         >
-          <div className="font-mono text-[9px] uppercase tracking-wider text-[var(--muted)]">
+          <div className="font-mono text-[10px] uppercase tracking-wider text-[var(--muted)]">
             {item.label}
           </div>
           <div className="mt-1 flex items-center justify-between gap-2">

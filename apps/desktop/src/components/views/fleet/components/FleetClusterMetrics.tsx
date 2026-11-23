@@ -16,14 +16,14 @@ export function ClusterStat({
 }) {
   return (
     <div className="min-w-0 rounded-lg border border-[var(--border)]/80 bg-black/[0.015] p-2 dark:bg-white/[0.02]">
-      <div className="flex items-center gap-1 text-[9px] font-mono uppercase tracking-wider text-[var(--muted)]">
+      <div className="flex items-center gap-1 text-[10px] font-mono uppercase tracking-wider text-[var(--muted)]">
         <Icon className="h-3 w-3 shrink-0" aria-hidden="true" />
         <span className="truncate">{label}</span>
       </div>
       <div className="mt-1 truncate font-mono text-[13px] font-semibold tabular-nums text-[var(--foreground)]">
         {value}
       </div>
-      <div className="truncate text-[9px] text-[var(--muted)]">{detail}</div>
+      <div className="truncate text-[10px] text-[var(--muted)]">{detail}</div>
     </div>
   );
 }
@@ -59,7 +59,7 @@ export function ResourceMeter({
           style={{ width: `${bounded}%` }}
         />
       </div>
-      <div className="mt-1 truncate text-[9px] font-mono text-[var(--muted)]">
+      <div className="mt-1 truncate text-[10px] font-mono text-[var(--muted)]">
         {detail}
       </div>
     </div>

@@ -335,10 +335,10 @@ function GuidedTourSession({ tour }: { tour: PageTour }) {
               <Compass className="h-3.5 w-3.5" aria-hidden="true" />
             </span>
             <div className="min-w-0">
-              <p className="text-[9px] font-semibold uppercase tracking-wider text-[var(--accent)]">
+              <p className="text-[10px] font-semibold uppercase tracking-wider text-[var(--accent)]">
                 Guided tour
               </p>
-              <p className="mt-0.5 truncate font-mono text-[9px] text-[var(--muted)]">
+              <p className="mt-0.5 truncate font-mono text-[10px] text-[var(--muted)]">
                 {tour.title}
               </p>
             </div>
@@ -357,7 +357,7 @@ function GuidedTourSession({ tour }: { tour: PageTour }) {
         <div className="mt-3 flex items-center justify-between gap-2">
           <span
             data-testid="guided-tour-step-label"
-            className="font-mono text-[9px] uppercase tracking-wider text-[var(--muted)]"
+            className="font-mono text-[10px] uppercase tracking-wider text-[var(--muted)]"
           >
             Step {stepIndex + 1} of {tour.steps.length}
           </span>
@@ -436,7 +436,7 @@ function GuidedTourSession({ tour }: { tour: PageTour }) {
           </div>
         </div>
 
-        <p className="mt-2 text-center text-[9px] text-[var(--muted)]/70">
+        <p className="mt-2 text-center text-[10px] text-[var(--muted)]/70">
           Use arrow keys to move, Esc to exit.
         </p>
       </div>

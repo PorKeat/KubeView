@@ -49,13 +49,20 @@ import { useTabStore } from "@/stores/tabStore";
 import { useClusterStore } from "@/stores/clusterStore";
 import { useTheme } from "next-themes";
 import { toast } from "sonner";
+import { useShallow } from "zustand/react/shallow";
 import { Logo } from "@/components/brand/Logo";
 import { GitOpsCommandItem } from "./GitOpsCommandItem";
 
 export function CommandPalette() {
   const { commandPaletteOpen, setCommandPaletteOpen, toggleSidebar } =
-    useLayoutStore();
-  const { openTab } = useTabStore();
+    useLayoutStore(
+      useShallow((state) => ({
+        commandPaletteOpen: state.commandPaletteOpen,
+        setCommandPaletteOpen: state.setCommandPaletteOpen,
+        toggleSidebar: state.toggleSidebar,
+      })),
+    );
+  const openTab = useTabStore((state) => state.openTab);
   const { resolvedTheme, setTheme } = useTheme();
   const {
     setCurrentContext,
@@ -65,7 +72,17 @@ export function CommandPalette() {
     availableContexts,
     availableNamespaces,
     openKubeconfigModal,
-  } = useClusterStore();
+  } = useClusterStore(
+    useShallow((state) => ({
+      setCurrentContext: state.setCurrentContext,
+      setCurrentNamespace: state.setCurrentNamespace,
+      openInspector: state.openInspector,
+      openCreateNamespace: state.openCreateNamespace,
+      availableContexts: state.availableContexts,
+      availableNamespaces: state.availableNamespaces,
+      openKubeconfigModal: state.openKubeconfigModal,
+    })),
+  );
 
   React.useEffect(() => {
     const down = (e: KeyboardEvent) => {
@@ -596,15 +613,15 @@ export function CommandPalette() {
                   openKubeconfigModal("browse");
                   setCommandPaletteOpen(false);
                 }}
-                className="flex items-center justify-between px-2.5 py-2 rounded-md cursor-pointer hover:bg-[var(--surface-hover)] text-[#F08A42] transition-colors"
+                className="flex items-center justify-between px-2.5 py-2 rounded-md cursor-pointer hover:bg-[var(--surface-hover)] text-[var(--accent)] transition-colors"
               >
                 <div className="flex items-center gap-2.5">
-                  <Server className="w-4 h-4 text-[#F08A42]" />
+                  <Server className="w-4 h-4 text-[var(--accent)]" />
                   <span className="font-medium">
                     + Import Kubeconfig File...
                   </span>
                 </div>
-                <span className="text-[9px] font-mono px-1.5 py-0.5 rounded bg-[#F08A42]/10 text-[#F08A42]">
+                <span className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-[var(--accent)]/10 text-[var(--accent)]">
                   Add
                 </span>
               </Command.Item>
@@ -614,15 +631,15 @@ export function CommandPalette() {
                   openKubeconfigModal("paste");
                   setCommandPaletteOpen(false);
                 }}
-                className="flex items-center justify-between px-2.5 py-2 rounded-md cursor-pointer hover:bg-[var(--surface-hover)] text-[#F08A42] transition-colors"
+                className="flex items-center justify-between px-2.5 py-2 rounded-md cursor-pointer hover:bg-[var(--surface-hover)] text-[var(--accent)] transition-colors"
               >
                 <div className="flex items-center gap-2.5">
-                  <FileCode className="w-4 h-4 text-[#F08A42]" />
+                  <FileCode className="w-4 h-4 text-[var(--accent)]" />
                   <span className="font-medium">
                     + Paste Kubeconfig YAML...
                   </span>
                 </div>
-                <span className="text-[9px] font-mono px-1.5 py-0.5 rounded bg-[#F08A42]/10 text-[#F08A42]">
+                <span className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-[var(--accent)]/10 text-[var(--accent)]">
                   YAML
                 </span>
               </Command.Item>

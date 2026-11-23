@@ -17,7 +17,7 @@ export function InspectorEventsTab({
   if (isLoading) {
     return (
       <div className="p-8 flex items-center justify-center text-[var(--muted)] gap-2">
-        <RotateCw className="w-4 h-4 animate-spin text-[#F08A42]" />
+        <RotateCw className="w-4 h-4 animate-spin text-[var(--accent)]" />
         <span>Loading pod events...</span>
       </div>
     );

@@ -180,11 +180,11 @@ export function PodLogsHeader({
             <RotateCcw className="w-3.5 h-3.5" />
             <span>Previous</span>
             {restartCount > 0 ? (
-              <span className="px-1 py-0.2 rounded text-[9px] bg-amber-500/20 text-amber-600 dark:text-amber-400 font-bold">
+              <span className="px-1 py-0.2 rounded text-[10px] bg-amber-500/20 text-amber-600 dark:text-amber-400 font-bold">
                 {restartCount}x
               </span>
             ) : (
-              <span className="px-1 py-0.2 rounded text-[9px] bg-black/5 dark:bg-white/5 text-[var(--muted)] opacity-60">
+              <span className="px-1 py-0.2 rounded text-[10px] bg-black/5 dark:bg-white/5 text-[var(--muted)] opacity-60">
                 0
               </span>
             )}

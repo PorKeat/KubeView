@@ -110,7 +110,7 @@ export function InspectorNetworkingOverview({
         <div className="flex flex-wrap items-start justify-between gap-3">
           <div className="space-y-1.5 min-w-0">
             <span className="text-[11px] font-semibold text-[var(--muted)] uppercase tracking-wider flex items-center gap-1.5">
-              <Icon className="w-3.5 h-3.5 text-[#F08A42]" />
+              <Icon className="w-3.5 h-3.5 text-[var(--accent)]" />
               {currentResource.kind} Detail
             </span>
             <div className="flex flex-wrap items-center gap-2">

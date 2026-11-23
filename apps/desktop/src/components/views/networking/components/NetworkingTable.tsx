@@ -87,13 +87,13 @@ export function NetworkingTable<T>({
 
   return (
     <div
-      className="flex-1 overflow-y-auto overflow-x-hidden min-h-0"
+      className="flex-1 overflow-auto min-h-0"
       data-testid="networking-table-scroll"
       data-tour={`${testIdPrefix}-table`}
     >
-      <table className="w-full text-left text-xs border-collapse table-fixed">
+      <table className="w-full min-w-[960px] text-left text-xs border-collapse table-fixed">
         <thead className="sticky top-0 bg-[var(--surface)] z-10 border-b border-[var(--border)] select-none">
-          <tr className="text-[10px] font-semibold text-[var(--muted)] uppercase tracking-wider h-8 whitespace-nowrap">
+          <tr className="text-[10px] font-semibold text-[var(--muted)] uppercase tracking-wide h-8 whitespace-nowrap">
             {selectable && (
               <th className="w-[30px] px-2 py-1" aria-label="Select rows">
                 <input
@@ -116,7 +116,7 @@ export function NetworkingTable<T>({
                 ascending: sortAsc,
                 onSort: handleSort,
               })}
-              className="w-[18%] py-1 px-2 cursor-pointer hover:text-[var(--foreground)] transition-colors"
+              className="w-[17%] py-1 px-2 cursor-pointer hover:text-[var(--foreground)] transition-colors"
             >
               <div className="flex items-center gap-1">
                 <span>Name</span>
@@ -130,7 +130,7 @@ export function NetworkingTable<T>({
                 ascending: sortAsc,
                 onSort: handleSort,
               })}
-              className="w-[8%] py-1 px-2 cursor-pointer hover:text-[var(--foreground)] transition-colors"
+              className="w-[7%] py-1 px-2 cursor-pointer hover:text-[var(--foreground)] transition-colors"
             >
               <div className="flex items-center gap-1">
                 <span>Namespace</span>
@@ -144,7 +144,7 @@ export function NetworkingTable<T>({
                 ascending: sortAsc,
                 onSort: handleSort,
               })}
-              className="w-[12%] py-1 px-2 cursor-pointer hover:text-[var(--foreground)] transition-colors"
+              className="w-[10%] py-1 px-2 cursor-pointer hover:text-[var(--foreground)] transition-colors"
             >
               <div className="flex items-center gap-1">
                 <span>Status</span>
@@ -187,7 +187,7 @@ export function NetworkingTable<T>({
                 ascending: sortAsc,
                 onSort: handleSort,
               })}
-              className="w-[5%] py-1 px-2 cursor-pointer hover:text-[var(--foreground)] transition-colors"
+              className="w-[4%] py-1 px-2 cursor-pointer hover:text-[var(--foreground)] transition-colors"
             >
               <div className="flex items-center gap-1">
                 <span>Age</span>
@@ -197,7 +197,7 @@ export function NetworkingTable<T>({
             <th
               className={cn(
                 "sticky right-0 z-30 border-l border-[var(--border)] bg-[var(--surface)] py-1 px-2 text-right",
-                onEdit || onDelete || onDiagnose ? "w-28" : "w-[4%]",
+                onEdit || onDelete || onDiagnose ? "w-[88px]" : "w-[4%]",
               )}
               aria-label="Actions"
             />
@@ -299,7 +299,7 @@ export function NetworkingTable<T>({
                       <button
                         type="button"
                         onClick={() => copyDescribe(item)}
-                        className="p-1 rounded-md text-[var(--muted)] hover:text-[var(--foreground)] hover:bg-black/10 dark:hover:bg-white/10 opacity-60 group-hover:opacity-100 transition-colors cursor-pointer"
+                        className="p-0.5 rounded-md text-[var(--muted)] hover:text-[var(--foreground)] hover:bg-black/10 dark:hover:bg-white/10 opacity-60 group-hover:opacity-100 transition-colors cursor-pointer"
                         aria-label={`Copy kubectl describe for ${name}`}
                       >
                         {copiedKey === key ? (
@@ -314,7 +314,7 @@ export function NetworkingTable<T>({
                         <button
                           type="button"
                           onClick={() => onDiagnose(item)}
-                          className="p-1 rounded-md text-[var(--muted)] hover:text-[var(--accent)] hover:bg-[var(--accent)]/10 opacity-60 group-hover:opacity-100 transition-colors cursor-pointer"
+                          className="p-0.5 rounded-md text-[var(--muted)] hover:text-[var(--accent)] hover:bg-[var(--accent)]/10 opacity-60 group-hover:opacity-100 transition-colors cursor-pointer"
                           aria-label={`Diagnose ${name}`}
                         >
                           <Activity className="w-3.5 h-3.5" />
@@ -327,7 +327,7 @@ export function NetworkingTable<T>({
                           type="button"
                           onClick={() => onEdit(item)}
                           data-testid={`${testIdPrefix}-edit`}
-                          className="p-1 rounded-md text-[var(--muted)] hover:text-[var(--foreground)] hover:bg-black/10 dark:hover:bg-white/10 opacity-60 group-hover:opacity-100 transition-colors cursor-pointer"
+                          className="p-0.5 rounded-md text-[var(--muted)] hover:text-[var(--foreground)] hover:bg-black/10 dark:hover:bg-white/10 opacity-60 group-hover:opacity-100 transition-colors cursor-pointer"
                           aria-label={`Edit ${name}`}
                         >
                           <Pencil className="w-3.5 h-3.5" />
@@ -339,7 +339,7 @@ export function NetworkingTable<T>({
                         <button
                           type="button"
                           onClick={() => onDelete(item)}
-                          className="p-1 rounded-md text-[var(--muted)] hover:text-rose-500 hover:bg-rose-500/10 opacity-60 group-hover:opacity-100 transition-colors cursor-pointer"
+                          className="p-0.5 rounded-md text-[var(--muted)] hover:text-rose-500 hover:bg-rose-500/10 opacity-60 group-hover:opacity-100 transition-colors cursor-pointer"
                           aria-label={`Delete ${name}`}
                         >
                           <Trash2 className="w-3.5 h-3.5" />

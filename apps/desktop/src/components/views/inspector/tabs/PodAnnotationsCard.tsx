@@ -21,9 +21,9 @@ export function PodAnnotationsCard({
         className="w-full flex items-center justify-between text-[11px] font-semibold text-[var(--muted)] uppercase tracking-wider cursor-pointer"
       >
         <div className="flex items-center gap-1.5">
-          <FileCode className="w-3.5 h-3.5 text-[#F08A42]" />
+          <FileCode className="w-3.5 h-3.5 text-[var(--accent)]" />
           <span>Annotations</span>
-          <span className="px-1.5 py-0.2 rounded-full text-[9px] font-mono bg-black/5 dark:bg-white/5 text-[var(--muted)] border border-[var(--border)]">
+          <span className="px-1.5 py-0.2 rounded-full text-[10px] font-mono bg-black/5 dark:bg-white/5 text-[var(--muted)] border border-[var(--border)]">
             {annotationEntries.length}
           </span>
         </div>
@@ -45,7 +45,7 @@ export function PodAnnotationsCard({
                 <span className="font-semibold text-[var(--foreground)] block truncate">
                   {k}
                 </span>
-                <span className="text-[var(--muted)] block truncate text-[9px] mt-0.5">
+                <span className="text-[var(--muted)] block truncate text-[10px] mt-0.5">
                   {v}
                 </span>
               </div>

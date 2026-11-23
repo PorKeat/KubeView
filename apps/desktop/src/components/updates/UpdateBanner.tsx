@@ -82,7 +82,7 @@ export function UpdateBanner() {
             {title}
           </p>
           {available && (
-            <span className="rounded border border-[var(--accent)]/25 bg-[var(--accent)]/10 px-1.5 py-0.5 font-mono text-[9px] text-[var(--accent)]">
+            <span className="rounded border border-[var(--accent)]/25 bg-[var(--accent)]/10 px-1.5 py-0.5 font-mono text-[10px] text-[var(--accent)]">
               v{info.currentVersion} → v{info.version}
             </span>
           )}

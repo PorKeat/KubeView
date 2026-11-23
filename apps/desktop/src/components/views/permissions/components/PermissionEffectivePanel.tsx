@@ -42,21 +42,21 @@ export function PermissionEffectivePanel({
             variant="muted"
             label={`${result.clusterRules.length + result.namespaceRules.length} rules`}
           />
-          <span className="font-mono text-[9px] text-[var(--muted)]">
+          <span className="font-mono text-[10px] text-[var(--muted)]">
             {new Date(result.generatedAt).toLocaleTimeString()}
           </span>
         </div>
       </div>
 
       <div className="rounded-lg border border-[var(--border)]/70 bg-black/[0.02] px-2.5 py-2 dark:bg-white/[0.02]">
-        <span className="font-mono text-[9px] uppercase tracking-wider text-[var(--muted)]">
+        <span className="font-mono text-[10px] uppercase tracking-wider text-[var(--muted)]">
           Subject
         </span>
         <div className="mt-0.5 font-mono text-[11px] font-semibold text-[var(--foreground)]">
           {subjectLabel(result)}
         </div>
         {result.subject.groups && result.subject.groups.length > 0 && (
-          <div className="mt-0.5 truncate font-mono text-[9px] text-[var(--muted)]">
+          <div className="mt-0.5 truncate font-mono text-[10px] text-[var(--muted)]">
             groups: {result.subject.groups.join(", ")}
           </div>
         )}
@@ -71,7 +71,7 @@ export function PermissionEffectivePanel({
           {result.warnings.map((warning, index) => (
             <p
               key={`${warning}-${index}`}
-              className="mt-1 break-words font-mono text-[9px] leading-relaxed text-[var(--muted)]"
+              className="mt-1 break-words font-mono text-[10px] leading-relaxed text-[var(--muted)]"
             >
               {warning}
             </p>
@@ -80,7 +80,7 @@ export function PermissionEffectivePanel({
       )}
 
       <div>
-        <div className="mb-1.5 flex items-center gap-2 font-mono text-[9px] uppercase tracking-wider text-[var(--muted)]">
+        <div className="mb-1.5 flex items-center gap-2 font-mono text-[10px] uppercase tracking-wider text-[var(--muted)]">
           <Network className="h-3 w-3" />
           Namespace access
         </div>
@@ -97,7 +97,7 @@ export function PermissionEffectivePanel({
             {result.namespaces.map((namespace) => (
               <span
                 key={namespace.namespace}
-                className="rounded-md border border-[var(--border)] bg-black/[0.03] px-2 py-1 font-mono text-[9px] text-[var(--foreground)] dark:bg-white/[0.03]"
+                className="rounded-md border border-[var(--border)] bg-black/[0.03] px-2 py-1 font-mono text-[10px] text-[var(--foreground)] dark:bg-white/[0.03]"
                 title={`verbs: ${namespace.verbs.join(", ")}`}
               >
                 {namespace.namespace}
@@ -112,7 +112,7 @@ export function PermissionEffectivePanel({
       </div>
 
       <div>
-        <div className="mb-1.5 font-mono text-[9px] uppercase tracking-wider text-[var(--muted)]">
+        <div className="mb-1.5 font-mono text-[10px] uppercase tracking-wider text-[var(--muted)]">
           Cluster-wide rules
         </div>
         <PermissionRuleTable
@@ -122,7 +122,7 @@ export function PermissionEffectivePanel({
       </div>
 
       <div>
-        <div className="mb-1.5 font-mono text-[9px] uppercase tracking-wider text-[var(--muted)]">
+        <div className="mb-1.5 font-mono text-[10px] uppercase tracking-wider text-[var(--muted)]">
           Namespaced rules
         </div>
         <PermissionRuleTable
@@ -132,7 +132,7 @@ export function PermissionEffectivePanel({
       </div>
 
       <div>
-        <div className="mb-1.5 font-mono text-[9px] uppercase tracking-wider text-[var(--muted)]">
+        <div className="mb-1.5 font-mono text-[10px] uppercase tracking-wider text-[var(--muted)]">
           Matching bindings
         </div>
         <PermissionBindingList bindings={result.bindings} />

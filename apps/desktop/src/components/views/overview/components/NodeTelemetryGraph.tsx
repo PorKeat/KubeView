@@ -41,7 +41,7 @@ function MetricCell({
     <div className="min-w-0 px-3 first:pl-0 last:pr-0">
       <span
         className={cn(
-          "block truncate font-mono text-[9px] font-medium uppercase tracking-[0.14em]",
+          "block truncate font-mono text-[10px] font-medium uppercase tracking-[0.12em]",
           highlighted ? "text-[var(--accent)]" : "text-[var(--muted)]",
         )}
         title={label}
@@ -58,7 +58,7 @@ function MetricCell({
         >
           {value}
         </span>
-        <span className="truncate font-mono text-[10px] font-medium text-[var(--muted)] tabular-nums">
+        <span className="truncate font-mono text-[11px] font-medium text-[var(--muted)] tabular-nums">
           {suffix}
         </span>
       </div>
