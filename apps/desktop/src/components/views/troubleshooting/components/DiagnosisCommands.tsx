@@ -45,10 +45,10 @@ export function DiagnosisCommands({
             className="flex min-w-0 items-center gap-2 rounded-md border border-[var(--border)]/70 bg-[#1e1e1e] p-1.5 pl-2.5"
           >
             <div className="min-w-0 flex-1">
-              <div className="font-mono text-[8px] uppercase tracking-wider text-slate-400">
+              <div className="font-mono text-[10px] uppercase tracking-wider text-slate-400">
                 {command.label}
               </div>
-              <code className="block truncate font-mono text-[9px] text-slate-200">
+              <code className="block truncate font-mono text-[10px] text-slate-200">
                 {command.command}
               </code>
             </div>

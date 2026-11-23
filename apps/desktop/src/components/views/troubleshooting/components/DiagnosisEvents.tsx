@@ -39,11 +39,11 @@ export function DiagnosisEvents({ events = [] }: { events?: PodEventItem[] }) {
                     variant={status.variant}
                     label={event.type}
                   />
-                  <span className="ml-auto shrink-0 font-mono text-[8px] text-[var(--muted)]">
+                  <span className="ml-auto shrink-0 font-mono text-[10px] text-[var(--muted)]">
                     {event.count > 1 ? `×${event.count}` : event.lastTimestamp}
                   </span>
                 </div>
-                <p className="mt-0.5 break-words font-mono text-[9px] leading-relaxed text-[var(--muted)]">
+                <p className="mt-0.5 break-words font-mono text-[10px] leading-relaxed text-[var(--muted)]">
                   {event.message}
                 </p>
               </div>

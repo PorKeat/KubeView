@@ -330,13 +330,17 @@ func probeHandler(probe *corev1.Probe) string {
 		if scheme == "" {
 			scheme = "HTTP"
 		}
-		return fmt.Sprintf("%s %s:%s", scheme, probe.HTTPGet.Path, probe.HTTPGet.Port.String())
+		path := probe.HTTPGet.Path
+		if path == "" {
+			path = "/"
+		}
+		return fmt.Sprintf("%s %s on port %s", scheme, path, probe.HTTPGet.Port.String())
 	case probe.TCPSocket != nil:
-		return "TCP " + probe.TCPSocket.Port.String()
+		return "TCP on port " + probe.TCPSocket.Port.String()
 	case probe.Exec != nil:
 		return "exec " + strings.Join(probe.Exec.Command, " ")
 	case probe.GRPC != nil:
-		return fmt.Sprintf("gRPC :%d", probe.GRPC.Port)
+		return fmt.Sprintf("gRPC on port %d", probe.GRPC.Port)
 	default:
 		return "unknown handler"
 	}

@@ -53,7 +53,7 @@ func TestResultResponsePreservesWireContract(t *testing.T) {
 			Probes: []domaindiagnosis.Probe{{
 				Kind:                "readiness",
 				Configured:          true,
-				Handler:             "HTTP /healthz:8080",
+				Handler:             "HTTP /healthz on port 8080",
 				InitialDelaySeconds: 5,
 				TimeoutSeconds:      1,
 				PeriodSeconds:       10,
@@ -113,7 +113,7 @@ func TestResultResponsePreservesWireContract(t *testing.T) {
 		`"lastTerminatedReason":"Error"`, `"lastTerminatedMessage":`,
 		`"requests":{"cpu":"100m","memory":"128Mi"}`, `"limits":{"cpu":"500m","memory":"256Mi"}`,
 		`"cpuUsageMillicores":25`, `"memoryUsageBytes":1048576`, `"metricsAvailable":true`,
-		`"probes":[{"kind":"readiness","configured":true,"handler":"HTTP /healthz:8080"`,
+		`"probes":[{"kind":"readiness","configured":true,"handler":"HTTP /healthz on port 8080"`,
 		`"initialDelaySeconds":5`, `"timeoutSeconds":1`, `"periodSeconds":10`,
 		`"failureThreshold":3`, `"successThreshold":1`, `"status":"fail"`,
 		`"logExcerpt":"panic: failed to connect to database"`, `"logSource":"previous"`,

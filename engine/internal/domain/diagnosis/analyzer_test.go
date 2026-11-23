@@ -78,7 +78,7 @@ func TestAnalyzePodDiagnosisProbeFailure(t *testing.T) {
 		Probes: []Probe{{
 			Kind:       "readiness",
 			Configured: true,
-			Handler:    "HTTP /healthz:8080",
+			Handler:    "HTTP /healthz on port 8080",
 			Status:     StatusFail,
 			Message:    "Readiness probe failed: HTTP probe failed with statuscode: 500",
 		}},

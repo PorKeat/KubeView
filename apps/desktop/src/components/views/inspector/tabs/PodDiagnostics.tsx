@@ -85,7 +85,7 @@ function PodIssueCard({
 
       {/* Actionable Fix Guidance */}
       <div className="flex items-start gap-2 text-[11px] text-[var(--foreground)] bg-rose-500/10 dark:bg-rose-500/15 border border-rose-500/20 p-2.5 rounded-xl">
-        <span className="px-1.5 py-0.5 rounded font-bold text-[9px] uppercase bg-rose-500 text-white shrink-0 mt-0.5">
+        <span className="px-1.5 py-0.5 rounded font-bold text-[10px] uppercase bg-rose-500 text-white shrink-0 mt-0.5">
           Fix
         </span>
         <span className="leading-relaxed font-sans">
@@ -148,7 +148,7 @@ function PodPendingCard({
 
       {/* Actionable Fix Guidance */}
       <div className="flex items-start gap-2 text-[11px] text-[var(--foreground)] bg-amber-500/10 dark:bg-amber-500/15 border border-amber-500/20 p-2.5 rounded-xl">
-        <span className="px-1.5 py-0.5 rounded font-bold text-[9px] uppercase bg-amber-500 text-white shrink-0 mt-0.5">
+        <span className="px-1.5 py-0.5 rounded font-bold text-[10px] uppercase bg-amber-500 text-white shrink-0 mt-0.5">
           Info
         </span>
         <span className="leading-relaxed font-sans">

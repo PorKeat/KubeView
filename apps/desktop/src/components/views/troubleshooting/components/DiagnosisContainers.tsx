@@ -9,7 +9,7 @@ import { formatBytes, formatMillicores, statusMeta } from "../lib/diagnosis";
 function ResourceValue({ label, value }: { label: string; value: string }) {
   return (
     <div className="min-w-0 rounded-md border border-[var(--border)]/70 bg-black/[0.02] px-2 py-1.5 dark:bg-white/[0.02]">
-      <div className="font-mono text-[8px] uppercase tracking-wider text-[var(--muted)]">
+      <div className="font-mono text-[10px] uppercase tracking-wider text-[var(--muted)]">
         {label}
       </div>
       <div className="truncate font-mono text-[10px] text-[var(--foreground)]">
@@ -27,16 +27,16 @@ function ProbeRow({
   const status = statusMeta(probe.status);
   return (
     <div className="flex min-w-0 flex-wrap items-center gap-1.5 rounded-md border border-[var(--border)]/60 px-2 py-1.5">
-      <span className="font-mono text-[9px] font-semibold uppercase tracking-wider text-[var(--muted)]">
+      <span className="text-[10px] font-semibold capitalize text-[var(--muted)]">
         {probe.kind}
       </span>
       <StatusBeacon size="xs" variant={status.variant} label={status.label} />
-      <span className="min-w-0 flex-1 truncate font-mono text-[9px] text-[var(--foreground)]">
+      <span className="min-w-0 flex-1 truncate font-mono text-[10px] text-[var(--foreground)]">
         {probe.handler || "not configured"}
       </span>
       {probe.message && (
         <span
-          className="w-full break-words font-mono text-[9px] leading-relaxed text-[var(--muted)]"
+          className="w-full break-words font-mono text-[10px] leading-relaxed text-[var(--muted)]"
           title={probe.message}
         >
           {probe.message}
@@ -67,7 +67,7 @@ function ContainerCard({ container }: { container: PodContainerDiagnosis }) {
               {container.name}
             </div>
             <div
-              className="truncate font-mono text-[9px] text-[var(--muted)]"
+              className="truncate font-mono text-[10px] text-[var(--muted)]"
               title={container.image}
             >
               {container.image}
@@ -80,11 +80,11 @@ function ContainerCard({ container }: { container: PodContainerDiagnosis }) {
             variant={stateStatus.variant}
             label={`${container.state} · ${container.ready ? "ready" : "not ready"}`}
           />
-          <span className="font-mono text-[9px] text-[var(--muted)]">
+          <span className="font-mono text-[10px] text-[var(--muted)]">
             restarts {container.restartCount}
           </span>
           {container.exitCode !== undefined && (
-            <span className="font-mono text-[9px] text-rose-600 dark:text-rose-400">
+            <span className="font-mono text-[10px] text-rose-600 dark:text-rose-400">
               exit {container.exitCode}
             </span>
           )}
@@ -92,7 +92,7 @@ function ContainerCard({ container }: { container: PodContainerDiagnosis }) {
       </div>
 
       {container.stateMessage && (
-        <p className="mt-2 break-words rounded-md border border-[var(--border)]/60 bg-black/[0.03] px-2 py-1.5 font-mono text-[9px] leading-relaxed text-[var(--muted)] dark:bg-black/20">
+        <p className="mt-2 break-words rounded-md border border-[var(--border)]/60 bg-black/[0.03] px-2 py-1.5 font-mono text-[10px] leading-relaxed text-[var(--muted)] dark:bg-black/20">
           {container.stateMessage}
         </p>
       )}
@@ -113,7 +113,7 @@ function ContainerCard({ container }: { container: PodContainerDiagnosis }) {
         />
       </div>
 
-      <div className="mt-2 flex flex-wrap items-center gap-3 font-mono text-[9px] text-[var(--muted)]">
+      <div className="mt-2 flex flex-wrap items-center gap-3 font-mono text-[10px] text-[var(--muted)]">
         <span className="inline-flex items-center gap-1">
           <Cpu className="h-3 w-3" />
           {container.metricsAvailable
@@ -129,12 +129,12 @@ function ContainerCard({ container }: { container: PodContainerDiagnosis }) {
       </div>
 
       <div className="mt-2">
-        <div className="font-mono text-[9px] uppercase tracking-wider text-[var(--muted)]">
+        <div className="text-[10px] font-semibold text-[var(--muted)]">
           Probes
         </div>
         <div className="mt-1 space-y-1">
           {container.probes.length === 0 ? (
-            <p className="font-mono text-[9px] text-[var(--muted)]">
+            <p className="font-mono text-[10px] text-[var(--muted)]">
               No probes configured.
             </p>
           ) : (
@@ -147,17 +147,17 @@ function ContainerCard({ container }: { container: PodContainerDiagnosis }) {
 
       {(container.logExcerpt || container.logError) && (
         <div className="mt-2">
-          <div className="flex items-center gap-1.5 font-mono text-[9px] uppercase tracking-wider text-[var(--muted)]">
+          <div className="flex items-center gap-1.5 text-[10px] font-semibold text-[var(--muted)]">
             <Terminal className="h-3 w-3" />
             {container.logSource ? `${container.logSource} logs` : "logs"}
           </div>
           {container.logError && (
-            <p className="mt-1 break-words font-mono text-[9px] text-rose-600 dark:text-rose-400">
+            <p className="mt-1 break-words font-mono text-[10px] text-rose-600 dark:text-rose-400">
               {container.logError}
             </p>
           )}
           {container.logExcerpt && (
-            <pre className="mt-1 max-h-40 overflow-auto whitespace-pre-wrap break-words rounded-md border border-[var(--border)]/70 bg-[#1e1e1e] p-2 font-mono text-[9px] leading-relaxed text-slate-200">
+            <pre className="mt-1 max-h-40 overflow-auto whitespace-pre-wrap break-words rounded-md border border-[var(--border)]/70 bg-[#1e1e1e] p-2 font-mono text-[10px] leading-relaxed text-slate-200">
               {container.logExcerpt}
             </pre>
           )}

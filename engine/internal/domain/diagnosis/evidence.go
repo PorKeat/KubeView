@@ -23,16 +23,16 @@ func buildEvidence(
 			}
 		}
 		summary := fmt.Sprintf("%s=%s", condition.Type, condition.Status)
-		detail := strings.TrimSpace(strings.Join([]string{condition.Reason, condition.Message}, ": "))
-		if detail == "" {
-			detail = "No condition message."
+		details := []string{}
+		if detail := conditionDetail(condition); detail != "" {
+			details = append(details, detail)
 		}
 		evidence = append(evidence, Evidence{
 			ID:      "condition-" + strings.ToLower(condition.Type),
 			Label:   condition.Type,
 			Status:  status,
 			Summary: summary,
-			Details: []string{detail},
+			Details: details,
 		})
 	}
 
@@ -128,6 +128,21 @@ func buildEvidence(
 		})
 	}
 	return evidence
+}
+
+// conditionDetail joins the parts Kubernetes actually reported. Joining a
+// reason and message of "" used to produce a bare ":" line in the UI.
+func conditionDetail(condition Condition) string {
+	reason := strings.TrimSpace(condition.Reason)
+	message := strings.TrimSpace(condition.Message)
+	switch {
+	case reason == "":
+		return message
+	case message == "":
+		return reason
+	default:
+		return reason + ": " + message
+	}
 }
 
 func resourceStatus(container Container, resultFinding finding) string {

@@ -30,6 +30,14 @@ test.describe("KubeView Pod Troubleshooting Assistant", () => {
     const assistant = page.getByTestId("pod-troubleshooting-assistant");
     await expect(assistant).toBeVisible();
     await expect(assistant).toContainText("Troubleshooting Assistant");
+    const evidence = page.getByTestId("pod-diagnosis-evidence");
+    await expect(evidence).toBeVisible();
+    await expect(evidence).toContainText("Needs attention");
+    await expect(evidence).toContainText("Passed checks");
+    await expect(evidence).toContainText("PodScheduled");
+    await expect(evidence.locator("p").filter({ hasText: /^:$/ })).toHaveCount(
+      0,
+    );
     await expect(page.getByTestId("pod-diagnosis-summary")).toContainText(
       "CrashLoopBackOff",
     );
@@ -40,7 +48,7 @@ test.describe("KubeView Pod Troubleshooting Assistant", () => {
       "Inspect previous container logs",
     );
     await expect(page.getByTestId("pod-diagnosis-containers")).toContainText(
-      "HTTP /healthz:8080",
+      "HTTP /healthz on port 8080",
     );
     await expect(page.getByTestId("pod-diagnosis-containers")).toContainText(
       "256Mi",

@@ -42,7 +42,7 @@ export function DiagnosisHeader({
             Correlates pod status, events, logs, probes, and resource limits.
           </p>
           {result && (
-            <span className="mt-1 block font-mono text-[9px] text-[var(--muted)]">
+            <span className="mt-1 block font-mono text-[10px] text-[var(--muted)]">
               Generated {formatGeneratedAt(result.generatedAt)}
               {result.nodeName ? ` · node ${result.nodeName}` : ""}
             </span>
