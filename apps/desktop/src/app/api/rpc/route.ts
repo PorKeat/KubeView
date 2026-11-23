@@ -15,7 +15,26 @@ function hostnameFromHeader(host: string | null): string {
   return host.split(":")[0].toLowerCase();
 }
 
+function hostnameFromOrigin(origin: string | null): string {
+  if (!origin) return "";
+  try {
+    return new URL(origin).hostname.toLowerCase();
+  } catch {
+    return "";
+  }
+}
+
+/**
+ * The hard security boundary is the dev server binding to 127.0.0.1. This
+ * check is defense-in-depth against DNS rebinding and misconfigured hosts:
+ * the Host header is client-controlled, so it must never be the only guard.
+ * The Origin check also rejects cross-origin browser requests.
+ */
 function isLoopbackRequest(req: NextRequest): boolean {
+  const origin = req.headers.get("origin");
+  if (origin && !LOOPBACK_HOSTS.has(hostnameFromOrigin(origin))) {
+    return false;
+  }
   return LOOPBACK_HOSTS.has(hostnameFromHeader(req.headers.get("host")));
 }
 

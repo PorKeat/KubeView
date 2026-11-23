@@ -4,7 +4,9 @@ import "encoding/json"
 
 // ProtocolVersion is the active JSON-RPC 2.0 contract version
 const ProtocolVersion = "1.0.0"
-const EngineVersion = "0.1.0"
+
+// EngineVersion is overridden at build time with -ldflags -X.
+var EngineVersion = "0.0.0-dev"
 
 // Standard JSON-RPC 2.0 error codes
 const (
@@ -69,6 +71,7 @@ type HandshakeParams struct {
 // HandshakeResult sent back to client
 type HandshakeResult struct {
 	EngineVersion        string   `json:"engineVersion"`
+	GoVersion            string   `json:"goVersion"`
 	ProtocolVersion      string   `json:"protocolVersion"`
 	Status               string   `json:"status"` // "ready" | "degraded"
 	SupportedAPIVersions []string `json:"supportedApiVersions"`

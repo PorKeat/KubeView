@@ -2,6 +2,7 @@ package main
 
 import (
 	"encoding/json"
+	"runtime"
 
 	"github.com/kubeview/engine/internal/ipc"
 	"github.com/kubeview/engine/internal/stream"
@@ -19,6 +20,7 @@ func registerCoreHandlers(server *ipc.Server, streamSrv *stream.StreamServer) {
 
 		return &ipc.HandshakeResult{
 			EngineVersion:        ipc.EngineVersion,
+			GoVersion:            runtime.Version(),
 			ProtocolVersion:      ipc.ProtocolVersion,
 			Status:               "ready",
 			SupportedAPIVersions: []string{"v1"},

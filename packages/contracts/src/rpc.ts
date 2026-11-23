@@ -71,7 +71,10 @@ export interface HandshakeParams {
 
 export interface HandshakeResult {
   engineVersion: string;
+  goVersion: string;
   protocolVersion: string;
   status: "ready" | "degraded";
   supportedApiVersions: string[];
+  streamPort?: number;
+  streamToken?: string;
 }

@@ -19,32 +19,35 @@
 
 Upon sidecar launch, the Rust host immediately initiates a handshake before any other RPC calls are permitted.
 
-### Request: `engine.handshake`
+### Request: `handshake`
 
 ```json
 {
   "jsonrpc": "2.0",
   "id": "init-01",
-  "method": "engine.handshake",
+  "method": "handshake",
   "params": {
-    "clientVersion": "0.1.0",
+    "clientVersion": "0.3.3",
     "protocolVersion": "1.0.0",
-    "capabilities": ["streaming", "diff", "metrics", "exec"]
+    "capabilities": ["stream", "exec", "logs"]
   }
 }
 ```
 
-### Response: `engine.handshake`
+### Response: `handshake`
 
 ```json
 {
   "jsonrpc": "2.0",
   "id": "init-01",
   "result": {
-    "engineVersion": "0.1.0",
+    "engineVersion": "0.3.3",
+    "goVersion": "go1.26.10",
     "protocolVersion": "1.0.0",
     "status": "ready",
-    "supportedApiVersions": ["1.0.0"]
+    "supportedApiVersions": ["v1"],
+    "streamPort": 59194,
+    "streamToken": "<per-process random token>"
   }
 }
 ```
@@ -110,11 +113,11 @@ export interface StreamEvent<T = unknown> {
 
 ### 4.1 Domain: `engine`
 
-| Method             | Params                               | Result                                           | Description                          |
-| :----------------- | :----------------------------------- | :----------------------------------------------- | :----------------------------------- |
-| `engine.status`    | `{}`                                 | `{ status, uptime, memoryBytes, activeStreams }` | Health and diagnostic status.        |
-| `engine.handshake` | `{ clientVersion, protocolVersion }` | `{ engineVersion, protocolVersion, status }`     | Version negotiation.                 |
-| `engine.shutdown`  | `{ timeoutMs?: number }`             | `{ acknowledged: boolean }`                      | Initiates graceful sidecar shutdown. |
+| Method            | Params                                             | Result                                                                                                 | Description                                 |
+| :---------------- | :------------------------------------------------- | :----------------------------------------------------------------------------------------------------- | :------------------------------------------ |
+| `engine.status`   | `{}`                                               | `{ status, uptime, memoryBytes, activeStreams }`                                                       | Health and diagnostic status.               |
+| `handshake`       | `{ clientVersion, protocolVersion, capabilities }` | `{ engineVersion, goVersion, protocolVersion, status, supportedApiVersions, streamPort, streamToken }` | Version negotiation and stream credentials. |
+| `engine.shutdown` | `{ timeoutMs?: number }`                           | `{ acknowledged: boolean }`                                                                            | Initiates graceful sidecar shutdown.        |
 
 ### 4.2 Domain: `clusters` & `contexts`
 
@@ -200,10 +203,11 @@ All mutating methods honor the desktop's read-only mode, protected-context guard
 
 ### 4.10 Domain: `metrics`
 
-| Method            | Params                                                                           | Result                              | Description                          |
-| :---------------- | :------------------------------------------------------------------------------- | :---------------------------------- | :----------------------------------- |
-| `metrics.current` | `{ clusterId: string, resourceType: "nodes" \| "pods", namespace?: string }`     | `{ metrics: ResourceMetricItem[] }` | Metrics Server CPU/Memory telemetry. |
-| `metrics.query`   | `{ clusterId: string, query: string, start: number, end: number, step: number }` | `{ series: MetricSeries[] }`        | Prometheus PromQL evaluation.        |
+| Method            | Params                                                                           | Result                              | Description                                                                                                                            |
+| :---------------- | :------------------------------------------------------------------------------- | :---------------------------------- | :------------------------------------------------------------------------------------------------------------------------------------- |
+| `metrics.current` | `{ clusterId: string, resourceType: "nodes" \| "pods", namespace?: string }`     | `{ metrics: ResourceMetricItem[] }` | Metrics Server CPU/Memory telemetry.                                                                                                   |
+| `metrics.query`   | `{ clusterId: string, query: string, start: number, end: number, step: number }` | `{ series: MetricSeries[] }`        | Prometheus PromQL evaluation.                                                                                                          |
+| `pods.metrics`    | `{ contextName?: string, namespace?: string }`                                   | `PodUsageResult`                    | Live pod and container CPU/memory usage. Returns `metricsAvailable: false` instead of failing when Metrics Server is absent or denied. |
 
 ---
 

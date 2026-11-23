@@ -1,10 +1,13 @@
 import { execFileSync } from "node:child_process";
-import { chmodSync, mkdirSync, rmSync } from "node:fs";
+import { chmodSync, mkdirSync, readFileSync, rmSync } from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const target = process.argv[2];
+const appVersion = JSON.parse(
+  readFileSync(path.join(root, "package.json"), "utf8"),
+).version;
 
 const targets = {
   "universal-apple-darwin": [
@@ -42,7 +45,12 @@ for (const spec of specs) {
   console.log(
     `Building engine for ${spec.goos}/${spec.goarch} -> ${path.basename(output)}`,
   );
-  const ldflags = spec.goos === "windows" ? "-s -w -H=windowsgui" : "-s -w";
+  const ldflags = [
+    "-s",
+    "-w",
+    `-X github.com/kubeview/engine/internal/ipc.EngineVersion=${appVersion}`,
+    ...(spec.goos === "windows" ? ["-H=windowsgui"] : []),
+  ].join(" ");
   execFileSync(
     "go",
     [

@@ -1,42 +1,7 @@
 import { useSettingsStore } from "@/stores/settingsStore";
-import type {
-  ListContextsResult,
-  SwitchContextResult,
-  ListNamespacesResult,
-  DiagnosticResult,
-} from "@kubeview/contracts";
+import { rpcTimeoutMs } from "@/lib/rpcTimeouts";
 
 const MOCK_MODE = process.env.NEXT_PUBLIC_KUBEVIEW_MOCK === "1";
-const RPC_TIMEOUT_MS = 30_000;
-const LONG_RPC_TIMEOUT_MS = 60_000;
-const HELM_LIFECYCLE_TIMEOUT_MS = 35 * 60_000;
-const DRAIN_TIMEOUT_MS = 20 * 60_000;
-
-function rpcTimeoutMs(method: string): number {
-  if (
-    method === "helm.install" ||
-    method === "helm.upgrade" ||
-    method === "helm.rollback" ||
-    method === "helm.uninstall"
-  ) {
-    return HELM_LIFECYCLE_TIMEOUT_MS;
-  }
-  if (method === "nodes.drain") return DRAIN_TIMEOUT_MS;
-  if (method === "pods.move") return 2 * 60_000;
-  if (
-    method.startsWith("helm.") ||
-    method === "deployments.rollback" ||
-    method === "deployments.rolloutHistory" ||
-    method === "statefulsets.partition" ||
-    method === "jobs.retry" ||
-    method === "jobs.clone" ||
-    method === "persistentvolumeclaims.expand" ||
-    method.startsWith("resources.")
-  ) {
-    return LONG_RPC_TIMEOUT_MS;
-  }
-  return RPC_TIMEOUT_MS;
-}
 
 const MUTATING_METHODS = new Set([
   "configmaps.apply",
@@ -233,7 +198,9 @@ export interface StreamCredentials {
 }
 
 let cachedStreamCredentials: StreamCredentials | null = null;
+let streamCredentialsPromise: Promise<StreamCredentials> | null = null;
 let browserEventSource: EventSource | null = null;
+let browserEventSourcePromise: Promise<EventSource | null> | null = null;
 let browserEventReconnectTimer: ReturnType<typeof setTimeout> | null = null;
 const browserEventHandlers = new Map<
   string,
@@ -264,6 +231,8 @@ function scheduleBrowserEventReconnect(): void {
 
 export function resetStreamCredentials(): void {
   cachedStreamCredentials = null;
+  streamCredentialsPromise = null;
+  browserEventSourcePromise = null;
   if (browserEventReconnectTimer) {
     clearTimeout(browserEventReconnectTimer);
     browserEventReconnectTimer = null;
@@ -277,21 +246,31 @@ export function resetStreamCredentials(): void {
 
 export async function getStreamCredentials(): Promise<StreamCredentials> {
   if (cachedStreamCredentials) return cachedStreamCredentials;
-  const res = await invokeRpc<{ streamPort?: number; streamToken?: string }>(
-    "handshake",
-    {
-      clientVersion: "0.1.0",
-      protocolVersion: "1.0.0",
-      capabilities: ["stream", "exec", "logs"],
-    },
-  );
-  if (!res?.streamPort || !res.streamToken) {
-    throw new Error(
-      "KubeView engine handshake did not return stream credentials",
+  if (streamCredentialsPromise) return streamCredentialsPromise;
+
+  streamCredentialsPromise = (async () => {
+    const res = await invokeRpc<{ streamPort?: number; streamToken?: string }>(
+      "handshake",
+      {
+        clientVersion: process.env.NEXT_PUBLIC_KUBEVIEW_VERSION ?? "0.0.0",
+        protocolVersion: "1.0.0",
+        capabilities: ["stream", "exec", "logs"],
+      },
     );
+    if (!res?.streamPort || !res.streamToken) {
+      throw new Error(
+        "KubeView engine handshake did not return stream credentials",
+      );
+    }
+    cachedStreamCredentials = { port: res.streamPort, token: res.streamToken };
+    return cachedStreamCredentials;
+  })();
+
+  try {
+    return await streamCredentialsPromise;
+  } finally {
+    streamCredentialsPromise = null;
   }
-  cachedStreamCredentials = { port: res.streamPort, token: res.streamToken };
-  return cachedStreamCredentials;
 }
 
 export async function getStreamPort(): Promise<number> {
@@ -301,26 +280,38 @@ export async function getStreamPort(): Promise<number> {
 async function getBrowserEventSource(): Promise<EventSource | null> {
   if (typeof window === "undefined") return null;
   if (browserEventSource) return browserEventSource;
+  if (browserEventSourcePromise) return browserEventSourcePromise;
 
-  let credentials: StreamCredentials;
+  browserEventSourcePromise = (async () => {
+    let credentials: StreamCredentials;
+    try {
+      credentials = await getStreamCredentials();
+    } catch {
+      scheduleBrowserEventReconnect();
+      return null;
+    }
+
+    // Another listener may have opened the source while credentials resolved.
+    if (browserEventSource) return browserEventSource;
+
+    const source = new EventSource(
+      `http://127.0.0.1:${credentials.port}/api/stream/events?token=${encodeURIComponent(credentials.token)}`,
+    );
+    source.onerror = () => {
+      source.close();
+      if (browserEventSource === source) browserEventSource = null;
+      cachedStreamCredentials = null;
+      scheduleBrowserEventReconnect();
+    };
+    browserEventSource = source;
+    return source;
+  })();
+
   try {
-    credentials = await getStreamCredentials();
-  } catch {
-    scheduleBrowserEventReconnect();
-    return null;
+    return await browserEventSourcePromise;
+  } finally {
+    browserEventSourcePromise = null;
   }
-
-  const source = new EventSource(
-    `http://127.0.0.1:${credentials.port}/api/stream/events?token=${encodeURIComponent(credentials.token)}`,
-  );
-  source.onerror = () => {
-    source.close();
-    if (browserEventSource === source) browserEventSource = null;
-    cachedStreamCredentials = null;
-    scheduleBrowserEventReconnect();
-  };
-  browserEventSource = source;
-  return source;
 }
 
 export async function listenNotification<T>(

@@ -3,6 +3,7 @@ import {
   overview,
   fleetOverview,
   pod,
+  podUsage,
   service,
   headlessService,
   manualService,
@@ -50,6 +51,7 @@ export function resultFor(method: string, params?: JsonRecord): unknown {
     case "handshake":
       return {
         engineVersion: "mock",
+        goVersion: "go1.26.3",
         protocolVersion: "1.0.0",
         status: "ready",
         supportedApiVersions: ["v1"],
@@ -153,7 +155,11 @@ users:
     case "clusters.fleetOverview":
       return fleetOverview;
     case "pods.list":
-      return { items: [pod], totalCount: 1 };
+      return { items: [{ ...pod, compact: true }], totalCount: 1 };
+    case "pods.detail":
+      return pod;
+    case "pods.metrics":
+      return podUsage;
     case "pods.move": {
       const targetNamespace =
         typeof params?.targetNamespace === "string"
@@ -194,6 +200,11 @@ users:
         nodeName: "worker-1",
         conditions: [
           {
+            type: "PodScheduled",
+            status: "True",
+            lastTransitionTime: now,
+          },
+          {
             type: "Ready",
             status: "False",
             lastTransitionTime: now,
@@ -220,7 +231,7 @@ users:
               {
                 kind: "readiness",
                 configured: true,
-                handler: "HTTP /healthz:8080",
+                handler: "HTTP /healthz on port 8080",
                 initialDelaySeconds: 5,
                 timeoutSeconds: 1,
                 periodSeconds: 10,
@@ -249,6 +260,12 @@ users:
           },
         ],
         evidence: [
+          {
+            id: "condition-podscheduled",
+            label: "PodScheduled",
+            status: "pass",
+            summary: "PodScheduled=True",
+          },
           {
             id: "condition-ready",
             label: "Ready",
@@ -338,6 +355,20 @@ users:
         roleBindings: 1,
         clusterRoleBindings: 0,
         crds: 1,
+      };
+    case "topology.snapshot":
+      return {
+        overview: resultFor("clusters.overview"),
+        networkingCounts: resultFor("networking.counts"),
+        services: resultFor("services.list"),
+        endpoints: resultFor("endpoints.list"),
+        ingresses: resultFor("ingresses.list"),
+        networkPolicies: resultFor("networkpolicies.list"),
+      };
+    case "sidebar.counts":
+      return {
+        networkingCounts: resultFor("networking.counts"),
+        simpleCounts: resultFor("simpleResources.counts"),
       };
     case "services.list":
       return {
